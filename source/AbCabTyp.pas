@@ -483,9 +483,11 @@ begin
       end;
     FDINT_Close_File_Info :
       begin
-        AbFileSetAttr(NewFilename, pfdin^.attribs);
-        FileSetDate(pfdin^.hf, Longint(pfdin^.date) shl 16 + pfdin^.time);
         _lclose(pfdin^.hf);
+        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+        AbFileSetAttr(NewFilename, pfdin^.attribs);
+        // Need to test as Handle maybe invalid after _lclose
+        FileSetDate(pfdin^.hf, Longint(pfdin^.date) shl 16 + pfdin^.time);
         Archive.DoCabItemProcessed;
       end;
   end;
