@@ -1366,7 +1366,7 @@ var
   i : Integer;
   Abort : Boolean;
 {$IFNDEF Linux}
-  Buff : array [0..MAX_PATH] of Char;                      {!!.03}
+//  Buff : array [0..MAX_PATH] of Char;                      {!!.03}
 {$ENDIF}
 begin
 {!!.03 - Added}
@@ -1500,7 +1500,7 @@ procedure TAbArchive.Freshen(aItem : TAbArchiveItem);
   {freshen the item}
 var
   Index : Integer;
-  temp : String;
+//  temp : String;
 begin
   CheckValid;
   Index := FindItem(aItem);
