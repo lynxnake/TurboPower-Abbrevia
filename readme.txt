@@ -39,7 +39,7 @@ TurboPower Abbrevia package names have the following form:
    |                                 CR = CLX runtime, VD = VCL designtime,
    |                                 VR = VCL runtime)
    |
-   +----------- NNN Product version number (e.g., 304=version 3.04)
+   +----------- NNN Product version number (e.g., 304=version 3.05)
 
 
 For example, the Abbrevia designtime package files for Delphi 5 have
