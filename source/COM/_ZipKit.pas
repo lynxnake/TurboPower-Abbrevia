@@ -32,8 +32,6 @@ uses
   AbUtils, _ZipItem, _GZipItem, _TarItem, AbZipTyp, AbTarTyp, AbGzTyp,
   AbConst, AbBrowse;
 
-{$DEFINE LICENSED}
-
 type
 
   TZipKit = class(TAutoObject, IConnectionPointContainer, IEnumVariant, IZipKit)
@@ -43,7 +41,6 @@ type
     FEvents           : IZipKitEvents;
     FOwner            : TAbZipKit;
     FEnumPos          : Integer;
-    FIsLicensed       : Boolean;   
 
     {Events for FOwner}
     procedure _OnArchiveItemProgress(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
@@ -140,9 +137,6 @@ type
 
     function Get_TarAutoHandle: WordBool; safecall;
     procedure Set_TarAutoHandle(Value: WordBool); safecall;
-
-
-
   end;
 
 
@@ -150,13 +144,8 @@ implementation
 
 
 uses
-  ComServ {$IFNDEF LICENSED}, ABCOMLic {$ENDIF};  
+  ComServ;
 
-{------------------------------------------------------------------------------}
-procedure OleError(ErrorCode: HResult);
-begin
-  raise EOleSysError.Create('CLASS_E_NOTLICENSED', ErrorCode, 89);
-end;
 {------------------------------------------------------------------------------}
 {IConnectionPointContainer}
 {------------------------------------------------------------------------------}
@@ -226,10 +215,7 @@ end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Add(const FileMask: WideString; const ExclusionMask: WideString; SearchAttr: Integer);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.AddFilesEx(FileMask, ExclusionMask, SearchAttr);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.AddFilesEx(FileMask, ExclusionMask, SearchAttr);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.AddFromStream(const FileName: WideString; Stream: OleVariant);
@@ -238,67 +224,45 @@ var
   Info     : array of Byte;
 begin
   Info := nil;
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    InStream := nil;
-    try
-      InStream := TMemoryStream.Create;
-      Info := Stream;
-      InStream.Write(Info[0], Length(Info));
-      InStream.Position := 0;
-      FOwner.AddFromStream(FileName, InStream);
-    finally
-      InStream.Free;
-    end;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  InStream := TMemoryStream.Create;
+  try
+    Info := Stream;
+    InStream.Write(Info[0], Length(Info));
+    InStream.Position := 0;
+    FOwner.AddFromStream(FileName, InStream);
+  finally
+    InStream.Free;
+  end;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_AutoSave: WordBool;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.AutoSave;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.AutoSave;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_AutoSave(Value: WordBool);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.AutoSave := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.AutoSave := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_BaseDirectory: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.BaseDirectory;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.BaseDirectory;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_BaseDirectory(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.BaseDirectory := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.BaseDirectory := Value;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.ClearTags;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.ClearTags;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.ClearTags;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_CompressionMethodToUse: TZipSupportMethod;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := TZipCompressionMethod(FOwner.CompressionMethodToUse);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := TZipCompressionMethod(FOwner.CompressionMethodToUse);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_CompressionMethodToUse(Value: TZipSupportMethod);
@@ -308,388 +272,255 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Count: Integer;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.Count;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.Count;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_DeflateOption: TZipDeflateOption;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := TZipDeflateOption(FOwner.DeflationOption);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := TZipDeflateOption(FOwner.DeflationOption);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_DeflateOption(Value: TZipDeflateOption);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.DeflationOption := TAbZipDeflationOption(Value);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.DeflationOption := TAbZipDeflationOption(Value);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Delete(const FileMask: WideString; const ExclusionMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.DeleteFilesEx(FileMask, ExclusionMask);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.DeleteFilesEx(FileMask, ExclusionMask);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.DeleteAt(Index: Integer);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.DeleteAt(Index);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.DeleteAt(Index);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.DeleteTaggedItems;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.DeleteTaggedItems;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.DeleteTaggedItems;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_DOSMode: WordBool;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.DOSMode;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.DOSMode;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_DOSMode(Value: WordBool);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.DOSMode := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.DOSMode := Value;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Extract(const FileMask: WideString; const ExclusionMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.ExtractFilesEx(FileMask, ExclusionMask);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.ExtractFilesEx(FileMask, ExclusionMask);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.ExtractAt(Index: Integer; const NewName: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.ExtractAt(Index, NewName);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.ExtractAt(Index, NewName);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_ExtractOptions: TZipExtractOptions;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := 0;
-    if TAbExtractOption(eoCreateDirs) in FOwner.ExtractOptions then
-      Result := Result + TZipExtractOptions(eoCreateDirs);
-    if TAbExtractOption(eoRestorePath) in FOwner.ExtractOptions then
-      Result := Result + TZipExtractOptions(eoRestorePath);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := 0;
+  if TAbExtractOption(eoCreateDirs) in FOwner.ExtractOptions then
+    Result := Result + TZipExtractOptions(eoCreateDirs);
+  if TAbExtractOption(eoRestorePath) in FOwner.ExtractOptions then
+    Result := Result + TZipExtractOptions(eoRestorePath);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_ExtractOptions(Value: TZipExtractOptions);
 var
   TempOptions : TAbExtractOptions;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    TempOptions := [];
-    if (Value or Integer(eoCreateDirs)) = Value then
-      Include(TempOptions, AbArcTyp.eoCreateDirs);
-    if (Value or Integer(eoRestorePath)) = Value then
-      Include(TempOptions, AbArcTyp.eoRestorePath);
-    FOwner.ExtractOptions := TempOptions
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  TempOptions := [];
+  if (Value or Integer(eoCreateDirs)) = Value then
+    Include(TempOptions, AbArcTyp.eoCreateDirs);
+  if (Value or Integer(eoRestorePath)) = Value then
+    Include(TempOptions, AbArcTyp.eoRestorePath);
+  FOwner.ExtractOptions := TempOptions
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.ExtractTaggedItems;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.ExtractTaggedItems;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.ExtractTaggedItems;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_FileName: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.FileName;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.FileName;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_FileName(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.FileName := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.FileName := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Find(const FileName: WideString): Integer;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.FindFile(FileName);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.FindFile(FileName);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Freshen(const FileMask: WideString; const ExclusionMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.FreshenFilesEx(FileMask, ExclusionMask);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.FreshenFilesEx(FileMask, ExclusionMask);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.FreshenTaggedItems;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.FreshenTaggedItems;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.FreshenTaggedItems;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Item(Index: Integer): IDispatch;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := TZipItem.Create(FOwner.Items[Index], FOwner);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := TZipItem.Create(FOwner.Items[Index], FOwner);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_LogFile: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.LogFile;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.LogFile;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_LogFile(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.LogFile := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.LogFile := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Logging: WordBool;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.Logging;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.Logging;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_Logging(Value: WordBool);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.Logging := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.Logging := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Password: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.Password;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.Password;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_Password(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.Password := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.Password := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_PasswordRetries: Byte;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.PasswordRetries;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.PasswordRetries;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_PasswordRetries(Value: Byte);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.PasswordRetries := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.PasswordRetries := Value;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Replace(const FileMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.Replace(FOwner.Items[FOwner.FindFile(FileMask)]);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.Replace(FOwner.Items[FOwner.FindFile(FileMask)]);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Save;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.Save;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.Save;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Spanned: WordBool;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.Spanned;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.Spanned;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_SpanningThreshold: Integer;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.SpanningThreshold;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.SpanningThreshold;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_SpanningThreshold(Value: Integer);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.SpanningThreshold := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.SpanningThreshold := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Status: TArchiveStatus;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := TArchiveStatus(FOwner.Status);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := TArchiveStatus(FOwner.Status);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_StoreOptions: TStoreOptions;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := 0;
-    if TAbStoreOption(soStripDrive) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soStripDrive);
-    if TAbStoreOption(soStripPath) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soStripPath);
-    if TAbStoreOption(soRemoveDots) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soRemoveDots);
-    if TAbStoreOption(soRecurse) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soRecurse);
-    if TAbStoreOption(soFreshen) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soFreshen);
-    if TAbStoreOption(soReplace) in FOwner.StoreOptions then
-      Result := Result + TStoreOptions(soReplace);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := 0;
+  if TAbStoreOption(soStripDrive) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soStripDrive);
+  if TAbStoreOption(soStripPath) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soStripPath);
+  if TAbStoreOption(soRemoveDots) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soRemoveDots);
+  if TAbStoreOption(soRecurse) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soRecurse);
+  if TAbStoreOption(soFreshen) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soFreshen);
+  if TAbStoreOption(soReplace) in FOwner.StoreOptions then
+    Result := Result + TStoreOptions(soReplace);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_StoreOptions(Value: TStoreOptions);
 var
   TempOptions : TAbStoreOptions;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    TempOptions := [];
-    if (Value or Integer(soStripDrive)) = Value then
-      Include(TempOptions, AbArcTyp.soStripDrive);
-    if (Value or Integer(soStripPath)) = Value then
-      Include(TempOptions, AbArcTyp.soStripPath);
-    if (Value or Integer(soRemoveDots)) = Value then
-      Include(TempOptions, AbArcTyp.soRemoveDots);
-    if (Value or Integer(soRecurse)) = Value then
-      Include(TempOptions, AbArcTyp.soRecurse);
-    if (Value or Integer(soFreshen)) = Value then
-      Include(TempOptions, AbArcTyp.soFreshen);
-    if (Value or Integer(soReplace)) = Value then
-      Include(TempOptions, AbArcTyp.soReplace);
-    FOwner.StoreOptions := TempOptions
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  TempOptions := [];
+  if (Value or Integer(soStripDrive)) = Value then
+    Include(TempOptions, AbArcTyp.soStripDrive);
+  if (Value or Integer(soStripPath)) = Value then
+    Include(TempOptions, AbArcTyp.soStripPath);
+  if (Value or Integer(soRemoveDots)) = Value then
+    Include(TempOptions, AbArcTyp.soRemoveDots);
+  if (Value or Integer(soRecurse)) = Value then
+    Include(TempOptions, AbArcTyp.soRecurse);
+  if (Value or Integer(soFreshen)) = Value then
+    Include(TempOptions, AbArcTyp.soFreshen);
+  if (Value or Integer(soReplace)) = Value then
+    Include(TempOptions, AbArcTyp.soReplace);
+  FOwner.StoreOptions := TempOptions
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.TagItems(const FileMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.TagItems(FileMask);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.TagItems(FileMask);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_TempDirectory: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.TempDirectory;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.TempDirectory;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_TempDirectory(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.TempDirectory := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.TempDirectory := Value;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.TestTaggedItems;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.TestTaggedItems;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.TestTaggedItems;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.UntagItems(const FileMask: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.UnTagItems(FileMask);
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.UnTagItems(FileMask);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_ZipFileComment: WideString;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Result := FOwner.ZipFileComment;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Result := FOwner.ZipFileComment;
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_ZipFileComment(const Value: WideString);
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    FOwner.ZipfileComment := Value;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  FOwner.ZipfileComment := Value;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.License(const Key: WideString): WordBool;
 begin
-  {$IFNDEF LICENSED}
-  if Length(Key) > 0 then
-    FIsLicensed := COMIsValidKey(Key);
-  Result := FIsLicensed;
-  {$ELSE}
-  FIsLicensed := True;
-  Result := FIsLicensed;
-  {$ENDIF}
+  Result := True;
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get__NewEnum: IUnknown;
@@ -702,20 +533,16 @@ var
   Stream : TMemoryStream;
   Info : array of Byte;
 begin
-  if FIsLicensed {$IFNDEF LICENSED}and (COMHasBeenLicensed) {$ENDIF}then begin
-    Stream := nil;
-    try
-      Stream := TMemoryStream.Create;
-      FOwner.ExtractToStream(FileName, Stream);
-      Stream.Position := 0;
-      SetLength(Info, Stream.Size);
-      Stream.Read(Info[0], Stream.Size);
-      Result := Info;
-    finally
-      Stream.Free;
-    end;
-  end else
-    OleError(CLASS_E_NOTLICENSED);
+  Stream := TMemoryStream.Create;
+  try
+    FOwner.ExtractToStream(FileName, Stream);
+    Stream.Position := 0;
+    SetLength(Info, Stream.Size);
+    Stream.Read(Info[0], Stream.Size);
+    Result := Info;
+  finally
+    Stream.Free;
+  end;
 end;
 {------------------------------------------------------------------------------}
 function TZipKit.Get_CompressionType: TArchiveType;
@@ -928,7 +755,6 @@ begin
   FOwner.OnRequestNthDisk      := _OnRequestNthDisk;
   FOwner.OnSave                := _OnSave;
   FEnumPos := 0;
-  FIsLicensed := False;
 end;
 {------------------------------------------------------------------------------}
 destructor TZipKit.Destroy;
