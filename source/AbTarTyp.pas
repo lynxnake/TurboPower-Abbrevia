@@ -935,22 +935,25 @@ begin
     try
       try {OutStream}
         ExtractItemToStreamAt(Index, OutStream);
-
-        {$IFDEF MSWINDOWS}
-        FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
-          + CurItem.LastModFileTime);
-        AbFileSetAttr(UseName, AbUnix2DosFileAttributes(CurItem.ExternalFileAttributes));
-        {$ENDIF}
-        {$IFDEF LINUX}
-        FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate, {!!.01}
-          CurItem.LastModFileTime);                                      {!!.01}
-        LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);             {!!.01}
-        FileSetDate(UseName, LinuxFileTime);                             {!!.01}
-        AbFileSetAttr(UseName, CurItem.ExternalFileAttributes);          {!!.01}
-        {$ENDIF}
       finally {OutStream}
         OutStream.Free;
       end; {OutStream}
+      // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+      {$IFDEF MSWINDOWS}
+//      FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
+//        + CurItem.LastModFileTime);
+      FileSetDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
+        + CurItem.LastModFileTime);
+       AbFileSetAttr(UseName, AbUnix2DosFileAttributes(CurItem.ExternalFileAttributes));
+      {$ENDIF}
+      {$IFDEF LINUX}
+      FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate, {!!.01}
+        CurItem.LastModFileTime);                                      {!!.01}
+      LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);             {!!.01}
+      FileSetDate(UseName, LinuxFileTime);                             {!!.01}
+      AbFileSetAttr(UseName, CurItem.ExternalFileAttributes);          {!!.01}
+      {$ENDIF}
+
 
     except
       on E : EAbUserAbort do begin
