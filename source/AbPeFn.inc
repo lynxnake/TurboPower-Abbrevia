@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeFn.Inc 3.04                             *}
+{* ABBREVIA: AbPeFn.Inc 3.05                             *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - FileName (Source)         *}
 {*   See AbPeFn.pas for the VCL header                   *}

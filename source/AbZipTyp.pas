@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbZipTyp.pas 3.04                           *}
+{* ABBREVIA: AbZipTyp.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: PKZip types                                 *}
 {* Based on information from Appnote.txt, shipped with   *}
@@ -2114,7 +2114,7 @@ const
   AB_SIZE_CD_HEADER    = 46;
   AB_SIZE_CD_TAIL      = 22;
 
-procedure TAbZipArchive.SaveArchive2; {!!.05 Renamed SaveArchive to SaveArchive2, switch methods to take back to Commerical 3.04 status}
+procedure TAbZipArchive.SaveArchive2; {!!.05 Renamed SaveArchive to SaveArchive2, switch methods to take back to Commerical 3.05 status}
 var
   CompressedDataStream  : TAbVirtualMemoryStream;
 //  CDStream : TAbVirtualMemoryStream;
@@ -2462,7 +2462,7 @@ end;  { SaveArchive }
 
 
 
-procedure TAbZipArchive.SaveArchive; {!!.05 Renamed SaveArchive2 to SaveArchive, switch methods to take back to Commerical 3.04 status}
+procedure TAbZipArchive.SaveArchive; {!!.05 Renamed SaveArchive2 to SaveArchive, switch methods to take back to Commerical 3.05 status}
   {builds a new archive and copies it to FStream}
 var
   Abort              : Boolean;

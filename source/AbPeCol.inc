@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeCol.inc 3.04                            *}
+{* ABBREVIA: AbPeCol.inc 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Property Editor -                           *}
 {*   Zip/CabView column headings (Source)                *}

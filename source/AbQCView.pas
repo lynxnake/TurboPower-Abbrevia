@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQCView.pas 3.04                           *}
+{* ABBREVIA: AbQCView.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Cabinet archive viewer component (CLX)      *}
 {*   See AbCView.pas for the VCL header                  *}

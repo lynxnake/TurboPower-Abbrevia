@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbZipCry.pas 3.04                           *}
+{* ABBREVIA: AbZipCry.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: PKZip crypto units                          *}
 {* Based on information from Appnote.txt, shipped with   *}

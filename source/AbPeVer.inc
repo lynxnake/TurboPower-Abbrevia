@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeVer.inc 3.04                            *}
+{* ABBREVIA: AbPeVer.inc 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - Version (Source)          *}
 {*   See AbPeVer.pas for the VCL header                  *}

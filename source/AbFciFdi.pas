@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbFciFdi.pas 3.04                           *}
+{* ABBREVIA: AbFciFdi.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Cabinet DLL wrapper                         *}
 {* Based on info from the FCI/FDI Library Description,   *}

@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* Abbrevia: Abconst.pas 3.04                            *}
+{* Abbrevia: Abconst.pas 3.05                            *}
 {*********************************************************}
 {* Abbrevia: Constants                                   *}
 {*********************************************************}
@@ -34,7 +34,7 @@ unit AbConst;
 interface
 
 const
-  AbVersion = '3.04';
+  AbVersion = '3.05';
   Ab_MessageLen = 255;
   Ab_CaptionLen = 80;
   AB_ZIPPATHDELIM = '/';

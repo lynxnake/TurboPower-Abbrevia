@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbDlgDir.inc 3.04                           *}
+{* ABBREVIA: AbDlgDir.inc 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Directory (Source)                 *}
 {*   See AbDlgDir.pas for the VCL header                 *}

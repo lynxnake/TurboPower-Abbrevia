@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbCabMak.pas 3.04                           *}
+{* ABBREVIA: AbCabMak.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Cabinet builder component (VCL)             *}
 {*   See AbQCabMk.pas for the CLX header                 *}

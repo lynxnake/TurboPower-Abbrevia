@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbView.inc 3.04                             *}
+{* ABBREVIA: AbView.inc 3.05                             *}
 {*********************************************************}
 {* ABBREVIA: Base archive viewer component (Source)      *}
 {*   See AbView.pas for the VCL header                   *}

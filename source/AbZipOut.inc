@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbZipOut.inc 3.04                           *}
+{* ABBREVIA: AbZipOut.inc 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Visual Component with Zip and unzip support *}
 {* (Source)                                              *}

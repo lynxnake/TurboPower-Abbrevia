@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbMeter.inc 3.04                            *}
+{* ABBREVIA: AbMeter.inc 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Progress meter (Source)                     *}
 {*   See AbMeter.pas for the VCL header                  *}

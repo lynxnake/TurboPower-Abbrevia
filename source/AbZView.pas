@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbZView.pas 3.04                            *}
+{* ABBREVIA: AbZView.pas 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Zip archive viewer component (VCL)          *}
 {*   See AbQZView.pas for the CLX header                 *}

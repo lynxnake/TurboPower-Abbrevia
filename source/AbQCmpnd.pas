@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQCmpnd.pas 3.04                           *}
+{* ABBREVIA: AbQCmpnd.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Compound File classes and component (CLX)   *}
 {*   See AbCompnd.pas for the VCL header                 *}

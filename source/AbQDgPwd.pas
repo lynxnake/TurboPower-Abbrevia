@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQDgPwd.pas 3.04                           *}
+{* ABBREVIA: AbQDgPwd.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Password (CLX)                     *}
 {*   See AbDlgPwd.pas for the VCL header                 *}

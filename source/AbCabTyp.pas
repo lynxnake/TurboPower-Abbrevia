@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbCabTyp.pas 3.04                           *}
+{* ABBREVIA: AbCabTyp.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Cabinet Archive                             *}
 {* Based on info from the FCI/FDI Library Description,   *}

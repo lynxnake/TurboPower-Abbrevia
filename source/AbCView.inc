@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbCView.inc 3.04                            *}
+{* ABBREVIA: AbCView.inc 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Cabinet archive viewer component (Source)   *}
 {*   See AbCView.pas for the VCL header                  *}

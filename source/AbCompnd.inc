@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbCompnd.inc 3.04                           *}
+{* ABBREVIA: AbCompnd.inc 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Compound File classes and component (Source)*}
 {*   See AbCompnd.pas for the VCL header                 *}
