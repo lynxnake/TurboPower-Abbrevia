@@ -181,7 +181,7 @@
 
 {Activate the following define to include extra code to get rid of all
  hints and warnings. Parts of ABBREVIA are written in such a way
- that the hint/warning algorithms of the Delphi 2/3 compilers are
+ that the hint/warning algorithms of the Delphi compilers are
  fooled and report things like variables being used before
  initialisation and so on when in reality the problem does not exist.}
 {$DEFINE DefeatWarnings} {!!.03 -- on by default }
