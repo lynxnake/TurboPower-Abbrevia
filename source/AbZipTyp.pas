@@ -2046,7 +2046,11 @@ begin
   { try to locate central directory tail }
   if (FileSignature = DWord(Ab_ZipSpannedSetSignature)) or           {!!.02}
      (FileSignature = DWord(Ab_ZipPossiblySpannedSignature)) then    {!!.02}
-    TailPosition := -1                                               {!!.02}
+  begin
+    if FDriveIsRemovable then        {!!.05}
+      TailPosition := -1              {!!.02}
+    else TailPosition := FindCDTail;  {!!.05}
+  end
   else                                                               {!!.02}
     TailPosition := FindCDTail;
 
