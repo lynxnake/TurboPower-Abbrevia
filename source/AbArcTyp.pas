@@ -1373,11 +1373,20 @@ begin
 {$IFDEF Linux}
  { do nothing to BaseDirectory }
 {$ELSE}
-  if AreFileApisANSI then begin
-    StrPCopy(Buff, BaseDirectory);
-    OEMToAnsi(Buff, Buff);
-    BaseDirectory := StrPas(Buff);
-  end;
+// [ 752491 ] I question the need for the following code, it fails the unit test 
+// AbUnZperTest.pas -> TAbUnZipperTests.TestLocale2
+// I have removed this...  If you know your directory exists but
+// this routine says it does not, check to see if your directory
+// is using locale specific characters, if it is uncomment this section
+// if it works, then report it as a bug in the trackers at
+//  sf.net/projects/tpabbrevia  and include the directory name your using
+// the code pages and locale of your system.  Maybe then I might understand
+// why we had this here to begin with.
+//  if AreFileApisANSI then begin
+//    StrPCopy(Buff, BaseDirectory);
+//    OEMToAnsi(Buff, Buff);
+//    BaseDirectory := StrPas(Buff);
+//  end;
 {$ENDIF}
 {!!.03 - End Added }
 
