@@ -1491,11 +1491,21 @@ procedure TAbArchive.Freshen(aItem : TAbArchiveItem);
   {freshen the item}
 var
   Index : Integer;
+  temp : String;
 begin
   CheckValid;
   Index := FindItem(aItem);
+
   if Index <> -1 then
+   begin
+    // [ 892830 ] freshing file it doesn't set the correct Item.DiskFileName
+    if AbGetPathType(aItem.DiskFileName) = ptAbsolute then   {!!.05}
+     begin
+       FItemList[Index].DiskFileName := aItem.DiskFileName;  {!!.05}
+//       FItemList[Index].FileName     := aItem.DiskFileName;  {!!.05}
+     end;
     FreshenAt(Index);
+   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.FreshenAt(Index : Integer);
@@ -1648,7 +1658,10 @@ begin
     if (BaseDirectory <> '') then
       DName := AbAddBackSlash(BaseDirectory) + Item.FileName           {!!.04}
     else
-      DName := Item.FileName;
+      if AbGetPathType(Item.DiskFileName) = ptAbsolute then
+        DName := Item.DiskFileName
+      else
+        DName := Item.FileName;
     AbUnfixName(DName);
     Item.DiskFileName := DName;
   end;
