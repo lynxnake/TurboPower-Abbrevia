@@ -1408,7 +1408,7 @@ begin
    end;   {OutStream}
    // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
       {$IFDEF MSWINDOWS}
-      FileSetDate(OutStream.Handle, (Longint(Item.LastModFileDate) shl 16)
+      AbSetFileDate(NewName, (Longint(Item.LastModFileDate) shl 16)
         + Item.LastModFileTime);
       {$ENDIF}
       {$IFDEF LINUX}

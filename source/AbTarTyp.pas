@@ -942,7 +942,7 @@ begin
       {$IFDEF MSWINDOWS}
 //      FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
 //        + CurItem.LastModFileTime);
-      FileSetDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
+      AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
         + CurItem.LastModFileTime);
        AbFileSetAttr(UseName, AbUnix2DosFileAttributes(CurItem.ExternalFileAttributes));
       {$ENDIF}

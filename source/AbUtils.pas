@@ -317,6 +317,8 @@ const
   function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;  {!!.01}
   function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;            {!!.01}
 
+  function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
+
 { file attributes }
   function AbDOS2UnixFileAttributes(Attr: LongInt): LongInt;
   function AbUnix2DosFileAttributes(Attr: LongInt): LongInt;
@@ -1299,6 +1301,32 @@ begin
 {$ENDIF}
 end;
 
+function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
+{$IFDEF MSWINDOWS}
+var
+  f: THandle;
+begin
+  f := FileOpen(FileName, fmOpenWrite);
+  if f = THandle(-1) then
+    Result := GetLastError
+  else
+  begin
+    Result := FileSetDate(f, Age);
+    FileClose(f);
+  end;
+end;
+{$ENDIF}
+{$IFDEF LINUX}
+var
+  ut: TUTimeBuffer;
+begin
+  Result := 0;
+  ut.actime := Age;
+  ut.modtime := Age;
+  if utime(PChar(FileName), @ut) = -1 then
+    Result := GetLastError;
+end;
+{$ENDIF}
 { -------------------------------------------------------------------------- }
 {!!.01 -- End Added }
 function AbSwapLongEndianness(Value : LongInt): LongInt;
