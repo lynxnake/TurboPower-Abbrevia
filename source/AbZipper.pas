@@ -393,15 +393,13 @@ begin
   FFileName := aFileName;
   if (csDesigning in ComponentState) then
     Exit;
-  try
-    if Assigned(FArchive) then
-      FArchive.Save;
-  except
-    raise;
-  end;
-
-  FArchive.Free;
-  FArchive := nil;
+  {!!.05 Remove Try|Except Raise and double Free }
+  if Assigned(FArchive) then
+   begin
+     FArchive.Save;
+     FArchive.Free;
+   end;
+  FArchive := nil;   
 
   ArcType := ArchiveType;
 
@@ -541,6 +539,7 @@ begin
 end;
 {!!.04 - Added end}
 { -------------------------------------------------------------------------- }
+
 
 end.
 
