@@ -1018,6 +1018,7 @@ procedure RequestPassword(Archive : TAbZipArchive; var Abort : Boolean);
 var
   APassPhrase : string;
 begin
+  APassPhrase := Archive.Password; {!!.05  SF.NET Bug 698162}
   Abort := False;
   if Assigned(Archive.OnNeedPassword) then begin
     Archive.OnNeedPassword(Archive, APassPhrase);
@@ -1384,6 +1385,7 @@ procedure AbUnzip(Sender : TObject; Item : TAbZipItem; NewName : string);
 var
   Confirm    : Boolean;
   OutStream  : TFileStream;
+  TempOut    : TMemoryStream;
   ZipArchive : TAbZipArchive;
 {$IFDEF LINUX}                                                           {!!.01}
   FileDateTime  : TDateTime;                                             {!!.01}
@@ -1399,13 +1401,41 @@ begin
 
   if not Confirm then
     Exit;
-  OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+  // The problem with Create the FileStream here is that overwrites the existing
+  // File which is no problem, unless the archive is password protected and
+  // then Password is found out to be wrong.   Ways to resolve:
+  // 1. extract to TMemoryStream then Write MemoryStream to Disk if everything is ok.
+  // 2. Move the password check up in the process (if possible)
+  // 3. Write to a Temp File if everything ok copy to new location.
+  // Given all the options that I have now, I am going to try option #1 for now,
+  // it may cause problems on memory overhead for some, but lets see if it does.
+  // It also may speed up this routine for many.
   try
-    try    {OutStream}
-      AbUnZipToStream(Sender, Item, OutStream);
-   finally {OutStream}
-      OutStream.Free;
-   end;   {OutStream}
+  TempOut := TMemoryStream.Create;
+  try
+    TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
+    AbUnZipToStream(Sender, Item, TempOut);
+    OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+    try
+      // Copy Memory Stream To File Stream.
+      TempOut.SaveToStream(OutStream);
+    finally
+     OutStream.Free;
+    end;
+
+  finally
+    TempOut.Free;
+  end;
+
+
+//  Original Code Base Before Change to Memory Stream
+//  OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+//  try
+//    try    {OutStream}
+//      AbUnZipToStream(Sender, Item, OutStream);
+//   finally {OutStream}
+//      OutStream.Free;
+//   end;   {OutStream}
    // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
       {$IFDEF MSWINDOWS}
       AbSetFileDate(NewName, (Longint(Item.LastModFileDate) shl 16)
