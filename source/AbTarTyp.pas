@@ -716,7 +716,8 @@ begin
   FStream.Seek(SizeOf(TAbTarHeaderRec), soFromCurrent);
 
   { copy stored data to output }
-  AStream.CopyFrom(FStream, Len);
+  if Len <> 0 then
+    AStream.CopyFrom(FStream, Len);
 
   {reset the stream to the start of the item}
   FStream.Seek(-(SizeOf(TAbTarHeaderRec) + Len), soFromCurrent);
