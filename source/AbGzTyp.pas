@@ -45,9 +45,10 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  {$IFDEF LINUX}
-  QDialogs,
-  {$ENDIF}
+// Removed Not needed: [ 871613 ] AB305B - QT dependancy in AbGzTyp
+//  {$IFDEF LINUX}
+//  QDialogs,
+//  {$ENDIF}
   SysUtils, Classes,
 
   AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp, 
@@ -1062,7 +1063,7 @@ begin
           {$IFDEF MSWINDOWS}
 //          FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
 //            + CurItem.LastModFileTime);
-          FileSetDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
+          AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
             + CurItem.LastModFileTime);
           AbFileSetAttr(UseName, 0); {normal file}                       {!!.01}
           {$ENDIF}
