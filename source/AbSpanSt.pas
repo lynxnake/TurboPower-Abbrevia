@@ -461,9 +461,10 @@ begin
         end
         else                                                             {!!.01}
           Result := False;                                               {!!.01}
-      end;
-    end;
-  end;
+      end; { if Not FCancelled}
+    end; { While }
+   end { if Assigned(FOnRequestImage) then begin }
+   else Raise EAbZipstreamFull.Create; {!!.05 [ 753982 ],[714944] }
 end;
 {------------------------------------------------------------------------------}
 function TAbSpanStream.NextDefaultImageName : string;

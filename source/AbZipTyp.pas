@@ -2266,6 +2266,9 @@ begin
     MediaType, FSpanningThreshold);
 
   if Spanning then begin
+    { set up event handler for new disk}
+    (FStream as TAbSpanStream).OnRequestImage := DoSpanningMediaRequest; {!!.05  [753982]} 
+
     { write spanned signature }
     FStream.Write(Ab_ZipSpannedSetSignature, SizeOf(Ab_ZipSpannedSetSignature));
 
