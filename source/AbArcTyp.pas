@@ -1584,6 +1584,9 @@ begin
       Matched := (Item.LastModFileDate = FileDate) and
                  (Item.LastModFileTime = FileTime);
       Result := not Matched;
+      // 887909 soFreshen isn't working (Specifically when date/time the same)
+      if not result then { Check for size change }
+        result := (FS.Size <> Item.UncompressedSize);
     finally
       FS.Free;
     end;
