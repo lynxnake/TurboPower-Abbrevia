@@ -49,9 +49,6 @@ type
     lnTitleShadow: TLabel;
     lblTitle: TLabel;
     Label5: TLabel;
-    Label86: TLabel;
-    Label85: TLabel;
-    Label84: TLabel;
     OKButton: TButton;
     Version: TLabel;
     Label1: TLabel;
