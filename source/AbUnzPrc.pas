@@ -188,6 +188,7 @@ implementation
 uses
   AbConst,
   AbExcept,
+  AbTempFileStream,  
   AbBitBkt,
   {$IFNDEF NoQt}
   {$IFDEF LINUX}
@@ -1385,7 +1386,13 @@ procedure AbUnzip(Sender : TObject; Item : TAbZipItem; NewName : string);
 var
   Confirm    : Boolean;
   OutStream  : TFileStream;
+  {$IFDEF AbUnZipMemory}
   TempOut    : TMemoryStream;
+  {$ENDIF}
+  {$IFDEF AbUnZipTempFile}
+  TempOut    : TAbTempFileStream;
+  TempFile   : String;
+  {$ENDIF}
   ZipArchive : TAbZipArchive;
 {$IFDEF LINUX}                                                           {!!.01}
   FileDateTime  : TDateTime;                                             {!!.01}
@@ -1410,32 +1417,58 @@ begin
   // Given all the options that I have now, I am going to try option #1 for now,
   // it may cause problems on memory overhead for some, but lets see if it does.
   // It also may speed up this routine for many.
+  // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
+  {$IFDEF AbUnZipClobber}
+    OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+    try
+    try    {OutStream}
+      AbUnZipToStream(Sender, Item, OutStream);
+    // Some Network Operating Systems cache the file and when we set attributes they are truncated
+      AbFlushOsBuffers(OutStream.Handle);
+    finally {OutStream}
+      OutStream.Free;
+    end;   {OutStream}
+  {$ENDIF}
+  {$IFDEF AbUnZipMemory}
   try
   TempOut := TMemoryStream.Create;
   try
     TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
+    TempOut.Position := 0;
     AbUnZipToStream(Sender, Item, TempOut);
     OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
     try
       // Copy Memory Stream To File Stream.
       TempOut.SaveToStream(OutStream);
+      // Some Operating Systems cache the file and when we set attributes they are truncated
+      AbFlushOsBuffers(OutStream.Handle);
     finally
      OutStream.Free;
     end;
-
   finally
     TempOut.Free;
   end;
+  {$ENDIF}
+  {$IFDEF AbUnZipTempFile}
+  try
+  TempOut := TAbTempFileStream.Create(false);
+  try
+    AbUnZipToStream(Sender, Item, TempOut);
+    TempFile := TempOut.FileName;
+  finally
+    TempOut.Free;
+  end;
+  // Now copy the temp File to correct location
+  CopyFile(pchar(TempFile),pchar(NewName),false);
+  // Check that it exists
+  if Not FileExists(NewName) then
+    raise EAbException.CreateFmt(abMoveFileErrorS,[TempFile,NewName]); // TODO: Add Own Exception Class 
+  // Now Delete the Temp File
+  DeleteFile(TempFile);
+  {$ENDIF}
 
 
-//  Original Code Base Before Change to Memory Stream
-//  OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
-//  try
-//    try    {OutStream}
-//      AbUnZipToStream(Sender, Item, OutStream);
-//   finally {OutStream}
-//      OutStream.Free;
-//   end;   {OutStream}
+
    // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
       {$IFDEF MSWINDOWS}
       AbSetFileDate(NewName, (Longint(Item.LastModFileDate) shl 16)
