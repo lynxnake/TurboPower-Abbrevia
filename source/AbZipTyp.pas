@@ -498,7 +498,7 @@ type
     procedure DoRequestNextImage(ImageNumber : Integer; var Stream : TStream;
       var Abort : Boolean );
     function FindCDTail : Longint;
-    function GetItem( Index : Integer ) : TAbZipItem;                    
+    function GetItem( Index : Integer ) : TAbZipItem;
     function GetZipFileComment : string;
     procedure PutItem( Index : Integer; Value : TAbZipItem );
     procedure DoRequestLastDisk( var Abort : Boolean );
@@ -1581,9 +1581,17 @@ begin
     end;
 {$ENDIF}
 {!!.03 - End Added }
-    DiskFileName := StrPas(Buff);
+// Changed due to comment made by Jeff Rather.
+// No bug report, but after review I can see how
+// DiskFileName and FileName inconsitencies this case may
+// cause a problem.  
     StrPCopy(Buff, FixName(FileSpec));
     FileName := StrPas(Buff);
+    DiskFileName := FileName;
+
+//    DiskFileName := StrPas(Buff);
+//    StrPCopy(Buff, FixName(FileSpec));
+//    FileName := StrPas(Buff);
     RelativeOffset := 0;
   end;
 end;
@@ -2079,7 +2087,6 @@ begin
     Item.LoadFromStream(FStream);
     except {!!.05 [ 800130 ] ZIP - Potential Memory Leak }
       Item.Free;
-      Item := nil;
       raise;
     end;
     if IsExecutable then
@@ -2679,21 +2686,30 @@ begin
         {!!! write spanning signature here?}
       end
       else
-        FStream := TAbSpanStream.Create(FArchiveName,
-          fmOpenWrite or fmShareDenyWrite, mtLocal,
-            FSpanningThreshold);
+       begin
+// !!.05 Test to use TFileStream if not Spanned
+//        FStream := TAbSpanStream.Create(FArchiveName,
+//          fmOpenWrite or fmShareDenyWrite, mtLocal,
+//            FSpanningThreshold);
+        FStream := TFileStream.Create(FArchiveName,
+          fmOpenReadWrite or fmShareDenyWrite);
+       end;
 
       try
-        TAbSpanStream(FStream).OnRequestImage :=
-          DoSpanningMediaRequest;
-        TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
+        if (FStream is TAbSpanStream) then
+         begin
+          TAbSpanStream(FStream).OnRequestImage :=
+                                 DoSpanningMediaRequest;
+          TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
 //        TAbSpanStream(FStream).SpanNumber := SCurrentImage;              {!!.01}
+         end;
 
         FStream.Size := 0;
         { copy temporary archive to the stream }
         if FStream.Position <> 0 then
           FStream.Position := 0;
-        TAbSpanStream(FStream).ArchiveTotalSize := NewStream.Size;     {!!.04}
+        if (FStream is TAbSpanStream) then
+           TAbSpanStream(FStream).ArchiveTotalSize := NewStream.Size;     {!!.04}
         FStream.CopyFrom(NewStream, NewStream.Size);
       except
         raise EAbBadStream.Create;
@@ -2713,6 +2729,7 @@ begin
     DoArchiveProgress( 100, Abort );
   finally {NewStream}
     NewStream.Free;
+ //   FStream.Free;
   end;
 end;
 { -------------------------------------------------------------------------- }
