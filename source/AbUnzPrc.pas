@@ -1403,6 +1403,10 @@ begin
   try
     try    {OutStream}
       AbUnZipToStream(Sender, Item, OutStream);
+   finally {OutStream}
+      OutStream.Free;
+   end;   {OutStream}
+   // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
       {$IFDEF MSWINDOWS}
       FileSetDate(OutStream.Handle, (Longint(Item.LastModFileDate) shl 16)
         + Item.LastModFileTime);
@@ -1413,9 +1417,7 @@ begin
       LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);               {!!.01}
       FileSetDate(NewName, LinuxFileTime);                               {!!.01}
       {$ENDIF}
-   finally {OutStream}
-      OutStream.Free;
-   end;   {OutStream}
+
    AbFileSetAttr(NewName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
 
   except
