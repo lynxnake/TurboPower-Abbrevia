@@ -1960,7 +1960,7 @@ begin
     AbStripDrive( lValue );
 
   {check for a leading backslash}
-  if lValue[1] = AbPathDelim then
+  if (Length(lValue) > 1) and (lValue[1] = AbPathDelim) then {!!.05  - [ 799438 ]}
     System.Delete( lValue, 1, 1 );
 
   if soStripPath in StoreOptions then begin
