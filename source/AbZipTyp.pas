@@ -2298,9 +2298,11 @@ begin
 
   { need new stream for writing }
   MediaType := TAbSpanStream(FStream).MediaType;
+  if FOwnsStream then begin
   FStream.Free;
   FStream := TAbSpanstream.Create(ArchiveName, fmOpenWrite or fmShareDenyWrite,
     MediaType, FSpanningThreshold);
+  end;
 
   if Spanning then begin
     { set up event handler for new disk}
@@ -2537,9 +2539,11 @@ begin
   if FStream is TAbSpanStream then begin
     if TAbSpanStream(FStream).SpanMode = smWriting then begin
       MediaType := TAbSpanStream(FStream).MediaType;
+      if FOwnsStream then begin //  914427 
       FStream.Free;
       FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
         MediaType, FSpanningThreshold);
+      end;
       TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;
       TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
     end;
@@ -2710,6 +2714,8 @@ begin
     NewStream.Position := 0;
     if (FStream is TMemoryStream) then
       TMemoryStream(FStream).LoadFromStream(NewStream)
+    else if FOwnsStream then  // 914427 
+       FStream.CopyFrom(NewStream,0)  
     else begin
       { need new stream to write }
       FStream.Free;
