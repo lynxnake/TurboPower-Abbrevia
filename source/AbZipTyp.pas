@@ -42,7 +42,7 @@ uses
 
 const
   { note  #$50 = 'P', #$4B = 'K'}
-  Ab_ZipVersion = 20;
+  Ab_ZipVersion = 21;
   Ab_ZipLocalFileHeaderSignature            : Longint = $04034B50;
   Ab_ZipCentralDirectoryFileHeaderSignature : Longint = $02014B50;
   Ab_ZipCentralDirectoryTailSignature       : Longint = $06054B50;
@@ -794,6 +794,11 @@ begin
       {read a buffer full}
       BytesRead := aStream.Read(Buffer^, BufSize);
 
+      if BytesRead < sizeOf(TailRec) then begin
+        Result := -1;
+        Exit;
+      end;
+
       {search backwards through the buffer looking for the signature}
       TestPos := Buffer + BytesRead - sizeof(TailRec);
       while (TestPos <> Buffer) and
@@ -1282,7 +1287,7 @@ begin
 {$IFDEF Linux}
  { do nothing to Buff }
 {$ELSE}
-    if AreFileApisANSI then begin
+    if (Hi(VersionMadeBy) = 0) and AreFileApisANSI then begin
       OEMToAnsi(Buff, Buff);
     end;
 {$ENDIF}
@@ -1550,6 +1555,7 @@ end;
 function TAbZipArchive.CreateItem( const FileSpec : string ): TAbArchiveItem;
 var
   Buff : array [0..MAX_PATH] of Char;
+  I : Integer;
 begin
   Result := TAbZipItem.Create;
   with TAbZipItem( Result ) do begin
@@ -1564,21 +1570,19 @@ begin
  { do nothing to Buff }
 {$ELSE}
     if AreFileApisANSI then begin
-      AnsiToOEM(Buff, Buff);
+      I := 0;
+      while Ord(Buff[I]) <> 0 do begin
+        if Ord(Buff[I]) >= 128 then begin
+          VersionMadeBy := Lo(VersionMadeBy) or $0B00;
+          Break;
+          end;
+        Inc(I);
+      end;
     end;
 {$ENDIF}
 {!!.03 - End Added }
     DiskFileName := StrPas(Buff);
     StrPCopy(Buff, FixName(FileSpec));
-{!!.03 - Added }
-{$IFDEF Linux}
- { do nothing to Buff }
-{$ELSE}
-    if AreFileApisANSI then begin
-      AnsiToOEM(Buff, Buff);
-    end;
-{$ENDIF}
-{!!.03 - End Added }
     FileName := StrPas(Buff);
     RelativeOffset := 0;
   end;

@@ -237,10 +237,7 @@ begin
   end;
 
 {$IFDEF MSWINDOWS}
-  if (GetVersion shr 16) = 0 then {Windows NT}
-    Item.VersionMadeBy := $0A00 + 20
-  else
-    Item.VersionMadeBy := 20;
+  Item.VersionMadeBy := (Item.VersionMadeBy and $FF00) + 20;
 {$ENDIF}
 {$IFDEF LINUX}
   Item.VersionMadeBy := 20;
@@ -358,7 +355,7 @@ begin
 {$IFDEF Linux}
  { do nothing to Buff }
 {$ELSE}
-    if AreFileApisANSI then begin
+    if (Item.VersionMadeBy and $FF00) = 0 then begin
       OEMToAnsi(Buff, Buff);
     end;
 {$ENDIF}
