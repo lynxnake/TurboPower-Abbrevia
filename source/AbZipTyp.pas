@@ -1937,6 +1937,7 @@ var
   i : SmallInt;
   lValue : string;
 begin
+  lValue := Value; {!!.05 [ 783583 ]}
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
     {Add the base directory to the filename before converting }
