@@ -2027,7 +2027,8 @@ begin
   IsZip := (FileSignature and $0000FFFF) = Ab_GeneralZipSignature;   {!!.02}
 
 {$IFDEF MSWINDOWS}
-  IsExecutable := FileSignature = Ab_WindowsExeSignature;
+// [ 719083 ] Windows exe signature check
+  IsExecutable := (FileSignature and $0000FFFF) = Ab_WindowsExeSignature;
 {$ENDIF}
 {$IFDEF LINUX}
   if FileSignature = Ab_LinuxExeSigWord1 then begin
