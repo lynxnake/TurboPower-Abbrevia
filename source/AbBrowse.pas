@@ -239,6 +239,7 @@ end;
 { -------------------------------------------------------------------------- }
 destructor TAbBaseBrowser.Destroy;
 begin
+ if Assigned(FArchive) then
   FArchive.Free;
   FArchive := nil;
   inherited Destroy;

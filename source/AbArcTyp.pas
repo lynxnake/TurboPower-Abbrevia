@@ -924,7 +924,8 @@ begin
   FPadLock.Free;
   FPadLock := nil;
   if FOwnsStream then begin
-    FStream.Free;
+   if Assigned(FStream) then {!!.05 avoid A/V if Nil (Only occurs if exception is raised)}
+     FStream.Free;
     FStream := nil;
   end;
   if Assigned(FLogStream) then begin

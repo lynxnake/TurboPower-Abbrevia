@@ -2747,6 +2747,7 @@ begin
 //        FStream := TAbSpanStream.Create(FArchiveName,
 //          fmOpenWrite or fmShareDenyWrite, mtLocal,
 //            FSpanningThreshold);
+        FStream := nil; {!!.05 avoid A/V on free if Create Fails}
         FStream := TFileStream.Create(FArchiveName,
           fmOpenReadWrite or fmShareDenyWrite);
        end;
