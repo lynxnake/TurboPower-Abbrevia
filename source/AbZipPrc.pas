@@ -206,6 +206,11 @@ begin
   if (Percent < 100) and Assigned(Archive.OnProgress) then
     Archive.OnProgress(100, Abort);
 
+  { DestStrm was created under these conditions it needs to be freed. }
+  //  [ 890888 ] Memory Leak in abZipPrc
+  if Archive.Password <> '' then  { encrypt the stream }
+    DestStrm.Free;
+
   { User wants to bail }
   if Abort then begin
     raise EAbUserAbort.Create;
