@@ -1081,11 +1081,11 @@ begin
         raise EAbUserAbort.Create;
 
 
-      Hlpr.Passphrase := Archive.Password;
       Hlpr.CheckValue := TheCRC;
       repeat
         try
           { attempt to inflate }
+          Hlpr.Passphrase := Archive.Password;
           Result := Inflate(Archive.FStream, OutStream, Hlpr);
           Successful := True;
         except
