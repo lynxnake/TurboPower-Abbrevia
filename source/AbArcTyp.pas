@@ -871,12 +871,12 @@ begin
   if AbDriveIsRemovable(FileName) then
     FStream := TAbSpanStream.Create(FileName, Mode, mtRemoveable, FSpanningThreshold)
   else
-//   FStream := TAbSpanStream.Create(FileName, Mode, mtLocal, FSpanningThreshold);
+   FStream := TAbSpanStream.Create(FileName, Mode, mtLocal, FSpanningThreshold);
 // !!.05 The following is a test to use TFileStream directly if not spanning
 // This removes the headaches of not being able to seek() when not spanning.
 // Allowing features such as TestTagged, and Add then Extract to work without
 // having to close reopen the archive.
-   FStream := TFileStream.Create(FileName,Mode);
+//   FStream := TFileStream.Create(FileName,Mode);
 
   if (FStream is TAbSpanStream) then {!!.05}
    begin
