@@ -499,6 +499,8 @@ begin
     { file doesn't exist (or is empty) so presume to make one }          {!!.01}
       if Ext = '.ZIP' then
         Result := atZip;
+      if Ext = '.JAR' then {!!.05}
+        Result := atZip;
       if Ext = '.TAR' then
         Result := atTar;
       if (Ext = '.GZ') then
@@ -516,6 +518,8 @@ begin
         if Ext = '.EXE' then
           Result := VerifySelfExtracting(FS);
         if Ext = '.ZIP' then
+          Result := VerifyZip(FS);
+        if Ext = '.JAR' then        {!!.05}
           Result := VerifyZip(FS);
         if Ext = '.TAR' then
           Result := VerifyTar(FS);
