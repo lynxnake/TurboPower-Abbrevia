@@ -267,7 +267,7 @@ begin
 
   {if we've reached the point requested, abort}
   if (FPartSize > 0) and ((FCurrent - FBuffer) >= FPartSize) then
-    raise EAbPartSizedInflate.Create('');
+    raise EAbPartSizedInflate.Create(''); {NOTE: This exception is expected during detection of .GZ and .TGZ files. (VerifyGZip)}
 
   {if we've advanced to the point when we need to write, do so}
   if (FCurrent >= FWritePoint) then
