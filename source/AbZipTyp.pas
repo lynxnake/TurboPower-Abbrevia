@@ -1787,7 +1787,7 @@ begin
       raise EAbFileNotFound.Create;
     Stream.Free;
     Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
-    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
+    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;   {!!.05 [ 714944 ]}
     TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;  {!!.04}
 //    TAbSpanStream(Stream).SpanNumber := ImageNumber;                     {!!.01}
     Exit;
