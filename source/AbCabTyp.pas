@@ -82,6 +82,7 @@ type
     FErrors          : CabErrorRecord;
     FFileHandle      : Integer;
     FItemInProgress  : TAbCabItem;
+    FIIPName         : string;
     FItemProgress    : DWord;
     FNextCabinet     : string;
     FNextDisk        : string;
@@ -183,10 +184,14 @@ begin
   Result := atCab;
   CabArchive := TAbCabArchive.Create(Fn, fmOpenRead or fmShareDenyNone);
   try
-    CabArchive.LoadArchive;
-  except
-    on EAbFDICreateError do
-      Result := atUnknown;
+    try
+      CabArchive.LoadArchive;
+    except
+      on EAbFDICreateError do
+        Result := atUnknown;
+    end;
+  finally
+    CabArchive.Free;
   end;
 end;
 
@@ -441,10 +446,14 @@ begin
       begin
         NewFilename := StrPas(pfdin^.psz1);
         if (NewFilename = Archive.FItemInProgress.FileName) then begin
-          if not (eoRestorePath in Archive.ExtractOptions) then
-            NewFilename := ExtractFileName(NewFileName);
-          if (Archive.BaseDirectory <> '') then
-            NewFilename := Archive.BaseDirectory + '\' + NewFilename;
+          if Archive.FIIPName <> '' then
+            NewFilename := Archive.FIIPName
+          else begin
+            if not (eoRestorePath in Archive.ExtractOptions) then
+              NewFilename := ExtractFileName(NewFileName);
+            if (Archive.BaseDirectory <> '') then
+              NewFilename := Archive.BaseDirectory + '\' + NewFilename;
+          end;
           NewFilePath := ExtractFilePath(NewFilename);
           if (Length(NewFilePath) > 0 ) and
             (NewFilePath[Length(NewFilePath)] = '\') then
@@ -662,9 +671,14 @@ procedure TAbCabArchive.ExtractItemAt(Index : Integer; const NewName : string);
   {extract a file from the cabinet}
 begin
   FItemInProgress := GetItem(Index);
-  if not FDICopy(FFDIContext, FCabName, FCabPath, 0, @FDI_ExtractFiles,
-                 nil, Self) then
-    DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
+  FIIPName := NewName;
+  try
+    if not FDICopy(FFDIContext, FCabName, FCabPath, 0, @FDI_ExtractFiles,
+                   nil, Self) then
+      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
+  finally
+    FIIPName := '';
+  end;
 end;
 {----------------------------------------------------------------------------}
 procedure TAbCabArchive.ExtractItemToStreamAt(Index : Integer; OutStream : TStream);
