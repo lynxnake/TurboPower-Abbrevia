@@ -1446,6 +1446,9 @@ var
   NameSize : Integer;
   VolName : string;
 begin
+{$IFDEF LINUX}
+  result := ''; //Stop Gap, spanning support needs to be rethought for Linux
+{$ELSE}
   NameSize := 0;
   Root := Drive + ':\';
   SetLength(VolName, MAX_VOL_LABEL);
@@ -1456,6 +1459,7 @@ begin
     nil, MaxLength, Flags, nil, NameSize)
   then
     Result := VolName;
+{$ENDIF}
 end;
 
 procedure AbSetSpanVolumeLabel(Drive: AnsiChar; VolNo : Integer);
