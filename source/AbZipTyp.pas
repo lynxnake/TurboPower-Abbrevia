@@ -1838,8 +1838,15 @@ var
 begin
   if Assigned(FOnRequestImage) then
     FOnRequestImage(self, ImageNumber, ImageName, Abort)
-  else if FAutoGen then                                              {!!.02}
-    AbIncFilename(ImageName, ImageNumber)                            {!!.02}
+  else if FAutoGen then
+   begin
+    AbIncFilename(ImageName, ImageNumber);                            {!!.02}
+    // if we are reading and the file does not exist
+    // then we must be at last file in archive, change to .ZIP extention
+    // as the last file is there.
+    if (Mode = smReading) and Not FileExists(ImageName) then         {!!.05}
+      ImageName := ChangeFileExt(ImageName,'.ZIP');
+   end
   else if Mode = smReading then begin
 
     pMessage := Format(AbStrRes(AbImageNumRequest), [ImageNumber]);
@@ -2063,6 +2070,9 @@ begin
   { set spanning flag if current disk is not the first one }
   if (FInfo.DiskNumber > 0) then
     FSpanned := True;
+  //Possible Bug, Remove Drives could be split instead of spanned.    
+  If FSpanned and (Not FDriveIsRemovable) then
+    FAutoGen := True;
 
   { build Items list from central directory records }
   i := 0;
