@@ -1767,9 +1767,10 @@ begin
 
   {--spanned image set--}
   { first check if the current image contains the CDT }                  {!!.03}
-  if FindCentralDirectoryTail(Stream) > -1 {not found} then begin        {!!.03}
-    Exit;                                                                {!!.03}
-  end;                                                                   {!!.03}
+// Removed {!!.05 if ImageNumber is looking for another disk it will never be opened.
+//  if FindCentralDirectoryTail(Stream) > -1 {not found} then begin        {!!.03}
+//    Exit;                                                                {!!.03}
+//  end;                                                                   {!!.03}
 
   {if OnRequestImage assigned, then fire event}
   if Assigned(FOnRequestImage) then begin
@@ -1787,9 +1788,9 @@ begin
 
   {if not last image requested, then simply auto-generate image name}
   if (ImageNumber > AbLastImage) then begin
-    if (ImageNumber = 0) then
-      ImageName := FArchiveName
-    else
+//    if (ImageNumber = 0) then
+//      ImageName := FArchiveName
+//    else
       AbIncFilename(ImageName, ImageNumber);
     if not FileExists(ImageName) then
       raise EAbFileNotFound.Create;
@@ -2497,6 +2498,8 @@ var
   SSpanningThreshold : Longint;
   CanSpan            : Boolean;
   MediaType          : TAbMediaType;                                     {!!.01}
+  BlockSize          : LongInt;
+  ByteBuf            : Byte;
 begin
   {shouldn't be trying to overwrite an existing spanned archive}
   if Spanned then begin
@@ -2635,10 +2638,24 @@ begin
         DoArchiveProgress(AbPercentage(9 * succ( i ), 10 * Count), Abort);
         if Abort then
           raise EabUserAbort.Create;
-        if (SSpanningThreshold > 0) then 
+        if (SSpanningThreshold > 0) then
           SCurrentImage := NewStream.Position div SSpanningThreshold;
         SCurrentOffset := NewStream.Position - (SCurrentImage * SSpanningThreshold);
       end;
+      { if Spanning and pad archive so directory starts on last disk }
+      if SSpanningThreshold>0 then
+        begin
+          // is the disk space left on the disk enough, if not pad till it is
+          BlockSize:=(SSpanningThreshold-SCurrentOffset);
+          if (BlockSize>0) and (BlockSize<CDHStream.Size+512) then
+            begin
+              bytebuf := 0;
+              for i:=0 to BlockSize do
+                NewStream.Write(bytebuf,sizeof(bytebuf));
+              SCurrentImage := NewStream.Position div SSpanningThreshold;
+              SCurrentOffset := NewStream.Position - (SCurrentImage * SSpanningThreshold);
+            end;
+        end;
 
       {append the central directory}
       FInfo.StartDiskNumber := SCurrentImage;
@@ -2686,7 +2703,23 @@ begin
         {!!! write spanning signature here?}
       end
       else
-       begin
+       if SpanningThreshold > 0 then
+        begin
+          //NOTE: It is possible that a archive written through this method will not be
+          //split.   I.e. The SpanningThreshold > TotalArchiveSize
+          //First File of a Split Archive is 'ARCHIVENAME.Z01' however if not split
+          //it should be 'ARCHIVENAME.ZIP'
+          //To handle this problem the first file is created with. '.ZIP'
+          //Later on in the process it is renamed to '.Z01' if spanned'
+          //The last file in a split archive has .ZIP extension
+          //It will be named .Z## initially.  Then renamed to .ZIP
+          //So Split archive will have two renames, with last and first file.
+          FStream := TAbSpanStream.Create(FArchiveName,
+                    fmOpenWrite or fmShareDenyWrite, mtLocal,
+                      FSpanningThreshold);
+        end
+       else
+        begin
 // !!.05 Test to use TFileStream if not Spanned
 //        FStream := TAbSpanStream.Create(FArchiveName,
 //          fmOpenWrite or fmShareDenyWrite, mtLocal,
@@ -2717,6 +2750,25 @@ begin
 {!!.01 -- End Modified }
     end;
 
+   {rename if split archive}
+    if (SCurrentImage > 0) then
+      begin
+       //Other archive types we hold the stream for the last file.
+       //However, with a split archive we need to free it so we can rename it.
+        FStream.Free;
+       //Rename .ZIP to Z01
+        RenameFile(FArchiveName,ChangeFileExt(FArchiveName,'.Z01'));
+       //Rename .Z## (where ## is last image) to .ZIP
+        if SCurrentImage < 9 then
+         RenameFile(ChangeFileExt(FArchiveName,'.z0' + IntToStr(SCurrentImage+1)),FArchiveName)
+        else
+         RenameFile(ChangeFileExt(FArchiveName,'.z' + IntToStr(SCurrentImage+1)),FArchiveName);
+        // Open the Split archive for reading to duplicate behavior of single file archives.
+        FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
+          MediaType, FSpanningThreshold);
+      end;
+
+
     {update Items list}
     for i := pred( Count ) downto 0 do begin
       if FItemList[i].Action = aaDelete then
@@ -2725,12 +2777,16 @@ begin
         FItemList[i].Action := aaNone;
     end;
 
+
+
     DoArchiveSaveProgress( 100, Abort );                               {!!.04}
     DoArchiveProgress( 100, Abort );
   finally {NewStream}
     NewStream.Free;
  //   FStream.Free;
   end;
+
+
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.SetZipFileComment(const Value : string );
