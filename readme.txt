@@ -8,12 +8,14 @@ Table of contents
 4.  Support 
 5.  Bug Reporting
 5.1  Known Bugs
+5.2 Current Plans and Priorities for Known Bugs (Everyone should read this section!)
 6.  Version history
 6.1   Release 3.05 -Bug Fixes and Enhancements Beta #1
 6.2   Release 3.05 -Bug Fixes and Enhancements Beta #2
 6.3   Release 3.05 -Bug Fixes and Enhancements Beta #3
 6.4   Release 3.05 -Bug Fixes and Enhancements Beta #4
 6.5   Release 3.05 -Bug Fixes and Enhancements Beta #5
+6.5   Release 3.05 -Bug Fixes and Enhancements Beta #6 (Everyone should read this section!)
 
 
 ==============================================
@@ -85,6 +87,9 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
 Outlook express can be setup to read these newsgroups if you don't
 already have a newsgroup reader.
 
+Access the support newsgroups with a browser:
+   http://delphi.newswhat.com/geoxml/forumlistgroups?area=TurboPower
+
 ==============================================
 
 5.  Bug Reporting
@@ -110,27 +115,79 @@ be integrated in to future builds.
 NOTE: If you are running into a bug that is Not reported here, it won't be fixed!
            Please report all bugs here:  http://sourceforge.net/tracker/?group_id=71001
 
- 698162 Failed unzipping of password protected files clobbers original 
  698165 Issues with Compound File Class 
- 698167 No provision for setting compression level 
+ 698167 No provision for setting compression level
  698168 Abbrevia not handling self extracting ZIPs created by SFX 
  698169 Abbrevia not handling Mac created .ZIPs correctly 
  698172 Abbrevia doesn't archive empty folders (other ZIP utilities do) 
  698174 Abbrevia handling of read-only media inadequate 
  698175 Improvements to ZIP identification and interpretation 
  698176 Problems with CAB and LZX compression 
- 698178 Off-by-one error(?) in Deflate engine 
  698179 Abbrevia 3 COM object not exposing "WithEvents" interface 
- 698180 bad Gzip causes infinite loop in Deflate engine 
- 698184 "Canvas does not allow drawing" error in TAbMeter 
- 713126 No build Delphi 6 personal 
- 752491 Impossible to unzip if basedirectory contains european chars 
- 763286 No Addition of USES Files 
+ 763286 No Addition of USES Files (Documentation Bug) 
  783613 Corrupt archives when disk spanning 
  822243 GZip decompress problem 
- 861543 OnArchiveProgress in TAbSpanStream.Write and User Abort 
- 874025 AV during InflateDynamicBlock   
- 891156 Wrong disk # request while testing spanned archive   
+ 874025 AV during InflateDynamicBlock 
+ 891156 Wrong disk # request while testing spanned archive 
+
+==============================================
+5.2 Current Plans and Priorities for Known Bugs
+
+I (Robert Love) went through all of the current reported open bugs and commented on each.   I have 
+identified only 4 bugs that are critical for 3.05, if you disagree you need to let me know by adding a comment to the specific bug in question on the SF.NET Tracker.
+
+ 698165 Issues with Compound File Class 
+ Comment:  I personally don't use the Compound File Class so I have no unit tests for it.   
+ Target Version: 4.0
+
+ 698167 No provision for setting GZIP compression level
+Comment:  This is really a feature request
+Target Version: 4.0
+
+ 698168 Abbrevia not handling self extracting ZIPs created by SFX 
+Comment:  I can not duplicate this problem, and I will be closing this bug with the status "Works For Me" after the release of 3.05 unless someone can reproduce it and give me some idea on how to reproduce it. 
+
+ 698169 Abbrevia not handling Mac created .ZIPs correctly 
+Comment:  I can not duplicate this problem, and I will be closing this bug with the status "Works For Me" after the release of 3.05 unless someone can reproduce it and give me some idea on how to reproduce it.
+
+ 698172 Abbrevia doesn't archive empty folders (other ZIP utilities do) 
+Comment:  This could be considered a feature request.  
+Target Version: 4.0
+
+ 698174 Abbrevia handling of read-only media inadequate 
+Comment:  This is a basic design problem, Handing has been improved for 3.05 but it is still inadequate.
+Target Version: 4.0
+
+ 698175 Improvements to ZIP identification and interpretation 
+Comment: This is a design problem as well, Abbrevia is too dependant on File Extensions for determining this.
+Target Version: 4.0
+
+ 698176 Problems with CAB and LZX compression 
+Comment:  I can not duplicate this problem, and I will be closing this bug with the status "Works For Me" after the release of 3.05 unless someone can reproduce it and give me some idea on how to reproduce it.
+
+ 698179 Abbrevia 3 COM object not exposing "WithEvents" interface 
+Comment: I don't work with the Abbrevia COM Interfaces.
+Target Version: (When someone else does it)
+
+ 763286 No Addition of USES Files (Documentation Bug) 
+Comment:  This is a very small documenation problem.
+Target Version 4.0
+
+ 783613 Corrupt archives when disk spanning 
+Comment: I have duplicated this problem and I am trying to resolve this now.
+Target Version 3.05
+
+ 822243 GZip decompress problem 
+Comment: I have duplicated this problem and I am trying to resolve this now.
+Target Version 3.05
+
+ 874025 AV during InflateDynamicBlock 
+Comment: I have duplicated this problem and I am trying to resolve this now.
+Target Version 3.05
+
+ 891156 Wrong disk # request while testing spanned archive 
+Comment: I have not tried to duplicate this problem but it is well documented
+Target Version 3.05
 
 ==============================================
 
@@ -222,3 +279,32 @@ Enhancements
  [891007] Compiler warning in AbZipTyp   
  [889324] problem closing TAbUnzip archive   
  [888927] compiler warnings with current CVS code   
+
+==============================================
+
+6.5   Release 3.05 -Bug Fixes and Enhancements Beta #6
+
+ [906875] IDE hangs when closing form with TAbVCLMeterLink  
+ [892830] freshing file it doesn't set the correct Item.DiskFileName 
+ [752491] Impossible to unzip if basedirectory contains european chars 
+ [698162] Failed unzipping of password protected files clobbers original 
+ [912918] Files Extracted to Network Drives may be truncated 
+
+A new set of defines has been added to AbDefine.inc allow you to control the extract behavior. 
+These changes where due to  bugs [698162] and  [912918].
+
+This a temporary Define for Abbrevia 3.05 Hopefully it's need will be removed when 
+Abbrevia 4.0 is released. With something that can be defined at runtime.  
+
+This only effects Procedure AbUnZip in AbUnzPrc.Pas.
+
+When extracting files, we have three options.
+  1.  Clobber - Write in Place (Side Effect: Bug [698162] will repear.  The bug is: If a Password or ZIP File is invalid and a version of the file you where extracting was on already the disk, the original copy will be destroyed!!!!)
+  2.  Memory - File is extracted to Memory, if successful then it is written to disk
+  3.  TempFile - File is extract to the Temp Directory, if successful then it is moved to correct location.
+
+In testing, the memory option is the fastest as long as you don't end up using the Page File.   Once you start to page, this option is usually (Not always) slower than TempFile method.  Clobber was not tested for
+performance, it was the original method and buggy.  
+
+After much thought, it has been decided to make TempFile the default method.
+
