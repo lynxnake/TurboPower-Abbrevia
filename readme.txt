@@ -7,7 +7,8 @@ Table of contents
 2.  Package names
 3.  Installation
 4.  Version history
-4.1   Release 3.05 (beta #1)
+4.1   Release 3.05 -Bug Fixes and Enhancements Beta #2
+4.2   Release 3.05 -Bug Fixes and Enhancements Beta #1
 
 ==============================================
 
@@ -39,11 +40,11 @@ TurboPower Abbrevia package names have the following form:
    |                                 CR = CLX runtime, VD = VCL designtime,
    |                                 VR = VCL runtime)
    |
-   +----------- NNN Product version number (e.g., 304=version 3.05)
+   +----------- NNN Product version number (e.g., 305=version 3.05)
 
 
 For example, the Abbrevia designtime package files for Delphi 5 have
-the filename B304_D50.*.
+the filename B305_D50.*.
 
 ==============================================
 
@@ -74,8 +75,28 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
 
 4. Version history
 
+4.1   Release 3.05 -Bug Fixes and Enhancements Beta #2
 
-4.1 Release 3.05 (Beta #1)
+ NOTE: Disk Spanning and Splitting does not work at all in this release.
+ 
+ Bug Fixes
+ ----------
+ [785769] V3.05 Beta 1. Problem when unzipping.
+ [806077] Unable to Call TestTagged on new Archives
+ [806087] DiskFileName needs to be set from FileName. (Bug and Fix from Jeff Rafter)
+ [800130] ZIP - Potential Memory Leak
+ [799438] A/V if ZIP Filename only contains extension.
+ [783583] In TAbZipArchive.FixName() lValue is not set from Value.
+ [735109] Spanning not working, access violation
+ [714944] AV on Disk Span, ignores OnRequestBlankDisk
+ [699140] OnArchive[Save]Progress events don't fire for new archives
+ [699119] OnProcessItemFailure does not fire for write locked files
+
+Enhancements
+----------------------
+  None.
+
+4.2   Release 3.05 -Bug Fixes and Enhancements Beta #1
 
     Bug Fixes
     ---------
