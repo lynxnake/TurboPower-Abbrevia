@@ -536,7 +536,7 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word );
       override;
-    constructor CreateFromStream( aStream : TStream; const ArchiveName : string );
+    constructor CreateFromStream( aStream : TStream; const ArchiveName : string ); override;
     destructor Destroy;
       override;
 
@@ -2789,6 +2789,8 @@ begin
          RenameFile(ChangeFileExt(FArchiveName,'.z0' + IntToStr(SCurrentImage+1)),FArchiveName)
         else
          RenameFile(ChangeFileExt(FArchiveName,'.z' + IntToStr(SCurrentImage+1)),FArchiveName);
+        // SCurrentImage > 0 only if FStream is a Spanned Archive.
+         MediaType := (FStream as TAbSpanStream).MediaType;
         // Open the Split archive for reading to duplicate behavior of single file archives.
         FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
           MediaType, FSpanningThreshold);
