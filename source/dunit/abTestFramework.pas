@@ -43,6 +43,8 @@ type
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
     procedure CheckFileExists(aFileName : String);
     procedure Setup; override;
+    procedure FilesInDirectory(const aDir : String;FileList : TStringList);
+    procedure CheckDirMatch(aDir1,aDir2 : string;IgnoreMissingFiles: Boolean = true);
     // Call this routine with GREAT Caution!!!!
     function DelTree(Dir : String) : Boolean;
 
@@ -79,6 +81,45 @@ implementation
 
 
 { TabTestCase }
+
+procedure TabTestCase.CheckDirMatch(aDir1, aDir2: string;
+  IgnoreMissingFiles: Boolean);
+var
+ d1,d2 : TStringList;
+ FS1,FS2 : TFileStream;
+ I : Integer;
+begin
+ d1 := TStringList.Create;
+ d1.Sorted := true;
+ d2 := TStringList.Create;
+ d2.Sorted := True;
+ try
+   FilesInDirectory(aDir1,d1);
+   FilesInDirectory(aDir2,d2);
+   Check(not ((not IgnoreMissingFiles) and (d1.count <> d2.count)),'Number of files in Directories do not match');
+   For I := 0 to d1.count -1 do
+    begin
+      if d2.IndexOf(d1.Strings[I]) = -1 then
+       begin
+         Check(IgnoreMissingFiles,d1.Strings[I] + ' is Missing in Directory');
+       end
+      else
+       begin
+         FS1 := TFileStream.Create(IncludeTrailingBackSlash(aDir1) + ExtractFileName(d1.Strings[I]),fmOpenRead);
+         FS2 := TFileStream.Create(IncludeTrailingBackSlash(aDir2) + ExtractFileName(d1.Strings[I]),fmOpenRead);
+         try
+           CheckStreamMatch(FS1,FS2,d1.Strings[I] + ' does not match');
+         finally
+           FS1.Free;
+           FS2.Free;
+         end;
+       end;
+    end;
+ finally
+   d1.free;
+   d2.free;
+ end;
+end;
 
 procedure TabTestCase.CheckFileExists(aFileName: String);
 begin
@@ -172,6 +213,24 @@ begin
        FileList.free;
      end;
    end; { If File Found with FindFirst }
+end;
+
+procedure TabTestCase.FilesInDirectory(const aDir: String;
+  FileList: TStringList);
+var
+ SR : TSearchRec;
+begin
+ Check(FileList <> nil,'FileList is not assigned');
+ Check(DirectoryExists(aDir),'Directory Requested does not exist : '+ aDir);
+ FileList.Clear;
+ if FindFirst(IncludeTrailingBackslash(aDir)+'*.*',faAnyFile,SR) = 0 then
+  begin
+    repeat
+      if not (SR.Attr and faDirectory > 0) then // Don't include Sub directories
+        FileList.Add(SR.Name);
+    until FindNext(SR) <> 0;
+  end;
+  FindClose(SR);
 end;
 
 function TabTestCase.GetTestFileDir: string;
@@ -408,8 +467,8 @@ begin
           {$ELSE}
              Result := '';
           {$ENDIF}
-	  tkDynArray:
-		DynArrayToVariant(Result, Pointer(GetOrdProp(Instance, PropInfo)), PropInfo^.PropType^);
+          tkDynArray:
+                DynArrayToVariant(Result, Pointer(GetOrdProp(Instance, PropInfo)), PropInfo^.PropType^);
     else
       raise Exception.Create('Invalid Property Type: ' + PropInfo.PropType^^.Name);
     end;
