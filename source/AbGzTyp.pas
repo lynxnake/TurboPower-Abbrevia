@@ -1105,6 +1105,17 @@ begin
       { Get validation data }
       GzHelp.ReadTail;
 
+
+      {$IFDEF STRICTGZIP}
+      { According to
+          http://www.gzip.org/zlib/rfc1952.txt
+
+       A compliant gzip compressor should calculate and set the CRC32 and ISIZE.
+       However, a compliant decompressor should not check these values.
+
+       If you want to check the the values of the CRC32 and ISIZE in a GZIP file
+       when decompressing enable the STRICKGZIP define contained in AbDefine.inc }
+
       { validate against CRC }
       if GzHelp.FItem.Crc32 <> GzHelp.TailCRC then
         raise EAbGzipBadCRC.Create;
@@ -1112,6 +1123,8 @@ begin
       { validate against file size }
       if GzHelp.FItem.UncompressedSize <> GZHelp.TailSize then
         raise EAbGzipBadFileSize.Create;
+      {$ENDIF}
+
     finally
       GzHelp.Free;
     end;
