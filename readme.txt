@@ -7,7 +7,7 @@ Table of contents
 2.  Package names
 3.  Installation
 4.  Version history
-4.1   Release 3.04
+4.1   Release 3.05 (beta #1)
 
 ==============================================
 
@@ -23,7 +23,7 @@ that simplify the manipulation of ZIP files.
 
 This is a source-only release of TurboPower Abbrevia. It includes
 designtime and runtime packages for Delphi 3 through 7 and C++Builder
-3 through 6.
+3 through 6 and Kylix 3.
 
 ==============================================
 
@@ -34,7 +34,7 @@ TurboPower Abbrevia package names have the following form:
 
   BNNNKKVV.*
    |  | |
-   |  | +------ VV  VCL version (30=Delphi 3, 40=Delphi 4, 70=Delphi 7)
+   |  | +------ VV  VCL version (30=Delphi 3, 40=Delphi 4, 70=Delphi 7, K3=Kylix 3)
    |  +-------- KK  Kind of package (R=runtime, D=designtime, CD = CLX designtime,
    |                                 CR = CLX runtime, VD = VCL designtime,
    |                                 VR = VCL runtime)
@@ -75,19 +75,26 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
 4. Version history
 
 
-4.1 Release 3.04
+4.1 Release 3.05 (Beta #1)
 
     Bug Fixes
     ---------
 
-    - Problem with redundant checks for Central Directory Tail on spanned archives.
-
-    - Removed AbZipTyp dependency on Dialogs unit.
-
-
+       [ 698173 ] Abbrevia doesn't handle filenames containing non-ASCII characters cleanly
+       [ 698181 ] Compiler Define out of Place
+       [ 698182 ] AV if delete AbMeter before deleting AbVCLMeterLink
+       [ 698183 ] CAB Extract At with new name does not work
+       [ 698185 ] Wrong file type icons shown
+       [ 698186 ] AV if invalid filename specified
+       [ 698996 ] Fails to compile in Kylix 3 Pro      
+       [ 699595 ] AbZipper and AbZipKit EReadError
+       [ 776882 ] Unzip truncates file on some machines
+       [ 783203 ] GZIP decompressor not Compliant
+ 
     Enhancements
     ------------
 
-    - Delphi 7 Support Added
-
-    - Added Support for Archive Save Progress
+        [ 702449 ] Create DUnit Framework to test Abbrevia
+        [ 783192 ] Add Support Kylix 3
+        
+NOTE: The number in brackets is the Bug and Enchancement Tracker IDs from SF.NET 
