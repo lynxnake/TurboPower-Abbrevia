@@ -1126,7 +1126,7 @@ begin
        However, a compliant decompressor should not check these values.
 
        If you want to check the the values of the CRC32 and ISIZE in a GZIP file
-       when decompressing enable the STRICKGZIP define contained in AbDefine.inc }
+       when decompressing enable the STRICTGZIP define contained in AbDefine.inc }
 
       { validate against CRC }
       if GzHelp.FItem.Crc32 <> GzHelp.TailCRC then
