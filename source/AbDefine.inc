@@ -40,6 +40,20 @@
 {$A+ Force alignment on word/dword boundaries}
 {$S- No stack checking}
 
+{
+ According to
+    http://www.gzip.org/zlib/rfc1952.txt
+
+ A compliant gzip compressor should calculate and set the CRC32 and ISIZE.
+ However, a compliant decompressor should not check these values.
+
+ If you want to check the the values of the CRC32 and ISIZE in a GZIP file
+ when decompressing enable the STRICKGZIP define below. }
+
+{.$DEFINE STRICTGZIP}
+
+
+
 
 {$IFNDEF LINUX}
 {---Global compiler defines for 32-bit OS's---}
