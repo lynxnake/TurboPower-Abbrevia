@@ -156,6 +156,7 @@ procedure TAbCLXMeterLink.Notification(AComponent: TComponent; Operation: TOpera
 procedure TAbVCLMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
 {$ENDIF}
 begin
+ inherited Notification(AComponent, Operation);  {!!.05 SF.NET #906875}
  if (Operation = opInsert) and (AComponent is TAbCustomMeter) and (FMeter = nil) then
     FMeter := TAbCustomMeter(AComponent);
  if (Operation = opRemove) and (AComponent = FMeter) then
