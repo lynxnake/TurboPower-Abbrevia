@@ -438,7 +438,7 @@ begin
   if Assigned(FOnRequestImage) then begin
     if MediaType = mtLocal then begin                                    {!!.01}
       NewName := NextDefaultImageName;
-      SpanNo := SpanNumber + 1;                                          {!!.01}
+      SpanNo := SpanNumber + 2;   {!!.05 change +1 to +2}                                       {!!.01} 
     end
     else begin { it's a floppy span }                                    {!!.01}
       NewName := FImageName;                                             {!!.01}
@@ -478,10 +478,10 @@ begin
   if pos('.', Result) > 0 then
     Delete(Result, Pos('.', Result), Length(Result) - Pos('.', Result) + 1);
   Result := Result + '.z';
-  if (FSpanNumber + 1) < 10 then
-    Result := Result + '0' + IntToStr(FSpanNumber + 1)
+  if (FSpanNumber + 2) < 10 then  {!!.05 change +1 to +2}
+    Result := Result + '0' + IntToStr(FSpanNumber + 2) {!!.05 change +1 to +2}
   else if (FSpanNumber + 1) < 100 then
-    Result := Result + IntToStr(FSpanNumber + 1)
+    Result := Result + IntToStr(FSpanNumber + 2) {!!.05 change +1 to +2}
   else
     Result := '';
 end;

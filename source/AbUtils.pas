@@ -954,7 +954,7 @@ var
   Ext : string[4];
   I : Word;
 begin
-  I := Value mod 100;
+  I := (Value +1) mod 100;
   Ext := ExtractFileExt(Filename);
   if (Length(Ext) < 2) then
     Ext := '.' + Format('%.2d', [I])
