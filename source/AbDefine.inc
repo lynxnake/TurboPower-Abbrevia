@@ -40,28 +40,6 @@
 {$A+ Force alignment on word/dword boundaries}
 {$S- No stack checking}
 
-{
- According to
-    http://www.gzip.org/zlib/rfc1952.txt
-
- A compliant gzip compressor should calculate and set the CRC32 and ISIZE.
- However, a compliant decompressor should not check these values.
-
- If you want to check the the values of the CRC32 and ISIZE in a GZIP file
- when decompressing enable the STRICKGZIP define below. }
-
-{.$DEFINE STRICTGZIP}
-
-{ The following define is ONLY used for Abbrevia Unit Tests.
-  It has no effect on the Abbrevia Library.
-  
-  If defined it uses Winzip to create and test archives for compatability.
-  The winzip tests require Systools stSpawn.pas
-  It can be downloaded at http://sf.net/projects/tpsystools }
-{$DEFINE WINZIPTESTS}
-
-
-
 {$IFNDEF LINUX}
 {---Global compiler defines for 32-bit OS's---}
 {====Global fixed compiler options (do NOT change)====}
@@ -219,6 +197,80 @@ all older PKZip compatible methods (Shrink, Reduce, Implode}
 {$IFOPT C+} //if Assertions are on
 {.$DEFINE UseLogging}
 {$ENDIF}
+
+{
+ According to
+    http://www.gzip.org/zlib/rfc1952.txt
+
+ A compliant gzip compressor should calculate and set the CRC32 and ISIZE.
+ However, a compliant decompressor should not check these values.
+
+ If you want to check the the values of the CRC32 and ISIZE in a GZIP file
+ when decompressing enable the STRICTGZIP define below. }
+
+{.$DEFINE STRICTGZIP}
+
+{ The following define is ONLY used for Abbrevia Unit Tests.
+  It has no effect on the Abbrevia Library.
+
+  If defined it uses Winzip to create and test archives for compatability.
+  The winzip tests require Systools stSpawn.pas
+  It can be downloaded at http://sf.net/projects/tpsystools }
+
+{$IFNDEF LINUX}
+{$DEFINE WINZIPTESTS}
+{$ENDIF}
+
+{ This a temporary Define for Abbrevia 3.05 Hopefully it's need will be removed
+  when Abbrevia 4.0 is released. With something that can be defined at runtime.
+  Which would be much easier to unit test!
+  
+  This only effects Procedure AbUnZip in AbUnzPrc.Pas.
+
+  When extracting files, we have three options.
+  1.  Clobber - Write in Place (Side Effect if Password or ZIP File is invalid and a version of the file you where
+                                extracting was on the disk, the original GONE!!!!)
+  2.  Memory - File is extracted to Memory, if succesful then it is written to disk
+  3.  TempFile - File is extract to the Temp Directory, if sucessful then it is moved to correct location.
+
+  In testing, the memory option is the fastest as long as you don't end up using the Page File.
+  Once you start to page, this option is usually (Not always) slower than TempFile method.
+  Clobber was not tested for performance, it was the original method, I would assume it is faster
+  than the TempFile method (If extracting to the same machine) but if extract to a network I suspect
+  it could be slower.
+
+  After much thought, I have decided to make TempFile the default method, I need comments if you
+  think this should be different. }
+
+{.$DEFINE AbUnZipClobber}
+{.$DEFINE AbUnZipMemory}
+{$DEFINE AbUnZipTempFile}
+
+{$IFDEF AbUnZipClobber}
+  {$IFDEF AbUnZipMemory}
+    Only one method can be used.
+  {$ENDIF}
+  {$IFDEF AbUnZipTempFile}
+    Only one method can be used.
+  {$ENDIF}
+{$ENDIF}
+{$IFDEF AbUnZipMemory}
+  {$IFDEF AbUnZipTempFile}
+    Only one method can be used.
+  {$ENDIF}
+{$ENDIF}
+
+{$IFNDEF AbUnzipClobber}
+  {$IFNDEF AbUnzipMemory}
+    {$IFNDEF AbUnzipTempFile}
+       Need to select on of the above methods.
+    {$ENDIF}
+  {$ENDIF}
+{$ENDIF}
+
+
+
+
 
 
 {-------- !! DO NOT CHANGE DEFINES BELOW THIS LINE !! --------}
