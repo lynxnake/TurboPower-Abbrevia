@@ -1584,14 +1584,15 @@ begin
 // Changed due to comment made by Jeff Rather.
 // No bug report, but after review I can see how
 // DiskFileName and FileName inconsitencies this case may
-// cause a problem.  
-    StrPCopy(Buff, FixName(FileSpec));
-    FileName := StrPas(Buff);
-    DiskFileName := FileName;
-
-//    DiskFileName := StrPas(Buff);
+// cause a problem.
+// Commented out Jeff Rather code, as it was causing problem
 //    StrPCopy(Buff, FixName(FileSpec));
 //    FileName := StrPas(Buff);
+//    DiskFileName := FileName;
+
+    DiskFileName := StrPas(Buff);
+    StrPCopy(Buff, FixName(FileSpec));
+    FileName := StrPas(Buff);
     RelativeOffset := 0;
   end;
 end;
