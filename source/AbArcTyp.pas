@@ -41,13 +41,7 @@ uses
   {$ENDIF Linux}
   Classes,
   AbUtils,
-  AbDfBase,
-  AbDfDec,
-  AbDfEnc,
   SysUtils;
-
-
-
 
 { ===== TAbArchiveItem ====================================================== }
 type
@@ -83,7 +77,7 @@ type
     procedure SetCompressedSize(const Value : LongInt); virtual;
     procedure SetCRC32(const Value : Longint); virtual;
     procedure SetExternalFileAttributes( Value : LongInt ); virtual;
-    procedure SetFileName(Value : string); virtual;
+    procedure SetFileName(const Value : string); virtual;
     procedure SetIsEncrypted(Value : Boolean); virtual;
     procedure SetLastModFileDate(const Value : Word); virtual;
     procedure SetLastModFileTime(const Value : Word); virtual;
@@ -305,7 +299,7 @@ type
     procedure ReplaceAt(Index : Integer);
     procedure SaveIfNeeded(aItem : TAbArchiveItem);
     procedure SetBaseDirectory(Value : string);
-    procedure SetLogFile(Value : string);
+    procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
     procedure Unlock;
 
@@ -347,7 +341,7 @@ type
       virtual;
     procedure DoSave;
       virtual;
-    function FixName(Value : string) : string;
+    function FixName(const Value : string) : string;
       virtual;
     function GetSpanningThreshold : Longint;
       virtual;
@@ -359,9 +353,9 @@ type
       read FInStream;
 
   public {methods}
-    constructor Create(FileName : string; Mode : Word);
+    constructor Create(const FileName : string; Mode : Word);
       virtual;
-    constructor CreateFromStream(aStream : TStream; aArchiveName : string);
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
     destructor  Destroy;
       override;
     procedure Add(aItem : TAbArchiveItem);
@@ -389,7 +383,7 @@ type
     procedure FreshenFilesEx(const FileMask, ExclusionMask : string);
     procedure FreshenTaggedItems;
     procedure Load; virtual;
-    procedure Move(aItem : TAbArchiveItem; NewStoredPath : string);
+    procedure Move(aItem : TAbArchiveItem; const NewStoredPath : string);
       virtual;
     procedure Replace(aItem : TAbArchiveItem);
     procedure Save;
@@ -505,8 +499,8 @@ implementation
 uses
   AbExcept,
   AbSpanSt,
+  AbDfBase,
   AbConst;
-
 const
   CRLF = #13 + #10;
   ProcessTypeToLogType : array[TAbProcessType] of TAbLogType =
@@ -678,7 +672,7 @@ begin
   FExternalFileAttributes := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchiveItem.SetFileName(Value : string);
+procedure TAbArchiveItem.SetFileName(const Value : string);
 begin
   FFileName := Value;
 end;
@@ -869,7 +863,7 @@ end;
 
 { TAbArchive implementation ================================================ }
 { TAbArchive }
-constructor TAbArchive.Create(FileName : string; Mode : Word);
+constructor TAbArchive.Create(const FileName : string; Mode : Word);
   {create an archive by opening a filestream on filename with the given mode}
 begin
   inherited Create;
@@ -892,7 +886,7 @@ begin
   Init;
 end;
 { -------------------------------------------------------------------------- }
-constructor TAbArchive.CreateFromStream(aStream : TStream; aArchiveName : string);
+constructor TAbArchive.CreateFromStream(aStream : TStream; const aArchiveName : string);
   {create an archive based on an existing stream}
 begin
   inherited Create;
@@ -1447,38 +1441,41 @@ begin
   Result := FItemList.Find(aItem.FileName);
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchive.FixName(Value : string) : string;
+function TAbArchive.FixName(const Value : string) : string;
+var
+  lValue: string;
 begin
+  lValue := Value;
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
     {Add the base directory to the filename before converting }
     {the file spec to the short filespec format. }
     if BaseDirectory <> '' then begin
       {Does the filename contain a drive or a leading backslash? }
-      if not ((Pos(':', Value) = 2) or (Pos(AbPathDelim, Value) = 1)) then
+      if not ((Pos(':', lValue) = 2) or (Pos(AbPathDelim, lValue) = 1)) then
         {If not, add the BaseDirectory to the filename.}
-        Value := AbAddBackSlash(BaseDirectory) + Value;                {!!.04}
+        lValue := AbAddBackSlash(BaseDirectory) + lValue;                {!!.04}
     end;
-    Value := AbGetShortFileSpec(Value);
+    lValue := AbGetShortFileSpec(lValue);
   end;
   {$ENDIF}
 
   {strip drive stuff}
   if soStripDrive in StoreOptions then
-    AbStripDrive(Value);
+    AbStripDrive(lValue);
 
   {check for a leading backslash}
-  if Value[1] = AbPathDelim then
-    System.Delete(Value, 1, 1);
+  if lValue[1] = AbPathDelim then
+    System.Delete(lValue, 1, 1);
 
   if soStripPath in StoreOptions then begin
-    Value := ExtractFileName(Value);
+    lValue := ExtractFileName(lValue);
   end;
 
   if soRemoveDots in StoreOptions then
-    AbStripDots(Value);
+    AbStripDots(lValue);
 
-  Result := Value;
+  Result := lValue;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Freshen(aItem : TAbArchiveItem);
@@ -1715,7 +1712,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchive.Move(aItem : TAbArchiveItem; NewStoredPath : string);
+procedure TAbArchive.Move(aItem : TAbArchiveItem; const NewStoredPath : string);
 var
   Confirm : Boolean;
   Found : Boolean;
@@ -1838,7 +1835,7 @@ begin
   FSpanningThreshold := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchive.SetLogFile(Value : string);
+procedure TAbArchive.SetLogFile(const Value : string);
 begin
   FLogFile := Value;
 end;

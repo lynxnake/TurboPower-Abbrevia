@@ -78,10 +78,10 @@ type
     FArchiveTotalSize : Longint;                                       {!!.04}
 
 
-    function MediaIsValid(FName : string) : Boolean;
+    function MediaIsValid(const FName : string) : Boolean;
     function DoRequestNewMedia{(const Prompt: string)}: Boolean;         {!!.01}
     function NextDefaultImageName : string;
-    function ValidateImageName(NewName : string) : Boolean;
+    function ValidateImageName(const NewName : string) : Boolean;
     procedure SetSize(NewSize: Longint); override;
   public
     constructor Create(const FileName: string; Mode: Word;
@@ -393,7 +393,7 @@ begin
   inherited Destroy;
 end;
 {------------------------------------------------------------------------------}
-function TAbSpanStream.MediaIsValid(FName : string) : Boolean;
+function TAbSpanStream.MediaIsValid(const FName : string) : Boolean;
 {- Determines if media is valid / formatted}
 {$IFDEF MSWINDOWS}
 var
@@ -480,7 +480,7 @@ begin
     Result := '';
 end;
 {------------------------------------------------------------------------------}
-function TAbSpanStream.ValidateImageName(NewName : string) : Boolean;
+function TAbSpanStream.ValidateImageName(const NewName : string) : Boolean;
 begin
   Result := MediaIsValid(NewName);
 end;

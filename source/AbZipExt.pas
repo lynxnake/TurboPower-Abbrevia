@@ -40,7 +40,9 @@ uses
 
 function AbExistingZipAssociation : Boolean;
 function AbGetZipAssociation(var App, ID, FileType : string) : Boolean;
-function AbRegisterZipExtension(App, ID, FileType : string; Replace : Boolean) : Boolean;
+function AbRegisterZipExtension(const App : string;
+                                      ID, FileType : string;
+                                      Replace : Boolean) : Boolean;
 
 
 implementation
@@ -109,7 +111,9 @@ begin
   Reg.Free;
 end;
 { -------------------------------------------------------------------------- }
-function AbRegisterZipExtension(App, ID, FileType : string; Replace : Boolean) : Boolean;
+function AbRegisterZipExtension(const App : string;
+                                      ID, FileType : string;
+                                      Replace : Boolean) : Boolean;
 begin
   Result := False;
   if AbExistingZipAssociation and not Replace then

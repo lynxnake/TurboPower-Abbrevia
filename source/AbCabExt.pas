@@ -38,7 +38,7 @@ interface
 uses
   SysUtils, Classes,
   AbCBrows, 
-  AbArcTyp, AbUtils, AbCabTyp;
+  AbArcTyp;
 
 type
   TAbCustomCabExtractor = class(TAbCustomCabBrowser)

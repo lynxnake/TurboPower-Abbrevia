@@ -96,8 +96,10 @@ uses
   AbArcTyp;
 
 { -------------------------------------------------------------------------- }
-procedure AbGetFilename(Ext, Filter, Title : string;
-  var aFilename : string);
+procedure AbGetFilename(const Ext : string;
+                        const Filter : string;
+                        const Title : string;
+                          var aFilename : string);
 var
   D : TOpenDialog;
 begin

@@ -49,7 +49,6 @@ uses
   AbDfInW,
   AbDfHufD,
   AbDfStrm,
-  AbDfXlat,
   AbDfCryS,
   AbDfPkMg;
 

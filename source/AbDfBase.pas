@@ -117,11 +117,11 @@ type
       procedure dhSetAmpleLength(aValue : longint);
       procedure dhSetChainLength(aValue : longint);
       procedure dhSetCheckValue(aValue : longint);
-      procedure dhSetLogFile(aValue : string);
+      procedure dhSetLogFile(const aValue : string);
       procedure dhSetMaxLazy(aValue : longint);
       procedure dhSetOnProgressStep(aValue : TAbProgressStep);
       procedure dhSetOptions(aValue : longint);
-      procedure dhSetPassphrase(aValue : string);
+      procedure dhSetPassphrase(const aValue : string);
       procedure dhSetWindowSize(aValue : longint);
       procedure dhSetZipOption(aValue : AnsiChar);
     public
@@ -314,7 +314,7 @@ begin
   FCheckValue := aValue;
 end;
 {--------}
-procedure TAbDeflateHelper.dhSetLogFile(aValue : string);
+procedure TAbDeflateHelper.dhSetLogFile(const aValue : string);
 begin
   FLogFile := aValue;
 end;
@@ -342,7 +342,7 @@ begin
   end;
 end;
 {--------}
-procedure TAbDeflateHelper.dhSetPassphrase(aValue : string);
+procedure TAbDeflateHelper.dhSetPassphrase(const aValue : string);
 begin
   FPassphrase := aValue;
 end;

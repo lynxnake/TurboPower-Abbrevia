@@ -237,7 +237,7 @@ resourcestring
   AbZipBadStubS = 'Stub must be an executable';
   AbFileNotFoundS = 'File not found';
   AbInvalidLFHS = 'Invalid Local File Header entry';
-  AbNoArchiveS = 'Archive does not exist - FileName is blank';
+  AbNoArchiveS = 'Archive does not exist - Filename is blank';
   AbReadErrorS = 'Error reading archive';
   AbInvalidIndexS = 'Invalid archive item index';
   AbInvalidThresholdS = 'Invalid archive size threshold';
@@ -369,18 +369,18 @@ resourcestring
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
     Gzip header }
-  AbGzOsFat         = 'FAT filesystem (MS-DOS, OS/2, NT/Win32)';
+  AbGzOsFat         = 'FAT File System (MS-DOS, OS/2, NT/Win32)';
   AbGzOsAmiga       = 'Amiga';
   AbGzOsVMS         = 'VMS (or OpenVMS)';
   AbGzOsUnix        = 'Unix';
   AbGzOsVM_CMS      = 'VM/CMS';
   AbGzOsAtari       = 'Atari TOS';
-  AbGzOsHPFS        = 'HPFS filesystem (OS/2, NT)';
+  AbGzOsHPFS        = 'HPFS File System (OS/2, NT)';
   AbGzOsMacintosh   = 'Macintosh';
   AbGzOsZ_System    = 'Z-System';
   AbGzOsCP_M        = 'CP/M';
   AbGzOsTOPS_20     = 'TOPS-20';
-  AbGzOsNTFS        = 'NTFS filesystem (NT)';
+  AbGzOsNTFS        = 'NTFS File System (NT)';
   AbGzOsQDOS        = 'QDOS';
   AbGzOsAcornRISCOS = 'Acorn RISCOS';
   AbGzOsunknown     = 'unknown';

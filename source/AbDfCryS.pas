@@ -37,8 +37,7 @@ interface
 
 uses
   SysUtils,
-  Classes,
-  AbDfBase;
+  Classes;
 
 type
   TAbZipEncryptHeader = array [0..11] of byte;

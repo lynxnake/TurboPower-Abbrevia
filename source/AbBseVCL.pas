@@ -36,12 +36,11 @@ unit AbBseVCL;
 interface
 
 uses
-  Classes,
+  Classes
   {$IFNDEF BuildingStub}
-  Controls,
+  , Controls
   {$ENDIF BuildingStub}
-  AbConst,
-  AbBase;
+  ;
 
 
 {$IFNDEF BuildingStub}

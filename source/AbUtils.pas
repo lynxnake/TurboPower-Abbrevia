@@ -191,9 +191,9 @@ type
      because if you have a path x:\dir, and request x:\dir\sub1\sub2,
      (/dir and /dir/sub1/sub2 on Linux) it fails.}
 
-  function AbCreateTempFile(Dir : string) : string;
+  function AbCreateTempFile(const Dir : string) : string;
 
-  function AbGetTempFile(Dir : string; CreateIt : Boolean) : string;
+  function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 
   function AbdMax(Var1, Var2: Longint): Longint;
     {-Return the maximum of two values}
@@ -230,7 +230,7 @@ type
     {returns path type - none, relative or absolute}
 
   {$IFDEF MSWINDOWS}
-  function AbGetShortFileSpec( LongFileSpec : string ) : string;
+  function AbGetShortFileSpec(const LongFileSpec : string ) : string;
   {$ENDIF}
 
   procedure AbIncFilename( var Filename : string; Value : Word );
@@ -245,8 +245,8 @@ type
                                           SubPaths[0] = abbrevia
                                           SubPaths[1] = examples}
 
-  function AbPatternMatch( Source : string; iSrc : Integer;
-                  Pattern : string; iPat : Integer ) : Boolean;
+  function AbPatternMatch(const Source : string; iSrc : Integer;
+                          const Pattern : string; iPat : Integer ) : Boolean;
     { recursive routine to see if the source string matches
       the pattern.  Both ? and * wildcard characters are allowed.}
 
@@ -470,7 +470,7 @@ begin
   until ( Length( TempPath ) = Length( Path ) );
 end;
 { -------------------------------------------------------------------------- }
-function AbCreateTempFile(Dir : string) : string;
+function AbCreateTempFile(const Dir : string) : string;
 begin
   Result := AbGetTempFile(Dir, True);
 end;
@@ -493,7 +493,7 @@ begin
 end;
 {$ENDIF}
 
-function AbGetTempFile(Dir : string; CreateIt : Boolean) : string;
+function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 {$IFDEF MSWINDOWS}
 var
   FileNameZ : array [0..259] of char;
@@ -902,7 +902,7 @@ end;
 { -------------------------------------------------------------------------- }
 {$IFDEF MSWINDOWS}
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-function AbGetShortFileSpec( LongFileSpec : string ) : string;
+function AbGetShortFileSpec(const LongFileSpec : string ) : string;
 var
   SR : TSearchRec;
   Search : string;
@@ -1020,8 +1020,8 @@ begin
   until ( i = Length( Path ) );
 end;
 { -------------------------------------------------------------------------- }
-function AbPatternMatch( Source : string; iSrc : Integer;
-                Pattern : string; iPat : Integer ) : Boolean;
+function AbPatternMatch(const Source : string; iSrc : Integer;
+                        const Pattern : string; iPat : Integer ) : Boolean;
 { recursive routine to see if the source string matches
   the pattern.  Both ? and * wildcard characters are allowed.
   Compares Source from iSrc to Length(Source) to

@@ -47,9 +47,6 @@ procedure GenerateCodeLengths(aMaxCodeLen  : integer;
 
 implementation
 
-uses
-  AbDfXlat;
-
 type
   PPkgNode = ^TPkgNode;
   TPkgNode = packed record

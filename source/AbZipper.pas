@@ -71,7 +71,7 @@ type
     procedure SetFileName(const aFileName : string);
       override;
     procedure SetStoreOptions( Value : TAbStoreOptions );
-    procedure SetZipfileComment(Value : string);
+    procedure SetZipfileComment(const Value : string);
       override;
     procedure ZipProc(Sender : TObject; Item : TAbArchiveItem;
                       OutStream : TStream);
@@ -131,7 +131,7 @@ type
     procedure FreshenFiles(const FileMask : string);
     procedure FreshenFilesEx(const FileMask, ExclusionMask : string);
     procedure FreshenTaggedItems;
-    procedure Move(aItem : TAbArchiveItem; NewStoredPath : string);
+    procedure Move(aItem : TAbArchiveItem; const NewStoredPath : string);
     procedure Save;
     procedure Replace(aItem : TAbArchiveItem);
   end;
@@ -328,7 +328,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipper.Move(aItem : TAbArchiveItem; NewStoredPath : string);
+procedure TAbCustomZipper.Move(aItem : TAbArchiveItem; const NewStoredPath : string);
   {renames the item}
 begin
   if (ZipArchive <> nil) then
@@ -488,7 +488,7 @@ begin
     ZipArchive.StoreOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipper.SetZipfileComment(Value : string);
+procedure TAbCustomZipper.SetZipfileComment(const Value : string);
 begin
   if (ZipArchive <> nil) then
     (ZipArchive as TAbZipArchive).ZipfileComment := Value

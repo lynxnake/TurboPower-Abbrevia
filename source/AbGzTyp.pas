@@ -118,7 +118,7 @@ type
     function GetIsText: Boolean;
 
     procedure SetExtraField(const Value: string);
-    procedure SetFileComment(Value : string);
+    procedure SetFileComment(const Value : string);
     procedure SetFileSystem(const Value: TAbGzFileSystem);
     procedure SetIsText(const Value: Boolean);
 
@@ -131,7 +131,7 @@ type
 
     procedure SetCompressedSize(const Value : LongInt); override;
     procedure SetExternalFileAttributes( Value : LongInt ); override;
-    procedure SetFileName(Value : string); override;
+    procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
     procedure SetLastModFileTime(const Value : Word); override;
@@ -255,13 +255,13 @@ type
       override;
     procedure TestItemAt(Index : Integer);
       override;
-    function FixName(Value : string) : string;
+    function FixName(const Value : string) : string;
       override;
 
     function GetItem(Index: Integer): TAbGzipItem;                  {!!.03}
     procedure PutItem(Index: Integer; const Value: TAbGzipItem);    {!!.03}
   public {methods}
-    constructor Create(FileName : string; Mode : Word);
+    constructor Create(const FileName : string; Mode : Word);
       override;
     destructor  Destroy;
       override;
@@ -341,7 +341,7 @@ begin
 end;
 
 
-function VerifyHeader(Header : TAbGzHeader) : Boolean;
+function VerifyHeader(const Header : TAbGzHeader) : Boolean;
 begin
   { check id fields and if deflated (only handle deflate anyway)}
   Result := (Header.ID1 = AB_GZ_HDR_ID1) and
@@ -862,7 +862,7 @@ begin
   end;
 end;
 
-procedure TAbGzipItem.SetFileComment(Value: string);
+procedure TAbGzipItem.SetFileComment(const Value: string);
 begin
   FFileComment := '';
 
@@ -875,7 +875,7 @@ begin
   end;
 end;
 
-procedure TAbGzipItem.SetFileName(Value: string);
+procedure TAbGzipItem.SetFileName(const Value: string);
 begin
   if FFileName <> '' then
      FFileName := '';
@@ -958,7 +958,7 @@ end;
 
 { TAbGzipArchive }
 
-constructor TAbGzipArchive.Create(FileName: string; Mode: Word);
+constructor TAbGzipArchive.Create(const FileName: string; Mode: Word);
 begin
   inherited Create(FileName, Mode);
   FTarLoaded := False;
@@ -1118,7 +1118,7 @@ begin
   end;
 end;
 
-function TAbGzipArchive.FixName(Value: string): string;
+function TAbGzipArchive.FixName(const Value: string): string;
 { fix up fileaname for storage }
 begin
   {GZip files Always strip the file path}

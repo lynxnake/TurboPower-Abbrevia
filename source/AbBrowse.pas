@@ -39,16 +39,9 @@ uses
   SysUtils, Classes,
   AbBase,
   AbUtils,
-  AbExcept,
-  AbArcTyp,
-{$IFDEF MSWINDOWS}
-  AbCabTyp,
-{$ENDIF}
-  AbZipTyp,
-  AbTarTyp,
-  AbGzTyp;
+  AbArcTyp;
 
-type
+  type
   TAbMeterLink = class(TAbBaseComponent)
     public
       procedure DoProgress(Progress : Byte); virtual; abstract;
@@ -219,7 +212,13 @@ function AbDetermineArcType(const FN : string; AssertType : TAbArchiveType) : TA
 implementation
 
 uses
-  AbConst;
+  AbExcept,
+{$IFDEF MSWINDOWS}
+  AbCabTyp,
+{$ENDIF}
+  AbZipTyp,
+  AbTarTyp,
+  AbGzTyp;
 
 { TAbBaseBrowser implementation ======================================= }
 

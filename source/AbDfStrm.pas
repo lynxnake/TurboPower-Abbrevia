@@ -203,7 +203,6 @@ type
 implementation
 
 uses
-  AbDfCryS,
   AbDfXlat;
 
 type
@@ -682,7 +681,7 @@ begin
   {if we couldn't write the correct number of bytes, it's an error}
   if (BytesWritten <> ByteCount) then
     raise EAbInternalDeflateError.Create(
-       'could not write to the output atream [TAbDfInBitStream.obsEmptyBuffer]');
+       'could not write to the output stream [TAbDfInBitStream.obsEmptyBuffer]');
 
   {reset the pointers}
   FBufPos := FBuffer;

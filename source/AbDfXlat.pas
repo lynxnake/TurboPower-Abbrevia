@@ -37,8 +37,7 @@ interface
 
 uses
   SysUtils,
-  Classes,
-  AbDfBase;
+  Classes;
 
 type
   TAbDfTranslator = class
@@ -71,7 +70,9 @@ var
   AbSymbolTranslator : TAbDfTranslator;
 
 implementation
-
+uses
+  AbDfBase;
+  
 {====================================================================}
 constructor TAbDfTranslator.Create;
 begin

@@ -36,8 +36,7 @@ unit AbBase;
 interface
 
 uses
-  Classes,
-  AbConst;
+  Classes;
 
 type
   TAbBaseComponent = class(TComponent)
@@ -53,6 +52,8 @@ type
   end;
 
 implementation
+uses
+  AbConst;
 
 { -------------------------------------------------------------------------- }
 function TAbBaseComponent.GetVersion : string;

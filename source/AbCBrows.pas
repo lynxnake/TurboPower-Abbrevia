@@ -38,7 +38,7 @@ interface
 uses
   SysUtils, Classes,
   AbBrowse,
-  AbArcTyp, AbExcept, AbUtils, AbCabTyp;
+  AbCabTyp;
 
 type
   TAbCustomCabBrowser = class(TAbBaseBrowser)
@@ -115,7 +115,8 @@ type
 implementation
 
 uses
-  AbConst;
+  AbArcTyp,
+  AbUtils;
 
 { TAbCustomCabBrowser ====================================================== }
 constructor TAbCustomCabBrowser.Create(AOwner : TComponent);

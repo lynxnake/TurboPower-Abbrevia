@@ -66,8 +66,8 @@ type
     procedure SetOnRequestBlankDisk(Value : TAbRequestDiskEvent);
     procedure SetOnRequestImage(Value : TAbRequestImageEvent); override;
 
-    procedure SetPassword(Value : string);
-    procedure SetZipfileComment(Value : string);
+    procedure SetPassword(const Value : string);
+    procedure SetZipfileComment(const Value : string);
       virtual;
 
   protected {properties}
@@ -285,7 +285,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipBrowser.SetPassword(Value : string);
+procedure TAbCustomZipBrowser.SetPassword(const Value : string);
 begin
   FPassword := Value;
   if (ZipArchive <> nil) then
@@ -306,7 +306,7 @@ begin
   end;
 end;
 
-procedure TAbCustomZipBrowser.SetZipfileComment(Value : string);
+procedure TAbCustomZipBrowser.SetZipfileComment(const Value : string);
 begin
   {NOP - descendents wishing to set this property should override}
 end;

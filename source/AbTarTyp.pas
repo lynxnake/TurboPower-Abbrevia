@@ -149,7 +149,7 @@ type
 
     procedure SetCompressedSize(const Value : LongInt); override;
     procedure SetExternalFileAttributes( Value : LongInt ); override;
-    procedure SetFileName(Value : string); override;
+    procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
     procedure SetLastModFileTime(const Value : Word); override;
@@ -218,13 +218,13 @@ type
       override;
     procedure TestItemAt(Index : Integer);
       override;
-    function FixName(Value: string): string;
+    function FixName(const Value: string): string;
       override;
 
     function GetItem(Index: Integer): TAbTarItem;                   {!!.03}
     procedure PutItem(Index: Integer; const Value: TAbTarItem);     {!!.03}
   public {methods}
-    constructor Create(FileName : string; Mode : Word);
+    constructor Create(const FileName : string; Mode : Word);
       override;
     destructor  Destroy;
       override;
@@ -275,7 +275,7 @@ begin
   end;
 end;
 
-function CalcTarHeaderChkSum(TarH : TAbTarHeaderRec): LongInt;
+function CalcTarHeaderChkSum(const TarH : TAbTarHeaderRec): LongInt;
 var
   HdrBuffer : PAnsiChar;
   HdrChkSum : LongInt;
@@ -292,7 +292,7 @@ begin
   Result := HdrChkSum;
 end;
 
-function VerifyHeader(TarH : TAbTarHeaderRec): Boolean;
+function VerifyHeader(const TarH : TAbTarHeaderRec): Boolean;
 { check "Magic" field in Tar Header}
 begin
   Result := (TarH.Magic = StrPas(AB_TAR_TMAGIC)) or
@@ -600,7 +600,7 @@ begin
   Move(S[1], FTarHeader.Mode, Length(S));
 end;
 
-procedure TAbTarItem.SetFileName(Value: string);
+procedure TAbTarItem.SetFileName(const Value: string);
 begin
   StrPCopy(FTarHeader.Name, Value);
 end;
@@ -876,7 +876,7 @@ end;
 
 { TAbTarArchive }
 
-constructor TAbTarArchive.Create(FileName: string; Mode: Word);
+constructor TAbTarArchive.Create(const FileName: string; Mode: Word);
 begin
   inherited Create(FileName, Mode);
 end;
@@ -1056,8 +1056,10 @@ begin
 end;
 
 
-function TAbTarArchive.FixName(Value: string): string;
+function TAbTarArchive.FixName(const Value: string): string;
 { fixup filename for storage }
+var
+  lValue : string;
 begin
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
@@ -1065,11 +1067,11 @@ begin
     {the file spec to the short filespec format. }
     if BaseDirectory <> '' then begin
       {Does the filename contain a drive or a leading backslash? }
-      if not ((Pos(':', Value) = 2) or (Pos(AbPathDelim, Value) = 1)) then
+      if not ((Pos(':', lValue) = 2) or (Pos(AbPathDelim, lValue) = 1)) then
         {If not, add the BaseDirectory to the filename.}
-        Value := BaseDirectory + AbPathDelim + Value;
+        lValue := BaseDirectory + AbPathDelim + lValue;
     end;
-    Value := AbGetShortFileSpec( Value );
+    lValue := AbGetShortFileSpec( lValue );
   end;
   {$ENDIF MSWINDOWS}
 
@@ -1078,21 +1080,21 @@ begin
 
   { strip drive stuff }
   if soStripDrive in StoreOptions then
-    AbStripDrive( Value );
+    AbStripDrive( lValue );
 
   { check for a leading slash }
-  if Value[1] = AbPathDelim then
-    System.Delete( Value, 1, 1 );
+  if lValue[1] = AbPathDelim then
+    System.Delete( lValue, 1, 1 );
 
   if soStripPath in StoreOptions then
-    Value := ExtractFileName(Value);
+    lValue := ExtractFileName(lValue);
 
   if soRemoveDots in StoreOptions then
-    AbStripDots(Value);
+    AbStripDots(lValue);
 
-  AbFixName(Value);
+  AbFixName(lValue);
 
-  Result := Value;
+  Result := lValue;
 end;
 
 {!!.03 - Added }

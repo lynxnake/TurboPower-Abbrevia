@@ -395,8 +395,8 @@ type
     procedure SaveLFHToStream( Stream : TStream );
     procedure SetCompressionMethod( Value : TAbZipCompressionMethod );
     procedure SetDiskNumberStart( Value : Word );
-    procedure SetFileComment( Value : string );
-    procedure SetExtraField( Value : string );
+    procedure SetFileComment(const Value : string );
+    procedure SetExtraField(const Value : string );
     procedure SetGeneralPurposeBitFlag( Value : Word );
     procedure SetInternalFileAttributes( Value : Word );
     procedure SetRelativeOffset( Value : Longint );
@@ -415,7 +415,7 @@ type
     procedure SetCompressedSize( const Value : Longint ); override;
     procedure SetCRC32( const Value : Longint ); override;
     procedure SetExternalFileAttributes( Value : Longint ); override;
-    procedure SetFileName( Value : string ); override;
+    procedure SetFileName(const Value : string ); override;
     procedure SetLastModFileDate(const Value : Word ); override;
     procedure SetLastModFileTime(const Value : Word ); override;
     procedure SetUncompressedSize( const Value : Longint ); override;
@@ -490,7 +490,7 @@ type
   protected {methods}
 
     function CreateItem(const FileSpec : string): TAbArchiveItem; override;
-    procedure DoExtractHelper(Index : Integer; NewName : string);
+    procedure DoExtractHelper(Index : Integer; const NewName : string);
     procedure DoExtractToStreamHelper(Index : Integer; aStream : TStream);
     procedure DoTestHelper(Index : Integer);
     procedure DoInsertHelper(Index : Integer; OutStream : TStream);
@@ -513,13 +513,13 @@ type
       override;
     procedure TestItemAt(Index : Integer);
       override;
-    function FixName( Value : string ) : string;
+    function FixName(const Value : string ) : string;
       override;
     procedure LoadArchive;
       override;
     procedure SaveArchive;
       override;
-    procedure SetZipFileComment( Value : string );
+    procedure SetZipFileComment(const Value : string );
 
   protected {properties}
     property IsExecutable : Boolean
@@ -534,9 +534,9 @@ type
       var ImageName: string; var Abort: Boolean);                        {!!.01}
 
   public {methods}
-    constructor Create( FileName : string; Mode : Word );
+    constructor Create(const FileName : string; Mode : Word );
       override;
-    constructor CreateFromStream( aStream : TStream; ArchiveName : string );
+    constructor CreateFromStream( aStream : TStream; const ArchiveName : string );
     destructor Destroy;
       override;
 
@@ -1437,7 +1437,7 @@ begin
   FItemInfo.ExternalFileAttributes := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipItem.SetExtraField( Value : string );
+procedure TAbZipItem.SetExtraField(const Value : string );
 begin
   FItemInfo.ExtraFieldLength := Length( Value );
   if Assigned( FItemInfo.FExtraField ) then
@@ -1449,7 +1449,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipItem.SetFileComment( Value : string );
+procedure TAbZipItem.SetFileComment(const Value : string );
 begin
   FItemInfo.FileCommentLength := Length( Value );
   if Assigned( FItemInfo.FFileComment ) then
@@ -1462,7 +1462,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipItem.SetFileName( Value : string );
+procedure TAbZipItem.SetFileName(const Value : string );
 begin
   FFileName := Value;
   FItemInfo.FileNameLength := Length( Value );
@@ -1519,7 +1519,7 @@ end;
 
 
 { TAbZipArchive implementation ============================================= }
-constructor TAbZipArchive.Create( FileName : string; Mode : Word );
+constructor TAbZipArchive.Create(const FileName : string; Mode : Word );
 begin
   inherited Create( FileName, Mode );
   FCompressionMethodToUse := smBestMethod;
@@ -1533,7 +1533,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 constructor TAbZipArchive.CreateFromStream( aStream : TStream;
-                                            ArchiveName : string );
+                                      const ArchiveName : string );
 begin
   inherited CreateFromStream( aStream, ArchiveName );
   FInfo := TAbZipDirectoryFileFooter.Create;
@@ -1584,7 +1584,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchive.DoExtractHelper(Index : Integer; NewName : string);
+procedure TAbZipArchive.DoExtractHelper(Index : Integer; const NewName : string);
 begin
   if Assigned(FExtractHelper) then
     FExtractHelper(Self, ItemList[Index], NewName)
@@ -1927,10 +1927,11 @@ begin
   Result := FindCentralDirectoryTail( FStream );
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipArchive.FixName( Value : string ) : string;
+function TAbZipArchive.FixName(const Value : string ) : string;
   {-changes backslashes to forward slashes}
 var
   i : SmallInt;
+  lValue : string;
 begin
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
@@ -1938,11 +1939,11 @@ begin
     {the file spec to the short filespec format. }
     if BaseDirectory <> '' then begin
       {Does the filename contain a drive or a leading backslash? }
-      if not ((Pos(':', Value) = 2) or (Pos(AbPathDelim, Value) = 1)) then
+      if not ((Pos(':', lValue) = 2) or (Pos(AbPathDelim, lValue) = 1)) then
         {If not, add the BaseDirectory to the filename.}
-        Value := AbAddBackSlash(BaseDirectory) + Value;                {!!.04}
+        lValue := AbAddBackSlash(BaseDirectory) + lValue;                {!!.04}
     end;
-    Value := AbGetShortFileSpec( Value );
+    lValue := AbGetShortFileSpec( lValue );
   end;
   {$ENDIF MSWINDOWS}
 
@@ -1951,23 +1952,23 @@ begin
 
   {strip drive stuff}
   if soStripDrive in StoreOptions then
-    AbStripDrive( Value );
+    AbStripDrive( lValue );
 
   {check for a leading backslash}
-  if Value[1] = AbPathDelim then
-    System.Delete( Value, 1, 1 );
+  if lValue[1] = AbPathDelim then
+    System.Delete( lValue, 1, 1 );
 
   if soStripPath in StoreOptions then begin
-    Value := ExtractFileName( Value );
+    lValue := ExtractFileName( lValue );
   end;
 
   if soRemoveDots in StoreOptions then
-    AbStripDots( Value );
+    AbStripDots( lValue );
 
-  for i := 1 to Length( Value ) do
-    if Value[i] = '\' then
-      Value[i] := '/';
-  Result := Value;
+  for i := 1 to Length( lValue ) do
+    if lValue[i] = '\' then
+      lValue[i] := '/';
+  Result := lValue;
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipArchive.GetItem( Index : Integer ) : TAbZipItem;
@@ -2687,7 +2688,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchive.SetZipFileComment( Value : string );
+procedure TAbZipArchive.SetZipFileComment(const Value : string );
 begin
   FInfo.ZipFileCommentLength := Length( Value );
   if Assigned( FInfo.FZipFileComment ) then

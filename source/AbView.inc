@@ -243,7 +243,7 @@ type
     function GetActiveRow : Longint;
     function GetHeaderRowHeight : Integer;
 {$IFDEF MSWINDOWS}
-    function GetIcon(ItemName : string) : HIcon;
+    function GetIcon(const ItemName : string) : HIcon;
 {$ENDIF}
 {$IFDEF UsingClx}
   { no file type icons in Clx }
@@ -1211,10 +1211,9 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 {$IFDEF MSWINDOWS}
-function TAbBaseViewer.GetIcon(ItemName : string) : HIcon;
+function TAbBaseViewer.GetIcon(const ItemName : string) : HIcon;
 var
   i : Longint;
-  n : Word;
   s : array[0..255] of Char;
   t : string;
   sfi : SHFILEINFO;
@@ -1227,7 +1226,6 @@ begin
   if (i > -1) then
     Result := HIcon(FIcons.Objects[i])
   else begin
-    n := 1;
     strPcopy(s,t);
     SHGetFileInfo( s, FILE_ATTRIBUTE_NORMAL,
                   sfi, sizeof(sfi), SHGFI_ICON or SHGFI_USEFILEATTRIBUTES);

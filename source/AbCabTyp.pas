@@ -39,7 +39,7 @@ interface
 
 uses
   Windows, SysUtils, Classes, AbFciFdi, AbArcTyp,
-  AbUtils, AbConst, AbExcept;
+  AbUtils;
 
 type
   TAbCabItem = class(TAbArchiveItem)
@@ -129,7 +129,7 @@ type
       override;
 
   public {methods}
-    constructor Create(FileName : string; Mode : Word);
+    constructor Create(const FileName : string; Mode : Word);
       override;
     destructor Destroy;
       override;
@@ -169,7 +169,9 @@ type
 function VerifyCab(const Fn : string) : TAbArchiveType;
 
 implementation
-
+uses
+  AbExcept;
+  
 type
   PWord    = ^Word;
   PInteger = ^Integer;
@@ -482,7 +484,7 @@ end;
 
 
 { == TAbCabArchive ========================================================= }
-constructor TAbCabArchive.Create( FileName : string; Mode : Word );
+constructor TAbCabArchive.Create(const FileName : string; Mode : Word );
 begin
   {Mode is used to identify which interface to use: }
   {  fmOpenWrite - FCI, fmOpenRead - FDI}

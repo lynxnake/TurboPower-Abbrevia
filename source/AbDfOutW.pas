@@ -110,10 +110,6 @@ implementation
         FCurrent along with it as well.
         }
 
-uses
-  AbUtils;
-
-
 {===TAbDfOutputWindow==================================================}
 constructor TAbDfOutputWindow.Create(aStream       : TStream;
                                      aUseDeflate64 : boolean;
