@@ -1217,7 +1217,7 @@ begin
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
         GZHelp.ReadTail;
         Item.FCRC32 := GZHelp.FTail.CRC32;
-        Item.FUncompressedSize := GZHelp.FTail.ISize
+        Item.FUncompressedSize := GZHelp.FTail.ISize;
 //        Item.CRC32 := GZHelp.FItem.FCRC32;
         Item.FUncompressedSize := GZHelp.FItem.FUncompressedSize;
 
