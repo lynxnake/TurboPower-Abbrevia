@@ -65,6 +65,7 @@ type
     private
       FMeter : TAbCustomMeter;
     protected
+      procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     public
       procedure DoProgress(Progress : Byte); override;
       procedure Reset; override;
@@ -149,6 +150,18 @@ uses
   AbConst;
 
 {====================================================================}
+{$IFDEF UsingCLX }
+procedure TAbCLXMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
+{$ELSE}
+procedure TAbVCLMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
+{$ENDIF}
+begin
+ if (Operation = opInsert) and (AComponent is TAbCustomMeter) and (FMeter = nil) then
+    FMeter := TAbCustomMeter(AComponent);
+ if (Operation = opRemove) and (AComponent = FMeter) then
+    FMeter := nil;
+end;
+{--------}
 {$IFDEF UsingCLX }
 procedure TAbCLXMeterLink.DoProgress(Progress : Byte);
 {$ELSE}
