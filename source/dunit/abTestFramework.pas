@@ -27,7 +27,7 @@ unit abTestFramework;
 {$I AbDefine.inc}
 interface
 
-uses TestFramework, {$IFDEF VERSION6} Variants,
+uses TestFramework, AbUtils,{$IFDEF VERSION6} Variants,
      {$ENDIF} {$IFDEF LINUX} QForms,QControls, {$ELSE}Forms,Windows,Controls,{$ENDIF}
      SysUtils, Classes, {$IFDEF WINZIPTESTS}SyncObjs,{$ENDIF}TypInfo;
 {$IFDEF WINZIPTESTS}
@@ -93,11 +93,28 @@ type
    published
    end;
 
+//function IncTrailingBackSlash(const str: String) : string;
+function DirExists(const dir : string) : boolean;
 
 implementation
 // Systool Unit change abdefine.inc if you don't have systools or don't want
 // to run winzip compatability tests
 {$IFDEF WINZIPTESTS} Uses stSpawn; {$ENDIF}
+
+
+//function IncTrailingBackSlash(const str: String) : string;
+//begin
+// if Str[Length(Str)] <> '\' then
+//     result  := Str + '\';
+//end;
+
+function DirExists(const dir: string): Boolean;
+var
+  Code: Integer;
+begin
+  Code := GetFileAttributes(PChar(Dir));
+  Result := (Code <> -1) and (FILE_ATTRIBUTE_DIRECTORY and Code <> 0);
+end;
 
 { TabTestCase }
 
@@ -124,8 +141,8 @@ begin
        end
       else
        begin
-         FS1 := TFileStream.Create(IncludeTrailingBackSlash(aDir1) + ExtractFileName(d1.Strings[I]),fmOpenRead);
-         FS2 := TFileStream.Create(IncludeTrailingBackSlash(aDir2) + ExtractFileName(d1.Strings[I]),fmOpenRead);
+         FS1 := TFileStream.Create(AbAddBackSlash(aDir1) + ExtractFileName(d1.Strings[I]),fmOpenRead);
+         FS2 := TFileStream.Create(AbAddBackSlash(aDir2) + ExtractFileName(d1.Strings[I]),fmOpenRead);
          try
            CheckStreamMatch(FS1,FS2,d1.Strings[I] + ' does not match');
          finally
@@ -271,9 +288,9 @@ var
  SR : TSearchRec;
 begin
  Check(FileList <> nil,'FileList is not assigned');
- Check(DirectoryExists(aDir),'Directory Requested does not exist : '+ aDir);
+ Check(DirExists(aDir),'Directory Requested does not exist : '+ aDir);
  FileList.Clear;
- if FindFirst(IncludeTrailingBackslash(aDir)+'*.*',faAnyFile,SR) = 0 then
+ if FindFirst(AbAddBackSlash(aDir)+'*.*',faAnyFile,SR) = 0 then
   begin
     repeat
       if not (SR.Attr and faDirectory > 0) then // Don't include Sub directories
@@ -312,14 +329,14 @@ begin
    result := '/etc/
  {$ELSE}
    GetWindowsDirectory(aDirBuf,SizeOf(aDirBuf));
-   result := IncludeTrailingBackslash(string(aDirBuf));
+   result := AbAddBackSlash(string(aDirBuf));
  {$ENDIF}
 end;
 
 procedure TabTestCase.Setup;
 begin
   inherited;
-  if not DirectoryExists(TestTempDir) then
+  if not DirExists(TestTempDir) then
    begin
     CreateDir(TestTempDir);
    end;

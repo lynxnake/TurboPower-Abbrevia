@@ -36,7 +36,8 @@ unit AbUnzperTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbUnzper,SysUtils,Classes,abMeter,abExcept;
+  TestFrameWork, abTestFrameWork, AbUnzper, SysUtils, Classes, abMeter,
+  AbZipTyp, abExcept;
 
 type
 
@@ -55,6 +56,11 @@ type
     procedure TestBasicUnGzipTar;
     procedure TestUserAbort;
     procedure TestWinZipOutput;
+    procedure TestGZipDecompress;
+    procedure TestZeroByteZipFile;
+    procedure TestIncompleteZipFile;
+    procedure TestArchiveNotFound;
+    procedure TestZipCopiedFromFloppy;
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
     {$ENDIF}
@@ -112,6 +118,16 @@ begin
 
 end;
 
+
+procedure TAbUnZipperTests.TestArchiveNotFound;
+begin
+ ExpectedException := EAbFileNotFound;
+ // Delete File if it exists
+ if FileExists(TestTempDir + 'nonexist.zip') then
+    DeleteFile(TestTempDir + 'nonexist.zip');
+ // Try to set the filename to the open byte file.
+ Component.FileName := TestTempDir + 'nonexist.zip';
+end;
 
 procedure TAbUnZipperTests.TestBasicUnGzip;
 var
@@ -181,6 +197,51 @@ begin
   UnRegisterClass(TAbUnZipper);
 end;
 
+procedure TAbUnZipperTests.TestGZipDecompress;
+var
+ fs,fs2 : TFileStream;
+begin
+ fs := TFileStream.Create(TestFileDir + 'dataland.txt',fmOpenRead);
+ try
+ // [ 822243 ] GZip decompress problem
+ component.FileName := TestFileDir + 'download[1].datalandsoftware.com-Aug-2003.gz';
+ Component.BaseDirectory:= TestTempDir;
+ {$IFDEF UseLogging}
+ Component.LogFile := TestTempDir + 'dataland.log';
+ Component.Logging := True;
+ {$ENDIF}
+ Component.ExtractAt(0,TestTempDir + 'dataland.txt');
+ fs2 := TFileStream.Create(TestTempDir + 'dataland.txt',fmOpenRead);
+ try
+ Check(fs2.Size > 0,'Extracted File is 0 bytes in size');
+ CheckStreamMatch(fs,fs2,'Extracted File does not match original file');
+ finally
+  fs2.free;
+ end;
+ finally
+  fs.free;
+ end;
+
+end;
+
+procedure TAbUnZipperTests.TestIncompleteZipFile;
+var
+ FS : TFileStream;
+begin
+ // Since file only contains initial sig and not Central Directory Tail Struct
+ // It should not be recogonized.
+ ExpectedException := EAbUnhandledType;
+ // Delete File if it exists
+ if FileExists(TestTempDir + 'dummy.zip') then
+    DeleteFile(TestTempDir + 'dummy.zip');
+ // Create Zero Byte File
+ FS := TFileStream.Create(TestTempDir + 'dummy.zip',fmCreate);
+ FS.Write(Ab_ZipLocalFileHeaderSignature,sizeof(Ab_ZipLocalFileHeaderSignature));
+ FS.Free;
+ // Try to set the filename to the open byte file.
+ Component.FileName := TestTempDir + 'zerobyte.zip';
+end;
+
 procedure TAbUnZipperTests.TestUserAbort;
 var
  FUnZipper : TAbUnZipper;
@@ -218,6 +279,31 @@ begin
   Component.ExtractFiles('*.*');
   CheckDirMatch(TestFileDir + '20030328\',TestTempDir,true);
 
+end;
+
+procedure TAbUnZipperTests.TestZeroByteZipFile;
+var
+ FS : TFileStream;
+begin
+ ExpectedException := EAbBadStream;
+ // Delete File if it exists
+ if FileExists(TestTempDir + 'zerobyte.zip') then
+    DeleteFile(TestTempDir + 'zerobyte.zip');
+ // Create Zero Byte File
+ FS := TFileStream.Create(TestTempDir + 'zerobyte.zip',fmCreate);
+ FS.Free;
+ // Try to set the filename to the open byte file.
+ Component.FileName := TestTempDir + 'zerobyte.zip';
+end;
+
+procedure TAbUnZipperTests.TestZipCopiedFromFloppy;
+begin
+//[ 858945 ] copy of File saved to floppy cannot be opened
+// Error of File Not Found appears if it fails.
+  Component.FileName := TestFileDir + 'cpFromFloppy.zip';
+  Component.BaseDirectory := TestTempDir;
+  ChDir(TestTempDir);
+  Component.ExtractFiles('*.*');
 end;
 
 initialization

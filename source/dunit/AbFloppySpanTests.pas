@@ -25,28 +25,18 @@
 
 unit AbFloppySpanTests;
 {$I AbDefine.inc}
-// The winzip test require Systools (http://sf.net/projects/tpsystools), stSpawn.pas
-// Inactivate Define to remove dependance on systools
-{$DEFINE WINZIPTESTS}
 interface
 
 uses
 // Note: The Floppy Span tests are designed to be platform specific
 
-  Windows, Forms, Dialogs,Controls,SysUtils, Classes, TestFrameWork,
+  Windows, Forms, Dialogs,Controls,SysUtils, Classes, TestFrameWork,abUtils,
   abTestFramework, AbZipper, AbUnzper{$IFDEF WINZIPTESTS},SyncObjs{$ENDIF} ;
 
 type
   TAbFloppySpanTests = class(TabTestCase)
   protected
     WinDir : String;
-
-    {$IFDEF WINZIPTESTS}
-      FSpawnComplete : TSimpleEvent;
-      procedure SpawnErrorEvent(Sender : TObject; Error : Word);
-      procedure SpawnCompletedEvent(Sender : TObject);
-      procedure SpawnTimeOutEvent(Sender : TObject);
-    {$ENDIF}
     procedure SetUp; override;
     procedure TearDown; override;
   published
@@ -59,7 +49,7 @@ type
 
 implementation
 
-uses ShellAPI {$IFDEF WINZIPTESTS}, stSpawn {$ENDIF} ;
+uses ShellAPI;
 
 
 
@@ -71,10 +61,7 @@ begin
    // Get directory windows is installed to
    SetLength(WinDir,MAX_PATH);
    SetLength(WinDir,GetWindowsDirectory(pchar(WinDir), MAX_PATH));
-   WinDir := IncludeTrailingBackslash(WinDir);
-  {$IFDEF WINZIPTESTS}
-    FSpawnComplete := TSimpleEvent.Create;
-  {$ENDIF}
+   WinDir := AbAddBackSlash(WinDir);
 end;
 
 
@@ -144,14 +131,11 @@ end;
 {$IFDEF WINZIPTESTS}
 procedure TAbFloppySpanTests.WinzipExtractTest;
 var
-  UnWinZip : String;
   ExtractTo : String;
   FileList : TStringList;
-  Spawn : TStSpawnApplication;
   SR : TSearchRec;
   I : integer;
   FS1,FS2 : TFileStream;
-  WR : TWaitResult;
 begin
  // This test will use the Winzip command line utility to determine if the
  // file created in CreateBasicSpan can be extracted.
@@ -159,34 +143,13 @@ begin
 
     if MessageDlg('This test requires the TESTSPAN.ZIP created in the '+#13+#10+'"CreateBasicSpan" test. '+ #13#10 + 'It also requires WinZIP Command Line Utility. '+#13#10#13#10 +'Please Insert LAST Disk of span set.'+#13+#10+''+#13+#10+'Pressing Cancel will terminate this test.', mtInformation, [mbOK,mbCancel], 0) = mrCancel then
       Fail('Test Aborted');
-// Hard Coded as I could not find install location in the Registry to extract and make dynamic
-// if this proves to be a problem, we will have to have test configuration file that specifies
-// the winzip command line utility path.
-   UnWinZip := 'C:\Program Files\WinZip\wzunzip.exe';
-   CheckFileExists(UnWinZip);
 
-   Spawn := TStSpawnApplication.Create(nil);
-   try
-     Spawn.FileName := UnWinZip;
-     ExtractTo := TestTempDir + 'WZSpan\';
-     DelTree(ExtractTo);
-     Check(DirectoryExists(extractTo),'DelTree() was just called it Directory should be deleted');
-     CreateDir(ExtractTo);
-     Spawn.RunParameters := 'A:\SPANTEST.ZIP ' + ExtractTo;
-     Spawn.NotifyWhenDone := True;
-     Spawn.OnSpawnError := SpawnErrorEvent;
-     Spawn.OnCompleted := SpawnCompletedEvent;
-     Spawn.OnTimeOut := SpawnTimeOutEvent;
-     Spawn.Execute;
-     WR := FSpawnComplete.WaitFor(1000);
-     While WR <> wrSignaled do
-       begin
-          Application.ProcessMessages;
-          Check(NOT (WR = wrAbandoned), 'Event has been Abandoonded');
-          Check(NOT (WR = wrError),'Event has Errored out');
-          WR := FSpawnComplete.WaitFor(1000);          
-       end;
-       
+   ExtractTo := TestTempDir + 'WZSpan\';
+   DelTree(ExtractTo);
+   Check(DirExists(extractTo),'DelTree() was just called it Directory should be deleted');
+   CreateDir(ExtractTo);
+   ExecuteAndWait(UnWinZip, 'A:\SPANTEST.ZIP ' + ExtractTo);
+
      // Files have now been extracted Time to test.
      FileList := TStringList.Create;
      try
@@ -216,27 +179,6 @@ begin
     finally
       FileList.free;
     end;
-   finally
-     Spawn.Free;
-   end;
-end;
-
-
-procedure TAbFloppySpanTests.SpawnCompletedEvent(Sender: TObject);
-begin
-  FSpawnComplete.SetEvent;
-end;
-
-procedure TAbFloppySpanTests.SpawnErrorEvent(Sender: TObject; Error: Word);
-begin
- FSpawnComplete.SetEvent;
- Fail('Error: ' + IntToSTr(Error) + ' occured launching WinZip');
-end;
-
-procedure TAbFloppySpanTests.SpawnTimeOutEvent(Sender: TObject);
-begin
-  FSpawnComplete.SetEvent;
- Fail('Timeout occured launching WinZip');
 end;
 {$ENDIF}
 
@@ -244,9 +186,6 @@ end;
 procedure TAbFloppySpanTests.TearDown;
 begin
   inherited;
-  {$IFDEF WINZIPTESTS}
-    FSpawnComplete.Free;
-  {$ENDIF}
 end;
 
 initialization

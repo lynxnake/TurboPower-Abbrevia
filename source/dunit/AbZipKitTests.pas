@@ -28,7 +28,8 @@ unit AbZipKitTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZipKit,SysUtils,Classes,abMeter;
+  TestFrameWork, abTestFrameWork, AbZipKit, AbZipTyp, AbArctyp, SysUtils,
+  Classes, abMeter;
 
 type
 
@@ -43,11 +44,74 @@ type
     procedure TestComponentLinks;
     procedure TestAddThenExtract;
     procedure TestTaggedFiles;
+    procedure FreshenTest;
   end;
 
 implementation
 
 { TAbZipKitTests }
+
+procedure TAbZipKitTests.FreshenTest;
+// [887909] soFreshen isn't working 
+var
+ SL : TStringList;
+ MS : TMemoryStream;
+ FS : TFileStream;
+begin
+  // Create 3 Text Files to add to archive.
+ SL := TStringList.Create;
+ try
+  SL.Add('Test File');
+
+  SL.SaveToFile(TestTempDir + 'Freshen1.fsh');
+  SL.SaveToFile(TestTempDir + 'Freshen2.fsh');
+  SL.SaveToFile(TestTempDir + 'Freshen3.fsh');
+
+  if FileExists(TestTempDir + 'Freshen.zip') then
+    DeleteFile(TestTempDir + 'Freshen.zip');
+
+  Component.FileName := TestTempDir + 'Freshen.zip';
+  Component.BaseDirectory := TestTempDir;
+  Component.DeflationOption := doMaximum;
+  Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
+  Component.AddFiles('*.fsh',0);
+  Component.Save;
+  component.CloseArchive;
+
+ // Modify the 2nd File
+  SL.Add('Modification');
+  SL.SaveToFile(TestTempDir + 'Freshen2.fsh');
+
+ // Freshen the archive
+  Component.FileName := TestTempDir + 'Freshen.zip';
+  Component.BaseDirectory := TestTempDir;
+  Component.DeflationOption := doMaximum;
+  Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
+  Component.AddFiles('*.fsh',0);
+  Component.Save;
+  
+// Make sure modified file and archive value matches
+  MS := TMemoryStream.create;
+  FS := TFileStream.create(TestTempDir + 'Freshen2.fsh',fmOpenRead);
+  try
+    Component.ExtractToStream('Freshen2.fsh',MS);
+    CheckStreamMatch(FS,MS,'Freshened File on Disk Did not Match Archived value');
+  finally
+    MS.Free;
+    FS.Free;
+  end;
+
+
+ finally
+  SL.Free;
+  DeleteFile(TestTempDir + 'Freshen1.fsh');
+  DeleteFile(TestTempDir + 'Freshen2.fsh');
+  DeleteFile(TestTempDir + 'Freshen3.fsh');
+  DeleteFile(TestTempDir + 'Freshen.zip');
+ end;
+
+
+end;
 
 procedure TAbZipKitTests.SetUp;
 begin

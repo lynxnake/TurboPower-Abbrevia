@@ -27,7 +27,8 @@ unit AbZipperTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZipper,SysUtils,Classes,abMeter,abUtils;
+  TestFrameWork, abTestFrameWork, AbZipper, AbUnZper, SysUtils,
+  Classes, abMeter, abArcTyp, abUtils;
 
 type
 
@@ -41,9 +42,16 @@ type
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
     procedure BasicZipFile;
+    procedure CreateAndTestBasicZipFile;
+    procedure CreateAndTestBasicZipFile2;
+    procedure CreateAndTestBasicZipFile3;
+    procedure CreateAndTestBasicZipFile4;
     procedure BasicGZipTarFile;
+    procedure BasicGZipTarFile2;
     procedure TestBasicForceTypeZip;
     procedure TestBasicForceTypeGZipTar;
+    procedure CreatePasswordProtectedAddedByStream;
+    procedure GZipInputStreamClearTest;
   end;
 
 implementation
@@ -65,6 +73,19 @@ begin
  DeleteFile(TestFileName);
 end;
 
+procedure TAbZipperTests.BasicGZipTarFile2;
+var
+ TestFileName : string;
+begin
+ TestFileName := TestTempDir + 'abasic.tar.gz';
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
+end;
+
 procedure TAbZipperTests.BasicZipFile;
 var
  TestFileName : String;
@@ -77,6 +98,151 @@ begin
  Component.AddFiles('*.*',faAnyFile);
  Component.Save;
  CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
+end;
+
+procedure TAbZipperTests.CreateAndTestBasicZipFile;
+var
+ TestFileName : String;
+ ExtractDir : String;
+ AbUnZip : TAbUnZipper;
+begin
+// Test with Setting BaseDirectory and not specifying AutoSave  
+ TestFileName := TestTempDir + 'basic.zip';
+ if FileExists(TestFileName) then
+   DeleteFile(TestFileName);
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ Component.FileName := '';
+ CheckFileExists(TestFileName);
+
+ AbUnZip := TAbUnZipper.Create(nil);
+ try
+   AbUnZip.FileName := TestFileName;
+   // Clean out old Directory and create a new one.
+   Extractdir := TestTempDir + 'extracttest\';
+   if DirExists(ExtractDir) then
+      DelTree(ExtractDir);
+   CreateDir(ExtractDir);
+   // Extract Files.
+   AbUnZip.BaseDirectory := ExtractDir;
+   AbUnZip.ExtractFiles('*.*');
+   // Compare Extracted Files
+   CheckDirMatch(TestFileDir,ExtractDir,False);
+ finally
+  AbUnZip.Free;
+ end;
+ DeleteFile(TestFileName);
+end;
+
+procedure TAbZipperTests.CreateAndTestBasicZipFile2;
+var
+ TestFileName : String;
+ ExtractDir : String;
+ AbUnZip : TAbUnZipper;
+begin
+// Test AutoSave and not setting BaseDirectory specify full path AddFiles
+
+ TestFileName := TestTempDir + 'basic.zip';
+ if FileExists(TestFileName) then
+   DeleteFile(TestFileName);
+ Component.AutoSave := True;
+ Component.FileName := TestFileName;
+ Component.AddFiles(GetTestFileDir + '*.*',faAnyFile);
+ Component.FileName := '';
+ CheckFileExists(TestFileName);
+
+ AbUnZip := TAbUnZipper.Create(nil);
+ try
+   AbUnZip.FileName := TestFileName;
+   // Clean out old Directory and create a new one.
+   Extractdir := TestTempDir + 'extracttest\';
+   if DirExists(ExtractDir) then
+      DelTree(ExtractDir);
+   CreateDir(ExtractDir);
+   // Extract Files.
+   AbUnZip.BaseDirectory := ExtractDir;
+   AbUnZip.ExtractFiles('*.*');
+   // Compare Extracted Files
+   CheckDirMatch(TestFileDir,ExtractDir,False);
+ finally
+  AbUnZip.Free;
+ end;
+ DeleteFile(TestFileName);
+end;
+
+procedure TAbZipperTests.CreateAndTestBasicZipFile3;
+var
+ TestFileName : String;
+ ExtractDir : String;
+ AbUnZip : TAbUnZipper;
+begin
+// Test AutoSave setting Base Directory.
+ TestFileName := TestTempDir + 'basic.zip';
+ if FileExists(TestFileName) then
+   DeleteFile(TestFileName);
+ Component.AutoSave := True;
+ Component.BaseDirectory := TestFileDir;
+ Component.FileName := TestFileName;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.FileName := '';
+ CheckFileExists(TestFileName);
+
+ AbUnZip := TAbUnZipper.Create(nil);
+ try
+   AbUnZip.FileName := TestFileName;
+   // Clean out old Directory and create a new one.
+   Extractdir := TestTempDir + 'extracttest\';
+   if DirExists(ExtractDir) then
+      DelTree(ExtractDir);
+   CreateDir(ExtractDir);
+   // Extract Files.
+   AbUnZip.BaseDirectory := ExtractDir;
+   AbUnZip.ExtractFiles('*.*');
+   // Compare Extracted Files
+   CheckDirMatch(TestFileDir,ExtractDir,False);
+ finally
+  AbUnZip.Free;
+ end;
+ DeleteFile(TestFileName);
+
+end;
+
+procedure TAbZipperTests.CreateAndTestBasicZipFile4;
+var
+ TestFileName : String;
+ ExtractDir : String;
+ AbUnZip : TAbUnZipper;
+begin
+// Test AutoSave setting BaseDirectory and specifing full path to AddFiles
+ TestFileName := TestTempDir + 'basic.zip';
+ if FileExists(TestFileName) then
+   DeleteFile(TestFileName);
+ Component.AutoSave := True;
+ Component.BaseDirectory := TestTempDir;
+ Component.FileName := TestFileName;
+ Component.AddFiles(GetTestFileDir + '*.*',faAnyFile);
+ Component.FileName := '';
+ CheckFileExists(TestFileName);
+
+ AbUnZip := TAbUnZipper.Create(nil);
+ try
+   AbUnZip.FileName := TestFileName;
+   // Clean out old Directory and create a new one.
+   Extractdir := TestTempDir + 'extracttest\';
+   if DirExists(ExtractDir) then
+      DelTree(ExtractDir);
+   CreateDir(ExtractDir);
+   // Extract Files.
+   AbUnZip.BaseDirectory := ExtractDir;
+   AbUnZip.ExtractFiles('*.*');
+   // Compare Extracted Files
+   CheckDirMatch(TestFileDir,ExtractDir,False);
+ finally
+  AbUnZip.Free;
+ end;
  DeleteFile(TestFileName);
 end;
 
@@ -152,11 +318,105 @@ begin
   UnRegisterClass(TAbZipper);
 end;
 
+procedure TAbZipperTests.CreatePasswordProtectedAddedByStream;
+var
+//oAbZipper : TAbZipper;
+oFileStream : TFileStream;
+sZipFile : String;
+begin
+//  oAbZipper := TAbZipper.Create(nil);
+//  try
+  // Remove the path from the zip
+  Component.StoreOptions := [soStripPath];
+
+  sZipFile := TestTempDir +  'PWStream.zip';
+
+  // Create the directory if it doesn't exist
+  {$IFDEF DELPHI5} // ForceDirectories not part of Delphi 4 so assume created by hand
+   Check(ForceDirectories(TestTempDir),'Unable to create Test Temp directory.');
+  {$ELSE}
+   Check(DirExists(TestTempDir),'Test Temp Directory needs to be created.');
+  {$ENDIF}
+
+
+  // File we need to zip
+  Component.FileName := sZipFile;
+
+  // Password protect the source file
+//  Component.Password := 'password';
+
+  oFileStream := TFileStream.Create(TestFileDir +'MPL-1_1.txt', fmOpenRead or fmShareDenyNone);
+  try
+  // Add file to the zip file
+   Component.AddFromStream('file.ext', oFileStream);
+   Component.Save;
+
+  finally
+  // Free memory
+  oFileStream.Free;
+  end; {finally}
+  CheckFileExists(sZipFile);
+  
+
+end;
+
+procedure TAbZipperTests.GZipInputStreamClearTest;
+//[ 820489 ] CloseArchive does not close input stream
+var
+ fs,fs2 : TFileStream;
+ filename : string;
+ extractFilename :string;
+ unzip : TAbUnZipper;
+begin
+ fs := TFileStream.Create(TestFileDir + 'MPL-1_1.txt',fmOpenRead);
+ try
+ filename := TestTempDir + 'clearinputstr.gz';
+ if FileExists(filename) then
+   DeleteFile(fileName);
+ Component.ForceType := true;
+ Component.ArchiveType := atGzip;
+ Component.FileName := FileName;
+ Fs.Position := 0;
+ Component.AddFromStream('', fs);
+ Component.Save;
+ Component.CloseArchive;
+ if FileExists(filename) then
+   DeleteFile(fileName);
+ Component.ForceType := true;
+ Component.ArchiveType := atGzip;
+ Component.FileName := FileName;
+ Fs.Position := 0;
+ Component.AddFromStream('', fs);
+ Component.Save;
+ Component.CloseArchive;
+ //Check Archive for match
+ unzip := TAbUnZipper.Create(nil);
+ try
+   extractFilename := TestTempDir + 'extractmpl.txt';
+   unzip.FileName := filename;
+   unzip.ExtractAt(0,extractFileName);
+ finally
+  unzip.free;
+ end;
+ fs2 := TFileStream.Create(extractFilename,fmOpenRead);
+ try
+   CheckStreamMatch(fs,fs2,'Extracted file does not match original');
+ finally
+   fs2.free;
+ end;
+
+ finally
+  fs.free;
+ end;
+
+
+end;
+
+
 initialization
 
   TestFramework.RegisterTest('Abbrevia.Component Level Test Suite',
     TAbZipperTests.Suite);
- 
+
 end.
 
- 

@@ -27,20 +27,23 @@ unit AbArchiveSplitTests;
 interface
 
 uses
-  TestFrameWork, abTestFramework, Windows,SysUtils,Classes, abZipper,abUnzper;
+  TestFrameWork, abTestFramework, Windows,SysUtils,Classes, abZipper,abExcept,abUnzper;
 
 type
 
   TAbArchiveSplitTests = class(TabTestCase)
   private
+    procedure AbortOnImageRequestEVENT (Sender : TObject; ImageNumber : Integer;
+                                  var ImageName : string; var Abort : Boolean);
 
   protected
     procedure SetUp; override;
     procedure TearDown; override;
   published
     procedure CreateBasicSplitArchive;
+//    procedure TestCreatedWithWinZip;
     procedure VerifyBasicSplitArchive;
-// Add test methods here...
+    procedure AbortOnImageRequest;
 
   end;
 
@@ -48,11 +51,44 @@ implementation
 
 { TAbArchiveSplitTests }
 
+procedure TAbArchiveSplitTests.AbortOnImageRequest;
+var
+ Zip : TabZipper;
+begin
+ // [ 783614 ] Item #1
+ // 3.05 Beta Code produced EAbBadStream, it should be EabUserAbort
+   ExpectedException := EabUserAbort;
+   if DirExists(TestTempDir+'SPLIT-ABORT\') then
+      DelTree(TestTempDir + 'SPLIT-ABORT\');
+     CreateDir(TestTempDir+'SPLIT-ABORT\');
+   // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
+   // Compares each file byte by byte to original.
+   Zip := TAbZipper.create(nil);
+   try
+   Zip.BaseDirectory := GetWindowsDir;
+   Zip.FileName := TestTempDir + 'SPLIT-ABORT\SPLITTEST.ZIP';
+   Zip.SpanningThreshold := 50000;
+   Zip.OnRequestImage := AbortOnImageRequestEVENT;
+   Zip.AddFiles('*.DLL',faAnyFile);
+   Zip.Save;
+   finally
+     Zip.Free;
+   end;
+
+
+end;
+
+procedure TAbArchiveSplitTests.AbortOnImageRequestEVENT(Sender: TObject;
+  ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
+begin
+ if ImageNumber = 2 then Abort := True;
+end;
+
 procedure TAbArchiveSplitTests.CreateBasicSplitArchive;
 var
   Zip : TAbZipper;
 begin
-   if DirectoryExists(TestTempDir+'SPLIT\') then
+   if DirExists(TestTempDir+'SPLIT\') then
       DelTree(TestTempDir + 'SPLIT\');
      CreateDir(TestTempDir+'SPLIT\');
    // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
@@ -80,6 +116,14 @@ begin
 
 end;
 
+// Bogus test WinZip Command Line does not support split archives
+// it thinks the archive is a span instead.
+//procedure TAbArchiveSplitTests.TestCreatedWithWinZip;
+//begin
+// Archive used in this test is created with the "CreateBasicSplitArchive" Test
+// Found in: TestTempDir + 'SPLIT\SPLITTEST.ZIP'
+//  ExecuteAndWait(UnWinZip,TestTempDir + 'SPLIT\SPLITTEST.ZIP');
+//end;
 
 procedure TAbArchiveSplitTests.VerifyBasicSplitArchive;
 var
@@ -105,7 +149,7 @@ begin
       // Extract File in Span to Memory
       UnZip.ExtractToStream(UnZip.Items[I].FileName,mStream);
       // Check to make sure mStream is not empty (note: this occured for awhile, during development)
-      Check(mStream.Size >0,'Memory Stream containing "' + UnZip.Items[I].FileName + '" is 0 bytes in length.'); 
+      Check(mStream.Size >0,'Memory Stream containing "' + UnZip.Items[I].FileName + '" is 0 bytes in length.');
       // Open the Existing File in Read Only Mode.
       fStream := TFileStream.Create(TestFile,fmOpenRead);
       try
