@@ -319,6 +319,8 @@ const
 
   function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
 
+  function AbFlushOsBuffers(Handle : Integer) : Boolean;
+
 { file attributes }
   function AbDOS2UnixFileAttributes(Attr: LongInt): LongInt;
   function AbUnix2DosFileAttributes(Attr: LongInt): LongInt;
@@ -1311,7 +1313,9 @@ begin
     Result := GetLastError
   else
   begin
+    {$IFDEF DefeatWarnings}{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF} {$ENDIF}
     Result := FileSetDate(f, Age);
+    {$IFDEF DefeatWarnings}{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}{$ENDIF}
     FileClose(f);
   end;
 end;
@@ -1328,6 +1332,24 @@ begin
 end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
+
+function AbFlushOsBuffers(Handle : Integer) : Boolean;
+//Taken from StSystem.pas from SysTools, modified to do nothing for linux
+{-Flush the OS's buffers for the specified file}
+begin
+{$IFNDEF LINUX}
+  Result := FlushFileBuffers(Handle);
+  if not Result then
+{$IFDEF Version6}
+    RaiseLastOSError;
+{$ELSE}
+    RaiseLastWin32Error;
+{$ENDIF}
+{$ENDIF}
+end;
+
+
+
 {!!.01 -- End Added }
 function AbSwapLongEndianness(Value : LongInt): LongInt;
 { convert BigEndian <-> LittleEndian 32-bit value }
