@@ -371,10 +371,21 @@ begin
     ChDir( SaveDir );
   end; {SaveDir}
   try {UncompressedStream}
-    DateTime := FileGetDate(TFileStream(UncompressedStream).Handle);
-    Item.LastModFileTime := LongRec(DateTime).Lo;
-    Item.LastModFileDate := LongRec(DateTime).Hi;
-    AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
+  {!!.05 [ 808499 ] Wrong file dates in zip archives under Linux }
+  {!!.05 Changed from unsafe LongRec, to shr 16 logic. Done to prep for CLR}
+      DateTime := FileGetDate(TFileStream
+      (UncompressedStream).Handle);
+      {$IFDEF Linux}
+      DateTime := AbDateTimeToDosFileDate
+      (FileDateToDateTime (DateTime));
+      {$ENDIF}
+      Item.LastModFileTime := Word(DateTime);        // Get the Lo Part
+      Item.LastModFileDate := Word(DateTime shr 16); // Get the Hi Part
+      AbZipFromStream(Sender, Item, OutStream,UncompressedStream);
+//    DateTime := FileGetDate(TFileStream(UncompressedStream).Handle);
+//    Item.LastModFileTime := LongRec(DateTime).Lo;
+//    Item.LastModFileDate := LongRec(DateTime).Hi;
+//    AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
   finally {UncompressedStream}
     UncompressedStream.Free;
   end; {UncompressedStream}
