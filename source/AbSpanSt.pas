@@ -461,7 +461,12 @@ begin
         end
         else                                                             {!!.01}
           Result := False;                                               {!!.01}
-      end; { if Not FCancelled}
+      end { if Not FCancelled}
+      else {!!.05 [ 783614 ]}
+       begin
+          result := false;
+          exit;
+       end;
     end; { While }
    end { if Assigned(FOnRequestImage) then begin }
    else Raise EAbZipstreamFull.Create; {!!.05 [ 753982 ],[714944] }
