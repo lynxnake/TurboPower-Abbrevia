@@ -27,7 +27,9 @@ unit abTestFramework;
 {$I AbDefine.inc}
 interface
 
-uses TestFramework, SysUtils, Classes, TypInfo, {$IFDEF VERSION6} Variants, {$ENDIF} {$IFDEF LINUX} QForms,QControls {$ELSE}Forms,Controls{$ENDIF};
+uses TestFramework, {$IFDEF VERSION6} Variants,
+     {$ENDIF} {$IFDEF LINUX} QForms,QControls, {$ELSE}Forms,Windows,Controls,{$ENDIF}
+     SysUtils, Classes, TypInfo;
 
 type
 
@@ -40,6 +42,7 @@ type
    protected
     function GetTestFileDir : string;
     function GetTestTempDir : string;
+    function GetWindowsDir : string;
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
     procedure CheckFileExists(aFileName : String);
     procedure Setup; override;
@@ -251,6 +254,19 @@ begin
   {$ELSE}
     result := GetTestFileDir + 'temp\';
   {$ENDIF}
+end;
+
+function TabTestCase.GetWindowsDir: string;
+var
+ aDirBuf : Array[0..MAX_PATH] of Char;
+begin
+// Windows Directory is used to find
+ {$IFDEF LINUX}
+   result := '/etc/
+ {$ELSE}
+   GetWindowsDirectory(aDirBuf,SizeOf(aDirBuf));
+   result := IncludeTrailingBackslash(string(aDirBuf));
+ {$ENDIF}
 end;
 
 procedure TabTestCase.Setup;

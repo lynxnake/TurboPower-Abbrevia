@@ -36,7 +36,7 @@ unit AbUnzperTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbUnzper,SysUtils,Classes,abMeter;
+  TestFrameWork,abTestFrameWork,AbUnzper,SysUtils,Classes,abMeter,abExcept;
 
 type
 
@@ -46,12 +46,15 @@ type
   protected
     procedure SetUp; override;
     procedure TearDown; override;
+    procedure TestUserAbortProgress(Sender : TObject; Progress : Byte; var Abort : Boolean);
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
     procedure TestBasicUnzip;
     procedure TestBasicUnGzip;
     procedure TestBasicUnGzipTar;
+    procedure TestUserAbort;
+    procedure TestWinZipOutput;
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
     {$ENDIF}
@@ -178,11 +181,49 @@ begin
   UnRegisterClass(TAbUnZipper);
 end;
 
+procedure TAbUnZipperTests.TestUserAbort;
+var
+ FUnZipper : TAbUnZipper;
+begin
+// This test needs to create and free the component as the problem is in the FREE
+// Inspired by, but not testing for the same thing as SF.Net Tracker ID [ 785269 ]
+
+// Expecting this exception don't fail if it occurs.
+ExpectedException := EAbUserAbort;
+
+FUnZipper := TAbUnZipper.Create(Nil);
+TRY
+FUnZipper.BaseDirectory := TestTempDir;
+FUnZipper.OnArchiveProgress:=TestUserAbortProgress;
+FUnZipper.FileName:=TestFileDir + 'MPL.ZIP';
+FUnZipper.ExtractFiles('*.*');
+Finally
+FUnZipper.Free;
+end;
+
+end;
+
+procedure TAbUnZipperTests.TestUserAbortProgress(Sender: TObject;
+  Progress: Byte; var Abort: Boolean);
+begin
+ Abort := (Progress > 25);
+end;
+
+procedure TAbUnZipperTests.TestWinZipOutput;
+begin
+// This compares a known problem archive with the results that were extracted from
+// WinZip.
+  Component.BaseDirectory := TestTempDir;
+  Component.Filename := TestFileDir + '20030328.ZIP';
+  Component.ExtractFiles('*.*');
+  CheckDirMatch(TestFileDir + '20030328\',TestTempDir,true);
+
+end;
+
 initialization
 
   TestFramework.RegisterTest('Abbrevia.Component Level Test Suite',
     TAbUnZipperTests.Suite);
- 
+
 end.
 
- 

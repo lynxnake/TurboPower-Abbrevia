@@ -42,6 +42,7 @@ type
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
     procedure TestAddThenExtract;
+    procedure TestTaggedFiles;
   end;
 
 implementation
@@ -75,8 +76,8 @@ if FileExists(TestTempDir + 'ZKitTest.zip') then
   DeleteFile(TestTempDir + 'ZKitTest.zip');
 
 Component.FileName := TestTempDir + 'ZKitTest.zip';
-Component.BaseDirectory := TestFileDir;
-Component.AddFiles('*.*',faAnyFile);
+Component.BaseDirectory := GetWindowsDir;
+Component.AddFiles('*.ZIP',faAnyFile);
 Component.Save;
 MS := TMemoryStream.Create;
 try
@@ -128,6 +129,22 @@ begin
   CompTest := (UnStreamComponent(CompStr) as TAbZipKit);
   CompareComponentProps(Component,CompTest);
   UnRegisterClass(TAbZipKit);
+end;
+
+procedure TAbZipKitTests.TestTaggedFiles;
+begin
+// Test for Bug  806077
+  DeleteFile(TestTempDir + 'test.zip');
+  Component.FileName := TestTempDir + 'test.zip';
+  Component.AutoSave := True;
+  Component.BaseDirectory := TestFileDir;
+  Component.ClearTags;
+  Component.AddFiles('*.*',0);
+  Component.TagItems('*.*');
+  Check(Component.Count > 0);
+  // TestTaggedItems should not raise an error.
+  Component.TestTaggedItems;
+  Component.CloseArchive;
 end;
 
 initialization
