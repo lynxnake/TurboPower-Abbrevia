@@ -23,13 +23,16 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
+{$I AbDefine.inc}
 
 // Uncomment the following directive to create a console application
 // or leave commented to create a GUI application...
+// Currently Abbrevia's Floppy Span Tests don't work will with console testing.
 
 {.$APPTYPE CONSOLE}
 
 program AbbreviaUnitTests;
+
 
 uses
   TestFramework {$IFDEF LINUX},
@@ -38,6 +41,12 @@ uses
   Forms,
   GUITestRunner {$ENDIF},
   TextTestRunner,
+  AbFloppySpanTests in 'AbFloppySpanTests.pas',
+  AbCabViewTests in 'AbCabViewTests.pas',
+  AbCBrowsTests in 'AbCBrowsTests.pas',
+  AbCabExtTests in 'AbCabExtTests.pas',
+  AbCabMakTests in 'AbCabMakTests.pas',
+  AbCabKitTests in 'AbCabKitTests.pas',
   AbUnzPrcTests in 'AbUnzPrcTests.pas',
   AbZipPrcTests in 'AbZipPrcTests.pas',
   abTestFramework in 'abTestFramework.pas',
@@ -46,15 +55,11 @@ uses
   AbZipperTests in 'AbZipperTests.pas',
   AbZipKitTests in 'AbZipKitTests.pas',
   AbZipViewTests in 'AbZipViewTests.pas',
-  AbCabViewTests in 'AbCabViewTests.pas',
   AbZipOutTests in 'AbZipOutTests.pas',
   AbZBrowsTests in 'AbZBrowsTests.pas',
-  AbCBrowsTests in 'AbCBrowsTests.pas',
-  AbCabExtTests in 'AbCabExtTests.pas',
-  AbCabMakTests in 'AbCabMakTests.pas',
-  AbCabKitTests in 'AbCabKitTests.pas',
   AbMeterTests in 'AbMeterTests.pas',
-  AbSelfExTests in 'AbSelfExTests.pas';
+  AbSelfExTests in 'AbSelfExTests.pas',
+  AbArchiveSplitTests in 'AbArchiveSplitTests.pas';
 
 {$R *.RES}
 

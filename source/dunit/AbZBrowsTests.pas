@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbZBrowsTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

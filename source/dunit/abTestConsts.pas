@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit abTestConsts;
-
+{$I AbDefine.inc}
 interface
 
 const

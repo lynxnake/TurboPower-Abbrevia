@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbZipPrcTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbSelfExTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

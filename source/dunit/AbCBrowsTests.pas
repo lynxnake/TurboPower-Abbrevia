@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbCBrowsTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

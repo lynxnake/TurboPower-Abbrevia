@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbUnzPrcTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

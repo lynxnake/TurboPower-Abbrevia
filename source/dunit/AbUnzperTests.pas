@@ -24,7 +24,15 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbUnzperTests;
-
+{$I AbDefine.inc}
+{ The following define is unit specific it will build the files used
+  in the tests here. Due to the potential problems of compress having
+  a problem and uncompress not, I did not want to confuse the tests by
+  having these created every time, but only when needed under a stable
+  code base... Otherwise it would more difficult to determine which
+  side the problem was on!  WATCH out for hardcoding of paths, if you
+  use this compiler define}
+{.$DEFINE BUILDTESTS}
 interface
 
 uses
@@ -41,11 +49,53 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
+    procedure TestBasicUnzip;
+    procedure TestBasicUnGzip;
+    procedure TestBasicUnGzipTar;
+    {$IFDEF BUILDTESTS}
+    procedure CreateTestFiles;
+    {$ENDIF}
   end;
 
 implementation
+{$IFDEF BUILDTESTS}
+  uses AbZipper;
+{$ENDIF}
 
 { TAbUnZipperTests }
+{$IFDEF BUILDTESTS}
+procedure TAbUnZipperTests.CreateTestFiles;
+var
+ Zip : TAbZipper;
+begin
+ //Cheap and easy way to keep the code around that I use to build the tests
+ //Hard Coded to Abbrevia path to keep things easy as this is one time only code
+ Zip := TAbZipper.Create(nil);
+ try
+    Zip.FileName := TestFileDir + 'MPL.ZIP';
+    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
+    Zip.Save;
+ finally
+   Zip.Free;
+ end;
+ Zip := TAbZipper.Create(nil);
+ try
+    Zip.FileName := TestFileDir + 'MPL.GZ';
+    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
+    Zip.Save;
+ finally
+   Zip.Free;
+ end;
+ Zip := TAbZipper.Create(nil);
+ try
+    Zip.FileName := TestFileDir + 'MPL.TGZ';
+    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
+    Zip.Save;
+ finally
+   Zip.Free;
+ end;
+end;
+{$ENDIF}
 
 procedure TAbUnZipperTests.SetUp;
 begin
@@ -59,12 +109,55 @@ begin
 
 end;
 
+
+procedure TAbUnZipperTests.TestBasicUnGzip;
+var
+ TestFileName : string;
+begin
+  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
+  if FileExists(TestFileName) then
+     DeleteFile(TestFileName);
+  Component.BaseDirectory := TestTempDir;
+  Component.FileName := TestFileDir + 'mpl.gz';
+  Component.ExtractFiles('*.*');
+  Check(FileExists(TestFileName),'Unzip Test File not Found');
+  DeleteFile(TestFileName)
+end;
+
+procedure TAbUnZipperTests.TestBasicUnGzipTar;
+var
+ TestFileName : string;
+begin
+  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
+  if FileExists(TestFileName) then
+     DeleteFile(TestFileName);
+  Component.BaseDirectory := TestTempDir;
+  Component.FileName := TestFileDir + 'mpl.tgz';
+  Component.ExtractFiles('*.*');
+  Check(FileExists(TestFileName),'Unzip Test File not Found');
+  DeleteFile(TestFileName)
+end;
+
+procedure TAbUnZipperTests.TestBasicUnzip;
+var
+ TestFileName : string;
+begin
+  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
+  if FileExists(TestFileName) then
+     DeleteFile(TestFileName);
+  Component.BaseDirectory := TestTempDir;
+  Component.FileName := TestFileDir + 'mpl.zip';
+  Component.ExtractFiles('*.*');
+  Check(FileExists(TestFileName),'Unzip Test File not Found');
+  DeleteFile(TestFileName);
+end;
+
 procedure TAbUnZipperTests.TestComponentLinks;
 var
   MLink1,MLink2 : TAbVCLMeterLink;
 begin
   MLink1 := TAbVCLMeterLink.Create(TestForm);
-  MLink2 := TAbVCLMeterLink.Create(TestForm);  
+  MLink2 := TAbVCLMeterLink.Create(TestForm);
   Component.ArchiveProgressMeter := MLink1;
   Component.ItemProgressMeter := MLink2;
   MLink1.Free;

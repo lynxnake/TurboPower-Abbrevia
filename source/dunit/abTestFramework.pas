@@ -24,9 +24,8 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit abTestFramework;
-
-interface
 {$I AbDefine.inc}
+interface
 
 uses TestFramework, SysUtils, Classes, TypInfo, {$IFDEF VERSION6} Variants, {$ENDIF} {$IFDEF LINUX} QForms,QControls {$ELSE}Forms,Controls{$ENDIF};
 
@@ -40,9 +39,16 @@ type
  TabTestCase = class(TTestCase)
    protected
     function GetTestFileDir : string;
+    function GetTestTempDir : string;
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
+    procedure CheckFileExists(aFileName : String);
+    procedure Setup; override;
+    // Call this routine with GREAT Caution!!!!
+    function DelTree(Dir : String) : Boolean;
+
    public
      property TestFileDir : String read GetTestFileDir;
+     property TestTempDir : String read GetTestTempDir;
    end;
 
  TabCompTestCase = class(TabTestCase)
@@ -74,6 +80,11 @@ implementation
 
 { TabTestCase }
 
+procedure TabTestCase.CheckFileExists(aFileName: String);
+begin
+ Check(FileExists(aFileName), 'Unable to Locate: '+ aFileName);
+end;
+
 procedure TabTestCase.CheckStreamMatch(aStream1, aStream2: TStream;
   Msg: String);
 var
@@ -93,15 +104,103 @@ begin
    end;
 end;
 
+function TabTestCase.DelTree(Dir: String): Boolean;
+//NOTE if returns false part of the directory may be gone while others parts still exist.
+//Written by: Robert Love
+var
+ SR : TSearchRec;
+ SDir : String;
+ // Uses Temp Variables as FindFirst/FindNext Leave files Locked
+ DirList : TStringList;
+ FileList : TStringList;
+ I : Integer;
+begin
+// Change to Exception Based, instead result based
+ result := TRUE;
+ // Force Slash
+ if Dir[Length(Dir)] <> '\' then
+   Dir := Dir + '\';
+ // Set Wildcards
+ SDir := Dir + '*.*';
+
+ // If a File is found
+ if  FindFirst(SDir,faAnyFile,SR)  = 0 then
+   begin
+     DirList := TStringList.create;
+     FileList := TStringList.create;
+     try
+
+      if (SR.Attr and faDirectory > 0) then
+         begin
+          if (SR.Name <> '.') and (SR.Name <> '..') then
+            DirList.Add(Dir + SR.Name)
+         end
+        else FileList.Add(Dir + SR.Name);
+
+      while FindNext(SR) = 0 do
+       begin
+        if (SR.Attr and faDirectory > 0) then
+           begin
+            if (SR.Name <> '.') and (SR.Name <> '..') then
+              DirList.Add(Dir + SR.Name)
+           end
+         else FileList.Add(Dir + SR.Name);
+      end; { While files found }
+       // Close Search to Free Locks on Files/Directories
+      FindClose(SR);
+      // Delete All Files in Directory
+      For I := 0 to FileList.Count -1 do
+       begin
+        result := DeleteFile(FileList.Strings[I]);
+        if not result then
+          raise exception.Create('Unable to Delete the following File: ' + FileList.Strings[I]);
+//        if not result then Exit;
+       end;
+      // Recursivly call DelTree to Get rid of SubDirectories
+      For I := 0 to DirList.Count -1 do
+        begin
+         result := DelTree(DirList.Strings[I]);
+         if not result then Exit;
+        end;
+      //Finally Remove the Directory
+      result := RemoveDir(Dir);
+      if not result then
+        raise exception.Create('Unable to Remove the following Directory: ' + Dir);
+
+     finally
+       DirList.free;
+       FileList.free;
+     end;
+   end; { If File Found with FindFirst }
+end;
+
 function TabTestCase.GetTestFileDir: string;
 begin
 // May want to place in ini file in the future but this will do for now
 {$IFDEF LINUX}
 // I don't think this will work with linux so may need to change
- result := ExtractFilePath(ParamStr(0)) + 'TestFiles/';
+ result := ExtractFilePath(ParamStr(0)) + 'testfiles/';
 {$ELSE}
- result := ExtractFilePath(ParamStr(0)) + 'TestFiles\';
+ result := ExtractFilePath(ParamStr(0)) + 'testfiles\';
 {$ENDIF}
+end;
+
+function TabTestCase.GetTestTempDir: string;
+begin
+  {$IFDEF LINUX}
+    result := GetTestFileDir + 'temp/';
+  {$ELSE}
+    result := GetTestFileDir + 'temp\';
+  {$ENDIF}
+end;
+
+procedure TabTestCase.Setup;
+begin
+  inherited;
+  if not DirectoryExists(TestTempDir) then
+   begin
+    CreateDir(TestTempDir);
+   end;
 end;
 
 { TabCompTestCase }

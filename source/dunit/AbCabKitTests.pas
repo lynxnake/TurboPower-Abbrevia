@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbCabKitTests;
-
+{$I AbDefine.inc}
 interface
 
 uses

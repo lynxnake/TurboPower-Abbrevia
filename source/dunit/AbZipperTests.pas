@@ -22,13 +22,12 @@
  * Contributor(s):
  *
  * ***** END LICENSE BLOCK ***** *)
-
 unit AbZipperTests;
-
+{$I AbDefine.inc}
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZipper,SysUtils,Classes,abMeter;
+  TestFrameWork,abTestFrameWork,AbZipper,SysUtils,Classes,abMeter,abUtils;
 
 type
 
@@ -41,11 +40,45 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
+    procedure BasicZipFile;
+    procedure BasicGZipTarFile;
+    procedure TestBasicForceTypeZip;
+    procedure TestBasicForceTypeGZipTar;
   end;
 
 implementation
 
 { TAbZipperTests }
+
+procedure TAbZipperTests.BasicGZipTarFile;
+var
+ TestFileName : String;
+begin
+ // This test only insure that the Gzip Tar file is created without raising errors
+ // it is not designed to test the data in the resulting zip file.
+ TestFileName := TestTempDir + 'basic.tgz';
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
+end;
+
+procedure TAbZipperTests.BasicZipFile;
+var
+ TestFileName : String;
+begin
+ // This test only insure that the zip file is created without raising errors
+ // it is not designed to test the data in the resulting zip file.
+ TestFileName := TestTempDir + 'basic.zip';
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
+end;
 
 procedure TAbZipperTests.SetUp;
 begin
@@ -57,6 +90,36 @@ procedure TAbZipperTests.TearDown;
 begin
   inherited;
 
+end;
+
+procedure TAbZipperTests.TestBasicForceTypeGZipTar;
+var
+ TestFileName : string;
+begin
+ TestFileName := TestTempDir + 'basicGzipTar';
+ Component.ArchiveType := atGzippedTar;
+ Component.ForceType := True;
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
+end;
+
+procedure TAbZipperTests.TestBasicForceTypeZip;
+var
+ TestFileName : string;
+begin
+ TestFileName := TestTempDir + 'basic';
+ Component.ArchiveType := atZip;
+ Component.ForceType := True;
+ Component.FileName := TestFileName;
+ Component.BaseDirectory := GetTestFileDir;
+ Component.AddFiles('*.*',faAnyFile);
+ Component.Save;
+ CheckFileExists(TestFileName);
+ DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.TestComponentLinks;

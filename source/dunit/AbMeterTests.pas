@@ -24,7 +24,7 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 unit AbMeterTests;
-
+{$I AbDefine.inc}
 interface
 
 uses
