@@ -2075,7 +2075,13 @@ begin
 
     { create new Item }
     Item := TAbZipItem.Create;
+    try
     Item.LoadFromStream(FStream);
+    except {!!.05 [ 800130 ] ZIP - Potential Memory Leak }
+      Item.Free;
+      Item := nil;
+      raise;
+    end;
     if IsExecutable then
       if (Item.RelativeOffset < Lowest) then
         Lowest := Item.RelativeOffset;
