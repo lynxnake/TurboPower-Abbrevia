@@ -41,6 +41,7 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
+    procedure TestAddThenExtract;
   end;
 
 implementation
@@ -56,6 +57,46 @@ end;
 procedure TAbZipKitTests.TearDown;
 begin
   inherited;
+
+end;
+
+procedure TAbZipKitTests.TestAddThenExtract;
+var
+ MS : TMemoryStream;
+ FS : TFileStream;
+ I  : Integer;
+begin
+// [ 785769 ] SF.NET Tracker ID is the Bug this is testing for.
+
+// This test is designed to add to an archive
+// Then extract from it without having to close/reopen archive.
+
+if FileExists(TestTempDir + 'ZKitTest.zip') then
+  DeleteFile(TestTempDir + 'ZKitTest.zip');
+
+Component.FileName := TestTempDir + 'ZKitTest.zip';
+Component.BaseDirectory := TestFileDir;
+Component.AddFiles('*.*',faAnyFile);
+Component.Save;
+MS := TMemoryStream.Create;
+try
+For I := 0 to Component.Count -1 do
+  begin
+    // Compare uncompressed Files to Original Files
+     Component.ExtractToStream(Component.Items[I].FileName,MS);
+     FS := TFileStream.create(TestFileDir + ExtractFileName(Component.Items[I].FileName),fmOpenRead);
+     try
+     CheckStreamMatch(MS,FS,'File ' + Component.Items[I].FileName + ' did not match original.');
+     MS.Clear;
+     finally
+      FS.Free;
+     end;
+  end;
+finally
+  MS.Free;
+end;
+
+
 
 end;
 
