@@ -1413,10 +1413,10 @@ begin
       LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);               {!!.01}
       FileSetDate(NewName, LinuxFileTime);                               {!!.01}
       {$ENDIF}
-      AbFileSetAttr(NewName, Item.ExternalFileAttributes);
    finally {OutStream}
       OutStream.Free;
-    end;   {OutStream}
+   end;   {OutStream}
+   AbFileSetAttr(NewName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
 
   except
     on E : EAbUserAbort do begin
