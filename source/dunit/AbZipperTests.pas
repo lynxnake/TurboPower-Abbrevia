@@ -28,7 +28,7 @@ interface
 
 uses
   TestFrameWork, abTestFrameWork, AbZipper, AbUnZper, SysUtils,
-  Classes, abMeter, abArcTyp, abUtils;
+  Classes, abMeter, abArcTyp, abZipTyp, abUtils;
 
 type
 
@@ -52,6 +52,8 @@ type
     procedure TestBasicForceTypeGZipTar;
     procedure CreatePasswordProtectedAddedByStream;
     procedure GZipInputStreamClearTest;
+    procedure CreateSimplePWZip;
+    procedure CreateMultiple;
   end;
 
 implementation
@@ -412,6 +414,57 @@ begin
 
 end;
 
+
+procedure TAbZipperTests.CreateSimplePWZip;
+var
+ TestFile :string;
+begin
+// This is to address a problem where archives where not created at all
+// when a password is used.   It is not designed to test if the archive
+// is extractable.   Another test should be written for that.
+ TestFile := TestTempDir + 'simplepw.zip';
+ if FileExists(TestFile) then
+   DeleteFile(TestFile);
+ Component.Password := 'simple';
+ Component.StoreOptions := [];
+ Component.BaseDirectory := TestFileDir;
+ Component.FileName := TestFile;
+ Component.AddFiles('MPL-1_1.txt',0);
+ Component.Save;
+ // For some reason test fails without a delay, but TestFile is created as expected
+ // So inserting delay
+ Sleep(500);
+ CheckFileExists(TestFile);
+
+//Current Actual Size 9151 (Could change if we change default compresion so not testing for it)
+ Check(AbFileGetSize(TestFile) > 8000,TestFile + ' too small check if created correctly');
+
+end;
+
+procedure TAbZipperTests.CreateMultiple;
+var
+ I : Integer;
+ SL : TStringList;
+begin
+  SL := TStringList.Create;
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  SL.Add('Test File Test File Test File Test File');
+  for I := 0 to 30 do
+    begin
+      SL.SaveToFile(TestTempDir + 'multi' + intToStr(I) + '.txt');
+      Component.DeflationOption := doMaximum;
+      Component.BaseDirectory := TestTempDir;
+      Component.FileName := TestTempDir + 'multi' + intToStr(I) + '.zip';
+      Component.AddFiles(TestTempDir + 'multi' + intToStr(I) + '.txt',0);
+      Component.Save;
+      Component.CloseArchive;
+    end;
+end;
 
 initialization
 

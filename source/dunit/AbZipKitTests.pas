@@ -45,14 +45,86 @@ type
     procedure TestAddThenExtract;
     procedure TestTaggedFiles;
     procedure FreshenTest;
+    procedure FreshenBaseDir;
   end;
 
 implementation
-
+uses Dialogs;
 { TAbZipKitTests }
 
+
+procedure TAbZipKitTests.FreshenBaseDir;
+// Test Freshen without setting the Base Directory
+// SF.NET Tracker [ 892830 ] DiskFileName is not set correctly
+var
+ TestFile : String;
+ SL : TStringList;
+ MS : TMemoryStream;
+ FS : TFileStream;
+
+begin
+
+TestFile := TestTempDir + 'freshenBaseDir.zip';
+if FileExists(testFile) then
+  DeleteFile(testFile);
+  
+Component.StoreOptions := Component.StoreOptions + [soRecurse,soFreshen];
+Component.FileName := TestFile;
+Component.DeflationOption := doMaximum;
+
+// Create Files to add
+
+  // Create 3 Text Files to add to archive.
+ SL := TStringList.Create;
+ try
+  SL.Add('Test File');
+
+  SL.SaveToFile(TestTempDir + 'Freshen1base.fsh');
+  SL.SaveToFile(TestTempDir + 'Freshen2base.fsh');
+  SL.SaveToFile(TestTempDir + 'Freshen3base.fsh');
+  Component.AddFiles(TestTempDir + 'Freshen1base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen2base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen3base.fsh', 0);
+
+  Component.CloseArchive;
+
+ // Modify the 2nd File
+  SL.Add('Modification');
+  SL.SaveToFile(TestTempDir + 'Freshen2base.fsh');
+
+ // Freshen the archive
+  Component.FileName := TestFile;
+  Component.DeflationOption := doMaximum;
+  Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
+  Component.AddFiles(TestTempDir + 'Freshen1base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen2base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen3base.fsh', 0);
+  Component.Save;
+
+  // Make sure modified file and archive value matches
+  MS := TMemoryStream.create;
+  FS := TFileStream.create(TestTempDir + 'Freshen2base.fsh',fmOpenRead);
+  try
+    Component.ExtractToStream(Component.Items[1].FileName,MS);
+    CheckStreamMatch(FS,MS,'Freshened File on Disk Did not Match Archived value');
+  finally
+    MS.Free;
+    FS.Free;
+  end;
+
+
+  finally
+    SL.Free;
+    DeleteFile(TestTempDir + 'Freshen1base.fsh');
+    DeleteFile(TestTempDir + 'Freshen2base.fsh');
+    DeleteFile(TestTempDir + 'Freshen3base.fsh');
+    DeleteFile(TestFile);
+  end;
+
+end;
+
 procedure TAbZipKitTests.FreshenTest;
-// [887909] soFreshen isn't working 
+// [887909] soFreshen isn't working
 var
  SL : TStringList;
  MS : TMemoryStream;
@@ -89,7 +161,7 @@ begin
   Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
   Component.AddFiles('*.fsh',0);
   Component.Save;
-  
+
 // Make sure modified file and archive value matches
   MS := TMemoryStream.create;
   FS := TFileStream.create(TestTempDir + 'Freshen2.fsh',fmOpenRead);

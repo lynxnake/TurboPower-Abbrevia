@@ -37,7 +37,7 @@ interface
 
 uses
   TestFrameWork, abTestFrameWork, AbUnzper, SysUtils, Classes, abMeter,
-  AbZipTyp, abExcept;
+  AbZipTyp, AbDfBase,abExcept;
 
 type
 
@@ -61,6 +61,8 @@ type
     procedure TestIncompleteZipFile;
     procedure TestArchiveNotFound;
     procedure TestZipCopiedFromFloppy;
+    procedure DecompressSimplePW;
+    procedure CheckBadPWOverwrite;
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
     {$ENDIF}
@@ -72,6 +74,49 @@ implementation
 {$ENDIF}
 
 { TAbUnZipperTests }
+
+procedure TAbUnZipperTests.CheckBadPWOverwrite;
+var
+ Ms : TMemoryStream;
+ Fs : TFileStream;
+ TestFile : String;
+ Buffer,Buffer1 : Array[0..20] of Char;
+begin
+// 698162 Failed unzipping of password protected files clobbers original
+   TestFile := TestTempDir + 'MPL-1_1.TXT';
+   if FileExists(TestFile) then
+      DeleteFile(TestFile);
+   // Create Dummy file to test with.
+   FillChar(Buffer,SizeOf(Buffer),#0);
+   Buffer := 'THIS IS A TEST';
+   Fs := TFileStream.Create(TestFile,fmCreate);
+   FS.Write(Buffer,SizeOf(Buffer)); // Write something to file
+   FS.Free;
+   // Try to extract with wrong password
+   Component.FileName := TestFileDir + 'simplepw.zip';
+   Component.Password := 'wrong password';
+   Component.BaseDirectory := TestTempDir;
+   try
+   Component.ExtractFiles('*.*'); // MPL-1_1.TXT
+   except
+    on EAbInflatePasswordError do
+      // nothing Expected
+   end;
+
+   CheckFileExists(TestFile);
+
+   // Test to make sure file matches dummy original
+   Fs := TFileStream.Create(TestFile,fmOpenRead);
+   try
+     FS.Read(Buffer1,SizeOf(Buffer1));
+     CompareMem(@Buffer[0],@Buffer[1],SizeOf(Buffer));
+   finally
+    Fs.free;
+    DeleteFile(TestFile); 
+   end;
+
+end;
+
 {$IFDEF BUILDTESTS}
 procedure TAbUnZipperTests.CreateTestFiles;
 var
@@ -105,6 +150,30 @@ begin
  end;
 end;
 {$ENDIF}
+
+procedure TAbUnZipperTests.DecompressSimplePW;
+var
+ Ms : TMemoryStream;
+ Fs : TFileStream;
+begin
+   Ms := TMemoryStream.create;
+   try
+   Component.FileName := TestFileDir + 'simplepw.zip';
+   Component.Password := 'simple';
+   Component.ExtractOptions := [];
+   Component.ExtractToStream(Component.Items[0].FileName,MS);
+   Fs := TFileStream.Create(TestFileDir + 'MPL-1_1.TXT',fmOpenRead);
+   try
+   CheckStreamMatch(MS,FS,'simplepw.zip MPL-1_1.TXT does not match original');
+   finally
+    Fs.free;
+   end;
+
+   finally
+    ms.free;
+   end;
+
+end;
 
 procedure TAbUnZipperTests.SetUp;
 begin
