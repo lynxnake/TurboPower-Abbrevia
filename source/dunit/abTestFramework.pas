@@ -58,6 +58,7 @@ type
     function GetWindowsDir : string;
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
     procedure CheckFileExists(aFileName : String);
+    procedure CreateDummyFile(aFileName : string; aSize : Integer);
     procedure Setup; override;
     procedure Teardown; override;
     procedure FilesInDirectory(const aDir : String;FileList : TStringList);
@@ -179,6 +180,27 @@ begin
      if (b1 <> b2) then
        Fail(Msg,CallerAddr);
    end;
+end;
+
+procedure TabTestCase.CreateDummyFile(aFileName: string; aSize: Integer);
+var
+ fs : TFileStream;
+ bf : pointer;
+begin
+ fs := TFileStream.Create(aFileName,fmCreate);
+ try
+  GetMem(bf,aSize+1);
+    try
+     // Fill with dummy data might be better in the future to fill less compressable
+     // data.
+     FillChar(bf^,aSize,26);
+     Fs.Write(bf^,aSize);
+     finally
+     FreeMem(bf,aSize+1);
+     end;
+ finally
+  FS.Free;
+ end;
 end;
 
 function TabTestCase.DelTree(Dir: String): Boolean;
