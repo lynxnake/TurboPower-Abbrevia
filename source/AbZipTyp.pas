@@ -489,7 +489,7 @@ type
 
   protected {methods}
 
-    function CreateItem(const FileSpec : string): TAbArchiveItem; override;
+
     procedure DoExtractHelper(Index : Integer; const NewName : string);
     procedure DoExtractToStreamHelper(Index : Integer; aStream : TStream);
     procedure DoTestHelper(Index : Integer);
@@ -539,8 +539,10 @@ type
     constructor CreateFromStream( aStream : TStream; const ArchiveName : string ); override;
     destructor Destroy;
       override;
+    function CreateItem(const FileSpec : string): TAbArchiveItem; override; {!!.05}
 
   public {properties}
+
     property CompressionMethodToUse : TAbZipSupportedMethod
       read FCompressionMethodToUse
       write FCompressionMethodToUse;
