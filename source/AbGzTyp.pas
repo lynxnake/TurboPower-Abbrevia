@@ -968,8 +968,8 @@ begin
 // Replaced to use TFileStream instead of TabSpanStream
 // This feels like a hack to do this here.
 //  FGZStream  := FStream;  { save reference to opened file stream }
-  FGZStream  := TFileStream.Create(FileName,Mode);
   fStream.Free;
+  FGZStream  := TFileStream.Create(FileName,Mode);
   fStream    := FGZStream;
   FGZItem    := FItemList;
   FTarStream := TAbVirtualMemoryStream.Create;
@@ -1051,7 +1051,7 @@ begin
     { check if path to save to is okay }
     if AbConfirmPath(BaseDirectory, UseName, ExtractOptions, FOnConfirmOverwrite) then
     begin
-      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
+      OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyNone);
 
       try
         try {OutStream}
@@ -1059,32 +1059,32 @@ begin
         finally {OutStream}
           OutStream.Free;
         end; {OutStream}
-        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05} 
+        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
           {$IFDEF MSWINDOWS}
 //          FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
 //            + CurItem.LastModFileTime);
-          AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
+          AbSetFileDate(NewName, (Longint(CurItem.LastModFileDate) shl 16)
             + CurItem.LastModFileTime);
-          AbFileSetAttr(UseName, 0); {normal file}                       {!!.01}
+          AbFileSetAttr(NewName, 0); {normal file}                       {!!.01}
           {$ENDIF}
           {$IFDEF LINUX}
           FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate,  {!!.01}
             CurItem.LastModFileTime);                                    {!!.01}
           LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);           {!!.01}
-          FileSetDate(UseName, LinuxFileTime);                           {!!.01}
-          AbFileSetAttr(UseName, AB_FPERMISSION_GENERIC);                {!!.01}
+          FileSetDate(NewName, LinuxFileTime);                           {!!.01}
+          AbFileSetAttr(NewName, AB_FPERMISSION_GENERIC);                {!!.01}
           {$ENDIF}
 
 
       except
         on E : EAbUserAbort do begin
           FStatus := asInvalid;
-          if FileExists(UseName) then
-            DeleteFile(UseName);
+          if FileExists(NewName) then
+            DeleteFile(NewName);
           raise;
         end else begin
-          if FileExists(UseName) then
-            DeleteFile(UseName);
+          if FileExists(NewName) then
+            DeleteFile(NewName);
           raise;
         end;
       end;
