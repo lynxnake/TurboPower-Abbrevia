@@ -1,14 +1,17 @@
 TurboPower Abbrevia
 
-
 Table of contents
 
 1.  Introduction
 2.  Package names
 3.  Installation
-4.  Version history
-4.1   Release 3.05 -Bug Fixes and Enhancements Beta #2
-4.2   Release 3.05 -Bug Fixes and Enhancements Beta #1
+4.  Support 
+5.  Known Bugs
+6.  Version history
+6.1   Release 3.05 -Bug Fixes and Enhancements Beta #3
+6.2   Release 3.05 -Bug Fixes and Enhancements Beta #2
+6.3   Release 3.05 -Bug Fixes and Enhancements Beta #1
+
 
 ==============================================
 
@@ -72,10 +75,82 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
      placed.
 
 ==============================================
+4.  Support 
 
-4. Version history
+     Support for Abbrevia can be obtained through the 
+"turbocontrol.abbrevia" newsgroup at news://news.turbocontrol.com.
 
-4.1   Release 3.05 -Bug Fixes and Enhancements Beta #2
+Outlook express can be setup to read these newsgroups if you don't
+already have a newsgroup reader.
+
+==============================================
+
+5.  Bug Reporting
+
+    All bugs and feature requests are handled via the SF.NET trackers.
+    If you have a found a bug please post it here so it does not get lost.
+    http://sourceforge.net/tracker/?group_id=71001
+
+    Please post complete steps, with code that duplicates the problem.  
+
+==============================================
+5.1  Bug Reporting
+
+Below is a list of all reported bugs as of this release, not all bugs have been verified, or
+duplicated.  If you run into a bug listed below please add a comment with code needed 
+to duplicate, and and attach any associated archive files.     
+
+If you find a fix to any of these bugs please attached the fixed code, so it can 
+be integrated in to future builds.
+
+ 874025 AV during InflateDynamicBlock   
+ 871613 AB305B - QT dependancy in AbGzTyp   
+ 861543 OnArchiveProgress in TAbSpanStream.Write and User Abort 
+ 858945 copy of File saved to floppy cannot be opened 
+ 858209 GZip from stream to stream with TAbGzipArchive renders error 
+ 823053 GZip Stream Decompression Problem 
+ 822243 GZip decompress problem 
+ 820489 CloseArchive does not close input stream 
+ 785269 Access violation on free 
+ 785249 ProcessItemFailure not called 
+ 783613 Corrupt archives when disk spanning 
+ 763286 No Addition of USES Files 
+ 752491 Impossible to unzip if basedirectory contains european chars 
+ 719083 Windows exe signature check 
+ 713126 No build Delphi 6 personal 
+ 698184 "Canvas does not allow drawing" error in TAbMeter 
+ 698180 bad Gzip causes infinite loop in Deflate engine 
+ 698176 Problems with CAB and LZX compression 
+ 698175 Improvements to ZIP identification and interpretation 
+ 698179 Abbrevia 3 COM object not exposing "WithEvents" interface 
+ 698178 Off-by-one error(?) in Deflate engine 
+ 698174 Abbrevia handling of read-only media inadequate 
+ 698169 Abbrevia not handling Mac created .ZIPs correctly 
+ 698172 Abbrevia doesn't archive empty folders (other ZIP utilities do) 
+ 698167 No provision for setting compression level 
+ 698168 Abbrevia not handling self extracting ZIPs created by SFX 
+ 698165 Issues with Compound File Class 
+ 698162 Failed unzipping of password protected files clobbers original 
+
+==============================================
+
+6. Version history
+
+==============================================
+
+6.2   Release 3.05 -Bug Fixes and Enhancements Beta #3
+ 
+ [884897] Invalid CRC32 and Size Values for GZip Archive   
+ [880505] setting Windows file attributes on an open file   
+ [808499] Wrong file dates in zip archives under Linux 
+ [753982] Spanned and split files can be created and read correctly. 
+ [698170] Abbrevia's spanning logic is not in conformance with PkWare spec.
+ [783617] Spanned and split files created and read correctly. 
+ [783614] Error reporting not right 
+
+==============================================
+
+6.2   Release 3.05 -Bug Fixes and Enhancements Beta #2
 
  NOTE: Disk Spanning and Splitting does not work at all in this release.
  
@@ -96,7 +171,9 @@ Enhancements
 ----------------------
   None.
 
-4.2   Release 3.05 -Bug Fixes and Enhancements Beta #1
+==============================================
+
+6.3   Release 3.05 -Bug Fixes and Enhancements Beta #1
 
     Bug Fixes
     ---------
