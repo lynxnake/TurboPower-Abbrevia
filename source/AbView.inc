@@ -1217,21 +1217,25 @@ var
   n : Word;
   s : array[0..255] of Char;
   t : string;
+  sfi : SHFILEINFO;
 begin
   Result := 0;
   if not (doShowIcons in FDisplayOptions) then
     Exit;
-  t := '*' + ExtractFileExt(ItemName);
-  StrPCopy(s, t);
+  t := ExtractFileExt(ItemName);
   i := FIcons.IndexOf(t);
   if (i > -1) then
     Result := HIcon(FIcons.Objects[i])
   else begin
     n := 1;
-    Result := ExtractAssociatedIcon(HInstance, s, n);
+    strPcopy(s,t);
+    SHGetFileInfo( s, FILE_ATTRIBUTE_NORMAL,
+                  sfi, sizeof(sfi), SHGFI_ICON or SHGFI_USEFILEATTRIBUTES);
+    result := sfi.hIcon;
     FIcons.AddObject(t, Pointer(Result));
   end;
 end;
+
 {$ENDIF}
 {$IFDEF UsingCLX }
   { no file type icons in CLX }
