@@ -240,9 +240,7 @@ begin
       end {case};
       FArchive.Load;
       FArchiveType := ArcType;
-    end
-    else
-      FArchive.FStatus := asInvalid;
+    end;
   end;
   DoChange;
 end;
