@@ -1807,13 +1807,13 @@ begin
 
 
   {search for last image, assuming images were auto-generated}
-  Stream.Free;                                                         {!!.04}
   FAutoGen := True;                                                  {!!.02}
   for i := 1 to 99 do begin
     AbIncFilename(ImageName, i);
     if not FileExists(ImageName) then
       raise EAbFileNotFound.Create;
-//    Stream.Free;                                                     {!!.04}
+    // 885670 (Moved Stream to avoid file corruption)      
+    Stream.Free;                                                     {!!.04}
     Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
     TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
     TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;  {!!.04}
@@ -2052,7 +2052,12 @@ begin
     else TailPosition := FindCDTail;  {!!.05}
   end
   else                                                               {!!.02}
+   begin                                                             {!!.02}
     TailPosition := FindCDTail;
+    // 885670 (Second Part Better Error Message)
+    if TailPosition = -1 then
+      raise EAbZipInvalid.Create;
+   end;
 
   if (TailPosition = -1) then begin { not found so need different image }
     if IsZip then begin
