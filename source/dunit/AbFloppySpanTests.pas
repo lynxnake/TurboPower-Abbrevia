@@ -31,17 +31,31 @@ uses
 // Note: The Floppy Span tests are designed to be platform specific
 
   Windows, Forms, Dialogs,Controls,SysUtils, Classes, TestFrameWork,abUtils,
-  abTestFramework, AbZipper, AbUnzper{$IFDEF WINZIPTESTS},SyncObjs{$ENDIF} ;
+  abTestFramework, AbZipper, AbArctyp, AbUnzper{$IFDEF WINZIPTESTS},SyncObjs{$ENDIF} ;
 
 type
   TAbFloppySpanTests = class(TabTestCase)
+  private
   protected
     WinDir : String;
+    HandleWriteFailure1Test : Boolean;
     procedure SetUp; override;
     procedure TearDown; override;
+    //Events for HandleWriteFailure1
+    procedure HandleWriteFailure1ProgressEvent(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
+
+    //Events for CheckFreeForAV
+    procedure CheckFreeForAVFailureEvent(Sender : TObject; Item : TAbArchiveItem;
+      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass; ErrorCode : Integer);
+    procedure CheckFreeForAVItemProgressEvent(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
+
+
   published
     procedure CreateBasicSpan;
     procedure VerifyBasicSpan;
+    procedure CheckFreeForAV;
+    procedure HandleWriteProtectedMedia;
+    procedure HandleWriteFailure1;
     {$IFDEF WINZIPTESTS}
     procedure WinzipExtractTest;
     {$ENDIF}
@@ -117,7 +131,7 @@ begin
    // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
    // Compares each file byte by byte to original.
    if MessageDlg('Insert Disk #1 to create A:\TESTSPAN.ZIP'+#13+#10+''+#13+#10+'Pressing Cancel Abort Test', mtWarning, [mbOK,mbCancel], 0) = mrCancel then
-     Fail('User Aborted Test'); 
+     Fail('User Aborted Test');
    Zip := TAbZipper.create(nil);
    try
    Zip.BaseDirectory := WinDir;
@@ -187,6 +201,92 @@ procedure TAbFloppySpanTests.TearDown;
 begin
   inherited;
 end;
+
+
+procedure TAbFloppySpanTests.CheckFreeForAV;
+var
+  FUnZipper : TAbUnZipper;
+begin
+//[ 785269 ] Access violation on free
+  ShowMessage('Insert Floppy Disk with FTest.zip on it');
+  FUnZipper:=TAbUnZipper.Create(Nil);
+  With FUnZipper do
+  Try
+  ForceType:=True;
+  ArchiveType:=atZip;
+  BaseDirectory:= GetTestTempDir;
+
+  OnProcessItemFailure:=CheckFreeForAVFailureEvent;
+//  OnRequestLastDisk:=RequestLastDisk;
+//  OnRequestNthDisk:=RequestNthDisk;
+//  OnArchiveProgress:=Progress;
+  OnArchiveItemProgress := CheckFreeForAVItemProgressEvent;
+  FileName:='A:\Ftest.zip';
+  ExtractFiles('*.*');
+  Finally
+   Free;
+  end;
+
+end;
+
+procedure TAbFloppySpanTests.CheckFreeForAVFailureEvent(Sender: TObject;
+  Item: TAbArchiveItem; ProcessType: TAbProcessType;
+  ErrorClass: TAbErrorClass; ErrorCode: Integer);
+begin
+  // Do Nothing
+end;
+
+procedure TAbFloppySpanTests.CheckFreeForAVItemProgressEvent(
+  Sender: TObject; Item: TAbArchiveItem; Progress: Byte;
+  var Abort: Boolean);
+begin
+  Abort := true;
+end;
+
+procedure TAbFloppySpanTests.HandleWriteProtectedMedia;
+var
+  Zip : TAbZipper;
+begin
+   ExpectedException := EFCreateError;
+   ShowMessage('Insert Blank Write Protected Disk in to Drive A');
+   Zip := TAbZipper.create(nil);
+   try
+   Zip.BaseDirectory := GetTestFileDir;
+   Zip.FileName := 'A:\SPANTEST.ZIP';
+   Zip.AddFiles('MPL-1_1.txt',faAnyFile);
+   Zip.Save;
+   finally
+     Zip.Free;
+   end;
+end;
+
+procedure TAbFloppySpanTests.HandleWriteFailure1ProgressEvent(
+  Sender: TObject; Item: TAbArchiveItem; Progress: Byte;
+  var Abort: Boolean);
+begin
+  if Progress > 50 then
+    ShowMessage('Take Disk out of drive to simulate failure');
+end;
+procedure TAbFloppySpanTests.HandleWriteFailure1;
+var
+  Zip : TAbZipper;
+begin
+//[ 785249 ] ProcessItemFailure not called
+   ExpectedException := EFOpenError;
+   ShowMessage('Insert Blank Formated Disk in to Drive A');
+   Zip := TAbZipper.create(nil);
+   try
+   Zip.BaseDirectory := GetTestFileDir;
+   Zip.OnArchiveItemProgress := HandleWriteFailure1ProgressEvent;
+   Zip.FileName := 'A:\SPANTEST.ZIP';
+   Zip.AddFiles('MPL-1_1.txt',faAnyFile);
+   Zip.Save;
+   finally
+     Zip.Free;
+   end;
+end;
+
+
 
 initialization
 
