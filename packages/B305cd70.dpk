@@ -52,7 +52,6 @@ package B305cd70;
 {$IMPLICITBUILD OFF}
 
 requires
-  designdgm,
   designide,
   B305cr70;
 
