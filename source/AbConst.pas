@@ -244,6 +244,7 @@ resourcestring
   AbUnhandledFileTypeS = 'Unhandled Archive Type';
   AbSpanningNotSupportedS = 'Spanning not supported by this Archive type';
   AbLogCreateErrorS = 'Error creating Log File';
+  abMoveFileErrorS = 'Error Moving File %s to %s';
 
   AbNoCabinetDllErrorS = 'Cannot load cabinet.dll';
   AbFCIFileOpenErrorS = 'FCI cannot open file';
