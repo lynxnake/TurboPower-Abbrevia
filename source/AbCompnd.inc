@@ -313,7 +313,9 @@ type
     procedure Defrag;                   {!!.03} {not implemented}
   public
     constructor Create(FileName : string; VolLabel : string;
-                       AllocSize : Integer);
+                       AllocSize : Integer); overload;
+    constructor Create(FileName : string; VolLabel : string;
+                       AllocSize : Integer; Signature: string); overload;
     destructor Destroy; override;
     procedure EnumerateFiles(Lst : TStringList);                       {!!.01}
     procedure EnumerateFolders(Lst : TStringList);                     {!!.01}
@@ -322,7 +324,8 @@ type
     procedure UpdateFile(FName : string; FData : TStream);
     procedure DeleteFile(FName : string);
     procedure DeleteFolder(FName : string);
-    procedure Open(FName : string);
+    procedure Open(FName : string); overload;
+    procedure Open(FName : string; Signature: string); overload;
     function OpenFile(FileName : string; var Strm : TStream) : Integer;
     function PopulateTreeView(TreeView : TTreeView) : Integer;
     procedure PopulateSubNodes(ParentNode : TMultiNode;
@@ -359,6 +362,8 @@ type
   end;
 
 implementation
+
+uses StrUtils;
 
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
@@ -608,6 +613,8 @@ var
 begin
   LocKey := Key;
   Lst.Clear;
+  if LocKey = '' then 
+    LocKey := '\';
 
   {- are we to start from the root folder}
   Counter := 0;
@@ -620,7 +627,11 @@ begin
   {- begin parsing}
   while Length(LocKey) > 0 do begin
     while LocKey[1] = '\' do
+    begin
       Delete(LocKey, 1, 1);
+      if Length(LocKey) = 0 then
+        exit;
+    end;
 
     if pos(SepChar,LocKey) > 0 then begin
       Lst.Add(copy(LocKey, 1, Pos(SepChar, LocKey) - 1));
@@ -1394,6 +1405,39 @@ begin
       FOnAfterOpen(self);
   end;
 end;
+
+constructor TAbCompoundFile.Create(FileName : string; VolLabel : string;
+                       AllocSize : Integer; Signature: string);
+  {- Creates a new instance}
+var
+  Buff : Array of Byte;
+begin
+  inherited Create;
+  FSystemBlock := TAbSystemBlock.Create(VolLabel, AllocSize);
+  FSystemBlock.Signature := LeftStr(Signature, sbSignatureSize);
+  FFATTable    := TAbFATTable.Create(AllocSize);
+  FRootDir     := TAbRootDir.Create(VolLabel, AllocSize);
+  {create file}
+
+  if FileName <> '' then begin
+    FDiskFile := FileName;
+    FStream := TFileStream.Create(FileName, fmOpenReadWrite or
+                                  fmCreate or fmShareDenyNone);
+
+    {fill first 3 blocks of file}
+    SetLength(Buff, 3 * AllocSize);
+    FStream.Write(Buff, 3 * AllocSize);
+
+    {write System, RootDir, and FAT blocks}
+    PersistSystemBlock;
+    PersistRootDirBlock;
+    PersistFATBlock;
+
+    if Assigned(FOnAfterOpen) then
+      FOnAfterOpen(self);
+  end;
+end;
+
 {-----------------------------------------------------------------------------}
 destructor TAbCompoundFile.Destroy;
   {- Persists and then destroys the instance of the compound file}
@@ -1826,7 +1870,33 @@ begin
 
   {Ensure valid signature}
   FStream.Read(Sig[0], sbSignatureSize);
-  if Sig <> 'AbCompoundFile' then begin
+  if Sig <> LeftStr(FSystemBlock.Signature, sbSignatureSize) then begin
+    raise ECompoundFileError.Create(AbCmpndInvalidFile);
+    exit;
+  end;
+
+  FDiskFile := FName;
+  {populate Compound File structure}
+  BuildSysBlock;
+  BuildFat;
+  BuildRootDir;
+
+  if Assigned(FOnAfterOpen) then
+    FOnAfterOpen(self);
+end;
+
+procedure TAbCompoundFile.Open(FName : string; Signature: string);
+{- Opens an existing compound file and builds Sys, Root Dir, and FAT blocks}
+var
+  Sig : Array[0..sbSignatureSize - 1] of Char;
+begin
+  if FStream <> nil then
+    FStream.Free;
+  FStream := TFileStream.Create(FName, fmOpenReadWrite or fmShareDenyNone);
+
+  {Ensure valid signature}
+  FStream.Read(Sig[0], sbSignatureSize);
+  if Sig <> LeftStr(Signature, sbSignatureSize) then begin
     raise ECompoundFileError.Create(AbCmpndInvalidFile);
     exit;
   end;
