@@ -2114,7 +2114,7 @@ const
   AB_SIZE_CD_HEADER    = 46;
   AB_SIZE_CD_TAIL      = 22;
 
-procedure TAbZipArchive.SaveArchive;
+procedure TAbZipArchive.SaveArchive2; {!!.05 Renamed SaveArchive to SaveArchive2, switch methods to take back to Commerical 3.04 status}
 var
   CompressedDataStream  : TAbVirtualMemoryStream;
 //  CDStream : TAbVirtualMemoryStream;
@@ -2158,6 +2158,9 @@ begin
       aaNone, aaMove: begin
       {just copy the compressed file data to temporary stream }
         { find the current item's data }
+{!!!}
+{RJL: The problem with this code that FStream is TAbSpanStream in which
+ a seek can currently not occur while writing }
         FStream.Position := CurrItem.RelativeOffset;
 
         { save compressed data size }
@@ -2459,7 +2462,7 @@ end;  { SaveArchive }
 
 
 
-procedure TAbZipArchive.SaveArchive2;
+procedure TAbZipArchive.SaveArchive; {!!.05 Renamed SaveArchive2 to SaveArchive, switch methods to take back to Commerical 3.04 status}
   {builds a new archive and copies it to FStream}
 var
   Abort              : Boolean;
