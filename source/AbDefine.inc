@@ -52,6 +52,13 @@
 
 {.$DEFINE STRICTGZIP}
 
+{ The following define is ONLY used for Abbrevia Unit Tests.
+  It has no effect on the Abbrevia Library.
+  
+  If defined it uses Winzip to create and test archives for compatability.
+  The winzip tests require Systools stSpawn.pas
+  It can be downloaded at http://sf.net/projects/tpsystools }
+{$DEFINE WINZIPTESTS}
 
 
 
