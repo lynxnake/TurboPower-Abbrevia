@@ -36,8 +36,10 @@ unit AbUnzperTests;
 interface
 
 uses
-  TestFrameWork, abTestFrameWork, AbUnzper, SysUtils, Classes, abMeter,
-  AbZipTyp, AbDfBase,abExcept;
+  Windows, // Needed for CopyFile could be replaced if needed on Linux
+  TestFrameWork, abTestFrameWork, AbUnzper,
+  SysUtils, Classes, abMeter, AbZipTyp,
+  AbDfBase, abExcept;
 
 type
 
@@ -63,6 +65,11 @@ type
     procedure TestZipCopiedFromFloppy;
     procedure DecompressSimplePW;
     procedure CheckBadPWOverwrite;
+    procedure TestLocale1;
+    procedure TestLocale2;
+    procedure TestLocale3;
+    procedure TestLocale4;          
+
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
     {$ENDIF}
@@ -309,6 +316,125 @@ begin
  FS.Free;
  // Try to set the filename to the open byte file.
  Component.FileName := TestTempDir + 'zerobyte.zip';
+end;
+
+procedure TAbUnZipperTests.TestLocale1;
+var
+ ltestdir,
+ ltestzip,
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Archive Directory Name
+
+  // Create New Directory
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ForceDirectories(ltestDir);
+
+  // copy fresh MPL.ZIP to locale1.zip in the new directory
+  ltestFile := lTestdir + 'locale1.zip';
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+  ltestzip := TestFileDir + 'MPL.ZIP';
+  CopyFile(pchar(ltestzip),pchar(ltestFile),false);
+
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := TestTempDir;
+  // Delete File to be extract if it exists
+  if FileExists(TestTempDir + 'MPL-1_1.txt') then
+     DeleteFile(TestTempDir + 'MPL-1_1.txt');
+  Component.ExtractFiles('*.*');
+  Component.CloseArchive;
+
+  CheckFileExists(TestTempDir + 'MPL-1_1.txt');
+
+end;
+
+procedure TAbUnZipperTests.TestLocale2;
+var
+ ltestdir,
+ ltestzip,
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Base Directory Name
+
+  // Create New Directory
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ForceDirectories(ltestDir);
+
+  ltestFile := TestFileDir + 'MPL.ZIP';
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := lTestDir;
+  // Delete File to be extract if it exists
+  if FileExists(lTestDir + 'MPL-1_1.txt') then
+     DeleteFile(lTestDir + 'MPL-1_1.txt');
+  Component.ExtractFiles('*.*');
+  Component.CloseArchive;
+
+  CheckFileExists(lTestDir + 'MPL-1_1.txt');
+end;
+
+procedure TAbUnZipperTests.TestLocale3;
+var
+ ltestzip,
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Archive File Name
+
+  // copy fresh MPL.ZIP to localeãëíõú3.zip in the temp directory
+  ltestFile := TestTempDir + 'localeãëíõú3.zip';
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+  ltestzip := TestFileDir + 'MPL.ZIP';
+  CopyFile(pchar(ltestzip),pchar(ltestFile),false);
+
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := TestTempDir;
+  // Delete File to be extract if it exists
+  if FileExists(TestTempDir + 'MPL-1_1.txt') then
+     DeleteFile(TestTempDir + 'MPL-1_1.txt');
+  Component.ExtractFiles('*.*');
+  Component.CloseArchive;
+
+  CheckFileExists(TestTempDir + 'MPL-1_1.txt');
+
+end;
+
+procedure TAbUnZipperTests.TestLocale4;
+var
+ ltestzip,
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Files contained in the Archive.
+
+  Component.FileName := TestFileDir + 'LocaleTests.zip';
+  Component.BaseDirectory := TestTempDir;
+
+  // Delete Files in Temp Directory if they exist
+  if FileExists(TestTempDir + 'testãëíõú1.lc4') then
+     DeleteFile(TestTempDir + 'testãëíõú1.lc4');
+  if FileExists(TestTempDir + 'testãëíõú2.lc4') then
+     DeleteFile(TestTempDir + 'testãëíõú2.lc4');
+  if FileExists(TestTempDir + 'testãëíõú3.lc4') then
+     DeleteFile(TestTempDir + 'testãëíõú3.lc4');
+
+  Component.ExtractFiles('*.lc4');
+  Component.CloseArchive;
+
+  CheckFileExists(TestTempDir + 'testãëíõú1.lc4');
+  CheckFileExists(TestTempDir + 'testãëíõú2.lc4');
+  CheckFileExists(TestTempDir + 'testãëíõú3.lc4');
+
 end;
 
 procedure TAbUnZipperTests.TestUserAbort;

@@ -27,7 +27,7 @@ unit AbZipperTests;
 interface
 
 uses
-  TestFrameWork, abTestFrameWork, AbZipper, AbUnZper, SysUtils,
+  TestFrameWork, abTestFrameWork, AbZipper, AbUnZper, SysUtils, 
   Classes, abMeter, abArcTyp, abZipTyp, abUtils;
 
 type
@@ -54,6 +54,10 @@ type
     procedure GZipInputStreamClearTest;
     procedure CreateSimplePWZip;
     procedure CreateMultiple;
+    procedure TestLocale1;
+    procedure TestLocale2;
+    procedure TestLocale3;
+    procedure TestLocale4;    
   end;
 
 implementation
@@ -464,6 +468,123 @@ begin
       Component.Save;
       Component.CloseArchive;
     end;
+end;
+
+procedure TAbZipperTests.TestLocale1;
+var
+ ltestdir : string;
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Archive Directory Name
+
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ForceDirectories(ltestDir);
+  ltestFile := lTestdir + 'locale1.zip';
+
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := TestFileDir;
+  Component.AddFiles('MPL-1_1.txt',0);
+  Component.Save;
+
+  CheckFileExists(lTestFile);
+
+
+end;
+
+procedure TAbZipperTests.TestLocale2;
+var
+ ltestdir : string;
+ ltestfile : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Archive File Name
+
+  ltestdir := TestTempDir;
+  ForceDirectories(ltestDir);
+
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+  ltestFile := lTestdir   + chr(236)+ 'ãëíõú.zip';
+
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := TestFileDir;
+  Component.AddFiles('MPL-1_1.txt',0);
+  Component.Save;
+
+  CheckFileExists(lTestFile);
+
+end;
+
+procedure TAbZipperTests.TestLocale3;
+var
+ ltestdir : string;
+ ltestfile : string;
+ lBaseDir : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the BaseDirectory
+
+  ltestdir := TestTempDir;
+  ForceDirectories(ltestDir);
+  ltestFile := lTestdir + 'locale3.zip';
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+  lBaseDir := TestTempDir + chr(236) + 'ãëíõú\';
+  ForceDirectories(lBaseDir);
+  CreateDummyFile(lBaseDir + 'test1.lc3',4000);
+  CreateDummyFile(lBaseDir + 'test2.lc3',6000);
+  CreateDummyFile(lBaseDir + 'test3.lc3',1000);
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := lBaseDir;
+  Component.AddFiles('*.lc3',0);
+  Component.Save;
+
+  CheckFileExists(lTestFile);
+end;
+
+procedure TAbZipperTests.TestLocale4;
+var
+ ltestdir : string;
+ ltestfile : string;
+ lBaseDir : string;
+begin
+// This test verifies use Ability to use Charactes such as ãëíõú
+// In the Zip Archive Files (Base directory also has character in it)
+
+  ltestdir := TestTempDir;
+  ForceDirectories(ltestDir);
+  ltestFile := lTestdir + 'locale4.zip';
+  if FileExists(lTestFile) then
+     DeleteFile(lTestFile);
+
+  //236 changes into a ? on my machine in the delphi editor
+  // so I thought it would be a good character to test with
+  lBaseDir := TestTempDir + chr(236) + 'ãëíõú\';
+  ForceDirectories(lBaseDir);
+  CreateDummyFile(lBaseDir + 'testãëíõú1.lc4',4000);
+  CreateDummyFile(lBaseDir + 'testãëíõú2.lc4',6000);
+  CreateDummyFile(lBaseDir + 'testãëíõú3.lc4',1000);
+
+  Component.FileName := lTestFile;
+  Component.BaseDirectory := lBaseDir;
+  Component.AddFiles('*.lc4',0);
+  Component.Save;
+
+  CheckFileExists(lTestFile);
 end;
 
 initialization
