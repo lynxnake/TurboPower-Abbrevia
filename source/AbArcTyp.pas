@@ -355,7 +355,7 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       virtual;
-    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string); virtual; {!!.05 Added Virtual}
     destructor  Destroy;
       override;
     procedure Add(aItem : TAbArchiveItem);

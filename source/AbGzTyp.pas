@@ -264,6 +264,7 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       override;
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string); override;
     destructor  Destroy;
       override;
 
@@ -1466,6 +1467,18 @@ procedure TAbGzipArchive.DoSpanningMediaRequest(Sender: TObject;
   ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
 begin
   Abort := False;
+end;
+
+constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
+  const aArchiveName: string);
+begin
+ // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
+  inherited CreateFromStream(aStream,aArchiveName);
+  FTarLoaded := False;
+  FState     := gsGzip;
+  FGZItem    := FItemList;
+  FTarStream := TAbVirtualMemoryStream.Create;
+  FTarList   := TAbArchiveList.Create;
 end;
 
 end.
