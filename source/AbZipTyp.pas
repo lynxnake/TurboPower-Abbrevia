@@ -2580,6 +2580,7 @@ begin
             CurrItem.DiskNumberStart := SCurrentImage;
             CurrItem.RelativeOffset := SCurrentOffset;
             WorkingStream := TAbVirtualMemoryStream.Create;
+            try
             try {WorkingStream}
 
               WorkingStream.SwapFileDirectory := NewStream.SwapFileDirectory;
@@ -2596,10 +2597,20 @@ begin
               FInfo.TotalEntries := FInfo.TotalEntries + 1;
               CurrItem.SaveCDHToStream(CDHStream);
             except
-              CurrItem.Action := aaDelete;
-              DoProcessItemFailure(CurrItem, ptAdd, ecFileOpenError, 0);
+              on E : Exception do
+              begin
+                { Exception was caused by a User Abort and Item Failure should not be called
+                  Question:  Do we want an New Event when this occurs or should the
+                  exception just be re-raised }
+                if (E is EAbUserAbort) then {!!.05 [ 783614 ]}
+                   raise;
+                CurrItem.Action := aaDelete;
+                DoProcessItemFailure(CurrItem, ptAdd, ecFileOpenError, 0);
+              end;
             end;
-            WorkingStream.Free;
+            finally
+              WorkingStream.Free;
+            end;
           end;
         end; { case }
 
