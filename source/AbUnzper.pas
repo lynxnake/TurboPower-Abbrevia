@@ -64,6 +64,9 @@ type
                                 OutStream : TStream);
     procedure TestItemProc(Sender : TObject; Item : TAbArchiveItem);
 
+    procedure SetFileName(const aFileName : string);
+      override;
+
   protected {properties}
     property ExtractOptions : TAbExtractOptions
       read  FExtractOptions
@@ -260,6 +263,17 @@ begin
   AbTestZipItem(TAbZipArchive(Sender), TAbZipItem(Item));
 end;
 { -------------------------------------------------------------------------- }
+
+procedure TAbCustomUnZipper.SetFileName(const aFileName: string);
+begin
+
+  if Not FileExists(aFileName) then  {!!.05}
+     raise EAbFileNotFound.Create;
+  if AbFileGetSize(aFileName) <= 0 then {!!.05}
+     raise EAbBadStream.Create;
+
+  inherited SetFileName(aFileName);
+end;
 
 end.
 
