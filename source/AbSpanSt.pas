@@ -438,7 +438,7 @@ begin
   if Assigned(FOnRequestImage) then begin
     if MediaType = mtLocal then begin                                    {!!.01}
       NewName := NextDefaultImageName;
-      SpanNo := SpanNumber + 2;   {!!.05 change +1 to +2}                                       {!!.01} 
+      SpanNo := SpanNumber + 1;                                          {!!.01} 
     end
     else begin { it's a floppy span }                                    {!!.01}
       NewName := FImageName;                                             {!!.01}
