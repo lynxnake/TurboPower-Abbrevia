@@ -1170,7 +1170,7 @@ begin
   Color := AbDefColor;
   ParentColor := AbDefParentColor;
 
-  FOutline := TAbZipDisplayOutline.Create(Self);
+  FOutline := TAbZipDisplayOutline.Create(nil); {!!.05 Self -> nil to avoid streaming error, in D4}
   FOutline.Parent := Self;
   FOutline.Visible := True;
   FOutline.Align := alClient;
@@ -1196,6 +1196,7 @@ end;
 destructor TAbCustomZipOutline.Destroy;
 begin
   FArchive.Free;
+  FOutLine.Free; {!!.05 Remove Self}
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
