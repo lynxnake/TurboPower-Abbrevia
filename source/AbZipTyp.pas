@@ -2755,7 +2755,12 @@ begin
            TAbSpanStream(FStream).ArchiveTotalSize := NewStream.Size;     {!!.04}
         FStream.CopyFrom(NewStream, NewStream.Size);
       except
-        raise EAbBadStream.Create;
+       on E : Exception do
+        begin
+         if E is EAbUserAbort                      {!!.05 [783614] }
+           then raise
+           else raise EAbBadStream.CreateInner(E);
+         end;
       end;
 {!!.01 -- End Modified }
     end;

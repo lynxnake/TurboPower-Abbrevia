@@ -51,8 +51,12 @@ type
   end;
 
   EAbBadStream = class( EAbException )
+  protected
+    FInnerException : Exception;
   public
     constructor Create;
+    constructor CreateInner(aInnerException : Exception);
+    property InnerException : Exception read FInnerException;
   end;
 
   EAbDuplicateName = class( EAbException )
@@ -380,8 +384,17 @@ end;
 constructor EAbBadStream.Create;
 begin
   inherited Create(AbStrRes(AbBadStreamType));
+  FInnerException := nil;
   ErrorCode := AbBadStreamType;
 end;
+
+constructor EAbBadStream.CreateInner(aInnerException: Exception);
+begin
+  inherited Create(AbStrRes(AbBadStreamType) + #13#10 + aInnerException.Message);
+  FInnerException := aInnerException;
+  ErrorCode := AbBadStreamType;
+end;
+
 
 constructor EAbDuplicateName.Create;
 begin
@@ -778,5 +791,6 @@ begin
   inherited Create(AbStrRes(AbSpanningNotSupported));
   ErrorCode := AbSpanningNotSupported;
 end;
+
 
 end.

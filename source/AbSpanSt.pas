@@ -145,15 +145,15 @@ begin
       Inc(FSpanNumber);
       FOnRequestImage(Self, FixSpanNumber(FSpanNumber),
         FImageName, FCancelled);                                         {!!.01}
-      FSpanStreamInCharge := True;                                   {!!.02}
+      if FCancelled then
+        raise EAbUserAbort.Create;                                       {!!.05}
+      FSpanStreamInCharge := True;                                       {!!.02}
       Valid := MediaIsValid(FImageName);
       if Valid and not FCancelled then begin
         FStr := TFileStream.Create(FImageName, FFileMode);
       end else begin
         if not Valid then
           raise EAbFileNotFound.Create;
-        if FCancelled then
-          raise EAbUserAbort.Create;
       end;
     end else
       Result := 0;
@@ -306,8 +306,10 @@ begin
       { request previous media }
       if not Assigned(FOnRequestImage) then exit;
       Dec(FSpanNumber);
-      FOnRequestImage(Self,
-        FixSpanNumber(FSpanNumber), FImageName, FCancelled);             {!!.01}
+      FOnRequestImage(Self,FixSpanNumber(FSpanNumber), FImageName, FCancelled);             {!!.01}
+      if FCancelled then                                               {!!.05}
+        raise EAbUserAbort.Create;
+
       { reset internal stream }
       Valid := MediaIsValid(FImageName);
       if Valid and not FCancelled then begin
@@ -317,8 +319,6 @@ begin
       end else begin
         if not Valid then
           raise EAbFileNotFound.Create;
-        if FCancelled then
-          raise EAbUserAbort.Create;
       end;
 
       { seek rest of way in new stream}
@@ -329,10 +329,9 @@ begin
       { request next media }
       if not Assigned(FOnRequestImage) then exit;
       Dec(FSpanNumber);
-      FOnRequestImage(Self,
-        FixSpanNumber(FSpanNumber), FImageName, FCancelled);             {!!.01}
-
-
+      FOnRequestImage(Self, FixSpanNumber(FSpanNumber), FImageName, FCancelled);             {!!.01}
+      if FCancelled then
+        raise EAbUserAbort.Create;
       { reset internal stream }
       Valid := MediaIsValid(FImageName);
       if Valid and not FCancelled then begin
@@ -342,8 +341,6 @@ begin
       end else begin
         if not Valid then
           raise EAbFileNotFound.Create;
-        if FCancelled then
-          raise EAbUserAbort.Create;
       end;
 
       { seek rest of way in new stream}
@@ -448,6 +445,8 @@ begin
     while ((not ValidName) and (not FCancelled)) do begin
 
       FOnRequestImage(Self, FixSpanNumber(SpanNo), NewName, FCancelled); {!!.01}
+      if FCancelled then
+        raise EAbUserAbort.Create;
       if not FCancelled then begin
         if ValidateImageName(NewName) then begin
           Mode := FFileMode;
