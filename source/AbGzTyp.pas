@@ -97,7 +97,7 @@ type
 type
   TAbGzipItem = class(TAbArchiveItem)
   private
-    FCRC32: LongInt;
+//    FCRC32: LongInt;
   protected {private}
     FGZHeader : TAbGzHeader;
     FIsText : Boolean;
@@ -140,8 +140,8 @@ type
     procedure SaveGzHeaderToStream(AStream : TStream);
     procedure LoadGzHeaderFromStream(AStream : TStream);
   public
-    property CRC32 : LongInt
-      read FCRC32 write FCRC32;
+//    property CRC32 : LongInt
+//      read FCRC32 write FCRC32;
 
     property CompressionMethod : Byte
       read FGZHeader.CompMethod write FGZHeader.CompMethod;
@@ -380,6 +380,7 @@ begin
       PartialTarData := TMemoryStream.Create;
       GHlp.SeekToItemData;
       Hlpr := TAbDeflateHelper.Create;
+//      Hlpr.LogFile := 'c:\gzip.log'; {REMOVE}
       Hlpr.PartialSize := 512;
       PartialTarData.SetSize(512 * 2);
       Inflate(Strm, PartialTarData, Hlpr);
@@ -739,7 +740,7 @@ begin
   end;
 
   {Assert: stream should now be located at start of compressed data }
-
+  {If file was compressed with 3.3 spec this will be invalid so use with care}
   FCompressedSize := AStream.Size - AStream.Position - SizeOf(TAbGzTailRec);
 
   DiskFileName := FileName;
@@ -963,7 +964,12 @@ begin
   inherited Create(FileName, Mode);
   FTarLoaded := False;
   FState    := gsGzip;
-  FGZStream  := FStream;  { save reference to opened file stream }
+// Replaced to use TFileStream instead of TabSpanStream
+// This feels like a hack to do this here.
+//  FGZStream  := FStream;  { save reference to opened file stream }
+  FGZStream  := TFileStream.Create(FileName,Mode);
+  fStream.Free;
+  fStream    := FGZStream;
   FGZItem    := FItemList;
   FTarStream := TAbVirtualMemoryStream.Create;
   FTarList   := TAbArchiveList.Create;
@@ -1049,8 +1055,14 @@ begin
       try
         try {OutStream}
           ExtractItemToStreamAt(Index, OutStream);
+        finally {OutStream}
+          OutStream.Free;
+        end; {OutStream}
+        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05} 
           {$IFDEF MSWINDOWS}
-          FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
+//          FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
+//            + CurItem.LastModFileTime);
+          FileSetDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
             + CurItem.LastModFileTime);
           AbFileSetAttr(UseName, 0); {normal file}                       {!!.01}
           {$ENDIF}
@@ -1061,9 +1073,7 @@ begin
           FileSetDate(UseName, LinuxFileTime);                           {!!.01}
           AbFileSetAttr(UseName, AB_FPERMISSION_GENERIC);                {!!.01}
           {$ENDIF}
-        finally {OutStream}
-          OutStream.Free;
-        end; {OutStream}
+
 
       except
         on E : EAbUserAbort do begin
@@ -1206,7 +1216,9 @@ begin
 
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
         GZHelp.ReadTail;
-        Item.FCRC32 := GZHelp.FItem.FCRC32;
+        Item.FCRC32 := GZHelp.FTail.CRC32;
+        Item.FUncompressedSize := GZHelp.FTail.ISize
+//        Item.CRC32 := GZHelp.FItem.FCRC32;
         Item.FUncompressedSize := GZHelp.FItem.FUncompressedSize;
 
         Item.Action := aaNone;
@@ -1362,9 +1374,11 @@ begin
     else begin
       { need new stream to write }
       FStream.Free;
-      FStream := TAbSpanStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite, mtLocal, FSpanningThreshold);
-      TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;   {!!.01}
-      TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
+      // GZIP does not support spanning, removing use of AbSpanStream.
+//      FStream := TAbSpanStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite, mtLocal, FSpanningThreshold);
+      FStream := TFileStream.Create(FArchiveName,fmOpenWrite or fmShareDenyWrite);
+//    TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;   {!!.01}
+//    TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
       try
         FStream.CopyFrom(NewStream, NewStream.Size);
         FGZStream := FStream;
