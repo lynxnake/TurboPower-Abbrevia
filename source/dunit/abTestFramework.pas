@@ -29,8 +29,14 @@ interface
 
 uses TestFramework, {$IFDEF VERSION6} Variants,
      {$ENDIF} {$IFDEF LINUX} QForms,QControls, {$ELSE}Forms,Windows,Controls,{$ENDIF}
-     SysUtils, Classes, TypInfo;
-
+     SysUtils, Classes, {$IFDEF WINZIPTESTS}SyncObjs,{$ENDIF}TypInfo;
+{$IFDEF WINZIPTESTS}
+// Hard Coded as I could not find install location in the Registry to extract and make dynamic
+// if this proves to be a problem, we will have to have test configuration file that specifies
+// the winzip command line utility path.
+const
+    UnWinZip = 'C:\Program Files\WinZip\wzunzip.exe';
+{$ENDIF}
 type
 
 {$IFNDEF VERSION6}
@@ -40,12 +46,20 @@ type
 
  TabTestCase = class(TTestCase)
    protected
+    {$IFDEF WINZIPTESTS}
+      FSpawnComplete  : TSimpleEvent;
+      procedure SpawnErrorEvent(Sender : TObject; Error : Word);
+      procedure SpawnCompletedEvent(Sender : TObject);
+      procedure SpawnTimeOutEvent(Sender : TObject);
+      procedure ExecuteAndWait(ExeName,Param : String;TimeOut : Integer = 0); // Exception if failure
+    {$ENDIF}
     function GetTestFileDir : string;
     function GetTestTempDir : string;
     function GetWindowsDir : string;
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
     procedure CheckFileExists(aFileName : String);
     procedure Setup; override;
+    procedure Teardown; override;
     procedure FilesInDirectory(const aDir : String;FileList : TStringList);
     procedure CheckDirMatch(aDir1,aDir2 : string;IgnoreMissingFiles: Boolean = true);
     // Call this routine with GREAT Caution!!!!
@@ -81,7 +95,9 @@ type
 
 
 implementation
-
+// Systool Unit change abdefine.inc if you don't have systools or don't want
+// to run winzip compatability tests
+{$IFDEF WINZIPTESTS} Uses stSpawn; {$ENDIF}
 
 { TabTestCase }
 
@@ -217,6 +233,37 @@ begin
      end;
    end; { If File Found with FindFirst }
 end;
+{$IFDEF WINZIPTESTS}
+procedure TabTestCase.ExecuteAndWait(ExeName, Param: String;TimeOut : Integer);
+var
+  Spawn : TStSpawnApplication;
+  WR    : TWaitResult;
+begin
+   // Make sure Application trying to execute is found
+   CheckFileExists(ExeName);
+   Spawn := TStSpawnApplication.Create(nil);
+   try
+     Spawn.FileName := ExeName;
+     Spawn.RunParameters := Param;
+     Spawn.NotifyWhenDone := True;
+     Spawn.TimeOut := TimeOut;
+     Spawn.OnSpawnError := SpawnErrorEvent;
+     Spawn.OnCompleted := SpawnCompletedEvent;
+     Spawn.OnTimeOut := SpawnTimeOutEvent;
+     Spawn.Execute;
+     WR := FSpawnComplete.WaitFor(1000);
+     While WR <> wrSignaled do
+       begin
+          Application.ProcessMessages;
+          Check(NOT (WR = wrAbandoned), 'Event has been Abandoonded');
+          Check(NOT (WR = wrError),'Event has Errored out');
+          WR := FSpawnComplete.WaitFor(1000);
+       end;
+   finally
+      Spawn.Free;
+   end;
+end;
+{$ENDIF}
 
 procedure TabTestCase.FilesInDirectory(const aDir: String;
   FileList: TStringList);
@@ -276,6 +323,36 @@ begin
    begin
     CreateDir(TestTempDir);
    end;
+  {$IFDEF WINZIPTESTS}
+    FSpawnComplete := TSimpleEvent.Create;
+  {$ENDIF}
+end;
+
+{$IFDEF WINZIPTESTS}
+procedure TabTestCase.SpawnCompletedEvent(Sender: TObject);
+begin
+  FSpawnComplete.SetEvent;
+end;
+
+procedure TabTestCase.SpawnErrorEvent(Sender: TObject; Error: Word);
+begin
+ FSpawnComplete.SetEvent;
+ Fail('Error: ' + IntToSTr(Error) + ' occured launching WinZip');
+end;
+
+procedure TabTestCase.SpawnTimeOutEvent(Sender: TObject);
+begin
+ FSpawnComplete.SetEvent;
+ Fail('Timeout occured launching WinZip');
+end;
+{$ENDIF}
+
+procedure TabTestCase.Teardown;
+begin
+  inherited;
+  {$IFDEF WINZIPTESTS}
+    FSpawnComplete.Free;
+  {$ENDIF}
 end;
 
 { TabCompTestCase }
@@ -284,7 +361,7 @@ procedure TabCompTestCase.SetUp;
 begin
   inherited;
   FTestForm := TForm.Create(nil);
-  IgnoreProp := TStringList.create;  
+  IgnoreProp := TStringList.create;
 end;
 
 procedure TabCompTestCase.ShowForm;
