@@ -151,9 +151,7 @@ type
     OS1: TMenuItem;
     OS6: TMenuItem;
     OS5: TMenuItem;
-    TurboPowerontheWeb1: TMenuItem;
     AbbreviaontheWeb1: TMenuItem;
-    SendmailtoTurboPower1: TMenuItem;
     AbMeter1: TAbMeter;
     AbMeter2: TAbMeter;
     ShowEmptyfolders1: TMenuItem;
@@ -234,7 +232,6 @@ type
       ErrorClass: TAbErrorClass; ErrorCode: Integer);
     procedure TurboPowerontheWeb1Click(Sender: TObject);
     procedure AbbreviaontheWeb1Click(Sender: TObject);
-    procedure SendmailtoTurboPower1Click(Sender: TObject);
     procedure TempDirectory1Click(Sender: TObject);
     procedure Logging1Click(Sender: TObject);
   private
@@ -1431,14 +1428,8 @@ end;
 
 procedure TForm1.AbbreviaontheWeb1Click(Sender: TObject);
 begin
-  if ShellExecute(0, 'open', 'http://www.turbopower.com/products/abbrevia', '', '', SW_SHOWNORMAL) <= 32 then
+  if ShellExecute(0, 'open', 'http://sf.net/projects/abbrevia', '', '', SW_SHOWNORMAL) <= 32 then
     ShowMessage('Unable to start web browser. Make sure you have it properly set-up on your system.');
-end;
-
-procedure TForm1.SendmailtoTurboPower1Click(Sender: TObject);
-begin
-  if ShellExecute(0, 'open', 'mailto:info@turbopower.com', '', '', SW_SHOWNORMAL) <= 32 then
-    ShowMessage('Unable to start mail client. Make sure you have it properly set-up on your system.');
 end;
 
 procedure TForm1.TempDirectory1Click(Sender: TObject);
