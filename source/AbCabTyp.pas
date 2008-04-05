@@ -557,6 +557,7 @@ begin
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
 
+    FIsDirty := true;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchive.CloseCabFile;

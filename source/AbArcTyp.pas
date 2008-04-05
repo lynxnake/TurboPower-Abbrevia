@@ -998,7 +998,7 @@ var
         try
 
           AbFindFilesEx(Mask, SearchAttr and not faDirectory, Files, Recursing);
-          if (Files.Count > 0) then
+          if (Files.Count > 0) then begin
             for i := 0 to pred(Files.Count) do
               if FilterList.IndexOf(Files[i]) < 0 then               
                 if not Wild then begin                               
@@ -1006,13 +1006,15 @@ var
                     Item := CreateItem(Files[i]);
                     Add(Item);
                   end;
-                end else begin                                       
+                end else begin
                   if (AbAddBackSlash(FBaseDirectory) + Files[i]) <> FArchiveName
                     then begin
                       Item := CreateItem(Files[i]);
                       Add(Item);
                     end;
                 end;
+            FIsDirty := true;
+          end;
         finally
           Files.Free;
         end;
