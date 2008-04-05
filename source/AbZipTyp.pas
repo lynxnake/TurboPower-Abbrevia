@@ -2714,9 +2714,11 @@ begin
     NewStream.Position := 0;
     if (FStream is TMemoryStream) then
       TMemoryStream(FStream).LoadFromStream(NewStream)
-    else if FOwnsStream then  // 914427 
-       FStream.CopyFrom(NewStream,0)  
-    else begin
+    else if not FOwnsStream then begin // 914427
+       FStream.Size := 0;
+       FStream.Position := 0;
+       FStream.CopyFrom(NewStream,0)
+    end else begin
       { need new stream to write }
       FStream.Free;
 
