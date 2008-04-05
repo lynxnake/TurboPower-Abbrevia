@@ -1049,10 +1049,11 @@ begin
     UseName := NewName;
     CurItem := TAbGzipItem(ItemList[Index]);
 
+    {fix provided by  fawlty //1740029 }
     { check if path to save to is okay }
     if AbConfirmPath(BaseDirectory, UseName, ExtractOptions, FOnConfirmOverwrite) then
     begin
-      OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyNone);
+      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
 
       try
         try {OutStream}
@@ -1472,7 +1473,9 @@ end;
 constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
   const aArchiveName: string);
 begin
+  //  [ 1240845 ] Fix suggested by JOvergaard
  // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
+ FGZStream := aStream;
   inherited CreateFromStream(aStream,aArchiveName);
   FTarLoaded := False;
   FState     := gsGzip;
