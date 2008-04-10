@@ -523,9 +523,10 @@ end;
 procedure TAbCabArchive.Add(aItem : TAbArchiveItem);
   {add a file to the cabinet}
 var
+  FH : HFILE;
+  newFileName:  string;
   Confirm, DoExecute : Boolean;
   FP, FN : array[0..255] of Char;
-  FH : HFILE;
   Item : TAbCabItem;
 begin
   if (FMode <> fmOpenWrite) then begin
@@ -541,7 +542,7 @@ begin
   if not Confirm then
     Exit;
   Item.Action := aaAdd;
-  StrPCopy(FP, Item.Filename);                                           {!!.02}
+  StrPCopy(FP, Item.DiskFilename);                                           {!!.02}
   FH := _lopen(FP, OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
   if (FH <> HFILE_ERROR) then begin
     aItem.UncompressedSize := _llseek(FH, 0, 2);
@@ -552,7 +553,13 @@ begin
     raise EAbFileNotFound.Create;
 
 
-  StrPCopy(FN, ExtractFilename(Item.Filename));                          {!!.02}
+    newFileName := Item.FileName;
+    if (soStripPath in StoreOptions) then
+    	Item.FileName := ExtractFileName(newFileName);
+
+    if (soRemoveDots in StoreOptions) then AbStripDots(newFileName);
+
+  StrPCopy(FN, newFileName);                          {!!.02}
   if not FCIAddFile(FFCIContext, FP, FN, DoExecute, @FCI_GetNextCab,
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
