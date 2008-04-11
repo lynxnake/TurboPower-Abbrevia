@@ -1648,7 +1648,7 @@ var
   SaveDir : string;
   DName : string;
 begin
-  PathType := AbGetPathType(Item.FileName);
+  PathType := AbGetPathType(Item.DiskFileName);
   if (soRecurse in StoreOptions) and (PathType = ptNone) then begin
     GetDir(0, SaveDir);
     if BaseDirectory <> '' then
