@@ -50,6 +50,13 @@ const
   Ab_ZipPossiblySpannedSignature            : Longint = $30304B50;
   Ab_GeneralZipSignature                    : Word    = $4B50;       {!!.02}
 
+  {Rohan Added}
+  Ab_ArchiveExtraDataRecord					: Longint = $08064b50;
+  Ab_DigitalSignature						: Longint = $05054b50;
+  Ab_Zip64EndCetralDirectory				: Longint = $06064b50;
+  Ab_Zip64EndCetralDirectoryLocator	   		: Longint = $07064b50;
+  {End Rohan Added}
+
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
   Ab_LinuxExeSigWord1                       : Word    = $457F;       {!!.02}
   Ab_LinuxExeSigWord2                       : Word    = $464C;       {!!.02}
@@ -329,6 +336,8 @@ type
 
 { TAbZipDirectoryFileFooter interface ====================================== }
   TAbZipDirectoryFileFooter = class( TObject )
+  private
+    function GetIsZip64(): Boolean;
   protected {private}
     FValidSignature       : Longint;
     FSignature            : Longint;
@@ -368,7 +377,31 @@ type
       read FZipfileComment write FZipfileComment;
     property IsValid : Boolean
       read GetValid;
+    property IsZip64: Boolean read GetIsZip64;
   end;
+
+  {
+   		Zip64 end of central directory record
+        zip64 end of central dir
+        signature                       4 bytes  (0x06064b50)
+        size of zip64 end of central
+        directory record                8 bytes
+        version made by                 2 bytes
+        version needed to extract       2 bytes
+        number of this disk             4 bytes
+        number of the disk with the
+        start of the central directory  4 bytes
+        total number of entries in the
+        central directory on this disk  8 bytes
+        total number of entries in the
+        central directory               8 bytes
+        size of the central directory   8 bytes
+        offset of start of central
+        directory with respect to
+        the starting disk number        8 bytes
+        zip64 extensible data sector    (variable size)
+}
+
 
 { TAbZipItem interface ===================================================== }
   TAbZipItem = class( TAbArchiveItem )
@@ -466,6 +499,7 @@ type
 { TAbZipArchive interface ================================================== }
   TAbZipArchive = class( TAbArchive )
   protected {private}
+  	FIsZip64				: Boolean;
     FCompressionMethodToUse : TAbZipSupportedMethod;
     FCurrentDisk            : Word;
     FDeflationOption        : TAbZipDeflationOption;
@@ -497,7 +531,7 @@ type
     procedure DoInsertFromStreamHelper(Index : Integer; OutStream : TStream);
     procedure DoRequestNextImage(ImageNumber : Integer; var Stream : TStream;
       var Abort : Boolean );
-    function FindCDTail : Longint;
+    function FindCDTail : Int64;   
     function GetItem( Index : Integer ) : TAbZipItem;
     function GetZipFileComment : string;
     procedure PutItem( Index : Integer; Value : TAbZipItem );
@@ -609,7 +643,8 @@ procedure MakeSelfExtracting( StubStream, ZipStream,
      then perform operations as needed - like ExtractFiles( '*.*' ).
      This routine updates the RelativeOffset of each item in the archive}
 
-function FindCentralDirectoryTail(aStream : TStream) : Longint;
+function FindCentralDirectoryTail(aStream : TStream) : Int64;
+function FindZip64CentralDirLocator(aStream: TStream; centralDirectoryPos: Int64): Int64;
 
 function VerifyZip(Strm : TStream) : TAbArchiveType;
 
@@ -641,8 +676,8 @@ function VerifyZip(Strm : TStream) : TAbArchiveType;
 var
   Footer       : TAbZipDirectoryFileFooter;
   Sig          : LongInt;                                                {!!.01}
-  TailPosition : LongInt;
-  StartPos     : LongInt;
+  TailPosition : int64;
+  StartPos     : int64;
 begin
   StartPos := Strm.Position;
   Result := atUnknown;
@@ -718,7 +753,50 @@ begin
 end;
 
 {============================================================================}
-function FindCentralDirectoryTail(aStream : TStream) : Longint;
+
+function FindZip64CentralDirLocator(aStream: TStream; centralDirectoryPos: Int64): Int64;
+const
+    minimumBlockSize: Integer = $14;
+    maximumVariableData: Integer = $1000;
+type
+    DataRec = packed record
+    signature: Longint;
+    Data: array[0..15] of Byte;
+    end;
+    PDataRec = ^DataRec;
+var
+	Found: Boolean;
+	i, BytesRead: Integer;
+    Position, EndPosition: Int64;
+    Buffer: array[0..4095] of Byte;
+function ToInt(value: Longint): integer;
+var
+	Bytes: array[0..3] of byte absolute value;
+begin
+	result := (bytes[0]) or (bytes[1] shl 8)
+    	or (bytes[2] shl 16) or (bytes[3] shl 24);
+end;
+begin
+	Found := False;
+	Position := centralDirectoryPos;
+    EndPosition := Position - maximumVariableData;
+
+    if (Position < 0) then Position := 0;
+
+    aStream.Seek(EndPosition, soBeginning);
+    BytesRead := aStream.Read(Buffer, SizeOf(buffer));
+
+	for i := BytesRead - SizeOf(DataRec) downto 0 do begin
+        if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCetralDirectoryLocator) then begin
+            Position := EndPosition - (BytesRead - i);
+            aStream.Seek(Position, soBeginning); Found := true; break;
+        end;
+    end;
+
+   if Found then Result := Position else result := -1;
+end;
+{============================================================================}
+function FindCentralDirectoryTail(aStream : TStream) : Int64;
 { search end of aStream looking for ZIP Central Directory structure
   returns position in stream if found (otherwise returns -1),
   leaves stream positioned at start of structure or at original
@@ -727,19 +805,19 @@ const
   StartBufSize = 512;
   CMaxBufSize = 64 * 1024;                                               {!!.01}
 var
-  StartPos  : longint;
+  StartPos  : Int64;
   TailRec : packed record
     trSig : longint;
     trMid : array [0..15] of byte;
     trLen : word;
   end;
   Buffer    : PAnsiChar;
-  Offset    : longint;
+  Offset    : Int64;
   TestPos   : PAnsiChar;
   Done      : boolean;
-  BytesRead : longint;
-  BufSize   : integer;
-  MaxBufSize: Integer;                                                   {!!.01}
+  BytesRead : Int64;
+  BufSize   : Int64;
+  MaxBufSize: Int64;                                                   {!!.01}
   CommentLen: integer;
   SpanState : Boolean;                                                   {!!.01}
 begin
@@ -755,17 +833,17 @@ begin
   end;                                                                   {!!.01}
 
   {save the starting position}
-  StartPos := aStream.Seek(0, soFromCurrent);
+  StartPos := aStream.Seek(0, soCurrent);
 
   {start off with the majority case: no zip file comment, so the
    central directory tail is the last thing in the stream and it's a
    fixed size and doesn't indicate a zip file comment}
-  Result := aStream.Seek(-sizeof(TailRec), soFromEnd);
+  Result := aStream.Seek(-sizeof(TailRec), soEnd);
   if (Result >= 0) then begin
     aStream.ReadBuffer(TailRec, sizeof(TailRec));
     if (TailRec.trSig = Ab_ZipEndCentralDirectorySignature) and
        (TailRec.trLen = 0) then begin
-      aStream.Seek(Result, soFromBeginning);
+      aStream.Seek(Result, soBeginning);
       Exit;
     end;
   end;
@@ -787,9 +865,9 @@ begin
     while not Done do begin
 
       {seek to the search position}
-      Result := aStream.Seek(Offset, soFromEnd);
+      Result := aStream.Seek(Offset, soEnd);
       if (Result <= 0) then begin                                        {!!.01}
-        Result := aStream.Seek(0, soFromBeginning);
+        Result := aStream.Seek(0, soBeginning);
         Done := true;
       end;
 
@@ -819,7 +897,7 @@ begin
 
           {calculate its position and exit}
           Result := Result + (TestPos - Buffer);
-          aStream.Seek(Result, soFromBeginning);
+          aStream.Seek(Result, soBeginning);
           Exit;
         end;
       end;
@@ -840,7 +918,7 @@ begin
 
     {if we reach this point, the CD tail is not present}
     Result := -1;
-    aStream.Seek(StartPos, soFromBeginning);
+    aStream.Seek(StartPos, soBeginning);
   finally
     FreeMem(Buffer);
   end;
@@ -853,8 +931,14 @@ end;
 
 { TAbZipDataDescriptor implementation ====================================== }
 procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
+var
+	tempBuffer: Longint;
 begin
-  Stream.Read( FCRC32, sizeof( FCRC32 ) );
+  Stream.Read(tempBuffer, SizeOf(tempBuffer));
+  if (tempBuffer = Ab_ZipSpannedSetSignature) then
+  	Stream.Read( FCRC32, sizeof( FCRC32 ) )
+  else
+  	FCRC32 := tempBuffer;
   Stream.Read( FCompressedSize, sizeof( FCompressedSize ) );
   Stream.Read( FUncompressedSize, sizeof( FUncompressedSize ) );
 end;
@@ -862,6 +946,21 @@ end;
 procedure TAbZipDataDescriptor.SaveToStream( Stream : TStream );
 begin
   {!!.01 -- rewritten}
+  {      Although not originally assigned a signature, the value 
+      0x08074b50 has commonly been adopted as a signature value 
+      for the data descriptor record.  Implementers should be 
+      aware that ZIP files may be encountered with or without this 
+      signature marking data descriptors and should account for
+      either case when reading ZIP files to ensure compatibility.
+      When writing ZIP files, it is recommended to include the
+      signature value marking the data descriptor record.  When
+      the signature is used, the fields currently defined for
+      the data descriptor record will immediately follow the
+      signature.}
+  {Begin Rohan Added}
+  Stream.Write(Ab_ZipSpannedSetSignature, sizeof(longint));
+  {End Rohan Added}
+
   Stream.Write( FCRC32, sizeof( FCRC32 ) );
   Stream.Write( FCompressedSize, sizeof( FCompressedSize ) );
   Stream.Write( FUncompressedSize, sizeof( FUncompressedSize ) );
@@ -1157,6 +1256,16 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
+function TAbZipDirectoryFileFooter.GetIsZip64: Boolean;
+begin
+  	Result := ((DiskNumber = $FFFF) or
+		      (StartDiskNumber = $FFFF) or
+			  (EntriesOnDisk = $FFFF) or
+              (TotalEntries = $FFFF) or
+              (DirectorySize = $FFFFFFFF) or
+              (DirectoryOffset = $FFFFFFFF));
+end;
+
 function TAbZipDirectoryFileFooter.GetValid : Boolean;
 begin
   Result := (FSignature = FValidSignature);
@@ -1945,7 +2054,7 @@ begin
   DoExtractToStreamHelper(Index, aStream);
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipArchive.FindCDTail : Longint;
+function TAbZipArchive.FindCDTail : Int64;
 begin
   Result := FindCentralDirectoryTail( FStream );
 end;
@@ -2008,13 +2117,16 @@ end;
 procedure TAbZipArchive.LoadArchive;
 var
   Abort : Boolean;
-  TailPosition : Longint;
+  TailPosition : int64;
   Item : TAbZipItem;
   i : Integer;
   Progress : Byte;
   FileSignature : DWord;                                             {!!.02}
   IsZip : Boolean;
   Lowest : Longint;
+  StartDiskNumber, EntriesOnDisk,
+  TotalEntries, DiskNumber: Longint;
+  DirectorySize, DirectoryOffset: Int64;      
 begin
   Lowest := MaxLongint;
   Abort := False;
@@ -2028,6 +2140,7 @@ begin
 
   IsZip := (FileSignature and $0000FFFF) = Ab_GeneralZipSignature;   {!!.02}
 
+  //Rohan: This is a problem
 {$IFDEF MSWINDOWS}
 // [ 719083 ] Windows exe signature check
   IsExecutable := (FileSignature and $0000FFFF) = Ab_WindowsExeSignature;
@@ -2079,17 +2192,26 @@ begin
 
   { load the ZipDirectoryFileFooter }
   FInfo.LoadFromStream(FStream);
+  DiskNumber := FInfo.DiskNumber;
+  TotalEntries := FInfo.TotalEntries;
+  EntriesOnDisk := FInfo.EntriesOnDisk;
+  DirectorySize := FInfo.DirectorySize;
+  DirectoryOffset := FInfo.DirectoryOffset;
+  StartDiskNumber := FInfo.StartDiskNumber;
+
+
+
   CurrentDisk := FInfo.DiskNumber;
   { set spanning flag if current disk is not the first one }
   if (FInfo.DiskNumber > 0) then
     FSpanned := True;
-  //Possible Bug, Remove Drives could be split instead of spanned.    
+  //Possible Bug, Remove Drives could be split instead of spanned.
   If FSpanned and (Not FDriveIsRemovable) then
     FAutoGen := True;
 
   { build Items list from central directory records }
   i := 0;
-  FStream.Seek(FInfo.DirectoryOffset, soFromBeginning);
+  FStream.Seek(FInfo.DirectoryOffset, soBeginning);
   {  while not((FStream.Position = TailPosition) and }                   {!!.01}
   {    (CurrentDisk = FInfo.DiskNumber)) do begin }                      {!!.01}
   while (FStream.Position < TailPosition) or                             {!!.01}
@@ -2233,7 +2355,7 @@ begin
             DoInsertHelper(i, TempStream);
 
           if CurrItem.CompressedSize > 0 then begin
-            TempStream.Seek(0, soFromBeginning);
+            TempStream.Seek(0, soBeginning);
             { save compressed data offset }
             Size := TempStream.Size;
             CompressedDataStream.Write(Size, SizeOf(LongInt));
@@ -2260,7 +2382,7 @@ begin
 
   end; { for i }
 
-  CompressedDataStream.Seek(0, soFromBeginning);
+  CompressedDataStream.Seek(0, soBeginning);
 end;
 
 function Spanning : Boolean;
@@ -2334,7 +2456,7 @@ begin
       { write local header }{ intermediate stream needed for speed }
       WorkStream.Size := 0;
       CurrItem.SaveLFHToStream(WorkStream);
-      WorkStream.Seek(0, soFromBeginning);
+      WorkStream.Seek(0, soBeginning);
       FStream.CopyFrom(WorkStream, WorkStream.Size);
 
       { write compressed data }
@@ -2350,7 +2472,7 @@ begin
       then begin
         WorkStream.Size := 0;
         CurrItem.SaveDDToStream(WorkStream);
-        WorkStream.Seek(0, soFromBeginning);
+        WorkStream.Seek(0, soBeginning);
         FStream.CopyFrom(WorkStream, WorkStream.Size);
       end;
 
@@ -2401,7 +2523,7 @@ begin
       { write CD header and increment CD size }{ intermediate stream needed for speed }
       WorkStream.Size := 0;
       CurrItem.SaveCDHToStream(WorkStream);
-      WorkStream.Seek(0, soFromBeginning);
+      WorkStream.Seek(0, soBeginning);
       Inc(DirSize, WorkStream.Size);
       FStream.CopyFrom(WorkStream, WorkStream.Size);
 
@@ -2424,7 +2546,7 @@ begin
   { write CD tail }{ intermediate stream needed for speed }
   WorkStream.Size := 0;
   FInfo.SaveToStream(WorkStream);
-  WorkStream.Seek(0, soFromBeginning);
+  WorkStream.Seek(0, soBeginning);
   FStream.CopyFrom(WorkStream, WorkStream.Size);
 
   finally
