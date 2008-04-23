@@ -1190,44 +1190,49 @@ begin
 
       { check for valid password }
       DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
-      while not Abort and not DecryptStream.IsValid and (Tries < Archive.PasswordRetries) do begin
-        RequestPassword(Archive, Abort);
-        if Abort then
-          raise EAbUserAbort.Create;
-        DecryptStream.Free;
-        DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
-        Inc(Tries);
-      end;
-      if (Tries > Archive.PasswordRetries) then
-        raise EAbZipInvalidPassword.Create;
+      try 
+          while not Abort and not DecryptStream.IsValid and (Tries < Archive.PasswordRetries) do begin
+            RequestPassword(Archive, Abort);
+            if Abort then
+              raise EAbUserAbort.Create;
+            DecryptStream.Free;
+            DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
+            Inc(Tries);
+          end;
+          if (Tries > Archive.PasswordRetries) then
+            raise EAbZipInvalidPassword.Create;
 
-      { got good Password, so extract }
-      { get first bufferful (decrypting) }
-      {  DecryptStream.Position := 0;                            }{!!.01}{!!.02}
-      DataRead := DecryptStream.Read(Buffer, SizeToRead);
-      { while more data has been read and we're not told to bail }
-      while (DataRead > 0) and not Abort do begin
-        { report progress }
-        if Assigned(Archive.OnProgress) then begin
-          Total := Total + DataRead;
-          Remaining := Remaining - DataRead;                             {!!.01}
-          Percent := Round((100.0 * Total) / Item.UncompressedSize);
-          if (LastPercent <> Percent) then
-            Archive.OnProgress(Percent, Abort);
-          LastPercent := Percent;
-        end;
+          { got good Password, so extract }
+          { get first bufferful (decrypting) }
+          {  DecryptStream.Position := 0;                            }{!!.01}{!!.02}
+          DataRead := DecryptStream.Read(Buffer, SizeToRead);
+          { while more data has been read and we're not told to bail }
+          while (DataRead > 0) and not Abort do begin
+            { report progress }
+            if Assigned(Archive.OnProgress) then begin
+              Total := Total + DataRead;
+              Remaining := Remaining - DataRead;                             {!!.01}
+              Percent := Round((100.0 * Total) / Item.UncompressedSize);
+              if (LastPercent <> Percent) then
+                Archive.OnProgress(Percent, Abort);
+              LastPercent := Percent;
+            end;
 
-        { update CRC }
-        AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
+            { update CRC }
+            AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
 
-        { write data }
-        OutStream.WriteBuffer(Buffer, DataRead);
+            { write data }
+            OutStream.WriteBuffer(Buffer, DataRead);
 
-        { get next bufferful (decrypting) }
-        SizeToRead := SizeOf(Buffer);
-        if SizeToRead > Remaining then
-          SizeToRead := Remaining;
-        DataRead := DecryptStream.Read(Buffer, SizeToRead);
+            { get next bufferful (decrypting) }
+            SizeToRead := SizeOf(Buffer);
+            if SizeToRead > Remaining then
+              SizeToRead := Remaining;
+            DataRead := DecryptStream.Read(Buffer, SizeToRead);
+          end;
+      finally
+      	DecryptStream.Free();
+
       end;
     except
       on EAbUserAbort do

@@ -31,7 +31,7 @@
 
 unit AbConst;
 
-interface
+interface                                            
 
 const
   AbVersion = '3.05';
@@ -204,6 +204,7 @@ const
   AbGzipBadFileSize               = 402;
 
   AbUnhandledEntity               = 513;
+  AbInvaliHeader				  = $FFFF;
 
 resourcestring
   AbErrZipInvalidS = 'Invalid file - not a PKZip file';

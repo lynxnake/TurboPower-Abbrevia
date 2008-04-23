@@ -1262,8 +1262,8 @@ begin
 		      (StartDiskNumber = $FFFF) or
 			  (EntriesOnDisk = $FFFF) or
               (TotalEntries = $FFFF) or
-              (DirectorySize = $FFFFFFFF) or
-              (DirectoryOffset = $FFFFFFFF));
+              (DirectorySize = -1) or
+              (DirectoryOffset = -1));
 end;
 
 function TAbZipDirectoryFileFooter.GetValid : Boolean;

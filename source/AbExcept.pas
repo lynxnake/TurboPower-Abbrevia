@@ -104,6 +104,11 @@ type
   EAbTarException = class( EAbException ); {Tar Exception}
   EAbGzipException = class( EAbException); {GZip exception }
 
+  EAbInvalidHeaderException = class(EAbException)
+  public 
+    constructor Create;
+  end;
+
   EAbZipBadSpanStream = class( EAbZipException )
   public
     constructor Create;
@@ -792,5 +797,13 @@ begin
   ErrorCode := AbSpanningNotSupported;
 end;
 
+
+{ EAbInvalidHeader }
+
+constructor EAbInvalidHeaderException.Create;
+begin
+	inherited Create('Invalid Header');
+    ErrorCode := AbInvaliHeader;
+end;
 
 end.
