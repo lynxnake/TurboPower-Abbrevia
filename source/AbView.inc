@@ -78,7 +78,7 @@ type
   TAbDisplayOptions = set of TAbDisplayOption;
 
   TAbSortAttribute =
-    (saItemName, saPacked, saRatio, saTimeStamp, saFileSize);
+    (saItemName, saPacked,  saPath, saRatio, saTimeStamp, saFileSize);
   TAbSortAttributes = set of TAbSortAttribute;
 
 const
@@ -172,6 +172,7 @@ type
     function GetRow(RowNum : Longint) : Longint;
     function GetInvRow(RowNum : Longint) : Longint;
     procedure SortOnItemName(ItemList : TAbArchiveList);
+    procedure SortOnItemDir(ItemList : TAbArchiveList);
   public {methods}
     constructor Create;
     destructor Destroy;
@@ -372,9 +373,12 @@ type
       read GetSelCount;
     property Selected[RowNum : Longint] : Boolean
       read GetSelected write SetSelected;
-    
+
     property ColWidths;
     property RowHeights;
+  published  
+    property OnDragDrop;
+    property OnDragOver;
   end;
 
 
@@ -615,51 +619,53 @@ var
 begin
   if (ItemList.Count <= 0) then
     Exit;
-  if (Attr = saItemName) then
-    SortOnItemName(ItemList)
-  else begin
-    RowCount := ItemList.Count;
-    SL := TList.Create;
-    try {SL}
-      SL.Capacity := RowCount;
-      for i := 0 to Pred(RowCount) do begin
-        GetMem(P, SizeOf(TSortRec));
-        aItem := TAbArchiveItem(ItemList.Items[i]);
-        case Attr of
-          saPacked   : P^.Val := aItem.CompressedSize;
-          saRatio :
-            begin
-              if (aItem is TAbZipItem) then
-                P^.Val := TAbZipItem(aItem).CompressionRatio
-              else
-                P^.Val := 0;
-            end;
-          saFileSize : P^.Val := aItem.UnCompressedSize;
-          saTimeStamp : begin
-            LI := LongInt(aItem.LastModFileDate) shl 16 +
-              aItem.LastModFileTime;
-            DT := FileDateToDateTime(LI);
-            P^.Val := Double(DT);
+  case Attr of
+    saItemName : SortOnItemName(ItemList);
+    saPath : SortOnItemDir(ItemList);
+    else begin
+      RowCount := ItemList.Count;
+      SL := TList.Create;
+      try {SL}
+        SL.Capacity := RowCount;
+        for i := 0 to Pred(RowCount) do begin
+          GetMem(P, SizeOf(TSortRec));
+          aItem := TAbArchiveItem(ItemList.Items[i]);
+          case Attr of
+            saPacked   : P^.Val := aItem.CompressedSize;
+            saRatio :
+              begin
+                if (aItem is TAbZipItem) then
+                  P^.Val := TAbZipItem(aItem).CompressionRatio
+                else
+                  P^.Val := 0;
+              end;
+            saFileSize : P^.Val := aItem.UnCompressedSize;
+            saTimeStamp : begin
+              LI := LongInt(aItem.LastModFileDate) shl 16 +
+                aItem.LastModFileTime;
+              DT := FileDateToDateTime(LI);
+              P^.Val := Double(DT);
+             end;
           end;
+          P^.Index := i;
+          SL.Add(P);
         end;
-        P^.Index := i;
-        SL.Add(P);
-      end;
-      QuickSort(SL, 0, Pred(SL.Count));
-      for i := 0 to Pred(SL.Count) do begin
-        if FSortAscending then
-          P := SL[i]
-        else
-          P := SL[Pred(SL.Count) - i];
-        FRows[i] := Pointer(P^.Index)
-      end;
-    finally {SL}
-      while (SL.Count > 0) do begin
-        FreeMem(SL[0], Sizeof(TSortRec));
-        SL.Delete(0);
-      end;
-      SL.Free;
-    end; {SL}
+        QuickSort(SL, 0, Pred(SL.Count));
+        for i := 0 to Pred(SL.Count) do begin
+          if FSortAscending then
+            P := SL[i]
+          else
+            P := SL[Pred(SL.Count) - i];
+          FRows[i] := Pointer(P^.Index)
+        end;
+      finally {SL}
+        while (SL.Count > 0) do begin
+          FreeMem(SL[0], Sizeof(TSortRec));
+          SL.Delete(0);
+        end;
+        SL.Free;
+      end; {SL}
+    end;
   end;
 
   FSortAscending := not FSortAscending;
@@ -693,13 +699,39 @@ begin
   end; {SL}
 end;
 
+{ -------------------------------------------------------------------------- }
+procedure TAbRowMap.SortOnItemDir(ItemList : TAbArchiveList);
+var
+  i, RowCount : Longint;
+  SL : TStringList;
+  FN : string;
+begin
+  RowCount := ItemList.Count;
+  SL := TStringList.Create;
+  try {SL}
+    for i := 0 to Pred(RowCount) do begin
+      FN := TAbArchiveItem(ItemList.Items[i]).DiskPath;
+      AbUnFixName(FN);
+      SL.AddObject(ExtractFilePath(FN), Pointer(i));
+    end;
+    SL.Sort;
+    for i := 0 to Pred(RowCount) do begin
+      if FSortAscending then
+        FRows[i] := SL.Objects[i]
+      else
+        FRows[i] := SL.Objects[Pred(RowCount) - i];
+    end;
+  finally {SL}
+    SL.Free;
+  end; {SL}
+end;
 
 {===== TAbBaseViewer ===============================================}
 constructor TAbBaseViewer.Create(AOwner : TComponent);
 begin
   inherited Create(AOwner);
 
-  FItemList := TAbArchiveList.Create;                        
+  FItemList := TAbArchiveList.Create;
 
   RowCount := 2;
   FixedCols := 0;
@@ -726,6 +758,7 @@ begin
   FHeadings := TAbColHeadings.Create;
   InitColMap;
   FColSizing := False;
+  FColMoving := False;
   FAllowInvalidate := True;
   FRowMap := TAbRowMap.Create;
   FIcons := TStringList.Create;
@@ -756,6 +789,7 @@ begin
     vaFileSize  : SortAttr := saFileSize;
     vaRatio     : SortAttr := saRatio;
     vaTimeStamp : SortAttr := saTimeStamp;
+    vaPath      : SortAttr := saPath;
   else
     Result := False;
   end;
@@ -1329,6 +1363,7 @@ procedure TAbBaseViewer.MouseDown(Button: TMouseButton;
       vaRatio    : Sorted := saRatio in FSortAttributes;
       vaTimeStamp: Sorted := saTimeStamp in FSortAttributes;
       vaFileSize : Sorted := saFileSize in FSortAttributes;
+      vaPath     : Sorted := saPath in FSortAttributes;
       else Sorted := False;
     end;
     if Sorted then
@@ -1601,9 +1636,3 @@ end;
 {$ENDIF}
 
 end.
-
-
-
-
-
-
