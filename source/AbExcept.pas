@@ -102,7 +102,9 @@ type
   EAbZipException = class( EAbException ); {Zip exception}
   EAbCabException = class( EAbException ); {Cab exception}
   EAbTarException = class( EAbException ); {Tar Exception}
-  EAbGzipException = class( EAbException); {GZip exception }
+  EAbGzipException = class( EAbException); {GZip exception}
+  EAbBzipException = class( EAbException); {BZip exception}
+
 
   EAbInvalidHeaderException = class(EAbException)
   public 
@@ -210,6 +212,21 @@ type
   end;
 
   EAbGzipInvalid = class( EAbGZipException )
+  public
+    constructor Create;
+  end;
+
+  EAbBzipBadCRC = class( EAbBZipException )
+  public
+    constructor Create;
+  end;
+
+  EAbBzipBadFileSize = class( EAbBZipException )
+  public
+    constructor Create;
+  end;
+
+  EAbBzipInvalid = class( EAbBZipException )
   public
     constructor Create;
   end;
@@ -783,6 +800,32 @@ end;
 { EAbGzipInvalid }
 
 constructor EAbGzipInvalid.Create;
+begin
+  inherited Create(AbStrRes(AbSpanningNotSupported));
+  ErrorCode := AbSpanningNotSupported;
+
+end;
+
+
+{ EAbBzipBadCRC }
+
+constructor EAbBzipBadCRC.Create;
+begin
+  inherited Create(AbStrRes(AbBzipBadCRC));
+  ErrorCode := AbBzipBadCRC;
+end;
+
+{ EAbBzipBadFileSize }
+
+constructor EAbBzipBadFileSize.Create;
+begin
+  inherited Create(AbStrRes(AbBzipBadFileSize));
+  ErrorCode := AbBzipBadFileSize;
+end;
+
+{ EAbBzipInvalid }
+
+constructor EAbBzipInvalid.Create;
 begin
   inherited Create(AbStrRes(AbSpanningNotSupported));
   ErrorCode := AbSpanningNotSupported;

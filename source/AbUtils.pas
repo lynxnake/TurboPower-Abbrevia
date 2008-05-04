@@ -86,7 +86,7 @@ var
 
 type
   TAbArchiveType = (atUnknown, atZip, atSpannedZip {!!.01}, atSelfExtZip,
-                    atTar, atGzip, atGzippedTar, atCab);
+                    atTar, atGzip, atGzippedTar, atCab,atBZip, atBzippedTar);
 
 
 {$IFDEF LINUX}
@@ -223,7 +223,7 @@ type
   function AbFindNthSlash( const Path : string; n : Integer ) : Integer;
     {return the position of the character just before the nth backslash}
 
-  function AbGetDriveFreeSpace(const ArchiveName : string) : LongInt;
+  function AbGetDriveFreeSpace(const ArchiveName : string) : int64;
     {return the available space on the specified drive }
 
   function AbGetPathType( const Value : string ) : TAbPathType;
@@ -582,16 +582,16 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Rewritten}
-function AbGetDriveFreeSpace(const ArchiveName : string) : LongInt;
+function AbGetDriveFreeSpace(const ArchiveName : string) : Int64;
 { attempt to find free space (in bytes) on drive/volume,
   returns MaxLongInt on drives with greater space,
   returns -1 if fails for some reason }
 
 {$IFDEF MSWINDOWS }
-function GetLocalDiskFree(const Path : string) : {$IFDEF VERSION4} Int64 {$ELSE} LongInt {$ENDIF};
+function GetLocalDiskFree(const Path : string) : Int64;
 var
   SectorsPerCluster, BytesPerSector,
-  NumberOfFreeClusters, TotalNumberOfClusters : {$IFDEF VERSION4} Cardinal {$ELSE} LongInt {$ENDIF};
+  NumberOfFreeClusters, TotalNumberOfClusters : LongWord;
   Succeeded : BOOL;
   DrvBuf : array[0..255] of char;
 begin
@@ -610,9 +610,9 @@ begin
 {!!.03 -- End Rewritten}
 end;
 
-function GetRemoteDiskFree(const Path : string) : {$IFDEF VERSION4} Int64 {$ELSE} LongInt {$ENDIF};
+function GetRemoteDiskFree(const Path : string) : Int64;
 var
-  FreeAvailable, TotalSpace, TotalFree: {$IFDEF VERSION4} TLargeInteger {$ELSE} LongInt {$ENDIF};
+  FreeAvailable, TotalSpace, TotalFree: Int64;
   Succeeded : BOOL;
   PathBuf : array[0..255] of char;
 begin
@@ -623,7 +623,7 @@ begin
     Result := FreeAvailable;
 end;
 
-function GetRemoveableDiskFree(const Path : string) : LongInt;
+function GetRemoveableDiskFree(const Path : string) : Int64;
 begin
   Result := DiskFree(Ord(AbDrive(Path)) - Ord('A') + 1);
 end;
@@ -670,18 +670,11 @@ end;
 {$ENDIF LINUX}
 
 var
-{$IFDEF MSWINDOWS}
-{$IFDEF VERSION4}
   Size : Int64;
-{$ELSE}
-  Size : Integer;
-{$ENDIF VERSION4}
+{$IFDEF MSWINDOWS}
   DrvTyp : Integer;
   DrvStr : string;                                                       {!!.02}
 {$ENDIF MSWINDOWS}
-{$IFDEF LINUX}
-  Size : Int64;
-{$ENDIF}
 begin
 {$IFDEF MSWINDOWS }
   Size := -1;
