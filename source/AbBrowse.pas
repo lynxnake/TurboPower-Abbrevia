@@ -218,7 +218,8 @@ uses
 {$ENDIF}
   AbZipTyp,
   AbTarTyp,
-  AbGzTyp;
+  AbGzTyp,
+  AbBzipTyp;
 
 { TAbBaseBrowser implementation ======================================= }
 

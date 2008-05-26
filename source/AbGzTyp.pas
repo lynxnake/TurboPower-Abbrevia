@@ -92,7 +92,7 @@ type
 
   TAbGzTailRec = packed record
     CRC32 : LongInt;  { crc for uncompressed data }
-    ISize : LongInt;  { size of uncompressed data }
+    ISize : Cardinal;  { size of uncompressed data }
   end;
 
 type
@@ -123,20 +123,16 @@ type
     procedure SetFileSystem(const Value: TAbGzFileSystem);
     procedure SetIsText(const Value: Boolean);
 
-    function GetCompressedSize : LongInt; override;
     function GetExternalFileAttributes : LongInt; override;
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
-    function GetUncompressedSize : LongInt; override;
 
-    procedure SetCompressedSize(const Value : LongInt); override;
     procedure SetExternalFileAttributes( Value : LongInt ); override;
     procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
     procedure SetLastModFileTime(const Value : Word); override;
-    procedure SetUncompressedSize(const Value : LongInt); override;
 
     procedure SaveGzHeaderToStream(AStream : TStream);
     procedure LoadGzHeaderFromStream(AStream : TStream);
@@ -221,7 +217,7 @@ type
       read GetFileSize;
     property TailCRC : LongInt
       read FTail.CRC32;
-    property TailSize : LongInt
+    property TailSize : Cardinal
       read FTail.ISize;
   end;
 
@@ -571,7 +567,7 @@ begin
   { Maxium Compression }
   FGzHeader.XtraFlags := 2;
 
-  FFileName := '';
+  FileName := '';
   FFileComment := '';
   FExtraField := '';
 
@@ -584,11 +580,6 @@ begin
 {$ENDIF MSWINDOWS }
 
   FIncludeHeaderCrc := False;
-end;
-
-function TAbGzipItem.GetCompressedSize: LongInt;
-begin
-  Result := FCompressedSize;
 end;
 
 function TAbGzipItem.GetExternalFileAttributes: LongInt;
@@ -688,17 +679,13 @@ begin
   Result := LongRec(Rslt).Lo;
 end;
 
-function TAbGzipItem.GetUncompressedSize: LongInt;
-begin
-  Result := FUncompressedSize;
-end;
-
 procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);
 var
   StartPos : LongInt;
   Len      : LongInt;
   LenW     : Word;
   CRC16    : ShortInt;
+  tempFileName : string;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
 
@@ -717,11 +704,13 @@ begin
     SeekToStringEndInStream(AStream);
     Len := AStream.Position - StartPos - 1;
     AStream.Seek(StartPos, soFromBeginning);
-    SetLength(FFileName, Len);
-    AStream.Read(FFileName[1], Len + 1);
+    SetLength(tempFileName, Len);
+    AStream.Read(tempFileName[1], Len + 1);
   end
   else
-    FFileName := 'unknown'; 
+    tempFileName := 'unknown';
+
+    FileName := tempFileName;
 
   { any comment present? }
   if HasFileComment then begin
@@ -743,10 +732,11 @@ begin
 
   {Assert: stream should now be located at start of compressed data }
   {If file was compressed with 3.3 spec this will be invalid so use with care}
-  FCompressedSize := AStream.Size - AStream.Position - SizeOf(TAbGzTailRec);
+  CompressedSize := AStream.Size - AStream.Position - SizeOf(TAbGzTailRec);
 
-  DiskFileName := FileName;
-  AbUnfixName(FDiskFileName);
+  tempFileName := FileName;
+  AbUnfixName(tempFileName);
+  DiskFileName := tempFileName;
   Action := aaNone;
   Tagged := False;
 end;
@@ -757,6 +747,7 @@ var
   HSize, I32 : LongInt;
   I16 : ShortInt;
   LenW  : Word;
+  tempFileName: string;
 begin
   { start with basic header record }
   HSize := SizeOf(TAbGzHeader);
@@ -787,10 +778,12 @@ begin
     HSize := HSize + 2 + Length(FExtraField);
   end;
 
+  tempFileName := FileName;
+
   { any File Name present? }
-  if FFileName > '' then begin
+  if tempFileName > '' then begin
     FGzHeader.Flags := FGZHeader.Flags or AB_GZ_FLAG_FNAME;
-    HSize := HSize + Length(FFileName) + 1;
+    HSize := HSize + Length(tempFileName) + 1;
   end;
 
   { any File Comment present? }
@@ -819,8 +812,8 @@ begin
 
     { add filename if any (and include final #0 from string) }
     if HasFileName then begin
-      Move(FFileName[1], HPtr^, succ(length(FFileName)));
-      Inc(HPtr, succ(length(FFileName)));
+      Move(tempFileName[1], HPtr^, succ(length(tempFileName)));
+      Inc(HPtr, succ(length(tempFileName)));
     end;
 
     { add file comment if any (and include final #0 from string) }
@@ -840,11 +833,6 @@ begin
   finally
     FreeMem(HBuff);
   end;
-end;
-
-procedure TAbGzipItem.SetCompressedSize(const Value: LongInt);
-begin
-  FCompressedSize := Value;
 end;
 
 procedure TAbGzipItem.SetExternalFileAttributes(Value: LongInt);
@@ -880,11 +868,11 @@ end;
 
 procedure TAbGzipItem.SetFileName(const Value: string);
 begin
-  if FFileName <> '' then
-     FFileName := '';
+  if FileName <> '' then
+     FileName := '';
 
   if Value > '' then begin
-    FFileName := Value { + #0};
+    FileName := Value { + #0};
     FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME;
   end
   else begin
@@ -954,10 +942,6 @@ begin
   FGZHeader.ModTime := UT;
 end;
 
-procedure TAbGzipItem.SetUncompressedSize(const Value: Integer);
-begin
-  FUncompressedSize := Value;
-end;
 
 { TAbGzipArchive }
 
@@ -1219,10 +1203,10 @@ begin
 
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
         GZHelp.ReadTail;
-        Item.FCRC32 := GZHelp.FTail.CRC32;
-        Item.FUncompressedSize := GZHelp.FTail.ISize;
+        Item.CRC32 := GZHelp.FTail.CRC32;
+        Item.UncompressedSize := GZHelp.FTail.ISize;
 //        Item.CRC32 := GZHelp.FItem.FCRC32;
-        Item.FUncompressedSize := GZHelp.FItem.FUncompressedSize;
+        Item.UncompressedSize := GZHelp.FItem.UncompressedSize;
 
         Item.Action := aaNone;
         FItemList.Clear;
@@ -1475,7 +1459,7 @@ constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
 begin
   //  [ 1240845 ] Fix suggested by JOvergaard
  // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
- FGZStream := aStream;
+  FGZStream := aStream;
   inherited CreateFromStream(aStream,aArchiveName);
   FTarLoaded := False;
   FState     := gsGzip;

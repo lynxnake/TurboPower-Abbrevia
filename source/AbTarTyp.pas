@@ -139,21 +139,21 @@ type
     procedure SetUserID(const Value: Integer);
     procedure SetUserName(const Value: string);
 
-    function GetCompressedSize : LongInt; override;
+    function GetCompressedSize : Int64; override;
     function GetExternalFileAttributes : LongInt; override;
     function GetFileName : string; override;
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
-    function GetUncompressedSize : LongInt; override;
+    function GetUncompressedSize : Int64; override;
 
-    procedure SetCompressedSize(const Value : LongInt); override;
+    procedure SetCompressedSize(const Value : Int64); override;
     procedure SetExternalFileAttributes( Value : LongInt ); override;
     procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
     procedure SetLastModFileTime(const Value : Word); override;
-    procedure SetUncompressedSize(const Value : LongInt); override;
+    procedure SetUncompressedSize(const Value : Int64); override;
 
     procedure SaveTarHeaderToStream(AStream : TStream);
     procedure LoadTarHeaderFromStream(AStream :TStream);
@@ -240,7 +240,7 @@ function VerifyTar(Strm : TStream) : TAbArchiveType;
 
 implementation
 
-function OctalToInt(const Oct : PAnsiChar; aLen : integer): Integer;
+function OctalToInt(const Oct : PAnsiChar; aLen : integer): Int64;
 var
   i : integer;
 begin
@@ -260,7 +260,7 @@ begin
 
 end;
 
-function IntToOctal(Value : Integer): string;
+function IntToOctal(Value : Int64): string;
 const
   OctDigits  : array[0..7] of AnsiChar = '01234567';
 begin
@@ -425,7 +425,7 @@ begin
 end;
 
 
-function TAbTarItem.GetCompressedSize: LongInt;
+function TAbTarItem.GetCompressedSize: Int64;
 { TAR includes no internal compression, returns same value as GetUncompressedSize }
 begin
   Result := OctalToInt(FTarHeader.Size, SizeOf(FTarHeader.Size));
@@ -508,7 +508,7 @@ begin
   Result := FTarHeader.Magic;
 end;
 
-function TAbTarItem.GetUncompressedSize: LongInt;
+function TAbTarItem.GetUncompressedSize: Int64;
 { TAR includes no internal compression, returns same value as GetCompressedSize }
 begin
   Result := OctalToInt(FTarHeader.Size, sizeof(FTarHeader.Size));
@@ -525,12 +525,15 @@ begin
 end;
 
 procedure TAbTarItem.LoadTarHeaderFromStream(AStream: TStream);
+var
+	tempFileName: string;
 begin
   AStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
   AStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
-  FFileName := FTarHeader.Name;
-  DiskFileName := FileName;
-  AbUnfixName(FDiskFileName);
+  FileName := FTarHeader.Name;
+  tempFileName := FileName;
+  AbUnfixName(tempFileName);
+  DiskFileName := tempFileName;
   Action := aaNone;
   Tagged := False;
 end;
@@ -568,7 +571,7 @@ begin
   AStream.Write(PadBuff, PadSize);
 end;
 
-procedure TAbTarItem.SetCompressedSize(const Value: Integer);
+procedure TAbTarItem.SetCompressedSize(const Value: Int64);
 var
   S : string;
 begin
@@ -674,7 +677,7 @@ begin
   StrPCopy(FTarHeader.LinkName, Value);
 end;
 
-procedure TAbTarItem.SetUncompressedSize(const Value: Integer);
+procedure TAbTarItem.SetUncompressedSize(const Value: Int64);
 var
   S : string;
 begin

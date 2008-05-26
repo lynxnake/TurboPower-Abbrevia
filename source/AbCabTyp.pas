@@ -34,6 +34,8 @@
 {$I AbDefine.inc}
 
 unit AbCabTyp;
+{$WARN UNIT_PLATFORM OFF}  
+{$WARN SYMBOL_PLATFORM OFF}
 
 interface
 
@@ -93,7 +95,7 @@ type
     FCabSize           : Longint;
     FCompressionType   : TAbCabCompressionType;
     FFileCount         : Word;
-    FFolderThreshold   : Longint;
+    FFolderThreshold   : LongWord;
     FFolderCount       : Word;
     FHasPrev           : Boolean;
     FHasNext           : Boolean;
@@ -122,9 +124,9 @@ type
     procedure PutItem( Index : Integer; Value : TAbCabItem );
     procedure SaveArchive;
       override;
-    procedure SetFolderThreshold(Value : Longint);
+    procedure SetFolderThreshold(Value : LongWord);
     procedure SetSetID(Value : Word);
-    procedure SetSpanningThreshold(Value : Longint);
+    procedure SetSpanningThreshold(Value : Int64);
       override;
     procedure TestItemAt(Index : Integer);
       override;
@@ -147,7 +149,7 @@ type
     property CompressionType : TAbCabCompressionType
       read  FCompressionType
       write FCompressionType;
-    property FolderThreshold : Longint
+    property FolderThreshold : LongWord
       read  FFolderThreshold
       write SetFolderThreshold;
     property FolderCount : Word
@@ -775,7 +777,7 @@ begin
     FCIFlushCabinet(FFCIContext, False, @FCI_GetNextCab, @FCI_Status);
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCabArchive.SetFolderThreshold(Value : Longint);
+procedure TAbCabArchive.SetFolderThreshold(Value : LongWord);
   {set maximum compression boundary}
 begin
   if (Value > 0) then
@@ -792,7 +794,7 @@ begin
   FFCICabInfo.SetID := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCabArchive.SetSpanningThreshold(Value : Longint);
+procedure TAbCabArchive.SetSpanningThreshold(Value : Int64);
   {set maximum cabinet size}
 begin
   if (Value > 0) then
@@ -806,5 +808,6 @@ procedure TAbCabArchive.TestItemAt(Index : Integer);
 begin
   {not implemented for cabinet archives}
 end;
-
+{$WARN UNIT_PLATFORM ON}
+{$WARN SYMBOL_PLATFORM ON}
 end.

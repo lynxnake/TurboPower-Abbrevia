@@ -183,6 +183,7 @@ type
     no encryption is tried, no check on CRC is done, uses the whole
     compressedstream - no Progress events - no Frills!}
 
+  function CopyFileTo(const Source, Destination: string;FailifExists:boolean): Boolean;
 implementation
 
 uses
@@ -1114,15 +1115,15 @@ end;
 { -------------------------------------------------------------------------- }
 function DoExtractStored(Archive : TAbZipArchive; Item : TAbZipItem; OutStream : TStream; TheCRC : LongInt) : LongInt;
 var
-  DataRead    : LongInt;
+  DataRead    : Int64;
   CRC32       : LongInt;
   Percent     : LongInt;
   LastPercent : LongInt;
 
   Tries : Integer;
-  Total       : LongInt;
-  Remaining   : LongInt;
-  SizeToRead  : LongInt;
+  Total       : Int64;
+  Remaining   : Int64;
+  SizeToRead  : Int64;
   Abort       : Boolean;
   Buffer      : array [0..1023] of byte;
   DecryptStream : TAbDfDecryptStream;
@@ -1464,7 +1465,7 @@ begin
     TempOut.Free;
   end;
   // Now copy the temp File to correct location
-  CopyFile(pchar(TempFile),pchar(NewName),false);
+  CopyFileTo(pchar(TempFile),pchar(NewName),false);
   // Check that it exists
   if Not FileExists(NewName) then
     raise EAbException.CreateFmt(abMoveFileErrorS,[TempFile,NewName]); // TODO: Add Own Exception Class 
@@ -1574,5 +1575,34 @@ begin
   Inflate(CompressedStream, UncompressedStream, nil);
 end;
 
+function CopyFileTo(const Source, Destination: string;failifExists:boolean): Boolean;
+var
+SourceStream: TFileStream;
+begin
+// -TODO: Change to use a Linux copy function
+// There is no native Linux copy function (at least "cp" doesn't use one
+// and I can't find one anywhere (Johannes Berg))
+{$IFDEF LINUX}
+   Result := false;
+   if not FileExists(Destination) then
+   begin
+      SourceStream := TFileStream.Create(Source, fmOpenRead);
+      try
+         with TFileStream.Create(Destination, fmCreate) do
+         try
+            CopyFrom(SourceStream, 0);
+         finally
+            Free;
+         end;
+      finally
+         SourceStream.free;
+      end;
+      Result := true;
+   end;
+{$ENDIF LINUX}
+{$IFDEF MSWINDOWS}
+   Result := CopyFile(PChar(Source), PChar(Destination), failifExists);
+{$ENDIF MSWINDOWS}
+end;
 end.
 

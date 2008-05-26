@@ -153,11 +153,11 @@ var
   CRC32       : LongInt;
   Percent     : LongInt;
   LastPercent : LongInt;
-  InSize      : LongInt;
-  DataRead    : LongInt;
-  Total       : LongInt;
+  InSize      : Int64;
+  DataRead    : Int64;
+  Total       : Int64;
   Abort       : Boolean;
-  Buffer      : array [0..1023] of byte;
+  Buffer      : array [0..4095] of byte;
   DestStrm    : TStream;  { place holder for Output, either direct or encrypted }
 begin
   { setup }
@@ -287,13 +287,13 @@ begin
         smDeflated : begin
         { Item is to be deflated regarless }
           { deflate item }
-          DoDeflate(ZipArchive, Item, TempOut, InStream);                {!!.01}
+          DoDeflate(ZipArchive, Item, OutStream, InStream);                {!!.01}
         end;
 
         smStored : begin
         { Item is to be stored regardless }
           { store item }
-          DoStore(ZipArchive, Item, TempOut, InStream);                  {!!.01}
+          DoStore(ZipArchive, Item, OutStream, InStream);                  {!!.01}
         end;
 
         smBestMethod : begin
@@ -314,8 +314,11 @@ begin
             TempOut.SwapFileDirectory := Sender.TempDirectory;           {!!.01}
 
             { store item }
-            DoStore(ZipArchive, Item, TempOut, InStream);                {!!.01}
+            DoStore(ZipArchive, Item, TempOut, InStream);          {!!.01}
           end {if};
+          
+    	 TempOut.Seek(0, soBeginning);                                    {!!.01}
+    	 OutStream.CopyFrom(TempOut, TempOut.Size);        
         end;
       end; { case }
 
@@ -329,9 +332,7 @@ begin
 
     { update item }
     UpdateItem;
-
-    TempOut.Seek(0, soFromBeginning);                                    {!!.01}
-    OutStream.CopyFrom(TempOut, TempOut.Size);                           {!!.01}
+                      {!!.01}
 
   finally                                                                {!!.01}
     TempOut.Free;                                                        {!!.01}
