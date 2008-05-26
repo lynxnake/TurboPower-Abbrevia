@@ -49,10 +49,10 @@ type
   private
     function GetLastModTimeAsDateTime: TDateTime;                        {!!.01}
     procedure SetLastModTimeAsDateTime(const Value: TDateTime);          {!!.01}
-  protected {private}
+  private
     NextItem          : TAbArchiveItem;
     FAction           : TAbArchiveAction;
-    FCompressedSize   : LongInt;
+    FCompressedSize   : Int64;
     FCRC32            : Longint;
     FDiskFileName     : string;
     FExternalFileAttributes : Longint;
@@ -61,10 +61,10 @@ type
     FLastModFileTime  : Word;
     FLastModFileDate  : Word;
     FTagged           : Boolean;
-    FUncompressedSize : LongInt;
+    FUncompressedSize : Int64;
 
   protected {property methods}
-    function GetCompressedSize : LongInt; virtual;
+    function GetCompressedSize : Int64; virtual;
     function GetCRC32 : Longint; virtual;
     function GetDiskPath : string;
     function GetExternalFileAttributes : LongInt; virtual;
@@ -73,15 +73,15 @@ type
     function GetLastModFileDate : Word; virtual;
     function GetLastModFileTime : Word; virtual;
     function GetStoredPath : string;
-    function GetUncompressedSize : LongInt; virtual;
-    procedure SetCompressedSize(const Value : LongInt); virtual;
+    function GetUncompressedSize : Int64; virtual;
+    procedure SetCompressedSize(const Value : Int64); virtual;
     procedure SetCRC32(const Value : Longint); virtual;
     procedure SetExternalFileAttributes( Value : LongInt ); virtual;
     procedure SetFileName(const Value : string); virtual;
     procedure SetIsEncrypted(Value : Boolean); virtual;
     procedure SetLastModFileDate(const Value : Word); virtual;
     procedure SetLastModFileTime(const Value : Word); virtual;
-    procedure SetUncompressedSize(const Value : LongInt); virtual;
+    procedure SetUncompressedSize(const Value : Int64); virtual;
 
   public {methods}
     constructor Create;
@@ -95,7 +95,7 @@ type
     property Action : TAbArchiveAction
       read FAction
       write FAction;
-    property CompressedSize : LongInt
+    property CompressedSize : Int64
       read GetCompressedSize
       write SetCompressedSize;
     property CRC32 : Longint
@@ -126,7 +126,7 @@ type
     property Tagged : Boolean
       read FTagged
       write FTagged;
-    property UncompressedSize : LongInt
+    property UncompressedSize : Int64
       read GetUncompressedSize
       write SetUncompressedSize;
 
@@ -248,6 +248,8 @@ type
 { ===== TAbArchive ========================================================== }
 type
   TAbArchive = class(TObject)
+  protected
+    class function GetMaxFileSize(): Int64; virtual;
   public
     FStream         : TStream;
     FStatus         : TAbArchiveStatus;
@@ -262,7 +264,7 @@ type
     FImageNumber    : Word;
     FInStream       : TStream;
     FIsDirty        : Boolean;
-    FSpanningThreshold      : Longint;
+    FSpanningThreshold      : Int64;
     FItemList       : TAbArchiveList;
     FLogFile        : string;
     FLogging        : Boolean;
@@ -343,9 +345,9 @@ type
       virtual;
     function FixName(const Value : string) : string;
       virtual;
-    function GetSpanningThreshold : Longint;
+    function GetSpanningThreshold : Int64;
       virtual;
-    procedure SetSpanningThreshold( Value : Longint );
+    procedure SetSpanningThreshold( Value : Int64 );
       virtual;
 
   protected {properties and events}
@@ -433,7 +435,7 @@ type
       read FMode;
     property Spanned : Boolean
       read FSpanned;
-    property SpanningThreshold : Longint
+    property SpanningThreshold : Int64
       read  GetSpanningThreshold
       write SetSpanningThreshold;
     property Status : TAbArchiveStatus
@@ -564,7 +566,7 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchiveItem.GetCompressedSize : LongInt;
+function TAbArchiveItem.GetCompressedSize : Int64;
 begin
   Result := FCompressedSize;
 end;
@@ -609,7 +611,7 @@ begin
   Result := ExtractFilePath(DiskFileName);
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchiveItem.GetUnCompressedSize : LongInt;
+function TAbArchiveItem.GetUnCompressedSize : Int64;
 begin
   Result := FUnCompressedSize;
 end;
@@ -657,7 +659,7 @@ begin
   Result := False;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchiveItem.SetCompressedSize(const Value : LongInt);
+procedure TAbArchiveItem.SetCompressedSize(const Value : Int64);
 begin
   FCompressedSize := Value;
 end;
@@ -692,7 +694,7 @@ begin
   FLastModFileTime := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchiveItem.SetUnCompressedSize(const Value : LongInt);
+procedure TAbArchiveItem.SetUnCompressedSize(const Value : Int64);
 begin
   FUnCompressedSize := Value;
 end;
@@ -715,6 +717,7 @@ end;
 {!!.01 -- End Added }
 
 { TAbArchiveList implementation ============================================ }
+
 { TAbArchiveList }
 constructor TAbArchiveList.Create;
 begin
@@ -1433,8 +1436,15 @@ begin
     end;
     DoArchiveProgress(100, Abort);
   end;
+end;          
+{ -------------------------------------------------------------------------- }
+
+class function TAbArchive.GetMaxFileSize: Int64;
+begin
+    Result := $FFFFFFFF;  //Make same as old
 end;
 { -------------------------------------------------------------------------- }
+
 procedure TAbArchive.TestTaggedItems;
   {test all tagged items in the archive}
 var
@@ -1686,7 +1696,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchive.GetSpanningThreshold : Longint;
+function TAbArchive.GetSpanningThreshold : Int64;
 begin
   Result := FSpanningThreshold;
 end;
@@ -1881,7 +1891,7 @@ begin
     raise EAbNoSuchDirectory.Create;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbArchive.SetSpanningThreshold( Value : Longint );
+procedure TAbArchive.SetSpanningThreshold( Value : Int64 );
 begin
   FSpanningThreshold := Value;
 end;
