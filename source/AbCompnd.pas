@@ -26,10 +26,11 @@
 {*********************************************************}
 {* ABBREVIA: AbCompnd.pas 3.05                           *}
 {*********************************************************}
-{* ABBREVIA: Compound File classes and component (Source)*}
-{*   See AbCompnd.pas for the VCL header                 *}
+{* ABBREVIA: Compound File classes and component (VCL)   *}
 {*   See AbQCmpnd.pas for the CLX header                 *}
 {*********************************************************}
+
+unit AbCompnd;
 
 {$I AbDefine.inc}
 
@@ -922,6 +923,7 @@ end;
 function TAbDirectoryEntry.IsVolumeID : Boolean;
   {- returns true if the entry is a volume ID}
 begin
+{$WARN SYMBOL_DEPRECATED OFF}
 {$IFNDEF Linux}
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
   Result := ((FAttributes and faVolumeID) > 0);
@@ -931,6 +933,7 @@ begin
   Result := ((FAttributes and faVolumeID) > 0);
 {$WARN SYMBOL_PLATFORM ON}
 {$ENDIF LINUX}
+{$WARN SYMBOL_DEPRECATED ON}
 end;
 {-----------------------------------------------------------------------------}
 procedure TAbDirectoryEntry.WriteToStream(Strm : TMemoryStream);
