@@ -1330,7 +1330,7 @@ var
   procedure GetHeader;
   begin
     {get past the item's local file header}
-    ZipArchive.FStream.Seek(Item.RelativeOffset, soFromBeginning);
+    ZipArchive.FStream.Seek(Item.RelativeOffset, soBeginning);
 
     { select appropriate CRC value based on General Purpose Bit Flag }
     { also get whether the file is stored, while we've got the local file header }
@@ -1391,7 +1391,9 @@ procedure AbUnzip(Sender : TObject; Item : TAbZipItem; NewName : string);
   {create the output filestream and pass it to AbUnzipToStream}
 var
   Confirm    : Boolean;
+{$IFDEF AbUnZipClobber}
   OutStream  : TFileStream;
+{$ENDIF}  
   {$IFDEF AbUnZipMemory}
   TempOut    : TMemoryStream;
   {$ENDIF}
@@ -1534,9 +1536,9 @@ begin
     BitBucket := TAbBitBucketStream.Create(0);
     LFH := TAbZipLocalFileHeader.Create;
       {get the item's local file header}
-    ZipArchive.FStream.Seek(Item.RelativeOffset, soFromBeginning);
+    ZipArchive.FStream.Seek(Item.RelativeOffset, soBeginning);
     LFH.LoadFromStream(ZipArchive.FStream);
-    ZipArchive.FStream.Seek(Item.RelativeOffset, soFromBeginning);
+    ZipArchive.FStream.Seek(Item.RelativeOffset, soBeginning);
 
       {currently a single exception is raised for any LFH error}
     if (LFH.VersionNeededToExtract <> Item.VersionNeededToExtract) then
@@ -1576,8 +1578,10 @@ begin
 end;
 
 function CopyFileTo(const Source, Destination: string;failifExists:boolean): Boolean;
+{$IFDEF LINUX}
 var
 SourceStream: TFileStream;
+{$ENDIF}
 begin
 // -TODO: Change to use a Linux copy function
 // There is no native Linux copy function (at least "cp" doesn't use one

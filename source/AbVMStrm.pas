@@ -323,7 +323,7 @@ end;
 function TAbVirtualMemoryStream.vmsGetPageForOffset(aOffset : Int64) : PvmsPage;
 var
   Page     : PvmsPage;
-  PageOfs  : Longint;
+  PageOfs  : Int64;
   L, M, R  : integer;
   OldestPageNum : integer;
   CreatedNewPage: boolean;
@@ -464,17 +464,17 @@ end;
 {--------}
 procedure TAbVirtualMemoryStream.vmsSwapFileWrite(aPage : PvmsPage);
 var
-  NewPos : Longint;
-  BytesWrit : Longint;
-  SeekResult: Longint;
+  NewPos : Int64;        
+  SeekResult: Int64;
+  BytesWritten : Longint;
 begin
   if (vmsSwapHandle = 0) then
     vmsSwapFileCreate;
   SeekResult := FileSeek(vmsSwapHandle, aPage^.vpStmOfs, 0);
   if (SeekResult = -1) then
     raise EAbVMSSeekFail.Create( vmsSwapFileName );                    
-  BytesWrit := FileWrite(vmsSwapHandle, aPage^.vpData, AB_VMSPageSize);
-  if BytesWrit <> AB_VMSPageSize then
+  BytesWritten := FileWrite(vmsSwapHandle, aPage^.vpData, AB_VMSPageSize);
+  if BytesWritten <> AB_VMSPageSize then
     raise EAbVMSWriteFail.Create( AB_VMSPageSize, vmsSwapFileName );   
   NewPos := aPage^.vpStmOfs + AB_VMSPageSize;
   if (NewPos > vmsSwapFileSize) then
