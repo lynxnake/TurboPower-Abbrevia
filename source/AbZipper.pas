@@ -50,7 +50,7 @@ type
     FOnConfirmSave          : TAbArchiveConfirmEvent;
     FOnSave                 : TAbArchiveEvent;
     FOnArchiveSaveProgress  : TAbArchiveProgressEvent;                 {!!.04}
-    FArchiveSaveProgressMeter : TAbMeterLink;                          {!!.04}
+    FArchiveSaveProgressMeter : TAbBaseMeterLink;                          {!!.04}
 
     FStoreOptions           : TAbStoreOptions;
 
@@ -100,7 +100,7 @@ type
       read  FStoreOptions
       write SetStoreOptions
       default AbDefStoreOptions;
-    property ArchiveSaveProgressMeter : TAbMeterLink                   {!!.04}
+    property ArchiveSaveProgressMeter : TAbBaseMeterLink                   {!!.04}
       read  FArchiveSaveProgressMeter                                  {!!.04}
       write FArchiveSaveProgressMeter;                                 {!!.04}
 

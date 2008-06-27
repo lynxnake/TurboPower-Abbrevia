@@ -566,6 +566,7 @@ begin
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
 
+	//TODO: Verify after flushing cab we can write to it again
     FIsDirty := true;
 end;
 { -------------------------------------------------------------------------- }

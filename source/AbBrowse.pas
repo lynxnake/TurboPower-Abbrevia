@@ -42,7 +42,7 @@ uses
   AbArcTyp;
 
   type
-  TAbMeterLink = class(TAbBaseComponent)
+  TAbBaseMeterLink = class(TAbBaseComponent)
     public
       procedure DoProgress(Progress : Byte); virtual; abstract;
       procedure Reset; virtual; abstract;
@@ -53,8 +53,8 @@ uses
     FArchive : TAbArchive;
   protected {private}
     FSpanningThreshold : Longint;
-    FItemProgressMeter : TAbMeterLink;
-    FArchiveProgressMeter : TAbMeterLink;
+    FItemProgressMeter : TAbBaseMeterLink;
+    FArchiveProgressMeter : TAbBaseMeterLink;
     FBaseDirectory : string;
     FFileName : string;
     FLogFile : string;
@@ -117,7 +117,7 @@ uses
   protected {properties}
     property Archive : TAbArchive
       read FArchive;
-    property ArchiveProgressMeter : TAbMeterLink
+    property ArchiveProgressMeter : TAbBaseMeterLink
       read  FArchiveProgressMeter
       write FArchiveProgressMeter;
     property BaseDirectory : string
@@ -130,7 +130,7 @@ uses
       read  FSpanningThreshold
       write SetSpanningThreshold
       default 0;
-    property ItemProgressMeter : TAbMeterLink
+    property ItemProgressMeter : TAbBaseMeterLink
       read  FItemProgressMeter
       write FItemProgressMeter;
     property LogFile : string
@@ -218,8 +218,7 @@ uses
 {$ENDIF}
   AbZipTyp,
   AbTarTyp,
-  AbGzTyp,
-  AbBzipTyp;
+  AbGzTyp;
 
 { TAbBaseBrowser implementation ======================================= }
 

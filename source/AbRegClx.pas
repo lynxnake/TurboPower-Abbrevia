@@ -229,7 +229,7 @@ begin
 
   RegisterComponents( 'Abbrevia',
                       [
-                        TAbCLXMeterLink,
+                        TAbMeterLink,
                         TAbMeter,
                         TAbCabView,
                         TAbZipView,
