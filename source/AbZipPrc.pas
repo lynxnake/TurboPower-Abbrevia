@@ -157,7 +157,7 @@ var
   DataRead    : Int64;
   Total       : Int64;
   Abort       : Boolean;
-  Buffer      : array [0..4095] of byte;
+  Buffer      : array [0..8191] of byte;
   DestStrm    : TStream;  { place holder for Output, either direct or encrypted }
 begin
   { setup }
@@ -345,12 +345,43 @@ end;
 procedure AbZip( Sender : TAbZipArchive; Item : TAbZipItem;
                  OutStream : TStream );
 var
-  UncompressedStream : TStream;
-  DateTime : LongInt;
   SaveDir : string;
-  Buff : array [0..MAX_PATH] of AnsiChar;
+  DateTime : LongInt;
+  FileAtributes: Integer;
   ZipArchive : TAbZipArchive;
+  UncompressedStream : TStream;
+  Buff : array [0..MAX_PATH] of AnsiChar;
+procedure AddDirectory();
+var
+	sr: TSearchRec;
 begin
+    Item.CRC32 := 0;
+    Item.VersionNeededToExtract := 20;
+    Item.CompressionMethod := cmStored;
+    //itemFileName := AbAddBackSlash(Item.DiskFileName);
+
+
+    //Item.DiskFileName := itemFileName;
+    Item.CompressedSize := 0;
+    Item.VersionMadeBy := (Item.VersionMadeBy and $FF00) + 20;
+    Item.ExternalFileAttributes := AbFileGetAttr(Item.DiskFileName);
+
+
+    FileAtributes := FindFirst(Item.DiskFileName, faAnyFile, sr);
+    try
+        if (FileAtributes <> 0) then begin
+            DateTime := sr.Time;
+            Item.LastModFileTime := Word(DateTime);        // Get the Lo Part
+            Item.LastModFileDate := Word(DateTime shr 16); // Get the Hi Part
+
+        end;
+    finally
+        FindClose(sr);
+    end;
+     //AbFixName(itemFileName);
+     //Item.FileName := itemFileName;
+
+end;begin
   ZipArchive := TAbZipArchive(Sender);
   GetDir(0, SaveDir);
   try {SaveDir}
@@ -362,17 +393,25 @@ begin
  { do nothing to Buff }
 {$ELSE}
     if (Item.VersionMadeBy and $FF00) = 0 then begin
-      OEMToAnsi(Buff, Buff);
+      OemToChar(Buff, Buff);
     end;
 {$ENDIF}
 {!!OEM - End Added }
-    { Converting file names causing problems on some systems, take hands off approach }
-    {  OEMToAnsi(Buff, Buff);  }
-    UncompressedStream := TFileStream.Create(StrPas(Buff),
-      fmOpenRead or fmShareDenyWrite );
-    {Now get the file's attributes}
-    Item.ExternalFileAttributes := AbFileGetAttr(StrPas(Buff));
-    Item.UncompressedSize := UncompressedStream.Size;
+
+	FileAtributes := AbFileGetAttr(StrPas(Buff));
+	if (0 <> (FileAtributes and faDirectory)) then begin
+    	Item.ExternalFileAttributes := FileAtributes;
+        AddDirectory(); Exit;
+    end else begin
+{ Converting file names causing problems on some systems, take hands off approach }
+        {  OEMToAnsi(Buff, Buff);  }
+
+		Item.ExternalFileAttributes := FileAtributes;
+        UncompressedStream := TFileStream.Create(StrPas(Buff), fmOpenRead or fmShareDenyWrite );
+        {Now get the file's attributes}
+
+        Item.UncompressedSize := UncompressedStream.Size;
+    end;
   finally {SaveDir}
     ChDir( SaveDir );
   end; {SaveDir}
