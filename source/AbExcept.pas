@@ -386,6 +386,11 @@ type
     constructor Create;
   end;
 
+  EAbFileTooLarge = class(EAbException)  
+    constructor Create;
+
+  end;
+
   procedure AbConvertException( const E : Exception;
                                 var eClass : TAbErrorClass;
                                 var eErrorCode : Integer );
@@ -847,6 +852,14 @@ constructor EAbInvalidHeaderException.Create;
 begin
 	inherited Create('Invalid Header');
     ErrorCode := AbInvaliHeader;
+end;
+
+{ EAbFileTooLarge }
+
+constructor EAbFileTooLarge.Create;
+begin
+    {TODO Create const and fix wording}
+    inherited Create('File size is too big for archive type'); 
 end;
 
 end.
