@@ -588,29 +588,8 @@ function AbGetDriveFreeSpace(const ArchiveName : string) : Int64;
   returns -1 if fails for some reason }
 
 {$IFDEF MSWINDOWS }
-function GetLocalDiskFree(const Path : string) : Int64;
-var
-  SectorsPerCluster, BytesPerSector,
-  NumberOfFreeClusters, TotalNumberOfClusters : LongWord;
-  Succeeded : BOOL;
-  DrvBuf : array[0..255] of char;
-begin
-  Result := -1;
-  StrPCopy(DrvBuf, ExtractFileDrive(Path) + AbDosPathDelim);
-  Succeeded := GetDiskFreeSpace(DrvBuf,
-    SectorsPerCluster, BytesPerSector, NumberOfFreeClusters, TotalNumberOfClusters);
-  if Succeeded then
-{!!.03 -- Rewritten}
-    try
-      Result := BytesPerSector * SectorsPerCluster * NumberOfFreeClusters;
-    except
-      on EIntOverflow do
-        Result := High(Result);
-    end;
-{!!.03 -- End Rewritten}
-end;
 
-function GetRemoteDiskFree(const Path : string) : Int64;
+function GetDiskFree(const Path : string) : Int64;
 var
   FreeAvailable, TotalSpace, TotalFree: Int64;
   Succeeded : BOOL;
@@ -691,13 +670,13 @@ begin
       if Pos('\\', ArchiveName) = 1 then begin  {path is UNC; must refer to network }
         { check OS version }
         if OSOK then begin
-          Size := GetRemoteDiskFree(DrvStr);                             {!!.02}
+          Size := GetDiskFree(DrvStr);                             {!!.02}
         end
         else begin {OS < Win95b }
           {GetDiskFreeSpaceEx isn't available and
            GetDiskFreeSpace and DiskFree fail on UNC paths,
            about all we can do is hope the server isn't full}
-            Size := MaxLongInt;
+            Size := High(Int64);
         end; {if}
       end
       else begin { path is not UNC}
@@ -711,10 +690,10 @@ begin
 
 //        DRIVE_CDROM           : Size := -1; { fail }                 {!!.04}
 //        DRIVE_CDROM           : Size := 0; { Read-Only }             {!!.04}
-          DRIVE_CDROM             : Size := GetLocalDiskFree(DrvStr);  {!!.04}
+          DRIVE_CDROM             : Size := GetDiskFree(DrvStr);  {!!.04}
           DRIVE_REMOVABLE         : Size := GetRemoveableDiskFree(DrvStr); {!!.02}
-          DRIVE_FIXED             : Size := GetLocalDiskFree(DrvStr);      {!!.02}
-          DRIVE_REMOTE            : Size := GetRemoteDiskFree(DrvStr);     {!!.02}
+          DRIVE_FIXED             : Size := GetDiskFree(DrvStr);      {!!.02}
+          DRIVE_REMOTE            : Size := GetDiskFree(DrvStr);     {!!.02}
         end; {case}
       end; {if}
     end; {ptAbsolute}
@@ -789,14 +768,18 @@ var
   Found : Integer;
   NameMask: string;
 begin
+
   Found := FindFirst( FileMask, SearchAttr, SR );
+	//raise EWin32Error.Create(SysErrorMessage(Found));	
   if Found = 0 then begin
     try
       NameMask := UpperCase(ExtractFileName(FileMask));
       while Found = 0 do begin
         NewFile := ExtractFilePath( FileMask ) + SR.Name;
-        if AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
-        FileList.Add( NewFile );
+	   if ((sr.Name <> AbThisDir) and (sr.Name <> AbParentDir)) then begin
+	        if AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
+    	    FileList.Add( NewFile );
+        end;
         Found := FindNext( SR );
       end;
     finally
