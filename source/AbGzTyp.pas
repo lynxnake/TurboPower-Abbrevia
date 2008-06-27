@@ -137,8 +137,6 @@ type
     procedure SaveGzHeaderToStream(AStream : TStream);
     procedure LoadGzHeaderFromStream(AStream : TStream);
   public
-//    property CRC32 : LongInt
-//      read FCRC32 write FCRC32;
 
     property CompressionMethod : Byte
       read FGZHeader.CompMethod write FGZHeader.CompMethod;
@@ -517,7 +515,7 @@ begin
   Helper := TAbDeflateHelper.Create;
   try
     FItem.CRC32 := Deflate(AStream, FStream, Helper);
-    FItem.UncompressedSize := AStream.Size;                              {!!.02}
+    FItem.UncompressedSize := AStream.Size;                         {!!.02}
 //    FItem.UncompressedSize := FStream.Size{Helper.NormalSize};         {!!.02}
   finally
     Helper.Free;
@@ -868,11 +866,11 @@ end;
 
 procedure TAbGzipItem.SetFileName(const Value: string);
 begin
-  if FileName <> '' then
-     FileName := '';
+  if inherited FileName <> '' then
+     inherited SetFileName('');
 
   if Value > '' then begin
-    FileName := Value { + #0};
+    inherited SetFileName(Value) { + #0};
     FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME;
   end
   else begin
@@ -1003,8 +1001,14 @@ begin
 end;
 
 destructor TAbGzipArchive.Destroy;
+var
+    i: Integer;
 begin
   SwapToGzip;
+  if FTarList.Count > 0 then begin
+      for I := 0 to FTarList.Count - 1 do TObject(FTarList[i]).Free();
+  end;
+
   FTarList.Free;
   FTarStream.Free;
   inherited Destroy;
@@ -1274,7 +1278,27 @@ begin
         InGzHelp.WriteArchiveHeader;
         InGzHelp.WriteArchiveItem(FTarStream);
         InGzHelp.WriteArchiveTail;
+
+        CurItem := TAbGzipItem.Create();
+        try
+            FGZItem.Add(CurItem);
+            CurItem.Action := aaNone;
+            CurItem.CRC32 := InGzHelp.CRC;
+            CurItem.UncompressedSize := InGzHelp.FileSize;
+        except
+            CurItem.Free(); raise;
+        end;
+
       end;
+
+      {
+        When Is Gzipperd Tar and Tar Auto Handle
+        it does not seems as if any item is being added to the
+        Archive, because AddFiles add all files to the tar and
+        the single item is never added.
+      }
+
+      {TODO -cGZip : Find a better way of saving}
 
       SwapToGzip;
 
@@ -1330,7 +1354,9 @@ begin
                     ChDir( SaveDir );
                   end; {SaveDir}
 
+{$WARN SYMBOL_DEPRECATED OFF}
                   DateTime := FileAge(CurItem.DiskFileName);
+{$WARN SYMBOL_DEPRECATED ON}
                   CurItem.LastModFileTime := LongRec(DateTime).Lo;
                   CurItem.LastModFileDate := LongRec(DateTime).Hi;
 
