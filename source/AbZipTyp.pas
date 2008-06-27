@@ -522,7 +522,8 @@ type
     FOnRequestLastDisk      : TAbRequestDiskEvent;
     FOnRequestNthDisk       : TAbRequestNthDiskEvent;
     FOnRequestBlankDisk     : TAbRequestDiskEvent;
-
+    class function SupportsEmptyFolder: Boolean; override;
+    
   protected {methods}    
     class function GetMaxFileSize: Int64; override;
     procedure DoExtractHelper(Index : Integer; const NewName : string);
@@ -574,7 +575,7 @@ type
     constructor CreateFromStream( aStream : TStream; const ArchiveName : string ); override;
     destructor Destroy;
       override;
-    function CreateItem(const FileSpec : string): TAbArchiveItem; override; {!!.05}
+    function CreateItem(const FileName : string): TAbArchiveItem; override; {!!.05}
 
   public {properties}
 
@@ -705,7 +706,7 @@ begin
     end
 (* {!!.02}
   else begin  { may be a span }                                          {!!.01}
-    Strm.Seek(0, soFromBeginning);                                       {!!.01}
+    Strm.Seek(0, somBeginning);                                       {!!.01}
     Strm.Read(Sig, SizeOf(LongInt));                                     {!!.01}
     if (Sig = Ab_ZipSpannedSetSignature)                                 {!!.01}
       or (Sig = Ab_ZipPossiblySpannedSignature)                          {!!.01}
@@ -1759,11 +1760,13 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipArchive.CreateItem( const FileSpec : string ): TAbArchiveItem;
+function TAbZipArchive.CreateItem( const FileName : string ): TAbArchiveItem;
 var
-  Buff : array [0..MAX_PATH] of Char;
+  FileSpec : string;
   I : Integer;
+  Buff : array [0..MAX_PATH] of Char;
 begin
+  FileSpec := FileName;  
   Result := TAbZipItem.Create;
   with TAbZipItem( Result ) do begin
     CompressionMethod := cmDeflated;
@@ -1771,7 +1774,14 @@ begin
     CompressedSize := 0;
     CRC32 := 0;
     ExtraField := '';
+    if (AbDirectoryExists(FileSpec)) then begin
+        Result.IsDiskFileADirectory := True;
+        FileSpec := IncludeTrailingPathDelimiter(FileSpec);
+    end;
+
     StrPCopy(Buff, ExpandFileName(FileSpec));
+
+    
 {!!.03 - Added }
 {$IFDEF Linux}
  { do nothing to Buff }
@@ -1792,14 +1802,9 @@ begin
 // No bug report, but after review I can see how
 // DiskFileName and FileName inconsitencies this case may
 // cause a problem.
-// Commented out Jeff Rather code, as it was causing problem
-//    StrPCopy(Buff, FixName(FileSpec));
-//    FileName := StrPas(Buff);
-//    DiskFileName := FileName;
 
-    DiskFileName := StrPas(Buff);
-    StrPCopy(Buff, FixName(FileSpec));
-    FileName := StrPas(Buff);
+    DiskFileName :=  StrPas(Buff);
+    FileName := FixName(FileSpec);
     RelativeOffset := 0;
   end;
 end;
@@ -2224,9 +2229,6 @@ var
   FileSignature : DWord;                                             {!!.02}
   IsZip : Boolean;
   Lowest : Int64;
-  StartDiskNumber, EntriesOnDisk,
-  TotalEntries, DiskNumber: Int64;
-  DirectorySize, DirectoryOffset: Int64;      
 begin
   Lowest := High(Int64);
   Abort := False;
@@ -2292,12 +2294,6 @@ begin
 
   { load the ZipDirectoryFileFooter }
   FInfo.LoadFromStream(FStream);
-  DiskNumber := FInfo.DiskNumber;
-  TotalEntries := FInfo.TotalEntries;
-  EntriesOnDisk := FInfo.EntriesOnDisk;
-  DirectorySize := FInfo.DirectorySize;
-  DirectoryOffset := FInfo.DirectoryOffset;
-  StartDiskNumber := FInfo.StartDiskNumber;
 
 
 
@@ -2309,6 +2305,10 @@ begin
   If FSpanned and (Not FDriveIsRemovable) then
     FAutoGen := True;
 
+  if (FInfo.StartDiskNumber <> FInfo.DiskNumber) then begin
+  	DoRequestNextImage(FInfo.FStartDiskNumber, FStream, Abort);
+    if (Abort) then raise EAbUserAbort.Create();
+  end;
   { build Items list from central directory records }
   i := 0;
   FStream.Seek(FInfo.DirectoryOffset, soBeginning);
@@ -2740,14 +2740,15 @@ var
   NewStream          : TAbVirtualMemoryStream;
   WorkingStream      : TAbVirtualMemoryStream;
   CurrItem           : TAbZipItem;
-  SCurrentImage      : Word;
+  SCurrentImage      : LongWord;
   SCurrentOffset     : int64;
-  SSpanningThreshold : LongWord;
+  SSpanningThreshold : Int64;
   CanSpan            : Boolean;
   MediaType          : TAbMediaType;                                     {!!.01}
   BlockSize          : int64;
   ByteBuf            : Byte;
 begin
+  if (Count = 0) then Exit;
   {shouldn't be trying to overwrite an existing spanned archive}
   if Spanned then begin
     for i := 0 to Pred(Count) do
@@ -2761,7 +2762,7 @@ begin
   if FStream is TAbSpanStream then begin
     if TAbSpanStream(FStream).SpanMode = smWriting then begin
       MediaType := TAbSpanStream(FStream).MediaType;
-      if FOwnsStream then begin //  914427 
+      if FOwnsStream then begin //  914427
       FStream.Free;
       FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
         MediaType, FSpanningThreshold);
@@ -2772,10 +2773,17 @@ begin
   end;
 {!!.01 -- End Modified (see more below)}
 
+  //CanSpan := False;
+  //SSpanningThreshold := 0;
+  FDriveIsRemovable := AbDriveIsRemovable(ArchiveName);
+{We should let the user decide whether w should span or not}
+{.$IFDEF OLD_SPAN_LOGIC}
   {can span if new archive and drive is removable, or
    can span if SpanningThreshold > 0 and drive is fixed}
-  FDriveIsRemovable := AbDriveIsRemovable(ArchiveName);
-  SSpanningThreshold := AbGetDriveFreeSpace(ArchiveName);
+  if (FDriveIsRemovable) then
+	  SSpanningThreshold := AbGetDriveFreeSpace(ArchiveName)
+  else SSpanningThreshold := 0;
+
   if FDriveIsRemovable then
     CanSpan := (FStream.Size = 0)
   else begin
@@ -2783,13 +2791,22 @@ begin
     if CanSpan then
       SSpanningThreshold := SpanningThreshold
   end;
-  if (SSpanningThreshold <= 0) then
-    SSpanningThreshold := $FFFFFFFF;
+{.$ENDIF}
+  if (SpanningThreshold > 0) then begin
+  	SSpanningThreshold := AbGetDriveFreeSpace(ArchiveName);
+    if (SpanningThreshold < SSpanningThreshold) then
+    	SSpanningThreshold := SpanningThreshold
+  end;
 
-  if (CanSpan = False) then SSpanningThreshold := $FFFFFFFF;
+  {if (SSpanningThreshold <= 0) then
+    SSpanningThreshold := High(int64);
+
+  if (CanSpan = False) then SSpanningThreshold := High(int64);;}
 
   {init new zip archive stream}
   NewStream := TAbVirtualMemoryStream.Create;
+
+  //NewStream := TFileStream.Create(AbGetTempFile(FTempDir, False), fmCreate or fmOpenReadWrite);
   try {NewStream}
     NewStream.SwapFileDirectory := ExtractFilePath(AbGetTempFile(FTempDir, False));
 
@@ -2850,7 +2867,9 @@ begin
             try
             try {WorkingStream}
 
-              WorkingStream.SwapFileDirectory := NewStream.SwapFileDirectory;
+              WorkingStream.SwapFileDirectory :=
+              	{ExtractFilePath(AbGetTempFile(FTempDir, False)); //}NewStream.SwapFileDirectory;
+
               if (CurrItem.Action = aaStreamAdd) then
                 DoInsertFromStreamHelper(i, WorkingStream)
               else
@@ -2911,8 +2930,7 @@ begin
       {append the central directory}
       FInfo.StartDiskNumber := SCurrentImage;
       FInfo.DirectoryOffset := SCurrentOffset;
-      CDHStream.Position := 0;
-      NewStream.CopyFrom( CDHStream, CDHStream.Size );
+      //NewStream.CopyFrom( CDHStream, CDHStream.Size );
 
       { we're not sure if the CDH may span disks }
       if (SpanningThreshold > 0) then
@@ -2921,7 +2939,10 @@ begin
       {append the central directory footer}
       FInfo.DirectorySize := CDHStream.Size;
       FInfo.DiskNumber := SCurrentImage;
-      FInfo.SaveToStream(NewStream);
+      FInfo.SaveToStream(CDHStream);
+      
+      CDHStream.Position := 0;
+      NewStream.CopyFrom( CDHStream, CDHStream.Size );
     finally {CDHStream}
       CDHStream.Free;
     end; {CDHStream}
@@ -2995,11 +3016,11 @@ begin
 
         FStream.Size := 0;
         { copy temporary archive to the stream }
-        if FStream.Position <> 0 then
-          FStream.Position := 0;
+        
         if (FStream is TAbSpanStream) then
-           TAbSpanStream(FStream).ArchiveTotalSize := NewStream.Size;     {!!.04}
-        FStream.CopyFrom(NewStream, NewStream.Size);
+           TAbSpanStream(FStream).ArchiveTotalSize := NewStream.Size; {!!.04}
+
+        FStream.CopyFrom(NewStream, 0);
       except
        on E : Exception do
         begin
@@ -3016,6 +3037,8 @@ begin
       begin
        //Other archive types we hold the stream for the last file.
        //However, with a split archive we need to free it so we can rename it.
+        {Rohan Changed, acces of destroyed object later}     
+        MediaType := (FStream as TAbSpanStream).MediaType;
         FStream.Free;
        //Rename .ZIP to Z01
         RenameFile(FArchiveName,ChangeFileExt(FArchiveName,'.Z01'));
@@ -3026,7 +3049,6 @@ begin
          RenameFile(ChangeFileExt(FArchiveName,'.z' + IntToStr(SCurrentImage+1)),FArchiveName);
         // SCurrentImage > 0 only if FStream is a Spanned Archive.
         //Note: Possible memory leak
-         MediaType := (FStream as TAbSpanStream).MediaType;
         // Open the Split archive for reading to duplicate behavior of single file archives.
         FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
           MediaType, FSpanningThreshold);
@@ -3079,6 +3101,11 @@ end;
 class function TAbZipArchive.GetMaxFileSize: Int64;
 begin
 	Result := High(Int64);
+end;
+
+class function TAbZipArchive.SupportsEmptyFolder: Boolean;
+begin
+	Result := True;
 end;
 
 end.
