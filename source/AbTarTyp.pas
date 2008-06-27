@@ -206,7 +206,7 @@ type
 
   TAbTarArchive = class(TAbArchive)
   protected
-    function CreateItem(const FileSpec : string): TAbArchiveItem;
+    function CreateItem(const FileName : string): TAbArchiveItem;
       override;
     procedure ExtractItemAt(Index : Integer; const NewName : string);
       override;
@@ -221,8 +221,10 @@ type
     function FixName(const Value: string): string;
       override;
 
+
     function GetItem(Index: Integer): TAbTarItem;                   {!!.03}
-    procedure PutItem(Index: Integer; const Value: TAbTarItem);     {!!.03}
+    procedure PutItem(Index: Integer; const Value: TAbTarItem);
+    class function SupportsEmptyFolder: Boolean; override;     {!!.03}
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       override;
@@ -362,7 +364,7 @@ end;
 function FindFirstTarItem(TarF: TStream; var Item : TAbTarHeaderRec): Integer;
 begin
   { reset Tar }
-  TarF.Seek(0, soFromBeginning);
+  TarF.Seek(0, soBeginning);
   Result := TarF.Read(Item, SizeOf(TAbTarHeaderRec));
 end;
 
@@ -373,7 +375,7 @@ begin
   { find length of item }
   Len := RoundToTarBlock(OctalToInt(Item.Size, 12));
   { seek past file to next header }
-  TarF.Seek((AB_TAR_RECORDSIZE-SizeOf(TAbTarHeaderRec)) + Len, soFromCurrent);
+  TarF.Seek((AB_TAR_RECORDSIZE-SizeOf(TAbTarHeaderRec)) + Len, soCurrent);
   Result := TarF.Read(Item, SizeOf(TAbTarHeaderRec));
 end;
 
@@ -716,14 +718,14 @@ begin
   Len := OctalToInt(FTarHeader.Size, sizeof(FTarHeader.Size));
 
   { locate start of stored data }
-  FStream.Seek(SizeOf(TAbTarHeaderRec), soFromCurrent);
+  FStream.Seek(SizeOf(TAbTarHeaderRec), soCurrent);
 
   { copy stored data to output }
   if Len <> 0 then
     AStream.CopyFrom(FStream, Len);
 
   {reset the stream to the start of the item}
-  FStream.Seek(-(SizeOf(TAbTarHeaderRec) + Len), soFromCurrent);
+  FStream.Seek(-(SizeOf(TAbTarHeaderRec) + Len), soCurrent);
 end;
 
 
@@ -734,24 +736,24 @@ var
 begin
 
   {the first item is found at the start of the stream}
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
   DataRead := FStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
 
   { keep looking til find ordinary file }
   while (DataRead = SizeOf(TAbTarHeaderRec)) and
     not (FTarHeader.LinkFlag in [AB_TAR_LF_OLDNORMAL, AB_TAR_LF_NORMAL]) do begin
-    FStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
+    FStream.Seek(-SizeOf(TAbTarHeaderRec), soCurrent);
 
     { advance to next record }
     { find length of current item, rounded up to the TAR block size }
     Len := RoundToTarBlock(OctalToInt(FTarHeader.Size, sizeof(FTarHeader.Size)));
 
     { seek past file to next header }
-    FStream.Seek(AB_TAR_RECORDSIZE + Len, soFromCurrent);
+    FStream.Seek(AB_TAR_RECORDSIZE + Len, soCurrent);
     DataRead := FStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
   end;
 
-  FStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
+  FStream.Seek(-SizeOf(TAbTarHeaderRec), soCurrent);
   Result := (DataRead = SizeOf(TAbTarHeaderRec)) {and VerifyHeader(FTarHeader)};
 end;
 
@@ -764,7 +766,7 @@ begin
   Len := RoundToTarBlock(OctalToInt(FTarHeader.Size, sizeof(FTarHeader.Size)));
 
   { seek past file to next header }
-  FStream.Seek(AB_TAR_RECORDSIZE + Len, soFromCurrent);
+  FStream.Seek(AB_TAR_RECORDSIZE + Len, soCurrent);
   DataRead := FStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
 
   while (DataRead = SizeOf(TAbTarHeaderRec)) and (StrLen(FTarHeader.Name) > 0) and
@@ -776,7 +778,7 @@ begin
     Len := RoundToTarBlock(OctalToInt(FTarHeader.Size, sizeof(FTarHeader.Size)));
 
     { seek past file to next header }
-    FStream.Seek(AB_TAR_RECORDSIZE + Len, soFromCurrent);
+    FStream.Seek(AB_TAR_RECORDSIZE + Len, soCurrent);
     DataRead := FStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
   end;
 
@@ -784,7 +786,7 @@ begin
   if (DataRead = SizeOf(TAbTarHeaderRec)) and (StrLen(FTarHeader.Name) > 0) and
     (FTarHeader.LinkFlag in [AB_TAR_LF_OLDNORMAL, AB_TAR_LF_NORMAL]) then
   begin
-    FStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
+    FStream.Seek(-SizeOf(TAbTarHeaderRec), soCurrent);
     Result := True;
   end else
     Result := False;
@@ -840,7 +842,7 @@ begin
   end;
 
   { locate start of stored data }
-  FStream.Seek(AB_TAR_RECORDSIZE - SizeOf(TAbTarHeaderRec), soFromCurrent);
+  FStream.Seek(AB_TAR_RECORDSIZE - SizeOf(TAbTarHeaderRec), soCurrent);
 end;
 
 procedure TAbTarStreamHelper.WriteArchiveHeader;
@@ -891,20 +893,26 @@ begin
 end;
 
 
-function TAbTarArchive.CreateItem(const FileSpec: string): TAbArchiveItem;
+function TAbTarArchive.CreateItem(const FileName: string): TAbArchiveItem;
 var
-  Buff : array [0..255] of AnsiChar;
+  FileSpec: string;
   Item : TAbTarItem;
+  Buff : array [0..255] of AnsiChar;
 begin
+  FileSpec := FileName;
   Item := TAbTarItem.Create;
   try
     Item.CompressedSize := 0;
     Item.CRC32 := 0;
+    if (AbDirectoryExists(FileSpec)) then begin
+        Item.SetIsDirectory(True);
+        FileSpec := IncludeTrailingPathDelimiter(FileSpec);
+    end;
     StrPCopy(Buff, ExpandFileName(FileSpec));
     {$IFDEF MSWINDOWS }
-    AnsiToOEM(Buff, Buff);
+    AnsiToOem(Buff, Buff);
     {$ENDIF MSWINDOWS }
-    Item.DiskFileName := Buff;
+    Item.DiskFileName := ExcludeTrailingPathDelimiter(Buff);
     StrPCopy(Buff, FixName(FileSpec));
     {$IFDEF MSWINDOWS }
     AnsiToOEM(Buff, Buff);
@@ -1068,6 +1076,7 @@ function TAbTarArchive.FixName(const Value: string): string;
 var
   lValue : string;
 begin
+  lValue := Value;	
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
     {Add the base directory to the filename before converting }
@@ -1118,6 +1127,7 @@ end;
 
 procedure TAbTarArchive.SaveArchive;
 var
+  SR                 : TSearchRec;
   InTarHelp,
   OutTarHelp         : TAbTarStreamHelper;
   Abort              : Boolean;
@@ -1172,8 +1182,23 @@ begin
               { adding from a stream }
                 CurItem.SaveTarHeaderToStream(NewStream);
                 OutTarHelp.WriteArchiveItem(InStream);
-              end
-              else begin
+              end else if (CurItem.IsDiskFileADirectory) then begin
+              
+                DateTime := FindFirst(ExcludeTrailingPathDelimiter(CurItem.DiskFileName), faAnyFile, SR);
+                if (DateTime <> 0) then begin
+                    try
+                        DateTime := sr.Time;
+                        CurItem.UncompressedSize := 0;
+                        CurItem.LastModFileTime := LongRec(DateTime).Lo;
+                        CurItem.LastModFileDate := LongRec(DateTime).Hi;
+                        CurItem.ExternalFileAttributes := AbDOS2UnixFileAttributes(sr.Attr);
+                    finally
+                        FindClose(SR);
+                    end;
+                end;
+
+                CurItem.SaveTarHeaderToStream(NewStream);
+              end else begin
               { it's coming from a file }
                 GetDir(0, SaveDir);
                 try {SaveDir}
@@ -1191,7 +1216,9 @@ begin
                 end; {SaveDir}
 
                 try {UncompressedStream}
+                  {$WARN SYMBOL_DEPRECATED OFF}
                   DateTime := FileAge(CurItem.DiskFileName);
+                  {$WARN SYMBOL_DEPRECATED ON}                  
                   {$IFDEF LINUX}                                         {!!.01}
                   TmpDT := AbUnixTimeToDateTime(DateTime);               {!!.01}
                   DateTime := AbDateTimeToDosFileDate(TmpDT);            {!!.01}
@@ -1254,6 +1281,11 @@ begin
     { Clean Up }
     InTarHelp.Free;
   end;
+end;
+
+class function TAbTarArchive.SupportsEmptyFolder: Boolean;
+begin
+    Result := True;
 end;
 
 procedure TAbTarArchive.TestItemAt(Index: Integer);
