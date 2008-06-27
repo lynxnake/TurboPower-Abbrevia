@@ -62,7 +62,11 @@ type
     FLastModFileDate  : Word;
     FTagged           : Boolean;
     FUncompressedSize : Int64;
-
+    FIsDirectory      : Boolean;
+  protected
+    function GetIsDirectory(): Boolean;
+    procedure SetIsDirectory(const Value: Boolean); 
+    class function GetMaxFileSize(): Int64; virtual;
   protected {property methods}
     function GetCompressedSize : Int64; virtual;
     function GetCRC32 : Longint; virtual;
@@ -88,7 +92,7 @@ type
     destructor Destroy; override;
     function MatchesDiskName(const FileMask : string) : Boolean;
     function MatchesStoredName(const FileMask : string) : Boolean;
-    function MatchesStoredNameEx(const FileMask : string) : Boolean;     
+    function MatchesStoredNameEx(const FileMask : string) : Boolean;
 
 
   public {properties}
@@ -129,6 +133,10 @@ type
     property UncompressedSize : Int64
       read GetUncompressedSize
       write SetUncompressedSize;
+
+    property IsDiskFileADirectory: Boolean
+        read GetIsDirectory
+        write SetIsDirectory;
 
     property LastModTimeAsDateTime : TDateTime                           {!!.01}
       read GetLastModTimeAsDateTime                                      {!!.01}
@@ -248,13 +256,11 @@ type
 { ===== TAbArchive ========================================================== }
 type
   TAbArchive = class(TObject)
-  protected
-    class function GetMaxFileSize(): Int64; virtual;
   public
     FStream         : TStream;
     FStatus         : TAbArchiveStatus;
 
-  protected {property variables}
+  protected {property variables}    //These break Encapsulation
     FArchiveName    : string;
     FAutoSave       : Boolean;
     FBaseDirectory  : string;
@@ -304,6 +310,9 @@ type
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
     procedure Unlock;
+    class function GetMaxFileSize: Int64; virtual;
+   	class Function SupportsEmptyFolder: Boolean; virtual;
+
 
   protected {abstract methods}
     function CreateItem(const FileSpec : string): TAbArchiveItem;
@@ -566,6 +575,12 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
+
+class function TAbArchiveItem.GetMaxFileSize: Int64;
+begin
+    Result := $FFFFFFFF;  //Make same as old
+end;
+{ -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetCompressedSize : Int64;
 begin
   Result := FCompressedSize;
@@ -591,6 +606,11 @@ begin
   Result := FFileName;
 end;
 { -------------------------------------------------------------------------- }
+function TAbArchiveItem.GetIsDirectory: Boolean;
+begin
+    Result := FIsDirectory;
+end;
+
 function TAbArchiveItem.GetIsEncrypted : Boolean;
 begin
   Result := FIsEncrypted;
@@ -679,6 +699,11 @@ begin
   FFileName := Value;
 end;
 { -------------------------------------------------------------------------- }
+procedure TAbArchiveItem.SetIsDirectory(const Value: Boolean);
+begin
+    FIsDirectory := Value;
+end;
+
 procedure TAbArchiveItem.SetIsEncrypted(Value : Boolean);
 begin
   FIsEncrypted := Value;
@@ -697,6 +722,7 @@ end;
 procedure TAbArchiveItem.SetUnCompressedSize(const Value : Int64);
 begin
   FUnCompressedSize := Value;
+  if Value > GetMaxFileSize() then raise EAbFileTooLarge.Create();
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
@@ -995,12 +1021,12 @@ var
     FilterList := TStringList.Create;
     try
       if (MaskF <> '') then
-        AbFindFilesEx(MaskF, SearchAttr and not faDirectory, FilterList, Recursing);
+        AbFindFilesEx(MaskF, SearchAttr, FilterList, Recursing);
 
         Files := TStringList.Create;
         try
 
-          AbFindFilesEx(Mask, SearchAttr and not faDirectory, Files, Recursing);
+          AbFindFilesEx(Mask, SearchAttr, Files, Recursing);
           if (Files.Count > 0) then begin
             for i := 0 to pred(Files.Count) do
               if FilterList.IndexOf(Files[i]) < 0 then               
@@ -1028,6 +1054,10 @@ var
   end;
 
 begin
+   if (not SupportsEmptyFolder()) then begin
+    SearchAttr := SearchAttr and not faDirectory;
+   end;
+
   CheckValid;
   IsWild := (Pos('*', FileMask) > 0) or (Pos('?', FileMask) > 0);
   PathType := AbGetPathType(FileMask);
@@ -1038,19 +1068,7 @@ begin
   AbUnfixName(MaskF);
 
   case PathType of
-    ptNone :
-      begin
-        GetDir(0, SaveDir);
-        if BaseDirectory <> '' then
-          ChDir(BaseDirectory);
-        try
-          CreateItems(IsWild, soRecurse in StoreOptions);
-        finally
-          if BaseDirectory <> '' then
-            ChDir(SaveDir);
-        end;
-      end;
-    ptRelative :
+    ptNone, ptRelative :
       begin
         GetDir(0, SaveDir);
         if BaseDirectory <> '' then
@@ -1436,12 +1454,6 @@ begin
     end;
     DoArchiveProgress(100, Abort);
   end;
-end;          
-{ -------------------------------------------------------------------------- }
-
-class function TAbArchive.GetMaxFileSize: Int64;
-begin
-    Result := $FFFFFFFF;  //Make same as old
 end;
 { -------------------------------------------------------------------------- }
 
@@ -1666,6 +1678,9 @@ begin
     try
       Files := TStringList.Create;
       try
+        // even if archive supports empty folder we don't have to
+        // freshen it because there is no data, although, the timestamp
+        // can be update since the folder was added
         AbFindFiles(Item.FileName, faAnyFile and not faDirectory, Files,
                      True);
         if Files.Count > 0 then begin
@@ -1938,6 +1953,12 @@ begin
   FPadLock.Locked := False;
 end;
 { -------------------------------------------------------------------------- }
+//TODO: Remove
+class function TAbArchive.GetMaxFileSize: Int64;
+begin
+    Result := High(LongWord);
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbArchive.UnTagItems(const FileMask : string);
   {clear tags for all items that match the mask}
 var
@@ -1956,6 +1977,11 @@ procedure TAbArchive.DoSpanningMediaRequest(Sender: TObject;
   ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
 begin
   raise EAbSpanningNotSupported.Create;
+end;
+
+class function TAbArchive.SupportsEmptyFolder: Boolean;
+begin
+	Result := false;
 end;
 
 { TAbArchiveStreamHelper }
