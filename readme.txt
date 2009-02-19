@@ -68,11 +68,11 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
      IDE's library path.
 
   4. Open & compile the runtime package specific to the IDE being
-     used.
+     used (e.g. B305vr2007.dpk for Delphi2007)
 
   5. Open & install the designtime package specific to the IDE being
-     used. The IDE should notify you the components have been
-     installed.
+     used (e.g. B305vd2007.dpk for Delphi2007). The IDE should notify 
+     you the components have been installed.
 
   6. Make sure the PATH environmental variable contains the directory
      in which the compiled packages (i.e., BPL or DPL files) were
