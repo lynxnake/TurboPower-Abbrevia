@@ -59,8 +59,8 @@ type
     procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
     procedure CheckFileExists(aFileName : String);
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
-    procedure Setup; override;
-    procedure Teardown; override;
+    procedure SetUp; override;
+    procedure TearDown; override;
     procedure FilesInDirectory(const aDir : String;FileList : TStringList);
     procedure CheckDirMatch(aDir1,aDir2 : string;IgnoreMissingFiles: Boolean = true);
     // Call this routine with GREAT Caution!!!!
@@ -171,14 +171,12 @@ var
 begin
  aStream1.Seek(0,soFromBeginning);
  aStream2.Seek(0,soFromBeginning);
- if aStream1.Size <> aStream2.Size then
-    Fail(Msg,CallerAddr);
+ CheckEquals(aStream1.Size, aStream2.Size, Msg);
  for I := 0 to aStream1.Size -1 do
    begin
      aStream1.Read(b1,1);
      aStream2.Read(b2,1);
-     if (b1 <> b2) then
-       Fail(Msg,CallerAddr);
+     Check(b1=b2,Msg);
    end;
 end;
 
@@ -355,7 +353,7 @@ begin
  {$ENDIF}
 end;
 
-procedure TabTestCase.Setup;
+procedure TabTestCase.SetUp;
 begin
   inherited;
   if not DirExists(TestTempDir) then
@@ -386,7 +384,7 @@ begin
 end;
 {$ENDIF}
 
-procedure TabTestCase.Teardown;
+procedure TabTestCase.TearDown;
 begin
   inherited;
   {$IFDEF WINZIPTESTS}

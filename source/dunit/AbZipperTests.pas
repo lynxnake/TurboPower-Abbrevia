@@ -27,7 +27,10 @@ unit AbZipperTests;
 interface
 
 uses
-  TestFrameWork, abTestFrameWork, AbZipper, AbUnZper, SysUtils, 
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  TestFrameWork, abTestFrameWork, AbZipper, AbUnZper,
   Classes, abMeter, abArcTyp, abZipTyp, abUtils;
 
 type
@@ -61,6 +64,8 @@ type
   end;
 
 implementation
+uses
+  SysUtils;
 
 { TAbZipperTests }
 
@@ -261,7 +266,7 @@ end;
 procedure TAbZipperTests.TearDown;
 begin
   inherited;
-
+  Component.Free;
 end;
 
 procedure TAbZipperTests.TestBasicForceTypeGZipTar;
@@ -441,7 +446,7 @@ begin
  CheckFileExists(TestFile);
 
 //Current Actual Size 9151 (Could change if we change default compresion so not testing for it)
- Check(AbFileGetSize(TestFile) > 8000,TestFile + ' too small check if created correctly');
+ Check(AbFileGetSize(TestFile) < 8000,TestFile + ' too small check if created correctly');
 
 end;
 

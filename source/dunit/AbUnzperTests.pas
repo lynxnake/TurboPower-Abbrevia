@@ -84,7 +84,6 @@ implementation
 
 procedure TAbUnZipperTests.CheckBadPWOverwrite;
 var
- Ms : TMemoryStream;
  Fs : TFileStream;
  TestFile : String;
  Buffer,Buffer1 : Array[0..20] of Char;
@@ -356,7 +355,6 @@ end;
 procedure TAbUnZipperTests.TestLocale2;
 var
  ltestdir,
- ltestzip,
  ltestfile : string;
 begin
 // This test verifies use Ability to use Charactes such as ãëíõú
@@ -410,9 +408,6 @@ begin
 end;
 
 procedure TAbUnZipperTests.TestLocale4;
-var
- ltestzip,
- ltestfile : string;
 begin
 // This test verifies use Ability to use Charactes such as ãëíõú
 // In the Files contained in the Archive.

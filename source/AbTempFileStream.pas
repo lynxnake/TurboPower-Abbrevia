@@ -27,7 +27,7 @@ unit AbTempFileStream;
 
 interface
 
-uses SysUtils,Classes;
+uses Classes;
 
 type
   TAbTempFileStream = class (TFileStream)
@@ -41,7 +41,12 @@ type
   end;
 
 implementation
-uses AbUtils;
+uses
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  SysUtils,
+  AbUtils;
 
 { TAbTempFileStream }
 

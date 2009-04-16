@@ -45,25 +45,12 @@ type
     procedure InflateStreamSimpleTest1;
     procedure InflateStreamSimpleTest2;
     procedure InflateStreamFileTest;
-    procedure CompareFiles;
-
 
   end;
 
 implementation
 
 { TAbUnzPrcTests }
-
-procedure TAbUnzPrcTests.CompareFiles;
-var
- FS1, FS2 : TFileStream;
-begin
-  FS1 := TFileStream.Create('C:\tp\abbrevia\bugtest\unknown',fmOpenRead);
-  FS2 := TFileSTream.Create('C:\tp\abbrevia\bugtest\ex1',fmOpenRead);
-  CheckStreamMatch(FS1,FS2,'They don''t match');
-  FS1.Free;
-  FS2.Free;
-end;
 
 procedure TAbUnzPrcTests.InflateStreamFileTest;
 var

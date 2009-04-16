@@ -28,6 +28,9 @@ unit AbZipKitTests;
 interface
 
 uses
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
   TestFrameWork, abTestFrameWork, AbZipKit, AbZipTyp, AbArctyp, SysUtils,
   Classes, abMeter;
 
