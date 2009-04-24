@@ -229,10 +229,8 @@ type
     FCRC32 : Longint;
     FCompressedSize : LongWord;
     FUncompressedSize : LongWord;
-    FFileNameLength : Word;
-    FExtraFieldLength : Word;
-    FFileName : PChar;
-    FExtraField : PChar;
+    FFileName : string;
+    FExtraField : string;
     FIsValid : Boolean;
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
@@ -244,8 +242,8 @@ type
     function GetShannonFanoTreeCount : Byte;
     function GetValid : Boolean;
     procedure SetCompressionMethod( Value : TAbZipCompressionMethod );
-    procedure SetExtraField( Value : PChar );
-    procedure SetFileName( Value : PChar );
+    procedure SetExtraField( const Value : string );
+    procedure SetFileName(const Value: string);
   public {methods}
     constructor Create;
     destructor Destroy; override;
@@ -268,13 +266,9 @@ type
       read FCompressedSize write FCompressedSize;
     property UncompressedSize : LongWord
       read FUncompressedSize write FUncompressedSize;
-    property FileNameLength : Word
-      read FFileNameLength write FFileNameLength;
-    property ExtraFieldLength : Word
-      read FExtraFieldLength write FExtraFieldLength;
-    property FileName : PChar
+    property FileName : string
       read FFileName write SetFileName;
-    property ExtraField : PChar
+    property ExtraField : string
       read FExtraField write SetExtraField;
 
     property CompressionRatio : Double
@@ -311,7 +305,7 @@ type
     FInternalFileAttributes : Word;
     FExternalFileAttributes : Longint;
     FRelativeOffset         : LongWord;
-    FFileComment            : PChar;
+    FFileComment            : string;
   public {methods}
     constructor Create;
     destructor Destroy; override;
@@ -330,7 +324,7 @@ type
       read FExternalFileAttributes write FExternalFileAttributes;
     property RelativeOffset : LongWord
       read FRelativeOffset write FRelativeOffset;
-    property FileComment : PChar
+    property FileComment : string
       read FFileComment write FFileComment;
   end;
 
@@ -1061,16 +1055,10 @@ constructor TAbZipFileHeader.Create;
 begin
   inherited Create;
   FValidSignature := $0;
-  FFileName := nil;
-  FExtraField := nil;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipFileHeader.Destroy;
 begin
-  if Assigned( FFileName ) then
-    StrDispose( FFileName );
-  if Assigned( FExtraField ) then
-    StrDispose( FExtraField );
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
@@ -1158,27 +1146,14 @@ begin
   FCompressionMethod := Ord( Value );
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipFileHeader.SetExtraField( Value : PChar );
+procedure TAbZipFileHeader.SetExtraField( const Value : string );
 begin
-  if Assigned( FExtraField ) then
-    StrDispose( FExtraField );
-  FExtraField := nil;
-  FExtraFieldLength := StrLen( Value );
-
-  if FExtraFieldLength > 0 then begin
-    FExtraField := StrAlloc( succ( FExtraFieldLength ) );
-    StrCopy( FExtraField, Value );
-  end;
+  FExtraField := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipFileHeader.SetFileName( Value : PChar );
+procedure TAbZipFileHeader.SetFileName(const Value: string);
 begin
-  if Assigned( FFileName ) then
-    StrDispose( FFileName );
-  FFileName := nil;
-  FFileNameLength := StrLen( Value );
-  FFileName := StrAlloc( succ( FFileNameLength ) );
-  StrCopy( FFileName, Value );
+  FFileName := Value;
 end;
 { -------------------------------------------------------------------------- }
 
@@ -1195,6 +1170,10 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipLocalFileHeader.LoadFromStream( Stream : TStream );
+var
+  sAnsi: AnsiString;
+  iFileNameLength: Word;
+  iExtraFieldLength: Word;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1206,17 +1185,18 @@ begin
     Read( FCRC32, sizeof( FCRC32 ) );
     Read( FCompressedSize, sizeof( FCompressedSize ) );
     Read( FUncompressedSize, sizeof( FUncompressedSize ) );
-    Read( FFileNameLength, sizeof( FFileNameLength ) );
-    Read( FExtraFieldLength, sizeof( FExtraFieldLength ) );
+    Read(iFileNameLength, SizeOf(iFileNameLength));
+    Read(iExtraFieldLength, SizeOf(iExtraFieldLength));
 
-    FFileName := StrAlloc( succ( FFileNameLength ) );
-    Read( FFileName^, FFileNameLength );
-    FFileName[FFileNameLength] := #0;
+    SetLength(sAnsi, iFileNameLength);
+    Read(sAnsi[1], iFileNameLength);
+    FFileName := string(sAnsi);
 
-    if FExtraFieldLength > 0 then begin
-      FExtraField := StrAlloc( succ( FExtraFieldLength ) );
-      Read( FExtraField^, FExtraFieldLength );
-      FExtraField[FExtraFieldLength] := #0;
+    if iExtraFieldLength > 0 then
+    begin
+      SetLength(sAnsi, iExtraFieldLength);
+      Read(sAnsi[1], iFileNameLength);
+      FExtraField := string(sAnsi);
     end;
   end;
   if not IsValid then
@@ -1224,6 +1204,10 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipLocalFileHeader.SaveToStream( Stream : TStream );
+var
+  sAnsi: AnsiString;
+  iFileNameLength: Word;
+  iExtraFieldLength: Word;
 begin
   with Stream do begin
     {write the valid signature from the constant}
@@ -1236,11 +1220,22 @@ begin
     Write( FCRC32, sizeof( FCRC32 ) );
     Write( FCompressedSize, sizeof( FCompressedSize ) );
     Write( FUncompressedSize, sizeof( FUncompressedSize ) );
-    Write( FFileNameLength, sizeof( FFileNameLength ) );
-    Write( FExtraFieldLength, sizeof( FExtraFieldLength ) );
 
-    Write( FFileName^, FFileNameLength );
-    Write( FExtraField^, FExtraFieldLength );
+    iFileNameLength := Word(Length(FFileName));
+    Write(iFileNameLength, SizeOf(iFileNameLength));
+
+    iExtraFieldLength := Word(Length(FExtraField));
+    Write(iExtraFieldLength, SizeOf(iExtraFieldLength));
+
+    sAnsi := AnsiString(FFileName);
+    Write(sAnsi[1], Length(sAnsi));
+
+    if Length(FExtraField) > 0 then
+    begin
+      sAnsi := AnsiString(FExtraField);
+      Write(sAnsi[1], Length(sAnsi));
+    end;
+
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1250,17 +1245,19 @@ constructor TAbZipDirectoryFileHeader.Create;
 begin
   inherited Create;
   FValidSignature := Ab_ZipCentralDirectoryFileHeaderSignature;
-  FileComment := nil;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipDirectoryFileHeader.Destroy;
 begin
-  if Assigned( FFileComment ) then
-    StrDispose( FileComment );
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileHeader.LoadFromStream( Stream : TStream );
+var
+  iFileNameLength: Word;
+  iExtraFieldLength: Word;
+  iFileCommentLength: Word;
+  sAnsi: AnsiString;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1273,28 +1270,33 @@ begin
     Read( FCRC32, sizeof( FCRC32 ) );
     Read( FCompressedSize, sizeof( FCompressedSize ) );
     Read( FUncompressedSize, sizeof( FUncompressedSize ) );
-    Read( FFileNameLength, sizeof( FFileNameLength ) );
-    Read( FExtraFieldLength, sizeof( FExtraFieldLength ) );
-    Read( FFileCommentLength, sizeof( FFileCommentLength ) );
+
+    Read(iFileNameLength, SizeOf(iFileNameLength));
+
+    Read(iExtraFieldLength, SizeOf(iExtraFieldLength));
+
+    Read(iFileCommentLength, SizeOf(iFileCommentLength));
     Read( FDiskNumberStart, sizeof( FDiskNumberStart ) );
     Read( FInternalFileAttributes, sizeof( FInternalFileAttributes ) );
     Read( FExternalFileAttributes, sizeof( FExternalFileAttributes ) );
     Read( FRelativeOffset, sizeof( FRelativeOffset ) );
 
-    FFileName := StrAlloc( succ( FFileNameLength ) );
-    Read( FFileName^, FFileNameLength );
-    FFileName[FFileNameLength] := #0;
+    SetLength(sAnsi, iFileNameLength);
+    Read(sAnsi[1], iFileNameLength);
+    FFileName := string(sAnsi);
 
-    if FExtraFieldLength > 0 then begin
-      FExtraField := StrAlloc( succ( FExtraFieldLength ) );
-      Read( FExtraField^, FExtraFieldLength );
-      FExtraField[FExtraFieldLength] := #0;
+    if iExtraFieldLength > 0 then
+    begin
+      SetLength(sAnsi, iExtraFieldLength);
+      Read(sAnsi[1], iExtraFieldLength);
+      FExtraField := string(sAnsi);
     end;
 
-    if FFileCommentLength > 0 then begin
-      FFileComment := StrAlloc( succ( FFileCommentLength ) );
-      Read( FFileComment^, FFileCommentLength );
-      FFileComment[FFileCommentLength] := #0;
+    if iFileCommentLength > 0 then
+    begin
+      SetLength(sAnsi, iFileCommentLength);
+      Read(sAnsi[1], iFileCommentLength);
+      FFileComment := string(sAnsi);
     end;
   end;
   if not IsValid then
@@ -1302,6 +1304,11 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileHeader.SaveToStream( Stream : TStream );
+var
+  sAnsi: AnsiString;
+  iFileNameLength: Word;
+  iExtraFieldLength: Word;
+  iFileCommentLength: Word;
 begin
   with Stream do begin
     {write the valid signature from the constant}
@@ -1315,16 +1322,30 @@ begin
     Write( FCRC32, sizeof( FCRC32 ) );
     Write( FCompressedSize, sizeof( FCompressedSize ) );
     Write( FUncompressedSize, sizeof( FUncompressedSize ) );
-    Write( FFileNameLength, sizeof( FFileNameLength ) );
-    Write( FExtraFieldLength, sizeof( FExtraFieldLength ) );
-    Write( FFileCommentLength, sizeof( FFileCommentLength ) );
+
+    iFileNameLength := Word(Length(FFileName));
+    Write(iFileNameLength, SizeOf(iFileNameLength));
+
+    iExtraFieldLength := Word(Length(FExtraField));
+    Write(iExtraFieldLength, SizeOf(iExtraFieldLength));
+
+    iFileCommentLength := Word(Length(FFileComment));
+    Write(iFileCommentLength, SizeOf(iFileCommentLength));
+
     Write( FDiskNumberStart, sizeof( FDiskNumberStart ) );
     Write( FInternalFileAttributes, sizeof( FInternalFileAttributes ) );
     Write( FExternalFileAttributes, sizeof( FExternalFileAttributes ) );
     Write( FRelativeOffset, sizeof( FRelativeOffset ) );
-    Write( FFileName^, FFileNameLength );
-    Write( FExtraField^, FExtraFieldLength );
-    Write( FFileComment^, FFileCommentLength );
+
+    sAnsi := AnsiString(FFileName);
+    Write(sAnsi[1], Length(sAnsi));
+
+    sAnsi := AnsiString(FExtraField);
+    Write(sAnsi[1], Length(sAnsi));
+
+    sAnsi := AnsiString(FFileComment);
+    Write(sAnsi[1], Length(sAnsi));
+
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1467,37 +1488,43 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetExtraField : string;
 begin
-  if Assigned( FItemInfo ) and ( FItemInfo.ExtraField <> nil ) then
-    Result := StrPas( FItemInfo.ExtraField )
+  if Assigned( FItemInfo ) and ( FItemInfo.ExtraField <> '' ) then
+    Result := FItemInfo.ExtraField
   else
     Result := '';
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetFileComment : string;
 begin
-  if Assigned( FItemInfo ) and ( FItemInfo.FileComment <> nil ) then
-    Result := StrPas( FItemInfo.FileComment )
+  if Assigned( FItemInfo ) and ( FItemInfo.FileComment <> '') then
+    Result := FItemInfo.FileComment
   else
     Result := '';
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetFileName : string;
 var
-  Buff : array [0..MAX_PATH] of Char;
+  sSource: AnsiString;
+  sDest: AnsiString;
 begin
-  if Assigned( FItemInfo ) and ( FItemInfo.FileName <> nil ) then begin
-    StrCopy(Buff, FItemInfo.FileName);
+  if Assigned( FItemInfo ) and ( FItemInfo.FileName <> '') then
+  begin
+    Result := FItemInfo.FileName;
 {!!.03 - Added }
 {$IFDEF Linux}
  { do nothing to Buff }
 {$ELSE}
-    if (Hi(VersionMadeBy) = 0) and AreFileApisANSI then begin
-      OEMToAnsi(Buff, Buff);
+    if (Hi(VersionMadeBy) = 0) and AreFileApisANSI then
+    begin
+      sSource := AnsiString(Result);
+      sDest := sSource;
+      if OEMToAnsi(PAnsiChar(sSource), PAnsiChar(sDest)) then
+        Result := string(sDest);
     end;
 {$ENDIF}
 {!!.03 - End Added }
-    Result := StrPas(Buff)
-  end else
+  end
+  else
     Result := '';
 end;
 { -------------------------------------------------------------------------- }
@@ -1551,8 +1578,8 @@ var
     tempFileName: string;
 begin
   FItemInfo.LoadFromStream( Stream );
-  if FItemInfo.FileName <> nil then
-    FileName := StrPas( FItemInfo.FileName )
+  if FItemInfo.FileName <> '' then
+    FileName := FItemInfo.FileName
   else
     FileName := '';
 
@@ -1652,40 +1679,18 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetExtraField(const Value : string );
 begin
-  FItemInfo.ExtraFieldLength := Length( Value );
-  if Assigned( FItemInfo.FExtraField ) then
-    StrDispose( FItemInfo.FExtraField );
-  FItemInfo.FExtraField := nil;
-  if Length( Value ) > 0 then begin
-    FItemInfo.FExtraField := StrAlloc( succ( FItemInfo.FExtraFieldLength ) );
-    StrPCopy( FItemInfo.FExtraField, Value );
-  end;
+  FItemInfo.ExtraField  := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetFileComment(const Value : string );
 begin
-  FItemInfo.FileCommentLength := Length( Value );
-  if Assigned( FItemInfo.FFileComment ) then
-    StrDispose( FItemInfo.FFileComment );
-  FItemInfo.FFileComment := nil;
-
-  if Length( Value ) > 0 then begin
-    FItemInfo.FFileComment := StrAlloc( succ( FItemInfo.FFileCommentLength ) );
-    StrPCopy( FItemInfo.FFileComment, Value );
-  end;
+  FItemInfo.FileComment := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetFileName(const Value : string );
 begin
   inherited SetFileName(Value);
-  FItemInfo.FileNameLength := Length( Value );
-  if Assigned( FItemInfo.FFileName ) then
-    StrDispose( FItemInfo.FFileName );
-  FItemInfo.FFileName := nil;
-  if Length( Value ) > 0 then begin
-    FItemInfo.FFileName := StrAlloc( succ( FItemInfo.FFileNameLength ) );
-    StrPCopy( FItemInfo.FFileName, Value );
-  end;
+  FItemInfo.FileName := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetGeneralPurposeBitFlag( Value : Word );

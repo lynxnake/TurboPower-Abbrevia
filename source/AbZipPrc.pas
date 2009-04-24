@@ -350,7 +350,8 @@ var
   FileAtributes: Integer;
   ZipArchive : TAbZipArchive;
   UncompressedStream : TStream;
-  Buff : array [0..MAX_PATH] of AnsiChar;
+  sBuffer: string;
+  sAnsi: AnsiString;
 procedure AddDirectory();
 var
 	sr: TSearchRec;
@@ -387,18 +388,20 @@ end;begin
   try {SaveDir}
     if (ZipArchive.BaseDirectory <> '') then
       ChDir(ZipArchive.BaseDirectory);
-    StrPCopy(Buff, Item.DiskFileName);
+    sBuffer := Item.DiskFileName;
 {!!OEM - Added }
 {$IFDEF Linux}
  { do nothing to Buff }
 {$ELSE}
-    if (Item.VersionMadeBy and $FF00) = 0 then begin
-      OemToChar(Buff, Buff);
+    if (Item.VersionMadeBy and $FF00) = 0 then
+    begin
+      sAnsi := AnsiString(sBuffer);
+      OemToChar(PAnsiChar(sAnsi), PChar(sBuffer));
     end;
 {$ENDIF}
 {!!OEM - End Added }
 
-	FileAtributes := AbFileGetAttr(StrPas(Buff));
+	FileAtributes := AbFileGetAttr(sBuffer);
 	if (0 <> (FileAtributes and faDirectory)) then begin
     	Item.ExternalFileAttributes := FileAtributes;
         AddDirectory(); Exit;
@@ -407,7 +410,7 @@ end;begin
         {  OEMToAnsi(Buff, Buff);  }
 
 		Item.ExternalFileAttributes := FileAtributes;
-        UncompressedStream := TFileStream.Create(StrPas(Buff), fmOpenRead or fmShareDenyWrite );
+        UncompressedStream := TFileStream.Create(sBuffer, fmOpenRead or fmShareDenyWrite );
         {Now get the file's attributes}
 
         Item.UncompressedSize := UncompressedStream.Size;

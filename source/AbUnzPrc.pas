@@ -1555,9 +1555,9 @@ begin
       raise EAbZipInvalidLFH.Create;
     if (LFH.UncompressedSize <> Item.UncompressedSize) then
       raise EAbZipInvalidLFH.Create;
-    if (CompareStr(StrPas(LFH.FileName), Item.FileName) <> 0) then
+    if (CompareStr(LFH.FileName, Item.FileName) <> 0) then
       raise EAbZipInvalidLFH.Create;
-    if (CompareStr(StrPas(LFH.ExtraField), Item.ExtraField) <> 0) then
+    if (CompareStr(LFH.ExtraField, Item.ExtraField) <> 0) then
       raise EAbZipInvalidLFH.Create;
 
       {any CRC errors will raise exception during extraction}

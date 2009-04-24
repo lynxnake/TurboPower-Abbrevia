@@ -93,6 +93,7 @@ contains
   AbZipper in '..\source\AbZipper.pas',
   AbUnzper in '..\source\AbUnzper.pas',
   AbZipCry in '..\source\AbZipCry.pas',
-  AbSWStm in '..\source\AbSWStm.pas';
+  AbSWStm in '..\source\AbSWStm.pas',
+  AbTempFileStream in '..\source\AbTempFileStream.pas';
 
 end.

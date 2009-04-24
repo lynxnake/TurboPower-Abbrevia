@@ -102,7 +102,9 @@ type
   type TFATChainArray = array of Integer;
 
   {forwards}
+{$M+}
   TAbCompoundFile = class;
+{$M-}
   TBeforeDirDeleteEvent = procedure(Sender : TAbCompoundFile; Dir : string;
                                     var AllowDelete : Boolean) of object;
   TBeforeDirModifiedEvent = procedure(Sender : TAbCompoundFile; Dir : string;
@@ -1471,7 +1473,11 @@ procedure TAbCompoundFile.AddFile(FName : string; FileData : TStream;
      I := Succ(Word(Length(PathName)));                                {!!.01}
      repeat                                                            {!!.01}
        Dec(I);                                                         {!!.01}
+{$IFDEF UNICODE}
+     until SysUtils.CharInSet(PathName[I], ['\',':']) or (I = 0);      {!!.01}
+{$ELSE}
      until (PathName[I] in ['\',':']) or (I = 0);                      {!!.01}
+{$ENDIF}
      Result := System.Copy(PathName, Succ(I), rdEntryNameSize);        {!!.01}
    end;                                                                {!!.01}
 

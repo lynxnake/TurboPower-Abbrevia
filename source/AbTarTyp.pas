@@ -264,7 +264,7 @@ end;
 
 function IntToOctal(Value : Int64): string;
 const
-  OctDigits  : array[0..7] of AnsiChar = '01234567';
+  OctDigits  : array[0..7] of Char = '01234567';
 begin
   if Value = 0 then
     Result := '0'
@@ -297,8 +297,8 @@ end;
 function VerifyHeader(const TarH : TAbTarHeaderRec): Boolean;
 { check "Magic" field in Tar Header}
 begin
-  Result := (TarH.Magic = StrPas(AB_TAR_TMAGIC)) or
-     (TarH.Magic = StrPas(AB_TAR_GNUMAGIC));
+  Result := (TarH.Magic = AB_TAR_TMAGIC) or
+     (TarH.Magic = AB_TAR_GNUMAGIC);
 end;
 
 function VerifyTar(Strm : TStream) : TAbArchiveType;
@@ -396,7 +396,7 @@ begin
     { if it's a file }
       if TarH.LinkFlag in [AB_TAR_LF_OLDNORMAL, AB_TAR_LF_NORMAL] then begin
       { add filename to List }
-        FN := StrPas(TarH.Name);
+        FN := string(TarH.Name);
         if FN <> '' then
           List.Add(FN);
     end; {if}
@@ -450,7 +450,7 @@ end;
 
 function TAbTarItem.GetFileName: string;
 begin
-  Result := FTarHeader.Name;
+  Result := string(FTarHeader.Name);
 end;
 
 function TAbTarItem.GetGroupID: Integer;
@@ -460,7 +460,7 @@ end;
 
 function TAbTarItem.GetGroupName: string;
 begin
-  Result := FTarHeader.GrpName;
+  Result := string(FTarHeader.GrpName);
 end;
 
 function TAbTarItem.GetIsEncrypted: Boolean;
@@ -501,13 +501,13 @@ end;
 
 function TAbTarItem.GetLinkName: string;
 begin
-  Result := FTarHeader.LinkName;
+  Result := string(FTarHeader.LinkName);
 end;
 
 
 function TAbTarItem.GetMagic: string;
 begin
-  Result := FTarHeader.Magic;
+  Result := string(FTarHeader.Magic);
 end;
 
 function TAbTarItem.GetUncompressedSize: Int64;
@@ -523,7 +523,7 @@ end;
 
 function TAbTarItem.GetUserName: string;
 begin
-  Result := FTarHeader.UsrName;
+  Result := string(FTarHeader.UsrName);
 end;
 
 procedure TAbTarItem.LoadTarHeaderFromStream(AStream: TStream);
@@ -532,7 +532,7 @@ var
 begin
   AStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
   AStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
-  FileName := FTarHeader.Name;
+  FileName := string(FTarHeader.Name);
   tempFileName := FileName;
   AbUnfixName(tempFileName);
   DiskFileName := tempFileName;
@@ -607,7 +607,7 @@ end;
 
 procedure TAbTarItem.SetFileName(const Value: string);
 begin
-  StrPCopy(FTarHeader.Name, Value);
+  StrPCopy(FTarHeader.Name, AnsiString(Value));
 end;
 
 procedure TAbTarItem.SetGroupID(const Value: Integer);
@@ -620,7 +620,7 @@ end;
 
 procedure TAbTarItem.SetGroupName(const Value: string);
 begin
-  StrPCopy(FTarHeader.GrpName, Value);
+  StrPCopy(FTarHeader.GrpName, AnsiString(Value));
 end;
 
 procedure TAbTarItem.SetIsEncrypted(Value: Boolean);
@@ -676,7 +676,7 @@ end;
 
 procedure TAbTarItem.SetLinkName(const Value: string);
 begin
-  StrPCopy(FTarHeader.LinkName, Value);
+  StrPCopy(FTarHeader.LinkName, AnsiString(Value));
 end;
 
 procedure TAbTarItem.SetUncompressedSize(const Value: Int64);
@@ -697,7 +697,7 @@ end;
 
 procedure TAbTarItem.SetUserName(const Value: string);
 begin
-  StrPCopy(FTarHeader.UsrName, Value);
+  StrPCopy(FTarHeader.UsrName, AnsiString(Value));
 end;
 
 { TAbTarStreamHelper }
@@ -908,16 +908,16 @@ begin
         Item.SetIsDirectory(True);
         FileSpec := IncludeTrailingPathDelimiter(FileSpec);
     end;
-    StrPCopy(Buff, ExpandFileName(FileSpec));
+    StrPCopy(Buff, AnsiString(ExpandFileName(FileSpec)));
     {$IFDEF MSWINDOWS }
     AnsiToOem(Buff, Buff);
     {$ENDIF MSWINDOWS }
-    Item.DiskFileName := ExcludeTrailingPathDelimiter(Buff);
-    StrPCopy(Buff, FixName(FileSpec));
+    Item.DiskFileName := ExcludeTrailingPathDelimiter(string(Buff));
+    StrPCopy(Buff, AnsiString(FixName(FileSpec)));
     {$IFDEF MSWINDOWS }
     AnsiToOEM(Buff, Buff);
     {$ENDIF MSWINDOWS }
-    Item.FileName := Buff;
+    Item.FileName := string(Buff);
   finally
     Result := Item;
   end;

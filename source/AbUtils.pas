@@ -205,7 +205,7 @@ type
     {Returns true if Path is an existing directory
      returns False on blank strings, filenames...}
 
-  function AbDrive(const ArchiveName : string) : AnsiChar;
+  function AbDrive(const ArchiveName : string) : Char;
 
   function AbDriveIsRemovable(const ArchiveName : string) : Boolean;
 
@@ -273,14 +273,14 @@ type
 
 
   function AbWriteVolumeLabel(const VolName : string;
-                                  Drive : AnsiChar) : Cardinal;
+                                  Drive : Char) : Cardinal;
 {!!.04 - Added }
 const
   AB_SPAN_VOL_LABEL = 'PKBACK# %3.3d';
 
-  function AbGetVolumeLabel(Drive : AnsiChar) : AnsiString;
-  procedure AbSetSpanVolumeLabel(Drive: AnsiChar; VolNo : Integer);
-  function AbTestSpanVolumeLabel(Drive: AnsiChar; VolNo : Integer): Boolean;
+  function AbGetVolumeLabel(Drive : Char) : string;
+  procedure AbSetSpanVolumeLabel(Drive: Char; VolNo : Integer);
+  function AbTestSpanVolumeLabel(Drive: Char; VolNo : Integer): Boolean;
 {!!.04 - Added End }
 
   function AbFileGetAttr(const aFileName : string) : integer;
@@ -537,7 +537,7 @@ begin
     Result := Var1;
 end;
 { -------------------------------------------------------------------------- }
-function AbDrive(const ArchiveName : string) : AnsiChar;
+function AbDrive(const ArchiveName : string) : Char;
 var
   iPos: Integer;
   Path : string;
@@ -681,7 +681,7 @@ begin
       end
       else begin { path is not UNC}
         { determine drive type }
-        DrvTyp := GetDriveType(PAnsiChar(DrvStr));                       {!!.02}
+        DrvTyp := GetDriveType(PChar(DrvStr));                       {!!.02}
         {DrvTyp := GetDriveType(PAnsiChar(ExtractFilePath(ArchiveName))); }{!!.02}
         case DrvTyp of
           0 {type undeterminable} : Size := -1; { fail }
@@ -717,7 +717,7 @@ function AbDirectoryExists( const Path : string ) : Boolean;
 {$IFDEF MSWINDOWS}
 var
   Attr : DWORD;
-  PathZ: array [0..255] of AnsiChar;
+  PathZ: array [0..255] of Char;
 {$ENDIF}
 {$IFDEF LINUX}
 var
@@ -831,12 +831,16 @@ end;
 function AbAddBackSlash(const DirName : string) : string;
 { Add a default slash to a directory name }
 const
-  AbDelimSet : set of Char = [AbPathDelim, ':', #0];
+  AbDelimSet : set of AnsiChar = [AbPathDelim, ':', #0];
 begin
   Result := DirName;
   if Length(DirName) = 0 then
     Exit;
+{$IFDEF UNICODE}
+  if not SysUtils.CharInSet(DirName[Length(DirName)], AbDelimSet) then
+{$ELSE}
   if not (DirName[Length(DirName)] in AbDelimSet) then
+{$ENDIF}
     Result := DirName + AbPathDelim;
 end;
 { -------------------------------------------------------------------------- }
@@ -931,7 +935,7 @@ end;
 procedure AbIncFilename( var Filename : string; Value : Word );
 { place value at the end of filename, e.g. Files.C04 }
 var
-  Ext : string[4];
+  Ext : string;
   I : Word;
 begin
   I := (Value +1) mod 100;
@@ -1147,11 +1151,11 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function AbWriteVolumeLabel(const VolName : string;
-                                Drive : AnsiChar) : Cardinal;
+                                Drive : Char) : Cardinal;
 var
   Temp : string;
-  Vol : array[0..11] of AnsiChar;
-  Root : array[0..3] of AnsiChar;
+  Vol : array[0..11] of Char;
+  Root : array[0..3] of Char;
 begin
   Temp := VolName;
   StrCopy(Root, '%:' + AbPathDelim);
@@ -1464,10 +1468,10 @@ end;
 const
   MAX_VOL_LABEL = 16;
 
-function AbGetVolumeLabel(Drive : AnsiChar) : AnsiString;
+function AbGetVolumeLabel(Drive : Char) : string;
 {-Get the volume label for the specified drive.}
 var
-  Root : AnsiString;
+  Root : string;
   Flags, MaxLength : DWORD;
   NameSize : Integer;
   VolName : string;
@@ -1481,20 +1485,20 @@ begin
 
   Result := '';
 
-  if GetVolumeInformation(PAnsiChar(Root), PChar(VolName), Length(VolName),
+  if GetVolumeInformation(PChar(Root), PChar(VolName), Length(VolName),
     nil, MaxLength, Flags, nil, NameSize)
   then
     Result := VolName;
 {$ENDIF}
 end;
 
-procedure AbSetSpanVolumeLabel(Drive: AnsiChar; VolNo : Integer);
+procedure AbSetSpanVolumeLabel(Drive: Char; VolNo : Integer);
 begin
   AbWriteVolumeLabel(Format(AB_SPAN_VOL_LABEL,
     [VolNo]), Drive);
 end;
 
-function AbTestSpanVolumeLabel(Drive: AnsiChar; VolNo : Integer): Boolean;
+function AbTestSpanVolumeLabel(Drive: Char; VolNo : Integer): Boolean;
 var
   VolLabel, TestLabel : string;
 begin

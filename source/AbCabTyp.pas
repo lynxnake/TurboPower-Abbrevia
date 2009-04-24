@@ -222,7 +222,7 @@ function FCI_FileOpen(lpPathName: PChar; Flag, Mode: Integer;
   cdecl;
   {open a file}
 begin
-  Result := _lcreat(lpPathName, 0);
+  Result := _lcreat(PAnsiChar(lpPathName), 0);
   if (Result = HFILE_ERROR) then
     raise EAbFCIFileOpenError.Create;
 end;
@@ -311,7 +311,7 @@ function FCI_GetOpenInfo(lpPathname: PChar; PDate, PTime, PAttribs : PWord;
 var
   DT : Integer;
 begin
-  Result := _lopen(lpPathname, OF_READ or OF_SHARE_DENY_NONE);
+  Result := _lopen(PAnsiChar(lpPathname), OF_READ or OF_SHARE_DENY_NONE);
   if (Result = -1) then
     raise EAbFCIFileOpenError.Create;
   PAttribs^ := AbFileGetAttr(StrPas(lpPathname));
@@ -362,7 +362,7 @@ function FDI_FileOpen(lpPathName: PChar; Flag, Mode: Integer) : Integer;
   cdecl;
   {open a file}
 begin
-  Result := _lopen(lpPathName, Mode);
+  Result := _lopen(PAnsiChar(lpPathName), Mode);
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileRead(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
@@ -545,7 +545,7 @@ begin
     Exit;
   Item.Action := aaAdd;
   StrPCopy(FP, Item.DiskFilename);                                           {!!.02}
-  FH := _lopen(FP, OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
+  FH := _lopen(PAnsiChar(@FP), OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
   if (FH <> HFILE_ERROR) then begin
     aItem.UncompressedSize := _llseek(FH, 0, 2);
     FItemInProgress := Item;
@@ -626,17 +626,22 @@ end;
 function TAbCabArchive.CreateItem( const FileSpec : string ): TAbArchiveItem;
   {create a new item for the file list}
 var
-  Buff : array [0..255] of Char;
+  sBuffer: string;
+  sAnsi: AnsiString;
 begin
   Result := TAbCabItem.Create;
   with TAbCabItem(Result) do begin
     CompressedSize := 0;
-    StrPCopy(Buff, ExpandFileName(FileSpec));
-    AnsiToOEM(Buff, Buff);
-    DiskFileName := StrPas(Buff);
-    StrPCopy(Buff, FixName(FileSpec));
-    AnsiToOEM(Buff, Buff);
-    FileName := StrPas(Buff);
+    sBuffer := ExpandFileName(FileSpec);
+
+    sAnsi := AnsiString(sBuffer);
+    AnsiToOEM(PAnsiChar(sAnsi), PAnsiChar(sAnsi));
+    DiskFileName := string(sAnsi);
+
+    sBuffer := FixName(FileSpec);
+    sAnsi := AnsiString(sBuffer);
+    AnsiToOEM(PAnsiChar(sAnsi), PAnsiChar(sAnsi));
+    FileName := string(sAnsi);
   end;
 end;
 { -------------------------------------------------------------------------- }
