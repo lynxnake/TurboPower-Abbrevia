@@ -440,13 +440,10 @@ begin
  Component.FileName := TestFile;
  Component.AddFiles('MPL-1_1.txt',0);
  Component.Save;
- // For some reason test fails without a delay, but TestFile is created as expected
- // So inserting delay
- Sleep(500);
- CheckFileExists(TestFile);
+ Component.CloseArchive;
 
 //Current Actual Size 9151 (Could change if we change default compresion so not testing for it)
- Check(AbFileGetSize(TestFile) < 8000,TestFile + ' too small check if created correctly');
+ Check(AbFileGetSize(TestFile) > 8000,TestFile + ' too small check if created correctly');
 
 end;
 

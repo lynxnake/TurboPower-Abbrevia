@@ -599,6 +599,12 @@ begin
           {$ENDIF}
           tkDynArray:
                 DynArrayToVariant(Result, Pointer(GetOrdProp(Instance, PropInfo)), PropInfo^.PropType^);
+      {$IFDEF CONDITIONALEXPRESSIONS}
+        {$IF DECLARED(tkUString)}
+          tkUString:
+            Result := GetUnicodeStrProp(Instance, PropInfo);
+        {$IFEND}
+      {$ENDIF}
     else
       raise Exception.Create('Invalid Property Type: ' + PropInfo.PropType^^.Name);
     end;
