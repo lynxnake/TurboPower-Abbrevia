@@ -193,6 +193,9 @@ type
 
   function AbCreateTempFile(const Dir : string) : string;
 
+  function AbGetTempDirectory : string;
+    {-Return the system temp directory}
+
   function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 
   function AbdMax(Var1, Var2: Longint): Longint;
@@ -479,6 +482,17 @@ begin
   Result := AbGetTempFile(Dir, True);
 end;
 { -------------------------------------------------------------------------- }
+function AbGetTempDirectory : string;
+begin
+{$IFDEF MSWiNDOWS}
+  SetLength(Result, MAX_PATH);
+  SetLength(Result, GetTempPath(Length(Result),  PChar(Result)));
+{$ENDIF}
+{$IFDEF LINUX}
+  Result := '/etc/';
+{$ENDIF}
+end;
+{ -------------------------------------------------------------------------- }
 {$IFDEF LINUX}
 function GetTempFileName(const Path, Mask : string): string;
 {
@@ -501,16 +515,16 @@ function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 {$IFDEF MSWINDOWS}
 var
   FileNameZ : array [0..259] of char;
-  TempPathZ : array [0..259] of char;
+  TempPath: string;
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
-  if not AbDirectoryExists(Dir) then
-    GetTempPath(sizeof(TempPathZ), TempPathZ)
+  if AbDirectoryExists(Dir) then
+    TempPath := Dir
   else
-    StrPCopy(TempPathZ, Dir);
-  GetTempFileName(TempPathZ, 'VMS', Word(not CreateIt), FileNameZ);
-  Result := StrPas(FileNameZ);
+    TempPath := AbGetTempDirectory;
+  GetTempFileName(PChar(TempPath), 'VMS', Word(not CreateIt), FileNameZ);
+  Result := string(FileNameZ);
 {$ENDIF}
 {$IFDEF LINUX}
   Result := GetTempFileName(Dir, 'VMSXXXXXX');
