@@ -342,8 +342,7 @@ type
     FTotalEntries         : Word;
     FDirectorySize        : LongWord;
     FDirectoryOffset      : LongWord;
-    FZipfileCommentLength : Word;
-    FZipFileComment       : PChar;
+    FZipFileComment       : string;
     function GetValid : Boolean;
   public {methods}
     constructor Create;
@@ -366,9 +365,7 @@ type
       read FDirectoryOffset write FDirectoryOffset;
     property StartDiskNumber : Word
       read FStartDiskNumber write FStartDiskNumber;
-    property ZipfileCommentLength : Word
-      read FZipfileCommentLength write FZipfileCommentLength;
-    property ZipfileComment : PChar
+    property ZipfileComment : string
       read FZipfileComment write FZipfileComment;
     property IsValid : Boolean
       read GetValid;
@@ -1355,13 +1352,10 @@ constructor TAbZipDirectoryFileFooter.Create;
 begin
   inherited Create;
   FValidSignature := Ab_ZipEndCentralDirectorySignature;
-  FZipfileComment := nil;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipDirectoryFileFooter.Destroy;
 begin
-  if Assigned( FZipfileComment ) then
-    StrDispose( FZipfileComment );
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
@@ -1386,6 +1380,9 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileFooter.LoadFromStream( Stream : TStream );
+var
+  iZipfileCommentLength: Word;
+  sAnsi: Ansistring;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1395,12 +1392,13 @@ begin
     Read( FTotalEntries, sizeof( FTotalEntries ) );
     Read( FDirectorySize, sizeof( FDirectorySize ) );
     Read( FDirectoryOffset, sizeof( FDirectoryOffset ) );
-    Read( FZipfileCommentLength, sizeof( FZipfileCommentLength ) );
+    Read( iZipfileCommentLength, sizeof( iZipfileCommentLength ) );
 
-    if FZipfileCommentLength > 0 then begin
-      FZipfileComment := StrAlloc( succ( FZipfileCommentLength ) );
-      Read( FZipfileComment^, FZipfileCommentLength );
-      FZipfileComment[FZipfileCommentLength] := #0;
+    if iZipfileCommentLength > 0 then
+    begin
+      SetLength(sAnsi, iZipfileCommentLength);
+      Read(sAnsi[1], iZipfileCommentLength);
+      FZipfileComment := string(sAnsi);
     end;
   end;
   if not IsValid then
@@ -1409,7 +1407,12 @@ end;
 
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileFooter.SaveToStream( Stream : TStream );
+var
+  iZipfileCommentLength: Word;
+  sAnsi: Ansistring;
 begin
+  iZipfileCommentLength := Length(FZipFileComment);
+  sAnsi := AnsiString(FZipfileComment);
   with Stream do begin
     Write( FValidSignature, sizeof( FValidSignature ) );
     Write( FDiskNumber, sizeof( FDiskNumber ) );
@@ -1418,8 +1421,8 @@ begin
     Write( FTotalEntries, sizeof( FTotalEntries ) );
     Write( FDirectorySize, sizeof( FDirectorySize ) );
     Write( FDirectoryOffset, sizeof( FDirectoryOffset ) );
-    Write( FZipfileCommentLength, sizeof( FZipfileCommentLength ) );
-    Write( FZipfileComment^, FZipfileCommentLength );
+    Write( iZipfileCommentLength, sizeof( iZipfileCommentLength ) );
+    Write(sAnsi[1], iZipfileCommentLength);
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -2221,7 +2224,7 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbZipArchive.GetZipFileComment : string;
 begin
-  Result := StrPas( FInfo.ZipFileComment );
+  Result := FInfo.ZipFileComment;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.LoadArchive;
@@ -3082,20 +3085,8 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.SetZipFileComment(const Value : string );
 begin
-  FInfo.ZipFileCommentLength := Length( Value );
-  if Assigned( FInfo.FZipFileComment ) then
-    StrDispose( FInfo.FZipFileComment );
-  FInfo.FZipFileComment := nil;
-  if Length( Value ) > 0 then begin
-    FInfo.FZipFileComment := StrAlloc( succ( FInfo.FZipFileCommentLength ) );
-    StrPCopy( FInfo.FZipFileComment, Value );
-    FIsDirty := True;
-  end                                                                    {!!.02}
-  else begin  { if Value = '' then clear the ZIP Comment }               {!!.02}
-    FInfo.FZipFileCommentLength := 0;                                    {!!.02}
-    FInfo.FZipFileComment := nil;                                        {!!.02}
-    FIsDirty := True;                                                    {!!.02}
-  end;
+  FIsDirty := True;
+  FInfo.FZipFileComment := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.TestItemAt(Index : Integer);
