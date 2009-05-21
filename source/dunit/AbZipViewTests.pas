@@ -60,19 +60,9 @@ begin
 end;
 
 procedure TAbZipViewTests.TestComponentLinks;
-var
-  Menu : TPopupMenu;
-  ZipBrow : TAbZipBrowser;
 begin
-  Menu := TPopupMenu.Create(TestForm);
-  ZipBrow := TAbZipBrowser.Create(TestForm);  
-  Component.PopupMenu := Menu;
-  Component.ZipComponent := ZipBrow;
-  Menu.Free;
-  ZipBrow.Free;
-  Check(Component.PopupMenu = nil,'Notification does not work for TAbZipView.PopupMenu');
-  Check(Component.ZipComponent = nil,'Notification does not work for TAbZipView.ZipComponent');
-
+  TestComponentLink(Component, 'PopupMenu', TPopupMenu);
+  TestComponentLink(Component, 'ZipComponent', TAbZipBrowser);
 end;
 
 procedure TAbZipViewTests.TestDefaultStreaming;

@@ -58,7 +58,7 @@ begin
  // [ 783614 ] Item #1
  // 3.05 Beta Code produced EAbBadStream, it should be EabUserAbort
    ExpectedException := EabUserAbort;
-   if DirExists(TestTempDir+'SPLIT-ABORT\') then
+   if DirectoryExists(TestTempDir+'SPLIT-ABORT\') then
       DelTree(TestTempDir + 'SPLIT-ABORT\');
      CreateDir(TestTempDir+'SPLIT-ABORT\');
    // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
@@ -88,7 +88,7 @@ procedure TAbArchiveSplitTests.CreateBasicSplitArchive;
 var
   Zip : TAbZipper;
 begin
-   if DirExists(TestTempDir+'SPLIT\') then
+   if DirectoryExists(TestTempDir+'SPLIT\') then
       DelTree(TestTempDir + 'SPLIT\');
      CreateDir(TestTempDir+'SPLIT\');
    // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
@@ -129,41 +129,33 @@ procedure TAbArchiveSplitTests.VerifyBasicSplitArchive;
 var
   UnZip : TAbUnZipper;
   mStream : TMemoryStream;
-  fStream : TFileStream;
   I : Integer;
   TestFile : string;
 begin
-   // Create a Basic Span by zipping all .EXE Files in C:\WINDOWS\
-   UnZip := TAbUnZipper.create(nil);
-   mStream := TMemoryStream.Create;
-   try
-   UnZip.BaseDirectory := GetTestTempDir;
-   CheckFileExists(TestTempDir + 'SPLIT\SPLITTEST.ZIP');
-   UnZip.FileName := TestTempDir + 'SPLIT\SPLITTEST.ZIP';
-   Check(Unzip.Count > 0,'Archive SPLITTEST.ZIP is empty');
-   For I := 0 to Unzip.Count -1 do
-    begin
+  // Create a Basic Span by zipping all .EXE Files in C:\WINDOWS\
+  UnZip := TAbUnZipper.create(nil);
+  mStream := TMemoryStream.Create;
+  try
+    UnZip.BaseDirectory := GetTestTempDir;
+    CheckFileExists(TestTempDir + 'SPLIT\SPLITTEST.ZIP');
+    UnZip.FileName := TestTempDir + 'SPLIT\SPLITTEST.ZIP';
+    Check(Unzip.Count > 0,'Archive SPLITTEST.ZIP is empty');
+    for I := 0 to Unzip.Count -1 do begin
       testFile := GetWindowsDir + ExtractFileName(UnZip.Items[I].FileName);
       // Make sure file exist to compare to.
       CheckFileExists(TestFile);
       // Extract File in Span to Memory
       UnZip.ExtractToStream(UnZip.Items[I].FileName,mStream);
       // Check to make sure mStream is not empty (note: this occured for awhile, during development)
-      Check(mStream.Size >0,'Memory Stream containing "' + UnZip.Items[I].FileName + '" is 0 bytes in length.');
+      Check(mStream.Size > 0, 'Memory Stream containing "' + UnZip.Items[I].FileName + '" is 0 bytes in length.');
       // Open the Existing File in Read Only Mode.
-      fStream := TFileStream.Create(TestFile,fmOpenRead);
-      try
-      // Make sure memory Stream of File and Actual File Match, Byte for Byte (This takes some time to complete)
-      CheckStreamMatch(mStream,fStream,'Test File: ' + TestFile + ' did not Match Archive');
-      finally
-        fStream.Free;
-      end;
+      CheckFileMatchesStream(TestFile, mStream, 'Test file: ' + TestFile + ' did not match archive');
       mStream.SetSize(0);
     end;
-   finally
-     UnZip.Free;
-     mStream.Free;
-   end;
+  finally
+    UnZip.Free;
+    mStream.Free;
+  end;
 end;
 
 initialization

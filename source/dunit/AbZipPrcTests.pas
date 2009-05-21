@@ -24,19 +24,22 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbZipPrcTests;
+
 {$I AbDefine.inc}
+
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,abTestConsts,AbZipPrc,AbUnzPrc, sysutils,classes;
-type
+  Classes,
+  AbTestFrameWork;
 
-  TAbZipPrcTests = class(TabTestCase)
+type
+  TAbZipPrcTests = class(TAbTestCase)
   private
     FUnCompressedStream : TMemoryStream;
     FCompressedStream   : TMemoryStream;
-  protected
 
+  protected
     procedure SetUp; override;
     procedure TearDown; override;
 
@@ -45,13 +48,14 @@ type
     procedure DeflateStreamSimpleTest2;
     procedure DeflateStreamFileTest;
     procedure DeflateStreamInflateStreamTest;
-
   end;
 
 implementation
 
-uses Math;
-
+uses
+  Math, SysUtils,
+  TestFrameWork,
+  AbTestConsts, AbUnzPrc, AbZipPrc;
 
 { TAbZipPrcTests }
 
@@ -59,7 +63,7 @@ procedure TAbZipPrcTests.SetUp;
 begin
   inherited;
   FUnCompressedStream := TMemoryStream.create;
-  FCompressedStream   := TMemoryStream.create;
+  FCompressedStream := TMemoryStream.create;
 end;
 
 procedure TAbZipPrcTests.TearDown;
@@ -71,41 +75,41 @@ end;
 
 procedure TAbZipPrcTests.DeflateStreamSimpleTest1;
 var
- I : Integer;
- b : byte;
+  I : Integer;
+  b : byte;
 begin
-  FUnCompressedStream.Write(UncompressedBuf1,SizeOf(UncompressedBuf1));
-  FUnCompressedStream.Seek(0,soFromBeginning);
-  DeflateStream(FUnCompressedStream,FCompressedStream);
-  check(FCompressedStream.Size = sizeOf(CompressedBuf1),'FCompressedStream.Size ('+IntToStr(FCompressedStream.Size)+ ') should be sizeOf(CompressedBuf1)');
-  FCompressedStream.Seek(0,soFromBeginning); // Move to start;
-  for I := 0 to sizeOf(CompressedBuf1)-1 do
-   begin
-     FCompressedStream.Read(b,1);
-     check(B = CompressedBuf1[I], 'Byte [' + IntToStr(I) + '] of Buffer is incorrect, Expecting:' + IntTostr(CompressedBuf1[I]) + ' found :'  + IntToStr(B));
-   end;
+  FUnCompressedStream.Write(UncompressedBuf1, SizeOf(UncompressedBuf1));
+  FUnCompressedStream.Seek(0, soFromBeginning);
+  DeflateStream(FUnCompressedStream, FCompressedStream);
+  Check(FCompressedStream.Size = SizeOf(CompressedBuf1),
+    'FCompressedStream.Size (' + IntToStr(FCompressedStream.Size) + ') should be sizeOf(CompressedBuf1)');
+  FCompressedStream.Seek(0, soFromBeginning);
+  for I := 0 to SizeOf(CompressedBuf1) - 1 do begin
+    FCompressedStream.Read(b, 1);
+    Check(B = CompressedBuf1[I], 'Byte [' + IntToStr(I) + '] of Buffer is incorrect, Expecting:' + IntTostr(CompressedBuf1[I]) + ' found :'  + IntToStr(B));
+  end;
 end;
 
 procedure TAbZipPrcTests.DeflateStreamSimpleTest2;
 var
- I : Integer;
- b : byte;
+  I : Integer;
+  b : Byte;
 begin
   FUnCompressedStream.Write(UncompressedBuf2,SizeOf(UncompressedBuf2));
-  FUnCompressedStream.Seek(0,soFromBeginning);
-  DeflateStream(FUnCompressedStream,FCompressedStream);
-  check(FCompressedStream.Size = sizeOf(CompressedBuf2),'FCompressedStream.Size ('+IntToStr(FCompressedStream.Size)+ ') should be sizeOf(CompressedBuf2)');
-  FCompressedStream.Seek(0,soFromBeginning); // Move to start;
-  for I := 0 to sizeOf(CompressedBuf2)-1 do
-   begin
-     FCompressedStream.Read(b,1);
-     check(B = CompressedBuf2[I], 'Byte [' + IntToStr(I) + '] of Buffer is incorrect, Expecting:' + IntTostr(CompressedBuf2[I]) + ' found :'  + IntToStr(B));
-   end;
+  FUnCompressedStream.Seek(0, soFromBeginning);
+  DeflateStream(FUnCompressedStream, FCompressedStream);
+  Check(FCompressedStream.Size = SizeOf(CompressedBuf2),
+    'FCompressedStream.Size ('+IntToStr(FCompressedStream.Size)+ ') should be sizeOf(CompressedBuf2)');
+  FCompressedStream.Seek(0, soFromBeginning); // Move to start;
+  for I := 0 to SizeOf(CompressedBuf2) - 1 do begin
+    FCompressedStream.Read(b,1);
+    Check(B = CompressedBuf2[I], 'Byte [' + IntToStr(I) + '] of Buffer is incorrect, Expecting:' + IntTostr(CompressedBuf2[I]) + ' found :'  + IntToStr(B));
+  end;
 end;
 
 procedure TAbZipPrcTests.DeflateStreamFileTest;
 var
- FS : TFileStream;
+  FS : TFileStream;
 begin
   {$IFDEF LINUX}
   FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests/Testdoc1.txt');
@@ -122,7 +126,8 @@ begin
   FS := TFileStream.Create(TestFileDir + 'StreamTests\Testdoc1.cmp',fmOpenRead);
   {$ENDIF}
   try
-  CheckStreamMatch(FCompressedStream,FS,'Streamtests\Testdoc1.txt Compressed did not match contents of Streamtests\Testdoc1.cmp');
+    CheckStreamMatch(FCompressedStream,FS,
+      'Streamtests\Testdoc1.txt Compressed did not match contents of Streamtests\Testdoc1.cmp');
   finally
     fs.free;
   end;
@@ -130,29 +135,28 @@ end;
 
 procedure TAbZipPrcTests.DeflateStreamInflateStreamTest;
 var
- I : Integer;
- Buf : Integer;
- FUnCompressedStream2 : TMemoryStream;
+  I : Integer;
+  Buf : Integer;
+  FUnCompressedStream2 : TMemoryStream;
 begin
- For I := 0 to 50000 do
-  begin
+  for I := 0 to 50000 do begin
     if Odd(I) then
       Buf := 4545424
     else Buf := I;
     FUnCompressedStream.Write(Buf,SizeOf(Buf));
   end;
- FUnCompressedStream.Seek(0,soFromBeginning);
- DeflateStream(FUnCompressedStream,FCompressedStream);
- FUnCompressedStream2 := TMemoryStream.Create;
- try
-   FCompressedStream.Seek(0,soFromBeginning);
-   InflateStream(FCompressedStream,FUnCompressedStream2);
-   FUnCompressedStream.Seek(0,soFromBeginning);
-   FUnCompressedStream2.Seek(0,soFromBeginning);
-   CheckStreamMatch(FUnCompressedStream,FUnCompressedStream2,'DeflateInflateTest - Streams did not match');
- finally
-   FUnCompressedStream2.Free;
- end;
+  FUnCompressedStream.Seek(0,soFromBeginning);
+  DeflateStream(FUnCompressedStream,FCompressedStream);
+  FUnCompressedStream2 := TMemoryStream.Create;
+  try
+    FCompressedStream.Seek(0,soFromBeginning);
+    InflateStream(FCompressedStream,FUnCompressedStream2);
+    FUnCompressedStream.Seek(0,soFromBeginning);
+    FUnCompressedStream2.Seek(0,soFromBeginning);
+    CheckStreamMatch(FUnCompressedStream,FUnCompressedStream2,'DeflateInflateTest - Streams did not match');
+  finally
+    FUnCompressedStream2.Free;
+  end;
 end;
 
 initialization

@@ -28,11 +28,11 @@ unit AbZipOutTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZipOut,AbZBrows,SysUtils,Classes,Menus,abMeter;
+  TestFrameWork, AbTestFrameWork, AbZipOut;
 
 type
 
-  TAbZipOutlineTests = class(TabCompTestCase)
+  TAbZipOutlineTests = class(TAbCompTestCase)
   private
     Component : TAbZipOutline;
   protected
@@ -44,6 +44,10 @@ type
   end;
 
 implementation
+
+uses
+  Classes, Menus, SysUtils,
+  AbMeter, AbZBrows;
 
 { TAbZipOutlineTests }
 
@@ -61,23 +65,10 @@ begin
 end;
 
 procedure TAbZipOutlineTests.TestComponentLinks;
-var
-  Menu : TPopupMenu;
-  MLink1,MLink2 : TAbMeter;
 begin
-  MLink1 := TAbMeter.Create(TestForm);
-  MLink2 := TAbMeter.Create(TestForm);
-  Menu := TPopupMenu.Create(TestForm);
-  Component.ArchiveProgressMeter := MLink1;
-  Component.ItemProgressMeter := MLink2;  
-  Component.PopupMenu := Menu;
-  Menu.Free;
-  MLink1.Free;
-  MLink2.Free;
-  Check(Component.PopupMenu = nil,'Notification does not work for TAbZipOutline.PopupMenu');
-  Check(Component.ArchiveProgressMeter = nil,'Notification does not work for TAbZipOutline.ArchiveProgressMeter');
-  Check(Component.ItemProgressMeter = nil,'Notification does not work for TAbZipOutline.ItemProgressMeter');
-
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbMeter);
+  TestComponentLink(Component, 'PopupMenu', TPopupMenu);
 end;
 
 procedure TAbZipOutlineTests.TestDefaultStreaming;
@@ -107,4 +98,3 @@ initialization
  
 end.
 
- 

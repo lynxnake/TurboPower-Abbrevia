@@ -56,33 +56,23 @@ end;
 procedure TAbCabViewTests.TearDown;
 begin
   inherited;
-
 end;
 
 procedure TAbCabViewTests.TestComponentLinks;
-var
-  Menu : TPopupMenu;
-  CabBrow : TAbCabBrowser;
 begin
-  Menu := TPopupMenu.Create(TestForm);
-  CabBrow := TAbCabBrowser.Create(TestForm);
-  Component.PopupMenu := Menu;
-  Component.CabComponent := CabBrow;
-  Menu.Free;
-  CabBrow.Free;
-  Check(Component.PopupMenu = nil,'Notification does not work for TAbCabView.PopupMenu');
-  Check(Component.CabComponent = nil,'Notification does not work for TAbCabView.ZipComponent');
+  TestComponentLink(Component, 'PopupMenu', TPopupMenu);
+  TestComponentLink(Component, 'CabComponent', TAbCabBrowser);
 end;
 
 procedure TAbCabViewTests.TestDefaultStreaming;
 var
-CompStr : STring;
-CompTest : TAbCabView;
+  CompStr : string;
+  CompTest : TAbCabView;
 begin
   RegisterClass(TAbCabView);
-  CompStr  := StreamComponent(Component);
+  CompStr := StreamComponent(Component);
   CompTest := (UnStreamComponent(CompStr) as TAbCabView);
-  CompareComponentProps(Component,CompTest);
+  CompareComponentProps(Component, CompTest);
   UnRegisterClass(TAbCabView);
 end;
 

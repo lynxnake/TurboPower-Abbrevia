@@ -61,17 +61,9 @@ begin
 end;
 
 procedure TAbCabMakTests.TestComponentLinks;
-var
-  MLink1,MLink2 : TAbVCLMeterLink;
 begin
-  MLink1 := TAbVCLMeterLink.Create(TestForm);
-  MLink2 := TAbVCLMeterLink.Create(TestForm);  
-  Component.ArchiveProgressMeter := MLink1;
-  Component.ItemProgressMeter := MLink2;
-  MLink1.Free;
-  MLink2.Free;
-  Check(Component.ArchiveProgressMeter = nil,'Notification does not work for TAbMakeCab.ArchiveProgressMeter');
-  Check(Component.ItemProgressMeter = nil,'Notification does not work for TAbMakeCab.ItemProgressMeter');
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
 end;
 
 procedure TAbCabMakTests.TestDefaultStreaming;

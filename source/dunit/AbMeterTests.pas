@@ -100,13 +100,8 @@ begin
 end;
 
 procedure TAbVCLMeterLinkTests.TestComponentLinks;
-var
-  Meter: TAbMeter;
 begin
-  Meter := TAbMeter.Create(TestForm);
-  Component.Meter := Meter;
-  Meter.Free;
-  Check(Component.Meter = nil,'Notification does not work for TAbMeter.Meter');
+  TestComponentLink(Component, 'Meter', TAbMeter);
 end;
 
 procedure TAbVCLMeterLinkTests.TestDefaultStreaming;

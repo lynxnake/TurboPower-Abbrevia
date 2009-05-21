@@ -46,9 +46,6 @@ type
 
 implementation
 
-{ TAbZBrowsTests }
-
-
 { TAbCabBrowserTests }
 
 procedure TAbCabBrowserTests.SetUp;
@@ -64,26 +61,18 @@ begin
 end;
 
 procedure TAbCabBrowserTests.TestComponentLinks;
-var
-  MLink1,MLink2 : TAbVCLMeterLink;
 begin
-  MLink1 := TAbVCLMeterLink.Create(TestForm);
-  MLink2 := TAbVCLMeterLink.Create(TestForm);  
-  Component.ArchiveProgressMeter := MLink1;
-  Component.ItemProgressMeter := MLink2;
-  MLink1.Free;
-  MLink2.Free;
-  Check(Component.ArchiveProgressMeter = nil,'Notification does not work for TAbCabBrowser.ArchiveProgressMeter');
-  Check(Component.ItemProgressMeter = nil,'Notification does not work for TAbCabBrowser.ItemProgressMeter');
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
 end;
 
 procedure TAbCabBrowserTests.TestDefaultStreaming;
 var
-CompStr : STring;
-CompTest : TAbCabBrowser;
+  CompStr : string;
+  CompTest : TAbCabBrowser;
 begin
   RegisterClass(TAbCabBrowser);
-  CompStr  := StreamComponent(Component);
+  CompStr := StreamComponent(Component);
   CompTest := (UnStreamComponent(CompStr) as TAbCabBrowser);
   CompareComponentProps(Component,CompTest);
   UnRegisterClass(TAbCabBrowser);

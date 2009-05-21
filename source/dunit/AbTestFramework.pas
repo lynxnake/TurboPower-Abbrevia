@@ -23,255 +23,246 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
-unit abTestFramework;
+unit AbTestFramework;
+
 {$I AbDefine.inc}
+
 interface
 
-uses TestFramework, AbUtils,{$IFDEF VERSION6} Variants,
-     {$ENDIF} {$IFDEF LINUX} QForms,QControls, {$ELSE}Forms,Windows,Controls,{$ENDIF}
-     SysUtils, Classes, {$IFDEF WINZIPTESTS}SyncObjs,{$ENDIF}TypInfo;
-{$IFDEF WINZIPTESTS}
-// Hard Coded as I could not find install location in the Registry to extract and make dynamic
-// if this proves to be a problem, we will have to have test configuration file that specifies
-// the winzip command line utility path.
-const
-    UnWinZip = 'C:\Program Files\WinZip\wzunzip.exe';
+uses
+  TestFramework,
+{$IFDEF VERSION6}
+  Variants,
 {$ENDIF}
-type
+{$IFDEF LINUX}
+  QControls, QForms,
+{$ELSE}
+  Windows, Controls, Forms,
+{$ENDIF}
+{$IFDEF WINZIPTESTS}
+  SyncObjs,
+{$ENDIF}
+  Classes, TypInfo;
 
+{$IFDEF WINZIPTESTS}
+{ Hard Coded as I could not find install location in the Registry to extract and
+  make dynamic if this proves to be a problem, we will have to have test
+  configuration file that specifies the winzip command line utility path. }
+const
+  UnWinZip = 'C:\Program Files\WinZip\wzunzip.exe';
+{$ENDIF}
+
+type
 {$IFNDEF VERSION6}
   TIntegerSet = set of 0..SizeOf(Integer) * 8 - 1;
 {$ENDIF}
 
-
- TabTestCase = class(TTestCase)
-   protected
-    {$IFDEF WINZIPTESTS}
-      FSpawnComplete  : TSimpleEvent;
-      procedure SpawnErrorEvent(Sender : TObject; Error : Word);
-      procedure SpawnCompletedEvent(Sender : TObject);
-      procedure SpawnTimeOutEvent(Sender : TObject);
-      procedure ExecuteAndWait(ExeName,Param : String;TimeOut : Integer = 0); // Exception if failure
-    {$ENDIF}
+  TAbTestCase = class(TTestCase)
+  protected
+  {$IFDEF WINZIPTESTS}
+    FSpawnComplete  : TSimpleEvent;
+    procedure SpawnErrorEvent(Sender : TObject; Error : Word);
+    procedure SpawnCompletedEvent(Sender : TObject);
+    procedure SpawnTimeOutEvent(Sender : TObject);
+    procedure ExecuteAndWait(ExeName,Param : string; TimeOut : Integer = 0); // Exception if failure
+  {$ENDIF}
     function GetTestFileDir : string;
     function GetTestTempDir : string;
     function GetWindowsDir : string;
-    procedure CheckStreamMatch(aStream1,aStream2 : TStream;Msg : String);
-    procedure CheckFileExists(aFileName : String);
+    procedure CheckFilesMatch(const AFileName1, aFileName2, Msg : string);
+    procedure CheckFileMatchesStream(const aFileName : string; aStream : TStream; Msg : string);
+    procedure CheckStreamMatch(aStream1, aStream2 : TStream; Msg : string);
+    procedure CheckFileExists(aFileName : string);
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
     procedure SetUp; override;
     procedure TearDown; override;
-    procedure FilesInDirectory(const aDir : String;FileList : TStringList);
-    procedure CheckDirMatch(aDir1,aDir2 : string;IgnoreMissingFiles: Boolean = true);
+    function FilesInDirectory(const aDir : string) : TStringList;
+    procedure CheckDirMatch(aDir1, aDir2 : string; IgnoreMissingFiles : Boolean = True);
     // Call this routine with GREAT Caution!!!!
-    function DelTree(Dir : String) : Boolean;
+    procedure DelTree(aDir : string);
 
-   public
-     property TestFileDir : String read GetTestFileDir;
-     property TestTempDir : String read GetTestTempDir;
-   end;
+  public
+    property TestFileDir : string
+      read GetTestFileDir;
+    property TestTempDir : string
+      read GetTestTempDir;
+  end;
 
- TabCompTestCase = class(TabTestCase)
-   protected
-     FTestForm : TForm;
-     FComponentClass : TComponentClass;
-     IgnoreProp : TStringList;
-     procedure SetUp; override;
-     procedure TearDown; override;
+  TAbCompTestCase = class(TAbTestCase)
+  protected
+    FTestForm : TForm;
+    IgnoreProp : TStringList;
+    procedure SetUp; override;
+    procedure TearDown; override;
 
-     // RTTI function so that they match from version to version of delphi.
-     function AbGetPropList(TypeInfo: PTypeInfo; out PropList: PPropList): Integer;
-     function AbGetPropValue(Instance: TObject; const PropName: string; PreferStrings: Boolean = True): Variant;
+    // RTTI function so that they match from version to version of delphi.
+    function AbGetPropList(TypeInfo : PTypeInfo; out PropList : PPropList) : Integer;
+    function AbGetPropValue(Instance : TObject; const PropName : string; PreferStrings : Boolean = True) : Variant;
 
+    function StreamComponent(aComp : TComponent) : string;
+    function UnStreamComponent(const aCompStr : string; Instance : TComponent = nil) : TComponent;
 
-     function StreamComponent(aComp : TComponent) : String;
-     function UnStreamComponent(aCompStr : String;Instance : TComponent = nil) : TComponent; overload;
+    procedure CompareComponentProps(aComp1, aComp2 : TPersistent); virtual;
 
-     procedure CompareComponentProps(aComp1,aComp2 : TPersistent); virtual;
-   public
-    property TestForm : TForm read FTestForm;
+    procedure TestComponentLink(AComponent: TComponent;
+      const APropName: string; APropClass: TComponentClass);
+
+  public
     procedure ShowForm; virtual;
-   published
-   end;
-
-//function IncTrailingBackSlash(const str: String) : string;
-function DirExists(const dir : string) : boolean;
+    property TestForm : TForm read FTestForm;
+  end;
 
 implementation
-// Systool Unit change abdefine.inc if you don't have systools or don't want
-// to run winzip compatability tests
-{$IFDEF WINZIPTESTS} Uses stSpawn; {$ENDIF}
 
+uses
+{$IFDEF WINZIPTESTS}
+  // Systool Unit change abdefine.inc if you don't have systools or don't want
+  // to run winzip compatability tests
+  stSpawn,
+{$ENDIF}
+  SysUtils,
+  AbUtils;
 
-//function IncTrailingBackSlash(const str: String) : string;
-//begin
-// if Str[Length(Str)] <> '\' then
-//     result  := Str + '\';
-//end;
+{ TAbTestCase }
 
-function DirExists(const dir: string): Boolean;
-var
-  Code: Integer;
-begin
-  Code := GetFileAttributes(PChar(Dir));
-  Result := (Code <> -1) and (FILE_ATTRIBUTE_DIRECTORY and Code <> 0);
-end;
-
-{ TabTestCase }
-
-procedure TabTestCase.CheckDirMatch(aDir1, aDir2: string;
+procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string;
   IgnoreMissingFiles: Boolean);
 var
- d1,d2 : TStringList;
- FS1,FS2 : TFileStream;
- I : Integer;
+  d1,d2 : TStringList;
+  I : Integer;
 begin
- d1 := TStringList.Create;
- d1.Sorted := true;
- d2 := TStringList.Create;
- d2.Sorted := True;
- try
-   FilesInDirectory(aDir1,d1);
-   FilesInDirectory(aDir2,d2);
-   Check(not ((not IgnoreMissingFiles) and (d1.count <> d2.count)),'Number of files in Directories do not match');
-   For I := 0 to d1.count -1 do
-    begin
-      if d2.IndexOf(d1.Strings[I]) = -1 then
-       begin
-         Check(IgnoreMissingFiles,d1.Strings[I] + ' is Missing in Directory');
-       end
+  d1 := FilesInDirectory(aDir1);
+  d2 := FilesInDirectory(aDir2);
+  try
+    Check(IgnoreMissingFiles or (d1.count = d2.count),
+      'Number of files in directories do not match');
+    for I := 0 to d1.Count - 1 do
+      if d2.IndexOf(d1[I]) = - 1 then
+        Check(IgnoreMissingFiles, d1[I] + ' is missing in directory')
       else
-       begin
-         FS1 := TFileStream.Create(AbAddBackSlash(aDir1) + ExtractFileName(d1.Strings[I]),fmOpenRead);
-         FS2 := TFileStream.Create(AbAddBackSlash(aDir2) + ExtractFileName(d1.Strings[I]),fmOpenRead);
-         try
-           CheckStreamMatch(FS1,FS2,d1.Strings[I] + ' does not match');
-         finally
-           FS1.Free;
-           FS2.Free;
-         end;
-       end;
-    end;
- finally
-   d1.free;
-   d2.free;
- end;
+        CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i], AbAddBackSlash(aDir2) + d1[i], d1[i] + ' does not match');
+  finally
+    d1.Free;
+    d2.Free;
+  end;
 end;
 
-procedure TabTestCase.CheckFileExists(aFileName: String);
+procedure TAbTestCase.CheckFileExists(aFileName : string);
 begin
- Check(FileExists(aFileName), 'Unable to Locate: '+ aFileName);
+  Check(FileExists(aFileName), 'Unable to locate: ' + aFileName);
 end;
 
-procedure TabTestCase.CheckStreamMatch(aStream1, aStream2: TStream;
-  Msg: String);
+procedure TAbTestCase.CheckFilesMatch(const aFileName1, aFileName2, Msg: string);
 var
- I : Integer;
- b1,b2 : Byte;
+  Stream1, Stream2 : TStream;
 begin
- aStream1.Seek(0,soFromBeginning);
- aStream2.Seek(0,soFromBeginning);
- CheckEquals(aStream1.Size, aStream2.Size, Msg);
- for I := 0 to aStream1.Size -1 do
-   begin
-     aStream1.Read(b1,1);
-     aStream2.Read(b2,1);
-     Check(b1=b2,Msg);
-   end;
-end;
-
-procedure TabTestCase.CreateDummyFile(aFileName: string; aSize: Integer);
-var
- fs : TFileStream;
- bf : pointer;
-begin
- fs := TFileStream.Create(aFileName,fmCreate);
- try
-  GetMem(bf,aSize+1);
+  Stream1 := TFileStream.Create(aFileName1, fmOpenRead or fmShareDenyWrite);
+  try
+    Stream2 := TFileStream.Create(AFileName2, fmOpenRead or fmShareDenyWrite);
     try
-     // Fill with dummy data might be better in the future to fill less compressable
-     // data.
-     FillChar(bf^,aSize,26);
-     Fs.Write(bf^,aSize);
-     finally
-     FreeMem(bf,aSize+1);
-     end;
- finally
-  FS.Free;
- end;
+      CheckStreamMatch(Stream1, Stream2, Msg);
+    finally
+      Stream2.Free;
+    end;
+  finally
+    Stream1.Free;
+  end;
 end;
 
-function TabTestCase.DelTree(Dir: String): Boolean;
-//NOTE if returns false part of the directory may be gone while others parts still exist.
-//Written by: Robert Love
+procedure TAbTestCase.CheckFileMatchesStream(const aFileName : string;
+  aStream : TStream; Msg : string);
 var
- SR : TSearchRec;
- SDir : String;
- // Uses Temp Variables as FindFirst/FindNext Leave files Locked
- DirList : TStringList;
- FileList : TStringList;
- I : Integer;
+  FileStream : TStream;
 begin
-// Change to Exception Based, instead result based
- result := TRUE;
- // Force Slash
- if Dir[Length(Dir)] <> '\' then
-   Dir := Dir + '\';
- // Set Wildcards
- SDir := Dir + '*.*';
-
- // If a File is found
- if  FindFirst(SDir,faAnyFile,SR)  = 0 then
-   begin
-     DirList := TStringList.create;
-     FileList := TStringList.create;
-     try
-
-      if (SR.Attr and faDirectory > 0) then
-         begin
-          if (SR.Name <> '.') and (SR.Name <> '..') then
-            DirList.Add(Dir + SR.Name)
-         end
-        else FileList.Add(Dir + SR.Name);
-
-      while FindNext(SR) = 0 do
-       begin
-        if (SR.Attr and faDirectory > 0) then
-           begin
-            if (SR.Name <> '.') and (SR.Name <> '..') then
-              DirList.Add(Dir + SR.Name)
-           end
-         else FileList.Add(Dir + SR.Name);
-      end; { While files found }
-       // Close Search to Free Locks on Files/Directories
-      FindClose(SR);
-      // Delete All Files in Directory
-      For I := 0 to FileList.Count -1 do
-       begin
-        result := DeleteFile(FileList.Strings[I]);
-        if not result then
-          raise exception.Create('Unable to Delete the following File: ' + FileList.Strings[I]);
-//        if not result then Exit;
-       end;
-      // Recursivly call DelTree to Get rid of SubDirectories
-      For I := 0 to DirList.Count -1 do
-        begin
-         result := DelTree(DirList.Strings[I]);
-         if not result then Exit;
-        end;
-      //Finally Remove the Directory
-      result := RemoveDir(Dir);
-      if not result then
-        raise exception.Create('Unable to Remove the following Directory: ' + Dir);
-
-     finally
-       DirList.free;
-       FileList.free;
-     end;
-   end; { If File Found with FindFirst }
+  FileStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
+  try
+    CheckStreammatch(FileStream, aStream, Msg);
+  finally
+    FileStream.Free;
+  end;
 end;
+
+
+procedure TAbTestCase.CheckStreamMatch(aStream1, aStream2 : TStream;
+  Msg: string);
+var
+  I : Integer;
+  b1, b2 : Byte;
+begin
+  aStream1.Seek(0, soFromBeginning);
+  aStream2.Seek(0, soFromBeginning);
+  CheckEquals(aStream1.Size, aStream2.Size, Msg);
+  for I := 0 to aStream1.Size - 1 do begin
+    aStream1.Read(b1, 1);
+    aStream2.Read(b2, 1);
+    Check(b1 = b2, Msg);
+  end;
+end;
+
+procedure TAbTestCase.CreateDummyFile(aFileName : string; aSize : Integer);
+var
+  fs : TFileStream;
+  bf : pointer;
+begin
+  fs := TFileStream.Create(aFileName, fmCreate);
+  try
+    GetMem(bf, aSize + 1);
+    try
+      // Fill with dummy data might be better in the future to fill less compressable
+      // data.
+      FillChar(bf^, aSize, 26);
+      Fs.Write(bf^, aSize);
+    finally
+      FreeMem(bf, aSize + 1);
+    end;
+  finally
+    FS.Free;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbTestCase.DelTree(aDir : string);
+var
+  SR : TSearchRec;
+  Directories, Files : TStringList; // FindFirst/FindNext locks directories
+  I : Integer;
+begin
+  // Force Slash
+  if aDir[Length(aDir)] <> '\' then
+    aDir := aDir + '\';
+  // If a File is found
+  if FindFirst(aDir + '*', faAnyFile, SR) = 0 then begin
+    Directories := TStringList.Create;
+    Files := TStringList.Create;
+    try
+      repeat
+        if (SR.Attr and faDirectory > 0) then begin
+          if (SR.Name <> '.') and (SR.Name <> '..') then
+            Directories.Add(aDir + SR.Name)
+        end
+        else
+          Files.Add(aDir + SR.Name);
+      until FindNext(SR) <> 0;
+      // Close search to free locks on files/directories
+      FindClose(SR);
+      // Delete all files in directory
+      for I := 0 to Files.Count - 1 do
+        if not DeleteFile(Files[I]) then
+          raise Exception.CreateFmt('Unable to delete "%s"', [Files[I]]);
+      // Recursivly call DelTree to get rid of subdirectories
+      for I := 0 to Directories.Count -1 do
+        DelTree(Directories[I]);
+      // Finally remove the directory
+      if not RemoveDir(aDir) then
+        raise Exception.CreateFmt('Unable to delete "%s"', [aDir]);
+    finally
+      Directories.Free;
+      Files.Free;
+    end;
+  end; { If File Found with FindFirst }
+end;
+{ -------------------------------------------------------------------------- }
 {$IFDEF WINZIPTESTS}
-procedure TabTestCase.ExecuteAndWait(ExeName, Param: String;TimeOut : Integer);
+procedure TAbTestCase.ExecuteAndWait(ExeName, Param: String;TimeOut : Integer);
 var
   Spawn : TStSpawnApplication;
   WR    : TWaitResult;
@@ -302,25 +293,23 @@ begin
 end;
 {$ENDIF}
 
-procedure TabTestCase.FilesInDirectory(const aDir: String;
-  FileList: TStringList);
+function TAbTestCase.FilesInDirectory(const aDir : string) : TStringList;
 var
- SR : TSearchRec;
+  SR : TSearchRec;
 begin
- Check(FileList <> nil,'FileList is not assigned');
- Check(DirExists(aDir),'Directory Requested does not exist : '+ aDir);
- FileList.Clear;
- if FindFirst(AbAddBackSlash(aDir)+'*.*',faAnyFile,SR) = 0 then
-  begin
+  Check(DirectoryExists(aDir), 'Directory Requested does not exist : ' + aDir);
+  Result := TStringList.Create;
+  Result.Sorted := True;
+  if FindFirst(AbAddBackSlash(aDir) + '*', faAnyFile, SR) = 0 then begin
     repeat
-      if not (SR.Attr and faDirectory > 0) then // Don't include Sub directories
-        FileList.Add(SR.Name);
+      if SR.Attr and faDirectory = 0 then // Don't include sub directories
+        Result.Add(SR.Name);
     until FindNext(SR) <> 0;
+    FindClose(SR);
   end;
-  FindClose(SR);
 end;
 
-function TabTestCase.GetTestFileDir: string;
+function TAbTestCase.GetTestFileDir: string;
 begin
 // May want to place in ini file in the future but this will do for now
 {$IFDEF LINUX}
@@ -331,16 +320,16 @@ begin
 {$ENDIF}
 end;
 
-function TabTestCase.GetTestTempDir: string;
+function TAbTestCase.GetTestTempDir: string;
 begin
   {$IFDEF LINUX}
-    result := GetTestFileDir + 'temp/';
+    Result := GetTestFileDir + 'temp/';
   {$ELSE}
-    result := GetTestFileDir + 'temp\';
+    Result := GetTestFileDir + 'temp\';
   {$ENDIF}
 end;
 
-function TabTestCase.GetWindowsDir: string;
+function TAbTestCase.GetWindowsDir: string;
 var
  aDirBuf : Array[0..MAX_PATH] of Char;
 begin
@@ -353,38 +342,36 @@ begin
  {$ENDIF}
 end;
 
-procedure TabTestCase.SetUp;
+procedure TAbTestCase.SetUp;
 begin
   inherited;
-  if not DirExists(TestTempDir) then
-   begin
+  if not DirectoryExists(TestTempDir) then
     CreateDir(TestTempDir);
-   end;
   {$IFDEF WINZIPTESTS}
     FSpawnComplete := TSimpleEvent.Create;
   {$ENDIF}
 end;
 
 {$IFDEF WINZIPTESTS}
-procedure TabTestCase.SpawnCompletedEvent(Sender: TObject);
+procedure TAbTestCase.SpawnCompletedEvent(Sender: TObject);
 begin
   FSpawnComplete.SetEvent;
 end;
 
-procedure TabTestCase.SpawnErrorEvent(Sender: TObject; Error: Word);
+procedure TAbTestCase.SpawnErrorEvent(Sender: TObject; Error: Word);
 begin
  FSpawnComplete.SetEvent;
  Fail('Error: ' + IntToSTr(Error) + ' occured launching WinZip');
 end;
 
-procedure TabTestCase.SpawnTimeOutEvent(Sender: TObject);
+procedure TAbTestCase.SpawnTimeOutEvent(Sender: TObject);
 begin
  FSpawnComplete.SetEvent;
  Fail('Timeout occured launching WinZip');
 end;
 {$ENDIF}
 
-procedure TabTestCase.TearDown;
+procedure TAbTestCase.TearDown;
 begin
   inherited;
   {$IFDEF WINZIPTESTS}
@@ -394,34 +381,33 @@ end;
 
 { TabCompTestCase }
 
-procedure TabCompTestCase.SetUp;
+procedure TAbCompTestCase.SetUp;
 begin
   inherited;
   FTestForm := TForm.Create(nil);
-  IgnoreProp := TStringList.create;
+  IgnoreProp := TStringList.Create;
 end;
 
-procedure TabCompTestCase.ShowForm;
+procedure TAbCompTestCase.ShowForm;
 begin
   FTestForm.ShowModal;
 end;
 
-function TabCompTestCase.StreamComponent(aComp: TComponent): String;
+function TAbCompTestCase.StreamComponent(aComp : TComponent) : string;
 // The Following was cut and paste out of the Delphi Help File.
 var
-  BinStream:TMemoryStream;
-  StrStream: TStringStream;
-  s: string;
+  BinStream : TMemoryStream;
+  StrStream : TStringStream;
 begin
   BinStream := TMemoryStream.Create;
   try
-    StrStream := TStringStream.Create(s);
+    StrStream := TStringStream.Create('');
     try
       BinStream.WriteComponent(aComp);
       BinStream.Seek(0, soFromBeginning);
       ObjectBinaryToText(BinStream, StrStream);
       StrStream.Seek(0, soFromBeginning);
-      Result:= StrStream.DataString;
+      Result := StrStream.DataString;
     finally
       StrStream.Free;
     end;
@@ -430,7 +416,7 @@ begin
   end;
 end;
 
-procedure TabCompTestCase.TearDown;
+procedure TAbCompTestCase.TearDown;
 begin
   IgnoreProp.free;
   FTestForm.Release; // This allows Message Handling to finish
@@ -438,7 +424,7 @@ begin
 end;
 
 
-procedure TabCompTestCase.CompareComponentProps(aComp1,aComp2 : TPersistent);
+procedure TAbCompTestCase.CompareComponentProps(aComp1,aComp2 : TPersistent);
 var
  PList1   : PPropList;
  PI1,PI2  : PPropInfo;
@@ -447,6 +433,7 @@ var
  PListCnt2 : Integer;
  I : Integer;
  SubComp1,SubComp2 : TObject;
+ PName1, PName2 : string;
 begin
 //NOTE: I wrote the following in Delphi 7.   I have had reports that this won't
 //      compile in Delphi 5 (Which I don't have access too)    Anyway this could
@@ -459,23 +446,25 @@ begin
   Check(PListCnt1 = PListCnt2,aComp1.ClassName + ' Streaming is really Screwed up!');
   For I := 0 to PListCnt1 -1 do
    begin
-     if IgnoreProp.IndexOf(PList1^[I]^.Name) = -1 then
+     PName1 := string(PList1^[I]^.Name);
+     PName2 := string(PList2^[I]^.Name);
+     if IgnoreProp.IndexOf(PName1) = -1 then
       begin
          if not(PList1^[I]^.PropType^.Kind = tkClass) then
-           Check(AbGetPropValue(aComp1,PList1^[I]^.Name) = AbGetPropValue(aComp2,PList2^[I]^.Name), 'Stream Problem with ' +aComp1.ClassName + '.' + PList2^[I]^.Name)
+           Check(AbGetPropValue(aComp1, PName1) = AbGetPropValue(aComp2, PName2), 'Stream Problem with ' + aComp1.ClassName + '.' + PName1)
          else
            begin
-              PI1 := GetPropInfo(aComp1.ClassInfo,PList1^[I]^.Name);
+              PI1 := GetPropInfo(aComp1.ClassInfo, PName1);
               if Assigned(PI1) then
                 SubComp1 := TObject(GetOrdProp(aComp1,PI1))
               else
                 SubComp1 := nil;
-              PI2 := GetPropInfo(aComp2.ClassInfo,PList1^[I]^.Name);
+              PI2 := GetPropInfo(aComp2.ClassInfo,PName1);
               if Assigned(PI2) then
                    SubComp2 := TObject(GetOrdProp(aComp2,PI2))
                 else
                    SubComp2 := nil;
-              Check((Assigned(SubComp1) and Assigned(SubComp2)) or ((not Assigned(SubComp1)) and (Not Assigned(SubComp1))),'Stream Problem with ' +aComp1.ClassName + '.' + PList2^[I]^.Name);
+              Check((Assigned(SubComp1) and Assigned(SubComp2)) or ((not Assigned(SubComp1)) and (Not Assigned(SubComp1))),'Stream Problem with ' +aComp1.ClassName + '.' + PName2);
               if Assigned(SubComp1) and (SubComp1 is TPersistent) and (SubComp1 is TPersistent) then
               CompareComponentProps(SubComp1 as TPersistent, SubComp2 as TPersistent);
            end;
@@ -484,7 +473,8 @@ begin
 
 end;
 
-function TabCompTestCase.UnStreamComponent(aCompStr: String;Instance : TComponent): TComponent;
+function TAbCompTestCase.UnStreamComponent(const aCompStr : string;
+                                           Instance : TComponent) : TComponent;
 // The Following was Cut and Paste from the Delphi Help file
 var
   StrStream:TStringStream;
@@ -522,7 +512,7 @@ begin
 end;
 
 
-function TabCompTestCase.AbGetPropList(TypeInfo: PTypeInfo;
+function TAbCompTestCase.AbGetPropList(TypeInfo: PTypeInfo;
   out PropList: PPropList): Integer;
 begin
   Result := GetTypeData(TypeInfo)^.PropCount;
@@ -533,7 +523,7 @@ begin
   end;
 end;
 
-function TabCompTestCase.AbGetPropValue(Instance: TObject;
+function TAbCompTestCase.AbGetPropValue(Instance: TObject;
   const PropName: string; PreferStrings: Boolean): Variant;
 var
   PropInfo: PPropInfo;
@@ -606,9 +596,25 @@ begin
         {$IFEND}
       {$ENDIF}
     else
-      raise Exception.Create('Invalid Property Type: ' + PropInfo.PropType^^.Name);
+      raise Exception.Create('Invalid Property Type: ' + string(PropInfo.PropType^^.Name));
     end;
   end;
+end;
+
+procedure TAbCompTestCase.TestComponentLink(AComponent: TComponent;
+  const APropName: string; APropClass: TComponentClass);
+  {- Create a component of the given type, assign it to the property, then
+     free the object and test that the property has been nilled. }
+var
+  PropObject: TComponent;
+begin
+  PropObject := APropClass.Create(TestForm);
+  SetObjectProp(AComponent, APropName, PropObject);
+  Check(GetObjectProp(AComponent, APropName) = PropObject,
+    Format('SetObjectProp failed for %s.%s', [AComponent.ClassName, APropName]));
+  PropObject.Free;
+  CheckNull(GetObjectProp(AComponent, APropName),
+    Format('Notification does not work for %s.%s', [AComponent.ClassName, APropName]));
 end;
 
 end.

@@ -159,26 +159,19 @@ end;
 
 procedure TAbUnZipperTests.DecompressSimplePW;
 var
- Ms : TMemoryStream;
- Fs : TFileStream;
+  MS : TMemoryStream;
 begin
-   Ms := TMemoryStream.create;
-   try
-   Component.FileName := TestFileDir + 'simplepw.zip';
-   Component.Password := 'simple';
-   Component.ExtractOptions := [];
-   Component.ExtractToStream(Component.Items[0].FileName,MS);
-   Fs := TFileStream.Create(TestFileDir + 'MPL-1_1.TXT',fmOpenRead);
-   try
-   CheckStreamMatch(MS,FS,'simplepw.zip MPL-1_1.TXT does not match original');
-   finally
-    Fs.free;
-   end;
-
-   finally
-    ms.free;
-   end;
-
+  MS := TMemoryStream.create;
+  try
+    Component.FileName := TestFileDir + 'simplepw.zip';
+    Component.Password := 'simple';
+    Component.ExtractOptions := [];
+    Component.ExtractToStream(Component.Items[0].FileName, MS);
+    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.TXT', MS,
+      'simplepw.zip MPL-1_1.TXT does not match original');
+  finally
+    MS.free;
+  end;
 end;
 
 procedure TAbUnZipperTests.SetUp;
@@ -247,17 +240,9 @@ begin
 end;
 
 procedure TAbUnZipperTests.TestComponentLinks;
-var
-  MLink1,MLink2 : TAbVCLMeterLink;
 begin
-  MLink1 := TAbVCLMeterLink.Create(TestForm);
-  MLink2 := TAbVCLMeterLink.Create(TestForm);
-  Component.ArchiveProgressMeter := MLink1;
-  Component.ItemProgressMeter := MLink2;
-  MLink1.Free;
-  MLink2.Free;
-  Check(Component.ArchiveProgressMeter = nil,'Notification does not work for TabUnZipper.ArchiveProgressMeter');
-  Check(Component.ItemProgressMeter = nil,'Notification does not work for TabUnZipper.ItemProgressMeter');
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
 end;
 
 procedure TAbUnZipperTests.TestDefaultStreaming;
