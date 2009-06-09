@@ -58,9 +58,9 @@ type
   TAbCustomMeter = class; // forward declaration
 
   {$IFDEF UsingCLX }
-  TAbCLXMeterLink = class(TAbMeterLink)
+  TAbMeterLink = class(TAbMeterLink)
   {$ELSE}
-  TAbVCLMeterLink = class(TAbMeterLink)
+  TAbMeterLink = class(TAbBaseMeterLink)
   {$ENDIF}
     private
       FMeter : TAbCustomMeter;
@@ -73,9 +73,18 @@ type
       property Meter : TAbCustomMeter read FMeter write FMeter;
   end;
 
+  {$IFDEF UsingCLX }
+  TAbClxMeterLink = class(TAbMeterLink) end;
+  {$ELSE}
+  TAbVclMeterLink = class(TAbMeterLink) end;
+  {$ENDIF}
+
+
   TAbCustomMeter = class(TGraphicControl)
   {.Z+}
-  protected {private}
+  private
+  	FTickMarks: Byte;
+  protected {private} //Why are these protected
     {property variables}
     FBorderStyle   : TBorderStyle;
     FCtl3D         : Boolean;
@@ -94,6 +103,9 @@ type
     procedure SetUnusedColor(const C : TColor);
     procedure SetUsedColor(const C : TColor);
     procedure SetVersion(Value : string);
+    
+    function GetTickMarks: Byte;
+    procedure SetTickMarks(const Value: Byte);
     property Version : string
       read  GetVersion write SetVersion stored False;
 
@@ -115,6 +127,7 @@ type
       read FUnusedColor write SetUnusedColor;
     property UsedColor : TColor
       read FUsedColor write SetUsedColor;
+    property TickMarks: Byte read GetTickMarks write SetTickMarks default 10; 
   end;
 
   TAbMeter = class(TAbCustomMeter)
@@ -140,6 +153,7 @@ type
     property UsedColor;
     property Version;
     property Visible;
+    property TickMarks;
   end;
   {.Z+}
 
@@ -151,9 +165,9 @@ uses
 
 {====================================================================}
 {$IFDEF UsingCLX }
-procedure TAbCLXMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TAbMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
 {$ELSE}
-procedure TAbVCLMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TAbMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
 {$ENDIF}
 begin
  inherited Notification(AComponent, Operation);  {!!.05 SF.NET #906875}
@@ -164,9 +178,9 @@ begin
 end;
 {--------}
 {$IFDEF UsingCLX }
-procedure TAbCLXMeterLink.DoProgress(Progress : Byte);
+procedure TAbMeterLink.DoProgress(Progress : Byte);
 {$ELSE}
-procedure TAbVCLMeterLink.DoProgress(Progress : Byte);
+procedure TAbMeterLink.DoProgress(Progress : Byte);
 {$ENDIF}
 begin
   if Assigned(FMeter) then
@@ -174,9 +188,9 @@ begin
 end;
 {--------}
 {$IFDEF UsingCLX }
-procedure TAbCLXMeterLink.Reset;
+procedure TAbMeterLink.Reset;
 {$ELSE}
-procedure TAbVCLMeterLink.Reset;
+procedure TAbMeterLink.Reset;
 {$ENDIF}
 begin
   if Assigned(FMeter) then
@@ -198,6 +212,7 @@ begin
     ControlStyle := ControlStyle + [csOpaque, csFramed];
   {$ENDIF}
 
+  FTickMarks := 10;
   FBorderStyle := bsSingle;
   FCtl3D       := True;
   FOrientation := moHorizontal;
@@ -243,10 +258,10 @@ begin
   ClHeight := ClRect.Bottom - ClRect.Top + 1;
 
   if (Orientation = moHorizontal) then
-    BlockWidth := ((ClWidth - LSpace - RSpace - (9 * VSpace)) div 10) + 1
+    BlockWidth := ((ClWidth - LSpace - RSpace - (9 * VSpace)) div FTickMarks) + 1
   else
-    BlockWidth := ((ClHeight - LSpace - RSpace - (9 * HSpace)) div 10) + 1;
-  BlockCount  := FPercent div 10;
+    BlockWidth := ((ClHeight - LSpace - RSpace - (9 * HSpace)) div FTickMarks) + 1;
+  BlockCount  := Round(FPercent div FTickMarks);
 
   if not Assigned((Canvas as TControlCanvas).Control) then begin         {!!.04}
     TControlCanvas(Canvas).Control := self;                              {!!.04}
@@ -344,4 +359,16 @@ begin
   {NOP}
 end;
 
+function TAbCustomMeter.GetTickMarks: Byte;
+begin
+	Result := FTickMarks;
+end;
+
+procedure TAbCustomMeter.SetTickMarks(const Value: Byte);
+begin
+	if (Value <= 0) then FTickMarks := 10 else FTickMarks := Value;
+end;
+
 end.
+
+
