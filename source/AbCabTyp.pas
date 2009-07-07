@@ -625,23 +625,12 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbCabArchive.CreateItem( const FileSpec : string ): TAbArchiveItem;
   {create a new item for the file list}
-var
-  sBuffer: string;
-  sAnsi: AnsiString;
 begin
   Result := TAbCabItem.Create;
   with TAbCabItem(Result) do begin
     CompressedSize := 0;
-    sBuffer := ExpandFileName(FileSpec);
-
-    sAnsi := AnsiString(sBuffer);
-    AnsiToOEM(PAnsiChar(sAnsi), PAnsiChar(sAnsi));
-    DiskFileName := string(sAnsi);
-
-    sBuffer := FixName(FileSpec);
-    sAnsi := AnsiString(sBuffer);
-    AnsiToOEM(PAnsiChar(sAnsi), PAnsiChar(sAnsi));
-    FileName := string(sAnsi);
+    DiskFileName := ExpandFileName(FileSpec);
+    FileName := FixName(FileSpec);
   end;
 end;
 { -------------------------------------------------------------------------- }

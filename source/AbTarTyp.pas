@@ -897,7 +897,6 @@ function TAbTarArchive.CreateItem(const FileName: string): TAbArchiveItem;
 var
   FileSpec: string;
   Item : TAbTarItem;
-  Buff : array [0..255] of AnsiChar;
 begin
   FileSpec := FileName;
   Item := TAbTarItem.Create;
@@ -908,16 +907,8 @@ begin
         Item.SetIsDirectory(True);
         FileSpec := IncludeTrailingPathDelimiter(FileSpec);
     end;
-    StrPCopy(Buff, AnsiString(ExpandFileName(FileSpec)));
-    {$IFDEF MSWINDOWS }
-    AnsiToOem(Buff, Buff);
-    {$ENDIF MSWINDOWS }
-    Item.DiskFileName := ExcludeTrailingPathDelimiter(string(Buff));
-    StrPCopy(Buff, AnsiString(FixName(FileSpec)));
-    {$IFDEF MSWINDOWS }
-    AnsiToOEM(Buff, Buff);
-    {$ENDIF MSWINDOWS }
-    Item.FileName := string(Buff);
+    Item.DiskFileName := ExcludeTrailingPathDelimiter(ExpandFileName(FileSpec));
+    Item.FileName := FixName(FileSpec);
   finally
     Result := Item;
   end;
