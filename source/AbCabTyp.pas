@@ -75,8 +75,8 @@ type
   TAbCabArchive = class(TAbArchive)
   protected {private}
     {internal variables}
-    FCabName         : array[0..255] of Char;
-    FCabPath         : array[0..255] of Char;
+    FCabName         : array[0..255] of AnsiChar;
+    FCabPath         : array[0..255] of AnsiChar;
     FFCICabInfo      : FCICabInfo;
     FFCIContext      : HFCI;
     FFDIContext      : HFDI;
@@ -217,12 +217,12 @@ end;
 
 
 { == FCI Callback Functions - cdecl calling convention ===================== }
-function FCI_FileOpen(lpPathName: PChar; Flag, Mode: Integer;
+function FCI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer;
   PError: PInteger; Archive: TAbCabArchive) : HFILE;
   cdecl;
   {open a file}
 begin
-  Result := _lcreat(PAnsiChar(lpPathName), 0);
+  Result := _lcreat(lpPathName, 0);
   if (Result = HFILE_ERROR) then
     raise EAbFCIFileOpenError.Create;
 end;
@@ -267,12 +267,12 @@ begin
     raise EAbFCIFileSeekError.Create;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileDelete(lpFilename: PChar;  PError: PInteger;
+function FCI_FileDelete(lpFilename: PAnsiChar;  PError: PInteger;
   Archive: TAbCabArchive) : Boolean;
   cdecl;
   {delete a file}
 begin
-  Result := SysUtils.DeleteFile(StrPas(lpFilename));
+  Result := SysUtils.DeleteFile(string(lpFilename));
   if (Result = False) then
     raise EAbFCIFileDeleteError.Create;
 end;
@@ -287,16 +287,16 @@ var
 begin
   Abort := False;
   with lpCCab^ do begin
-    CabName := StrPas(szCab);                                            {!!.02}
+    CabName := string(szCab);                                            {!!.02}
     {obtain next cabinet.  Make index zero-based}
     Archive.DoGetNextCabinet(Pred(iCab), CabName, Abort);
     if not Abort then
-      StrPCopy(szCab, CabName);                                          {!!.02}
+      StrPLCopy(szCab, AnsiString(CabName), Length(szCab));              {!!.02}
   end;
   Result := not Abort;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileDest(PCCab: PFCICabInfo; PFilename: PChar; cbFile: Longint;
+function FCI_FileDest(PCCab: PFCICabInfo; PFilename: PAnsiChar; cbFile: Longint;
   Continuation: Boolean; Archive: TAbCabArchive) : Integer;
   cdecl;
   {currently not used}
@@ -304,17 +304,17 @@ begin
   Result := 0;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_GetOpenInfo(lpPathname: PChar; PDate, PTime, PAttribs : PWord;
+function FCI_GetOpenInfo(lpPathname: PAnsiChar; PDate, PTime, PAttribs : PWord;
   PError: PInteger; Archive: TAbCabArchive) : Integer;
   cdecl;
   {open a file and return date/attributes}
 var
   DT : Integer;
 begin
-  Result := _lopen(PAnsiChar(lpPathname), OF_READ or OF_SHARE_DENY_NONE);
+  Result := _lopen(lpPathname, OF_READ or OF_SHARE_DENY_NONE);
   if (Result = -1) then
     raise EAbFCIFileOpenError.Create;
-  PAttribs^ := AbFileGetAttr(StrPas(lpPathname));
+  PAttribs^ := AbFileGetAttr(string(lpPathname));
   DT := FileGetDate(Result);
   PDate^ := DT shr 16;
   PTime^ := DT and $0FFFF;
@@ -358,11 +358,11 @@ begin
 end;
 
 { == FDI Callback Functions - cdecl calling convention ===================== }
-function FDI_FileOpen(lpPathName: PChar; Flag, Mode: Integer) : Integer;
+function FDI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer) : Integer;
   cdecl;
   {open a file}
 begin
-  Result := _lopen(PAnsiChar(lpPathName), Mode);
+  Result := _lopen(lpPathName, Mode);
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileRead(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
@@ -408,15 +408,15 @@ begin
       begin
         FSetID := pfdin^.setID;
         FCurrentCab := pfdin^.iCabinet;
-        FNextCabinet := StrPas(pfdin^.psz1);
-        FNextDisk    := StrPas(pfdin^.psz2);
+        FNextCabinet := string(pfdin^.psz1);
+        FNextDisk    := string(pfdin^.psz2);
         Result := 0;
       end;
     FDINT_Copy_File, FDINT_Partial_File :
       begin
         Item := TAbCabItem.Create;
         with Item do begin
-          Filename := StrPas(pfdin^.psz1);
+          Filename := string(pfdin^.psz1);
           UnCompressedSize := pfdin^.cb;
           LastModFileDate := pfdin^.date;
           LastModFileTime := pfdin^.time;
@@ -446,7 +446,7 @@ begin
   case fdint of
     FDINT_Copy_File :
       begin
-        NewFilename := StrPas(pfdin^.psz1);
+        NewFilename := string(pfdin^.psz1);
         if (NewFilename = Archive.FItemInProgress.FileName) then begin
           if Archive.FIIPName <> '' then
             NewFilename := Archive.FIIPName
@@ -481,7 +481,7 @@ begin
     FDINT_Next_Cabinet :
       begin
         Result := 1;
-        NextCabName := StrPas(pfdin^.psz3) + StrPas(pfdin^.psz1);
+        NextCabName := string(pfdin^.psz3) + string(pfdin^.psz1);
       end;
     FDINT_Close_File_Info :
       begin
@@ -508,8 +508,8 @@ begin
   FItemList := TAbArchiveList.Create;
   FPadLock := TAbPadLock.Create;
   FStatus := asIdle;
-  StrPCopy(FCabName, ExtractFileName(FileName));
-  StrPCopy(FCabPath, ExtractFilePath(FileName));
+  StrPLCopy(FCabName, AnsiString(ExtractFileName(FileName)), Length(FCabName));
+  StrPLCopy(FCabPath, AnsiString(ExtractFilePath(FileName)), Length(FCabPath));
   SpanningThreshold := AbDefCabSpanningThreshold;
   FFolderThreshold := AbDefFolderThreshold;
   FItemInProgress := nil;
@@ -528,7 +528,7 @@ var
   FH : HFILE;
   newFileName:  string;
   Confirm, DoExecute : Boolean;
-  FP, FN : array[0..255] of Char;
+  FP, FN : array[0..255] of AnsiChar;
   Item : TAbCabItem;
 begin
   if (FMode <> fmOpenWrite) then begin
@@ -544,8 +544,8 @@ begin
   if not Confirm then
     Exit;
   Item.Action := aaAdd;
-  StrPCopy(FP, Item.DiskFilename);                                           {!!.02}
-  FH := _lopen(PAnsiChar(@FP), OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
+  StrPLCopy(FP, AnsiString(Item.DiskFilename), Length(FP));              {!!.02}
+  FH := _lopen(FP, OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
   if (FH <> HFILE_ERROR) then begin
     aItem.UncompressedSize := _llseek(FH, 0, 2);
     FItemInProgress := Item;
@@ -554,20 +554,20 @@ begin
   end else
     raise EAbFileNotFound.Create;
 
+  newFileName := Item.FileName;
+  if (soStripPath in StoreOptions) then
+    newFileName := ExtractFileName(newFileName);
+  if (soRemoveDots in StoreOptions) then
+    AbStripDots(newFileName);
+  Item.FileName := newFileName;
 
-    newFileName := Item.FileName;
-    if (soStripPath in StoreOptions) then
-    	Item.FileName := ExtractFileName(newFileName);
-
-    if (soRemoveDots in StoreOptions) then AbStripDots(newFileName);
-
-  StrPCopy(FN, newFileName);                          {!!.02}
+  StrPLCopy(FN, AnsiString(newFileName), Length(FN));                    {!!.02}
   if not FCIAddFile(FFCIContext, FP, FN, DoExecute, @FCI_GetNextCab,
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
 
 	//TODO: Verify after flushing cab we can write to it again
-    FIsDirty := true;
+  FIsDirty := True;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchive.CloseCabFile;
