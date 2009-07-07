@@ -1428,7 +1428,7 @@ end;
 
 procedure TForm1.AbbreviaontheWeb1Click(Sender: TObject);
 begin
-  if ShellExecute(0, 'open', 'http://sf.net/projects/abbrevia', '', '', SW_SHOWNORMAL) <= 32 then
+  if ShellExecute(0, 'open', 'http://sf.net/projects/tpabbrevia', '', '', SW_SHOWNORMAL) <= 32 then
     ShowMessage('Unable to start web browser. Make sure you have it properly set-up on your system.');
 end;
 
