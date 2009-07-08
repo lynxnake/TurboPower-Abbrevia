@@ -109,8 +109,6 @@ type
     procedure DoCabItemProcessed;
     procedure DoCabItemProgress(BytesCompressed : DWord;
       var Abort : Boolean);
-    procedure DoConfirmOverwrite(var FileName : string; var Confirm : Boolean);
-      virtual;
     procedure DoGetNextCabinet(CabIndex : Integer; var CabName : string;
                                var Abort : Boolean);
     procedure ExtractItemAt(Index : Integer; const NewName : string);
@@ -438,45 +436,16 @@ var
   Archive : TAbCabArchive;
   NewFilename : string;
   NextCabName : string;
-  NewFilePath : string;
-  Confirm     : Boolean;
 begin
   Result := 0;
   Archive :=pfdin^.pv;
   case fdint of
     FDINT_Copy_File :
       begin
-        NewFilename := string(pfdin^.psz1);
-        if (NewFilename = Archive.FItemInProgress.FileName) then begin
-          if Archive.FIIPName <> '' then
-            NewFilename := Archive.FIIPName
-          else begin
-            if not (eoRestorePath in Archive.ExtractOptions) then
-              NewFilename := ExtractFileName(NewFileName);
-            if (Archive.BaseDirectory <> '') then
-              NewFilename := Archive.BaseDirectory + '\' + NewFilename;
-          end;
-          NewFilePath := ExtractFilePath(NewFilename);
-          if (Length(NewFilePath) > 0 ) and
-            (NewFilePath[Length(NewFilePath)] = '\') then
-            System.Delete(NewFilePath, Length(NewFilePath), 1);
-          if (Length(NewFilePath) > 0 ) and
-            (not AbDirectoryExists(NewFilePath)) then
-            if (eoCreateDirs in Archive.ExtractOptions) then
-               AbCreateDirectory(NewFilePath)
-            else
-               raise EAbNoSuchDirectory.Create;
-          if FileExists(NewFilename) then begin
-            Archive.DoConfirmOverwrite(NewFilename, Confirm);
-            if not Confirm then
-              Result := 0 {skip file}
-            else
-              Result := FileOpen(NewFilename, fmOpenWrite or fmShareDenyNone);
-          end else
-            Result := FileCreate(NewFilename);
-        end else
-          Result := 0;   {skip file}
-//        Application.ProcessMessages;                                 {!!.04}
+        if (string(pfdin^.psz1) = Archive.FItemInProgress.FileName) then
+          Result := FileCreate(Archive.FIIPName)
+        else
+          Result := 0;
       end;
     FDINT_Next_Cabinet :
       begin
@@ -653,14 +622,6 @@ begin
       FItemInProgress.UnCompressedSize);
     FOnArchiveItemProgress(Self, FItemInProgress, Progress, Abort);
   end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbCabArchive.DoConfirmOverwrite(var FileName : string;
-  var Confirm : Boolean);
-begin
-  Confirm := True;
-  if Assigned(FOnConfirmOverwrite) then
-    FOnConfirmOverwrite( FileName, Confirm );
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchive.DoGetNextCabinet(CabIndex : Integer;

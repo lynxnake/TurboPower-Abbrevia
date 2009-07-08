@@ -534,7 +534,7 @@ type
       virtual;
     procedure DoRequestBlankDisk( var Abort : Boolean );
       virtual;
-    procedure ExtractItemAt(Index : Integer; const NewName : string);
+    procedure ExtractItemAt(Index : Integer; const UseName : string);
       override;
     procedure ExtractItemToStreamAt(Index : Integer; aStream : TStream);
       override;
@@ -1783,13 +1783,12 @@ begin
     CRC32 := 0;
     ExtraField := '';
     if (AbDirectoryExists(FileSpec)) then begin
-        Result.IsDiskFileADirectory := True;
-        FileSpec := IncludeTrailingPathDelimiter(FileSpec);
+      Result.IsDiskFileADirectory := True;
+      FileSpec := IncludeTrailingPathDelimiter(FileSpec);
     end;
 
     StrPCopy(Buff, ExpandFileName(FileSpec));
 
-    
 {!!.03 - Added }
 {$IFDEF Linux}
  { do nothing to Buff }
@@ -2156,9 +2155,9 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchive.ExtractItemAt(Index : Integer; const NewName : string);
+procedure TAbZipArchive.ExtractItemAt(Index : Integer; const UseName : string);
 begin
-  DoExtractHelper(Index, NewName);
+  DoExtractHelper(Index, UseName);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.ExtractItemToStreamAt(Index : Integer;

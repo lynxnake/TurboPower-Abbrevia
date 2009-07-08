@@ -236,7 +236,7 @@ type
   protected
     function CreateItem(const FileSpec : string): TAbArchiveItem;
       override;
-    procedure ExtractItemAt(Index : Integer; const NewName : string);
+    procedure ExtractItemAt(Index : Integer; const UseName : string);
       override;
     procedure ExtractItemToStreamAt(Index : Integer; aStream : TStream);
       override;
@@ -1013,10 +1013,9 @@ end;
 
 
 procedure TAbGzipArchive.ExtractItemAt(Index: Integer;
-  const NewName: string);
+  const UseName: string);
 var
   OutStream : TFileStream;
-  UseName : string;
   CurItem : TAbGzipItem;
 {$IFDEF LINUX}                                                           {!!.01}
   FileDateTime  : TDateTime;                                             {!!.01}
@@ -1025,55 +1024,46 @@ var
 begin
   if IsGZippedTar and TarAutoHandle then begin
     SwapToTar;
-    inherited ExtractItemAt(Index, NewName);
+    inherited ExtractItemAt(Index, UseName);
   end
   else begin
     SwapToGzip;
     if Index > 0 then Index := 0; { only one item in a GZip}
 
-    UseName := NewName;
     CurItem := TAbGzipItem(ItemList[Index]);
 
-    {fix provided by  fawlty //1740029 }
-    { check if path to save to is okay }
-    if AbConfirmPath(BaseDirectory, UseName, ExtractOptions, FOnConfirmOverwrite) then
-    begin
-      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
-
-      try
-        try {OutStream}
-          ExtractItemToStreamAt(Index, OutStream);
-        finally {OutStream}
-          OutStream.Free;
-        end; {OutStream}
-        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-          {$IFDEF MSWINDOWS}
-//          FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
-//            + CurItem.LastModFileTime);
-          AbSetFileDate(NewName, (Longint(CurItem.LastModFileDate) shl 16)
-            + CurItem.LastModFileTime);
-          AbFileSetAttr(NewName, 0); {normal file}                       {!!.01}
-          {$ENDIF}
-          {$IFDEF LINUX}
-          FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate,  {!!.01}
-            CurItem.LastModFileTime);                                    {!!.01}
-          LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);           {!!.01}
-          FileSetDate(NewName, LinuxFileTime);                           {!!.01}
-          AbFileSetAttr(NewName, AB_FPERMISSION_GENERIC);                {!!.01}
-          {$ENDIF}
-
-
-      except
-        on E : EAbUserAbort do begin
-          FStatus := asInvalid;
-          if FileExists(NewName) then
-            DeleteFile(NewName);
-          raise;
-        end else begin
-          if FileExists(NewName) then
-            DeleteFile(NewName);
-          raise;
-        end;
+    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
+    try
+      try {OutStream}
+        ExtractItemToStreamAt(Index, OutStream);
+      finally {OutStream}
+        OutStream.Free;
+      end; {OutStream}
+      // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+      {$IFDEF MSWINDOWS}
+//    FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
+//      + CurItem.LastModFileTime);
+      AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
+        + CurItem.LastModFileTime);
+      AbFileSetAttr(UseName, 0); {normal file}                           {!!.01}
+      {$ENDIF}
+      {$IFDEF LINUX}
+      FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate,   {!!.01}
+        CurItem.LastModFileTime);                                        {!!.01}
+      LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);               {!!.01}
+      FileSetDate(UseName, LinuxFileTime);                               {!!.01}
+      AbFileSetAttr(UseName, AB_FPERMISSION_GENERIC);                    {!!.01}
+      {$ENDIF}
+    except
+      on E : EAbUserAbort do begin
+        FStatus := asInvalid;
+        if FileExists(UseName) then
+          DeleteFile(UseName);
+        raise;
+      end else begin
+        if FileExists(UseName) then
+          DeleteFile(UseName);
+        raise;
       end;
     end;
   end;

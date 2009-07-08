@@ -297,6 +297,8 @@ type
 
   protected {methods}
     procedure CheckValid;
+    function  ConfirmPath(Item : TAbArchiveItem; const NewName : string;
+      out UseName : string) : Boolean;
     procedure FreshenAt(Index : Integer);
     function  FreshenRequired(Item : TAbArchiveItem) : Boolean;
     procedure GetFreshenTarget(Item : TAbArchiveItem);
@@ -317,7 +319,7 @@ type
   protected {abstract methods}
     function CreateItem(const FileSpec : string): TAbArchiveItem;
       virtual; abstract;
-    procedure ExtractItemAt(Index : Integer; const NewName : string);
+    procedure ExtractItemAt(Index : Integer; const UseName : string);
       virtual; abstract;
     procedure ExtractItemToStreamAt(Index : Integer; aStream : TStream);
       virtual; abstract;
@@ -339,6 +341,8 @@ type
       virtual;
     procedure DoArchiveItemProgress(Item : TAbArchiveItem; Progress : Byte;
       var Abort : Boolean);
+      virtual;
+    procedure DoConfirmOverwrite(var FileName : string; var Confirm : Boolean);
       virtual;
     procedure DoConfirmProcessItem(Item : TAbArchiveItem;
       const ProcessType : TAbProcessType; var Confirm : Boolean);
@@ -498,11 +502,6 @@ const
   AbLastDisk = -1;
   AbLastImage = -1;
 
-
-function AbConfirmPath(const BaseDirectory : string; var NewName : string;
-  ExtractOptions : TAbExtractOptions;
-  ConfirmOverwrite : TAbConfirmOverwriteEvent) : Boolean;
-
 implementation
 
 {.$R ABRES.R32}
@@ -518,43 +517,6 @@ const
     (ltAdd, ltDelete, ltExtract, ltFreshen, ltMove, ltReplace, ltFoundUnhandled);
 
 
-function AbConfirmPath(const BaseDirectory : string; var NewName : string;
-  ExtractOptions : TAbExtractOptions;
-  ConfirmOverwrite : TAbConfirmOverwriteEvent) : Boolean;
-var
-  FMessage   : string;
-  TestPath : string;
-begin
-  Result := True;
-  TestPath := NewName;
-  FMessage := BaseDirectory;
-
-  {BaseDirectory is the drive:\directory\sub where we currently want files}
-  {NewName is the optionalpath\sub\filename.ext where we want the file}
-  AbUnfixName(TestPath);
-  
-  if (FMessage <> '') and (FMessage[Length(FMessage)] <> AbPathDelim) then
-    FMessage := FMessage + AbPathDelim;                                      
-  if (eoRestorePath in ExtractOptions) then
-    FMessage := FMessage + TestPath
-  else
-    FMessage := FMessage + ExtractFileName(TestPath);
-
-  TestPath := ExtractFilePath(FMessage);
-  if (Length(TestPath) > 0) and (TestPath[Length(TestPath)] = AbPathDelim) then
-      System.Delete(TestPath, Length(TestPath), 1);
-  if (Length(TestPath) > 0) and (not AbDirectoryExists(TestPath)) then
-    if (eoCreateDirs in ExtractOptions) then
-      AbCreateDirectory(TestPath)
-    else
-      raise EAbNoSuchDirectory.Create;
-
-  if FileExists(FMessage) and Assigned(ConfirmOverwrite) then
-    ConfirmOverwrite(FMessage, Result);
-
-  if Result then
-    NewName := FMessage;
-end;
 
 
 { TAbArchiveItem implementation ============================================ }
@@ -1143,6 +1105,34 @@ begin
       TAbArchiveItem(FItemList[i]).Tagged := False;
 end;
 { -------------------------------------------------------------------------- }
+function TAbArchive.ConfirmPath(Item : TAbArchiveItem; const NewName : string;
+  out UseName : string) : Boolean;
+var
+  Path : string;
+begin
+  if (NewName = '') then begin
+    UseName := Item.FileName;
+    AbUnfixName(UseName);
+    if (not (eoRestorePath in ExtractOptions)) then
+      UseName := ExtractFileName(UseName);
+  end
+  else
+    UseName := NewName;
+  if (AbGetPathType(UseName) <> ptAbsolute) then
+    UseName := AbAddBackSlash(BaseDirectory) + UseName;
+
+  Path := ExtractFileDir(UseName);
+  if (Path <> '') and not AbDirectoryExists(Path) then
+    if (eoCreateDirs in ExtractOptions) then
+      AbCreateDirectory(Path)
+    else
+      raise EAbNoSuchDirectory.Create;
+
+  Result := True;
+  if FileExists(UseName) then
+    DoConfirmOverwrite(UseName, Result);
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbArchive.Delete(aItem : TAbArchiveItem);
   {delete an item from the archive}
 var
@@ -1245,6 +1235,13 @@ begin
     FOnArchiveItemProgress(Self, Item, Progress, Abort);
 end;
 { -------------------------------------------------------------------------- }
+procedure TAbArchive.DoConfirmOverwrite(var FileName : string; var Confirm : Boolean);
+begin
+  Confirm := True;
+  if Assigned(FOnConfirmOverwrite) then
+    FOnConfirmOverwrite(FileName, Confirm);
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbArchive.DoConfirmProcessItem(Item : TAbArchiveItem;
   const ProcessType : TAbProcessType; var Confirm : Boolean);
 begin
@@ -1315,7 +1312,7 @@ var
   Confirm : Boolean;
   ErrorClass : TAbErrorClass;
   ErrorCode : Integer;
-  TempNewName : string;
+  UseName : string;
 begin
   CheckValid;
   SaveIfNeeded(FItemList[Index]);
@@ -1324,20 +1321,13 @@ begin
     DoConfirmProcessItem(FItemList[Index], ptExtract, Confirm);
     if not Confirm then
       Exit;
-    TempNewName := NewName;
-    if (TempNewName = '') then begin
-      TempNewName := TAbArchiveItem(FItemList[Index]).FileName;
-      AbUnfixName(TempNewName);
 
-      if (not (eoRestorePath in ExtractOptions)) then
-      	TempNewName := ExtractFileName(TempNewName);
-
-      TempNewName := AbAddBackSlash(BaseDirectory) + TempNewName;
-	end;
+    if not ConfirmPath(FItemList[Index], NewName, UseName) then
+      Exit;
 
     try
       FCurrentItem := FItemList[Index];
-      ExtractItemAt(Index, TempNewName);
+      ExtractItemAt(Index, UseName);
     except
       on E : Exception do begin
         AbConvertException(E, ErrorClass, ErrorCode);

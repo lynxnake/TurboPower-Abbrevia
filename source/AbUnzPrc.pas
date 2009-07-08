@@ -174,7 +174,7 @@ type
   procedure AbUnzipToStream( Sender : TObject; Item : TAbZipItem;
     OutStream : TStream);
 
-  procedure AbUnzip(Sender : TObject; Item : TAbZipItem; NewName : string);
+  procedure AbUnzip(Sender : TObject; Item : TAbZipItem; const UseName : string);
 
   procedure AbTestZipItem(Sender : TObject; Item : TAbZipItem);
 
@@ -1387,13 +1387,12 @@ begin
   end;    {LFH}
 end;
 { -------------------------------------------------------------------------- }
-procedure AbUnzip(Sender : TObject; Item : TAbZipItem; NewName : string);
+procedure AbUnzip(Sender : TObject; Item : TAbZipItem; const UseName : string);
   {create the output filestream and pass it to AbUnzipToStream}
 var
-  Confirm    : Boolean;
 {$IFDEF AbUnZipClobber}
   OutStream  : TFileStream;
-{$ENDIF}  
+{$ENDIF}
   {$IFDEF AbUnZipMemory}
   TempOut    : TMemoryStream;
   {$ENDIF}
@@ -1409,13 +1408,6 @@ var
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  {BaseDirectory is the drive:\directory\sub where we currently want files}
-  {NewName is the optionalpath\sub\filename.ext where we want the file}
-  Confirm := AbConfirmPath(ZipArchive.BaseDirectory, NewName,
-    ZipArchive.ExtractOptions, ZipArchive.OnConfirmOverwrite);
-
-  if not Confirm then
-    Exit;
   // The problem with Create the FileStream here is that overwrites the existing
   // File which is no problem, unless the archive is password protected and
   // then Password is found out to be wrong.   Ways to resolve:
@@ -1427,7 +1419,7 @@ begin
   // It also may speed up this routine for many.
   // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
   {$IFDEF AbUnZipClobber}
-    OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
     try
     try    {OutStream}
       AbUnZipToStream(Sender, Item, OutStream);
@@ -1444,7 +1436,7 @@ begin
     TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
     TempOut.Position := 0;
     AbUnZipToStream(Sender, Item, TempOut);
-    OutStream := TFileStream.Create(NewName, fmCreate or fmShareDenyWrite); {!!.01}
+    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
     try
       // Copy Memory Stream To File Stream.
       TempOut.SaveToStream(OutStream);
@@ -1459,47 +1451,45 @@ begin
   {$ENDIF}
   {$IFDEF AbUnZipTempFile}
   try
-  TempOut := TAbTempFileStream.Create(false);
-  try
-    AbUnZipToStream(Sender, Item, TempOut);
-    TempFile := TempOut.FileName;
-  finally
-    TempOut.Free;
-  end;
-  // Now copy the temp File to correct location
-  CopyFileTo(pchar(TempFile),pchar(NewName),false);
-  // Check that it exists
-  if Not FileExists(NewName) then
-    raise EAbException.CreateFmt(abMoveFileErrorS,[TempFile,NewName]); // TODO: Add Own Exception Class 
-  // Now Delete the Temp File
-  DeleteFile(TempFile);
-  {$ENDIF}
+    TempOut := TAbTempFileStream.Create(false);
+    try
+      AbUnZipToStream(Sender, Item, TempOut);
+      TempFile := TempOut.FileName;
+    finally
+      TempOut.Free;
+    end;
+    // Now copy the temp File to correct location
+    CopyFileTo(pchar(TempFile),pchar(UseName),false);
+    // Check that it exists
+    if not FileExists(UseName) then
+      raise EAbException.CreateFmt(abMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
+    // Now Delete the Temp File
+    DeleteFile(TempFile);
+    {$ENDIF}
 
+//  [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+    {$IFDEF MSWINDOWS}
+    AbSetFileDate(UseName, (Longint(Item.LastModFileDate) shl 16)
+      + Item.LastModFileTime);
+    {$ENDIF}
+    {$IFDEF LINUX}
+    FileDateTime := AbDosFileDateToDateTime(Item.LastModFileDate,        {!!.01}
+      Item.LastModFileTime);                                             {!!.01}
+    LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);                 {!!.01}
+    FileSetDate(UseName, LinuxFileTime);                                 {!!.01}
+    {$ENDIF}
 
-
-   // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-      {$IFDEF MSWINDOWS}
-      AbSetFileDate(NewName, (Longint(Item.LastModFileDate) shl 16)
-        + Item.LastModFileTime);
-      {$ENDIF}
-      {$IFDEF LINUX}
-      FileDateTime := AbDosFileDateToDateTime(Item.LastModFileDate,      {!!.01}
-        Item.LastModFileTime);                                           {!!.01}
-      LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);               {!!.01}
-      FileSetDate(NewName, LinuxFileTime);                               {!!.01}
-      {$ENDIF}
-
-   AbFileSetAttr(NewName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
+    AbFileSetAttr(UseName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
 
   except
     on E : EAbUserAbort do begin
       ZipArchive.FStatus := asInvalid;
-      if FileExists(NewName) then
-        DeleteFile(NewName);
+      if FileExists(UseName) then
+        DeleteFile(UseName);
       raise;
     end else begin
-      if FileExists(NewName) then
-        DeleteFile(NewName);
+      if FileExists(UseName) then
+        DeleteFile(UseName);
       raise;
     end;
   end;
