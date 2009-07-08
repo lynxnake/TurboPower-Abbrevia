@@ -679,6 +679,7 @@ var
   Len      : LongInt;
   LenW     : Word;
   CRC16    : ShortInt;
+  AnsiName : AnsiString;
   tempFileName : string;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
@@ -698,13 +699,13 @@ begin
     SeekToStringEndInStream(AStream);
     Len := AStream.Position - StartPos - 1;
     AStream.Seek(StartPos, soFromBeginning);
-    SetLength(tempFileName, Len);
-    AStream.Read(tempFileName[1], Len + 1);
+    SetLength(AnsiName, Len);
+    AStream.Read(AnsiName[1], Len + 1);
   end
   else
-    tempFileName := 'unknown';
+    AnsiName := 'unknown';
 
-    FileName := tempFileName;
+  FileName := string(AnsiName);
 
   { any comment present? }
   if HasFileComment then begin
