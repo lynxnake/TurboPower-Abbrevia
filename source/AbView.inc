@@ -1248,7 +1248,6 @@ end;
 function TAbBaseViewer.GetIcon(const ItemName : string) : HIcon;
 var
   i : Longint;
-  s : array[0..255] of Char;
   t : string;
   sfi : SHFILEINFO;
 begin
@@ -1260,14 +1259,12 @@ begin
   if (i > -1) then
     Result := HIcon(FIcons.Objects[i])
   else begin
-    strPcopy(s,t);
-    SHGetFileInfo( s, FILE_ATTRIBUTE_NORMAL,
-                  sfi, sizeof(sfi), SHGFI_ICON or SHGFI_USEFILEATTRIBUTES);
-    result := sfi.hIcon;
+    SHGetFileInfo(PChar(t), FILE_ATTRIBUTE_NORMAL, sfi, sizeof(sfi),
+      SHGFI_ICON or SHGFI_USEFILEATTRIBUTES);
+    Result := sfi.hIcon;
     FIcons.AddObject(t, Pointer(Result));
   end;
 end;
-
 {$ENDIF}
 {$IFDEF UsingCLX }
   { no file type icons in CLX }

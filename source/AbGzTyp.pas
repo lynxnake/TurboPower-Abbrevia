@@ -45,10 +45,6 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-// Removed Not needed: [ 871613 ] AB305B - QT dependancy in AbGzTyp
-//  {$IFDEF LINUX}
-//  QDialogs,
-//  {$ENDIF}
   SysUtils, Classes,
 
   AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp, 

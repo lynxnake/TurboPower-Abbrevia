@@ -389,7 +389,6 @@ procedure TAbCustomZipper.SetFileName(const aFileName : string);
 var
   ArcType : TAbArchiveType;
 begin
-
   FFileName := aFileName;
   if (csDesigning in ComponentState) then
     Exit;
@@ -397,9 +396,8 @@ begin
   if Assigned(FArchive) then
    begin
      FArchive.Save;
-     FArchive.Free;
+     FreeAndNil(FArchive);
    end;
-  FArchive := nil;   
 
   ArcType := ArchiveType;
 
@@ -408,7 +406,6 @@ begin
 
     if not ForceType then
       ArcType := AbDetermineArcType(FileName, atUnknown);
-
 
       case ArcType of
         atZip, atSpannedZip, atSelfExtZip : begin                        {!!.02}
@@ -539,7 +536,6 @@ begin
 end;
 {!!.04 - Added end}
 { -------------------------------------------------------------------------- }
-
 
 end.
 
