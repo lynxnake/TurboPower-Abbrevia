@@ -434,7 +434,6 @@ function FDI_ExtractFiles(fdint : FDINOTIFICATIONTYPE;
   {extract file from cabinet}
 var
   Archive : TAbCabArchive;
-  NewFilename : string;
   NextCabName : string;
 begin
   Result := 0;
@@ -457,7 +456,7 @@ begin
         FileSetDate(pfdin^.hf, Longint(pfdin^.date) shl 16 + pfdin^.time);
         _lclose(pfdin^.hf);
         // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-        AbFileSetAttr(NewFilename, pfdin^.attribs);
+        AbFileSetAttr(Archive.FIIPName, pfdin^.attribs);
         Archive.DoCabItemProcessed;
       end;
   end;
