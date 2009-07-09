@@ -86,7 +86,7 @@ var
 
 type
   TAbArchiveType = (atUnknown, atZip, atSpannedZip {!!.01}, atSelfExtZip,
-                    atTar, atGzip, atGzippedTar, atCab,atBZip, atBzippedTar);
+                    atTar, atGzip, atGzippedTar, atCab);
 
 
 {$IFDEF LINUX}
