@@ -1547,7 +1547,8 @@ begin
       raise EAbZipInvalidLFH.Create;
     if (CompareStr(LFH.FileName, Item.FileName) <> 0) then
       raise EAbZipInvalidLFH.Create;
-    if (CompareStr(LFH.ExtraField, Item.ExtraField) <> 0) then
+    if (LFH.ExtraFieldLength <> Item.ExtraFieldLength) or
+       not CompareMem(LFH.ExtraField, Item.ExtraField, Item.ExtraFieldLength) then
       raise EAbZipInvalidLFH.Create;
 
       {any CRC errors will raise exception during extraction}
