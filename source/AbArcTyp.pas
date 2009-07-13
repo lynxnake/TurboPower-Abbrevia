@@ -1422,7 +1422,6 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-
 procedure TAbArchive.TestTaggedItems;
   {test all tagged items in the archive}
 var
@@ -1600,11 +1599,9 @@ begin
       FileTime := DW(DateTime).Lo;
       FileDate := DW(DateTime).Hi;
       Matched := (Item.LastModFileDate = FileDate) and
-                 (Item.LastModFileTime = FileTime);
+                 (Item.LastModFileTime = FileTime) and
+                 (Item.UncompressedSize = FS.Size);
       Result := not Matched;
-      // 887909 soFreshen isn't working (Specifically when date/time the same)
-      if not result then { Check for size change }
-        result := (FS.Size <> Item.UncompressedSize);
     finally
       FS.Free;
     end;

@@ -57,39 +57,33 @@ type
 
   TAbCustomMeter = class; // forward declaration
 
-  {$IFDEF UsingCLX }
-  TAbMeterLink = class(TAbMeterLink)
-  {$ELSE}
   TAbMeterLink = class(TAbBaseMeterLink)
-  {$ENDIF}
-    private
-      FMeter : TAbCustomMeter;
-    protected
-      procedure Notification(AComponent: TComponent; Operation: TOperation); override;
-    public
-      procedure DoProgress(Progress : Byte); override;
-      procedure Reset; override;
-    published
-      property Meter : TAbCustomMeter read FMeter write FMeter;
+  private
+    FMeter : TAbCustomMeter;
+  protected
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+  public
+    procedure DoProgress(Progress : Byte); override;
+    procedure Reset; override;
+  published
+    property Meter : TAbCustomMeter read FMeter write FMeter;
   end;
 
   {$IFDEF UsingCLX }
-  TAbClxMeterLink = class(TAbMeterLink) end;
+  TAbCLXMeterLink = class(TAbMeterLink);
   {$ELSE}
-  TAbVclMeterLink = class(TAbMeterLink) end;
+  TAbVCLMeterLink = class(TAbMeterLink);
   {$ENDIF}
-
 
   TAbCustomMeter = class(TGraphicControl)
   {.Z+}
-  private
-  	FTickMarks: Byte;
-  protected {private} //Why are these protected
+  protected {private}
     {property variables}
     FBorderStyle   : TBorderStyle;
     FCtl3D         : Boolean;
     FOrientation   : TAbMeterOrientation;
     FPercent       : Integer;
+  	FTickMarks     : Byte;
     FUsedColor     : TColor;
     FUnusedColor   : TColor;
 
@@ -100,12 +94,10 @@ type
     procedure SetBorderStyle(const Value : TBorderStyle);
     procedure SetCtl3D(const Value : Boolean);
     procedure SetOrientation(const O : TAbMeterOrientation);
+    procedure SetTickMarks(const Value: Byte);
     procedure SetUnusedColor(const C : TColor);
     procedure SetUsedColor(const C : TColor);
     procedure SetVersion(Value : string);
-    
-    function GetTickMarks: Byte;
-    procedure SetTickMarks(const Value: Byte);
     property Version : string
       read  GetVersion write SetVersion stored False;
 
@@ -123,11 +115,12 @@ type
       read FCtl3D write SetCtl3D default True;
     property Orientation : TAbMeterOrientation
       read FOrientation write SetOrientation;
+    property TickMarks: Byte
+		  read FTickMarks write SetTickMarks default 10; 
     property UnusedColor : TColor
       read FUnusedColor write SetUnusedColor;
     property UsedColor : TColor
       read FUsedColor write SetUsedColor;
-    property TickMarks: Byte read GetTickMarks write SetTickMarks default 10; 
   end;
 
   TAbMeter = class(TAbCustomMeter)
@@ -149,11 +142,11 @@ type
     property ParentFont;
     property ParentShowHint;
     property ShowHint;
+    property TickMarks;
     property UnusedColor;
     property UsedColor;
     property Version;
     property Visible;
-    property TickMarks;
   end;
   {.Z+}
 
@@ -164,34 +157,23 @@ uses
   AbConst;
 
 {====================================================================}
-{$IFDEF UsingCLX }
 procedure TAbMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
-{$ELSE}
-procedure TAbMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
-{$ENDIF}
 begin
- inherited Notification(AComponent, Operation);  {!!.05 SF.NET #906875}
- if (Operation = opInsert) and (AComponent is TAbCustomMeter) and (FMeter = nil) then
+  inherited Notification(AComponent, Operation);
+  if (Operation = opInsert) and (AComponent is TAbCustomMeter) and (FMeter = nil) then
     FMeter := TAbCustomMeter(AComponent);
- if (Operation = opRemove) and (AComponent = FMeter) then
+  if (Operation = opRemove) and (AComponent = FMeter) then
     FMeter := nil;
 end;
 {--------}
-{$IFDEF UsingCLX }
+
 procedure TAbMeterLink.DoProgress(Progress : Byte);
-{$ELSE}
-procedure TAbMeterLink.DoProgress(Progress : Byte);
-{$ENDIF}
 begin
   if Assigned(FMeter) then
     FMeter.DoProgress(Progress);
 end;
 {--------}
-{$IFDEF UsingCLX }
 procedure TAbMeterLink.Reset;
-{$ELSE}
-procedure TAbMeterLink.Reset;
-{$ENDIF}
 begin
   if Assigned(FMeter) then
     FMeter.Reset;
@@ -212,10 +194,10 @@ begin
     ControlStyle := ControlStyle + [csOpaque, csFramed];
   {$ENDIF}
 
-  FTickMarks := 10;
   FBorderStyle := bsSingle;
   FCtl3D       := True;
   FOrientation := moHorizontal;
+  FTickMarks   := 10;
   FUnusedColor := clBtnFace;
   FUsedColor   := clNavy;
   Width        := 150;
@@ -261,7 +243,7 @@ begin
     BlockWidth := ((ClWidth - LSpace - RSpace - (9 * VSpace)) div FTickMarks) + 1
   else
     BlockWidth := ((ClHeight - LSpace - RSpace - (9 * HSpace)) div FTickMarks) + 1;
-  BlockCount  := Round(FPercent div FTickMarks);
+  BlockCount  := FPercent div FTickMarks;
 
   if not Assigned((Canvas as TControlCanvas).Control) then begin         {!!.04}
     TControlCanvas(Canvas).Control := self;                              {!!.04}
@@ -338,6 +320,14 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
+procedure TAbCustomMeter.SetTickMarks(const Value: Byte);
+begin
+	if Value <= 0 then
+	  FTickMarks := 10
+	else
+	  FTickMarks := Value;
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbCustomMeter.SetUnusedColor(const C : TColor);
 begin
   if (C <> FUnusedColor) then begin
@@ -359,16 +349,4 @@ begin
   {NOP}
 end;
 
-function TAbCustomMeter.GetTickMarks: Byte;
-begin
-	Result := FTickMarks;
-end;
-
-procedure TAbCustomMeter.SetTickMarks(const Value: Byte);
-begin
-	if (Value <= 0) then FTickMarks := 10 else FTickMarks := Value;
-end;
-
 end.
-
-

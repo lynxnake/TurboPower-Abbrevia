@@ -50,12 +50,10 @@ const
   Ab_ZipPossiblySpannedSignature            : Longint = $30304B50;
   Ab_GeneralZipSignature                    : Word    = $4B50;       {!!.02}
 
-  {Rohan Added}
-  Ab_ArchiveExtraDataRecord					: Longint = $08064b50;
-  Ab_DigitalSignature						: Longint = $05054b50;
-  Ab_Zip64EndCetralDirectory				: Longint = $06064b50;
-  Ab_Zip64EndCetralDirectoryLocator	   		: Longint = $07064b50;
-  {End Rohan Added}
+  Ab_ArchiveExtraDataRecord                 : Longint = $08064b50;
+  Ab_DigitalSignature                       : Longint = $05054b50;
+  Ab_Zip64EndCetralDirectory                : Longint = $06064b50;
+  Ab_Zip64EndCetralDirectoryLocator         : Longint = $07064b50;
 
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
   Ab_LinuxExeSigWord1                       : Word    = $457F;       {!!.02}
@@ -231,7 +229,7 @@ type
     FUncompressedSize : LongWord;
     FFileName : string;
     FExtraField : Pointer;
-    FExtraFieldLength: Word;
+    FExtraFieldLength : Word;
     FIsValid : Boolean;
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
@@ -333,7 +331,7 @@ type
 { TAbZipDirectoryFileFooter interface ====================================== }
   TAbZipDirectoryFileFooter = class( TObject )
   private
-    function GetIsZip64(): Boolean;
+    function GetIsZip64: Boolean;
     function GetIsSpan: Boolean;
   protected {private}
     FValidSignature       : Longint;
@@ -1348,19 +1346,19 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbZipDirectoryFileFooter.GetIsSpan: Boolean;
 begin
-	Result := ((StartDiskNumber > 0) and (StartDiskNumber < $FFFF));
+  Result := ((StartDiskNumber > 0) and (StartDiskNumber < $FFFF));
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbZipDirectoryFileFooter.GetIsZip64: Boolean;
 begin
-  	Result := ((DiskNumber = $FFFF) or
-		      (StartDiskNumber = $FFFF) or
-			  (EntriesOnDisk = $FFFF) or
-              (TotalEntries = $FFFF) or
-              (DirectorySize = LongWord(-1)) or
-              (DirectoryOffset = LongWord(-1)));
+  Result := (DiskNumber = $FFFF) or
+            (StartDiskNumber = $FFFF) or
+            (EntriesOnDisk = $FFFF) or
+            (TotalEntries = $FFFF) or
+            (DirectorySize = LongWord(-1)) or
+            (DirectoryOffset = LongWord(-1));
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbZipDirectoryFileFooter.GetValid : Boolean;
 begin
   Result := (FSignature = FValidSignature);
