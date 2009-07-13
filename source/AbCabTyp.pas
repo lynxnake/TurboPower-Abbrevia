@@ -170,9 +170,10 @@ type
 function VerifyCab(const Fn : string) : TAbArchiveType;
 
 implementation
+
 uses
   AbExcept;
-  
+
 type
   PWord    = ^Word;
   PInteger = ^Integer;
@@ -338,20 +339,18 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_GetTempFile(lpTempName: PChar; TempNameSize: Integer;
+function FCI_GetTempFile(lpTempName: PAnsiChar; TempNameSize: Integer;
                          Archive: TAbCabArchive) : Integer; cdecl;
   {obtain temporary filename}
 var
-  TempPath : array[0..255] of Char;
-  Prefix : array[0..10] of Char;
+  TempPath : array[0..255] of AnsiChar;
 begin
   Archive.FTempFileID := Archive.FTempFileID + 1;
-  StrPCopy(Prefix, 'VMS');
   if (Archive.TempDirectory <> '') then
-    StrPCopy(TempPath, Archive.TempDirectory)                            {!!.02}
+    StrPLCopy(TempPath, AnsiString(Archive.TempDirectory), Length(TempPath)){!!.02}
   else
-    GetTempPath(255, TempPath);                                          {!!.02}
-  GetTempFileName(TempPath, Prefix, Archive.FTempFileID, lpTempName);    {!!.02}
+    GetTempPathA(255, TempPath);                                         {!!.02}
+  GetTempFileNameA(TempPath, 'VMS', Archive.FTempFileID, lpTempName);    {!!.02}
   Result := 1;
 end;
 
@@ -492,10 +491,9 @@ end;
 procedure TAbCabArchive.Add(aItem : TAbArchiveItem);
   {add a file to the cabinet}
 var
-  FH : HFILE;
-  newFileName:  string;
   Confirm, DoExecute : Boolean;
   FP, FN : array[0..255] of AnsiChar;
+  FH : HFILE;
   Item : TAbCabItem;
 begin
   if (FMode <> fmOpenWrite) then begin
@@ -521,14 +519,7 @@ begin
   end else
     raise EAbFileNotFound.Create;
 
-  newFileName := Item.FileName;
-  if (soStripPath in StoreOptions) then
-    newFileName := ExtractFileName(newFileName);
-  if (soRemoveDots in StoreOptions) then
-    AbStripDots(newFileName);
-  Item.FileName := newFileName;
-
-  StrPLCopy(FN, AnsiString(newFileName), Length(FN));                    {!!.02}
+  StrPLCopy(FN, AnsiString(Item.FileName), Length(FN));                  {!!.02}
   if not FCIAddFile(FFCIContext, FP, FN, DoExecute, @FCI_GetNextCab,
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
