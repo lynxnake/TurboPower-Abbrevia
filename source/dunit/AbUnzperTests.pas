@@ -286,20 +286,16 @@ end;
 
 procedure TAbUnZipperTests.TestIncompleteZipFile;
 var
- FS : TFileStream;
+  FS : TFileStream;
 begin
- // Since file only contains initial sig and not Central Directory Tail Struct
- // It should not be recogonized.
- ExpectedException := EAbUnhandledType;
- // Delete File if it exists
- if FileExists(TestTempDir + 'dummy.zip') then
-    DeleteFile(TestTempDir + 'dummy.zip');
- // Create Zero Byte File
- FS := TFileStream.Create(TestTempDir + 'dummy.zip',fmCreate);
- FS.Write(Ab_ZipLocalFileHeaderSignature,sizeof(Ab_ZipLocalFileHeaderSignature));
- FS.Free;
- // Try to set the filename to the open byte file.
- Component.FileName := TestTempDir + 'zerobyte.zip';
+  // Create a file that only contains the initial signature and not the 
+  // central directory tail structure, which should not be recognized.
+  ExpectedException := EAbUnhandledType;
+  FS := TFileStream.Create(TestTempDir + 'dummy.zip', fmCreate);
+  FS.Write(Ab_ZipLocalFileHeaderSignature, SizeOf(Ab_ZipLocalFileHeaderSignature));
+  FS.Free;
+  // Try to set the filename to the open byte file.
+  Component.FileName := TestTempDir + 'dummy.zip';
 end;
 
 procedure TAbUnZipperTests.TestLocale1;
