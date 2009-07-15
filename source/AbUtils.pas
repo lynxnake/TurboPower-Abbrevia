@@ -483,47 +483,36 @@ begin
   SetLength(Result, GetTempPath(Length(Result),  PChar(Result)));
 {$ENDIF}
 {$IFDEF LINUX}
-  Result := '/etc/';
+  Result := '/tmp/';
 {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
-{$IFDEF LINUX}
-function GetTempFileName(const Path, Mask : string): string;
-{
-Returns a unique filename for use as a temporary
-}
-var
-  Buff: array[0..AB_MAXPATH] of char;
-  IntMask : string;
-begin
-  IntMask := Mask;
-  if Copy(IntMask, Length(IntMask) - 5, 6) <> 'XXXXXX' then
-    IntMask := IntMask + 'XXXXXX';
-  StrPCopy(Buff, AbAddBackSlash(Path) + IntMask);
-  mktemp(Buff);
-  Result := StrPas(Buff);
-end;
-{$ENDIF}
-
 function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
-{$IFDEF MSWINDOWS}
 var
+  TempPath : string;
+{$IFDEF MSWINDOWS}
   FileNameZ : array [0..259] of char;
-  TempPath: string;
+{$ENDIF}
+{$IFDEF LINUX}
+  hFile: Integer;
 {$ENDIF}
 begin
-{$IFDEF MSWINDOWS}
   if AbDirectoryExists(Dir) then
     TempPath := Dir
   else
     TempPath := AbGetTempDirectory;
+{$IFDEF MSWINDOWS}
   GetTempFileName(PChar(TempPath), 'VMS', Word(not CreateIt), FileNameZ);
   Result := string(FileNameZ);
 {$ENDIF}
 {$IFDEF LINUX}
-  Result := GetTempFileName(Dir, 'VMSXXXXXX');
-  if CreateIt then
-    FileCreate(Result);
+  Result := TempPath + 'VMSXXXXXX';
+  mktemp(PChar(Result));
+  if CreateIt then begin
+    hFile := FileCreate(Result);
+    if hFile <> -1 then
+      FileClose(hFile);
+  end;
 {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
@@ -1470,15 +1459,15 @@ const
 
 function AbGetVolumeLabel(Drive : Char) : string;
 {-Get the volume label for the specified drive.}
+{$IFDEF MSWINDOWS}
 var
   Root : string;
   Flags, MaxLength : DWORD;
   NameSize : Integer;
   VolName : string;
+{$ENDIF}
 begin
-{$IFDEF LINUX}
-  result := ''; //Stop Gap, spanning support needs to be rethought for Linux
-{$ELSE}
+{$IFDEF MSWINDOWS}
   NameSize := 0;
   Root := Drive + ':\';
   SetLength(VolName, MAX_VOL_LABEL);
@@ -1486,9 +1475,11 @@ begin
   Result := '';
 
   if GetVolumeInformation(PChar(Root), PChar(VolName), Length(VolName),
-    nil, MaxLength, Flags, nil, NameSize)
+	nil, MaxLength, Flags, nil, NameSize)
   then
-    Result := VolName;
+	Result := VolName;
+{$ELSE}
+  Result := ''; //Stop Gap, spanning support needs to be rethought for Linux
 {$ENDIF}
 end;
 
