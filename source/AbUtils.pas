@@ -291,6 +291,16 @@ const
     {-Get or set file attributes for a file. Uses DOS format attributes}
   function AbFileGetSize(const aFileName : string) : Int64;
 
+type
+  TAbAttrExRec = record
+    Time: Integer;
+    Size: Int64;
+    Attr: Integer;
+    Mode: {$IFDEF LINUX}mode_t{$ELSE}Cardinal{$ENDIF};
+  end;
+
+  function AbFileGetAttrEx(const aFileName: string; out aAttr: TAbAttrExRec) : Boolean;
+
   function AbSwapLongEndianness(Value : LongInt): LongInt;
 
 
@@ -1423,9 +1433,20 @@ end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
 function AbFileGetSize(const aFileName : string) : Int64;
+var
+  SR: TAbAttrExRec;
+begin
+  if AbFileGetAttrEx(aFileName, SR) then
+    Result := SR.Size
+  else
+    Result := -1;
+end;
+{!!.01 -- End Added }
+{ -------------------------------------------------------------------------- }
+function AbFileGetAttrEx(const aFileName: string; out aAttr: TAbAttrExRec) : Boolean;
 {$IFDEF MSWINDOWS}
 var
-  SR : TSearchRec;
+  FindData: TWin32FindData;
 {$ENDIF}
 {$IFDEF LINUX}
 var
@@ -1433,24 +1454,27 @@ var
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
-  Result := -1;
-  if FindFirst(aFileName, faAnyFile, SR) = 0 then begin       {!!.02}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-    Int64Rec(Result).Lo := SR.FindData.nFileSizeLow;
-    Int64Rec(Result).Hi := SR.FindData.nFileSizeHigh;
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-    FindClose(SR);                                            {!!.02}
-  end;                                                        {!!.02}
+  Result := GetFileAttributesEx(PChar(aFileName), GetFileExInfoStandard, @FindData);
+  if Result then begin
+    FileTimeToDosDateTime(FindData.ftLastWriteTime, LongRec(aAttr.Time).Lo,
+      LongRec(aAttr.Time).Hi);
+    LARGE_INTEGER(aAttr.Size).LowPart := FindData.nFileSizeLow;
+    LARGE_INTEGER(aAttr.Size).HighPart := FindData.nFileSizeHigh;
+    aAttr.Attr := FindData.dwFileAttributes;
+    aAttr.Mode := AbDOS2UnixFileAttributes(FindData.dwFileAttributes);
+  end;
 {$ENDIF}
 {$IFDEF LINUX}
   // Work around Kylix QC#2761: Stat64, et al., are defined incorrectly
-  if (__lxstat64(_STAT_VER, PChar(aFileName), StatBuf) = 0) then
-    Result := StatBuf.st_size
-  else
-    Result := -1;
+  Result := (__lxstat64(_STAT_VER, PChar(aFileName), StatBuf) = 0);
+  if Result then begin
+    aAttr.Time := StatBuf.st_mtime;
+    aAttr.Size := StatBuf.st_size;
+    aAttr.Attr := AbUnix2DosFileAttributes(StatBuf.st_mode);
+    aAttr.Mode := StatBuf.st_mode;
+  end;
 {$ENDIF}
 end;
-{!!.01 -- End Added }
 
 
 {!!.04 - Added }
@@ -1475,9 +1499,9 @@ begin
   Result := '';
 
   if GetVolumeInformation(PChar(Root), PChar(VolName), Length(VolName),
-	nil, MaxLength, Flags, nil, NameSize)
+    nil, MaxLength, Flags, nil, NameSize)
   then
-	Result := VolName;
+    Result := VolName;
 {$ELSE}
   Result := ''; //Stop Gap, spanning support needs to be rethought for Linux
 {$ENDIF}

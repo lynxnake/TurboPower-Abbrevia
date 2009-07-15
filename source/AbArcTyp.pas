@@ -1575,11 +1575,6 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchive.FreshenRequired(Item : TAbArchiveItem) : Boolean;
-type
-  DW = packed record
-    Lo : Word;
-    Hi : Word;
-  end;
 var
   FS : TFileStream;
   DateTime : LongInt;
@@ -1596,8 +1591,8 @@ begin
                               fmOpenRead or fmShareDenyWrite);
     try
       DateTime := FileGetDate(FS.Handle);
-      FileTime := DW(DateTime).Lo;
-      FileDate := DW(DateTime).Hi;
+      FileTime := LongRec(DateTime).Lo;
+      FileDate := LongRec(DateTime).Hi;
       Matched := (Item.LastModFileDate = FileDate) and
                  (Item.LastModFileTime = FileTime) and
                  (Item.UncompressedSize = FS.Size);

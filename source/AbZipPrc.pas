@@ -344,75 +344,38 @@ end;
 procedure AbZip( Sender : TAbZipArchive; Item : TAbZipItem;
                  OutStream : TStream );
 var
-  UncompressedStream : TFileStream;
-  DateTime : LongInt;
+  UncompressedStream : TStream;
   SaveDir : string;
-  FileAtributes: Integer;
-  sBuffer: string;
-  sAnsi: AnsiString;
-  ZipArchive : TAbZipArchive;
-
-procedure AddDirectory();
-var
-	sr: TSearchRec;
+  Filename : string;
+  AttrEx : TAbAttrExRec;
 begin
-  Item.CRC32 := 0;
-  Item.VersionNeededToExtract := 20;
-  Item.CompressionMethod := cmStored;
-  Item.CompressedSize := 0;
-  Item.VersionMadeBy := (Item.VersionMadeBy and $FF00) + 20;
-  Item.ExternalFileAttributes := AbFileGetAttr(Item.DiskFileName);
-
-  FileAtributes := FindFirst(Item.DiskFileName, faAnyFile, sr);
-  try
-    if (FileAtributes <> 0) then begin
-      DateTime := sr.Time;
-      Item.LastModFileTime := Word(DateTime);        // Get the Lo Part
-      Item.LastModFileDate := Word(DateTime shr 16); // Get the Hi Part
-    end;
-  finally
-    FindClose(sr);
-  end;
-end;
-
-begin
-  ZipArchive := TAbZipArchive(Sender);
   GetDir(0, SaveDir);
   try {SaveDir}
-    if (ZipArchive.BaseDirectory <> '') then
-      ChDir(ZipArchive.BaseDirectory);
-    sBuffer := Item.DiskFileName;
+    if (Sender.BaseDirectory <> '') then
+      ChDir(Sender.BaseDirectory);
+    Filename := Item.DiskFileName;
 
     {$IFDEF MSWINDOWS}
-    if (Item.VersionMadeBy and $FF00) = 0 then begin
-      sAnsi := AnsiString(sBuffer);
-      OemToChar(PAnsiChar(sAnsi), PChar(sBuffer));
-    end;
+    if (Item.VersionMadeBy and $FF00) = 0 then
+      OemToChar(PAnsiChar(AnsiString(Filename)), PChar(Filename));
     {$ENDIF}
 
-    FileAtributes := AbFileGetAttr(sBuffer);
-    if (0 <> (FileAtributes and faDirectory)) then begin
-      Item.ExternalFileAttributes := FileAtributes;
-      AddDirectory();
-      Exit;
-    end
-    else begin
-      Item.ExternalFileAttributes := FileAtributes;
-      UncompressedStream := TFileStream.Create(sBuffer, fmOpenRead or fmShareDenyWrite );
-      {Now get the file's attributes}
-      Item.UncompressedSize := UncompressedStream.Size;
-    end;
+    AbFileGetAttrEx(Filename, AttrEx);
+    if ((AttrEx.Attr and faDirectory) <> 0) then
+      UncompressedStream := TMemoryStream.Create
+    else
+      UncompressedStream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   finally {SaveDir}
     ChDir( SaveDir );
   end; {SaveDir}
   try {UncompressedStream}
-    DateTime := FileGetDate(UncompressedStream.Handle);
-    {$IFDEF Linux}
-    DateTime := AbDateTimeToDosFileDate(FileDateToDateTime(DateTime));
-    {$ENDIF}
-    Item.LastModFileTime := LongRec(DateTime).Lo;
-    Item.LastModFileDate := LongRec(DateTime).Hi;
     AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
+    Item.ExternalFileAttributes := AttrEx.Attr;
+    {$IFDEF Linux}
+    AttrEx.Time := AbDateTimeToDosFileDate(FileDateToDateTime(AttrEx.Time));
+    {$ENDIF}
+    Item.LastModFileTime := LongRec(AttrEx.Time).Lo;
+    Item.LastModFileDate := LongRec(AttrEx.Time).Hi;
   finally {UncompressedStream}
     UncompressedStream.Free;
   end; {UncompressedStream}
