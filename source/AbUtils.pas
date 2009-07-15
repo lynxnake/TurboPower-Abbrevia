@@ -289,13 +289,7 @@ const
   function AbFileGetAttr(const aFileName : string) : integer;
   procedure AbFileSetAttr(const aFileName : string; aAttr : integer);
     {-Get or set file attributes for a file. Uses DOS format attributes}
-  function AbFileGetSize(const aFileName : string) :                     {!!.01}
-  {$IFDEF MSWINDOWS}                                                     {!!.01}
-    {$IFDEF VERSION4} Int64 {$ELSE} LongInt {$ENDIF};                    {!!.01}
-  {$ENDIF}                                                               {!!.01}
-  {$IFDEF LINUX}                                                         {!!.01}
-    Int64;                                                               {!!.01}
-  {$ENDIF}                                                               {!!.01}
+  function AbFileGetSize(const aFileName : string) : Int64;
 
   function AbSwapLongEndianness(Value : LongInt): LongInt;
 
@@ -784,15 +778,14 @@ var
 begin
 
   Found := FindFirst( FileMask, SearchAttr, SR );
-	//raise EWin32Error.Create(SysErrorMessage(Found));	
   if Found = 0 then begin
     try
       NameMask := UpperCase(ExtractFileName(FileMask));
       while Found = 0 do begin
         NewFile := ExtractFilePath( FileMask ) + SR.Name;
-	   if ((sr.Name <> AbThisDir) and (sr.Name <> AbParentDir)) then begin
-	        if AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
-    	    FileList.Add( NewFile );
+       if ((sr.Name <> AbThisDir) and (sr.Name <> AbParentDir)) then begin
+            if AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
+            FileList.Add( NewFile );
         end;
         Found := FindNext( SR );
       end;
@@ -1440,13 +1433,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
-function AbFileGetSize(const aFileName : string) :
-{$IFDEF MSWINDOWS}
-  {$IFDEF VERSION4} Int64 {$ELSE} LongInt {$ENDIF};
-{$ENDIF}
-{$IFDEF LINUX}
-  Int64;
-{$ENDIF}
+function AbFileGetSize(const aFileName : string) : Int64;
 {$IFDEF MSWINDOWS}
 var
   SR : TSearchRec;
@@ -1459,20 +1446,19 @@ begin
 {$IFDEF MSWINDOWS}
   Result := -1;
   if FindFirst(aFileName, faAnyFile, SR) = 0 then begin       {!!.02}
-  {$IFDEF VERSION4}
   {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
     Int64Rec(Result).Lo := SR.FindData.nFileSizeLow;
     Int64Rec(Result).Hi := SR.FindData.nFileSizeHigh;
   {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-  {$ELSE}
-    Result := SR.Size;
-  {$ENDIF};
     FindClose(SR);                                            {!!.02}
   end;                                                        {!!.02}
 {$ENDIF}
 {$IFDEF LINUX}
-  lstat64(PAnsiChar(aFileName), StatBuf);
-  Result := StatBuf.st_size;
+  // Work around Kylix QC#2761: Stat64, et al., are defined incorrectly
+  if (__lxstat64(_STAT_VER, PChar(aFileName), StatBuf) = 0) then
+    Result := StatBuf.st_size
+  else
+    Result := -1;
 {$ENDIF}
 end;
 {!!.01 -- End Added }
