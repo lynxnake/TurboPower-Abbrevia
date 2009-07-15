@@ -112,9 +112,9 @@ var
   FS : TFileStream;
 begin
   {$IFDEF LINUX}
-  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests/Testdoc1.txt');
+  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests/TestDoc1.txt');
   {$ELSE}
-  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests\Testdoc1.txt');
+  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests\TestDoc1.txt');
   {$ENDIF}
   FUnCompressedStream.Seek(0,soFromBeginning);
   DeflateStream(FUnCompressedStream,FCompressedStream);
@@ -127,7 +127,7 @@ begin
   {$ENDIF}
   try
     CheckStreamMatch(FCompressedStream,FS,
-      'Streamtests\Testdoc1.txt Compressed did not match contents of Streamtests\Testdoc1.cmp');
+      'Streamtests\TestDoc1.txt Compressed did not match contents of Streamtests\Testdoc1.cmp');
   finally
     fs.free;
   end;

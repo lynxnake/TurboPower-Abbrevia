@@ -65,8 +65,8 @@ end;
 
 procedure TAbZipBrowserTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
 end;
 
 procedure TAbZipBrowserTests.TestDefaultStreaming;

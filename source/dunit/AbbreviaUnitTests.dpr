@@ -39,13 +39,13 @@ uses
   QGUITestRunner {$ELSE},
   Forms,
   GUITestRunner {$ENDIF},
-  TextTestRunner,
+  TextTestRunner {$IFDEF MSWINDOWS},
   AbFloppySpanTests in 'AbFloppySpanTests.pas',
   AbCabViewTests in 'AbCabViewTests.pas',
   AbCBrowsTests in 'AbCBrowsTests.pas',
   AbCabExtTests in 'AbCabExtTests.pas',
   AbCabMakTests in 'AbCabMakTests.pas',
-  AbCabKitTests in 'AbCabKitTests.pas',
+  AbCabKitTests in 'AbCabKitTests.pas' {$ENDIF},
   AbUnzPrcTests in 'AbUnzPrcTests.pas',
   AbZipPrcTests in 'AbZipPrcTests.pas',
   AbTestFramework in 'AbTestFramework.pas',
@@ -60,7 +60,7 @@ uses
   AbSelfExTests in 'AbSelfExTests.pas',
   AbArchiveSplitTests in 'AbArchiveSplitTests.pas';
 
-{$R *.RES}
+{$R *.res}
 
 begin
   Application.Initialize;

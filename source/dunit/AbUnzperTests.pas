@@ -36,10 +36,9 @@ unit AbUnzperTests;
 interface
 
 uses
-  Windows, // Needed for CopyFile could be replaced if needed on Linux
   TestFrameWork, abTestFrameWork, AbUnzper,
-  SysUtils, Classes, abMeter, AbZipTyp,
-  AbDfBase, abExcept;
+  SysUtils, Classes, AbMeter, AbZipTyp,
+  AbDfBase, abExcept, AbUnzPrc;
 
 type
 
@@ -89,7 +88,7 @@ var
  Buffer,Buffer1 : Array[0..20] of Char;
 begin
 // 698162 Failed unzipping of password protected files clobbers original
-   TestFile := TestTempDir + 'MPL-1_1.TXT';
+   TestFile := TestTempDir + 'MPL-1_1.txt';
    if FileExists(TestFile) then
       DeleteFile(TestFile);
    // Create Dummy file to test with.
@@ -167,8 +166,8 @@ begin
     Component.Password := 'simple';
     Component.ExtractOptions := [];
     Component.ExtractToStream(Component.Items[0].FileName, MS);
-    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.TXT', MS,
-      'simplepw.zip MPL-1_1.TXT does not match original');
+    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.txt', MS,
+      'simplepw.zip MPL-1_1.txt does not match original');
   finally
     MS.free;
   end;
@@ -205,7 +204,7 @@ begin
   if FileExists(TestFileName) then
      DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
-  Component.FileName := TestFileDir + 'mpl.gz';
+  Component.FileName := TestFileDir + 'MPL.GZ';
   Component.ExtractFiles('*.*');
   Check(FileExists(TestFileName),'Unzip Test File not Found');
   DeleteFile(TestFileName)
@@ -219,7 +218,7 @@ begin
   if FileExists(TestFileName) then
      DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
-  Component.FileName := TestFileDir + 'mpl.tgz';
+  Component.FileName := TestFileDir + 'MPL.TGZ';
   Component.ExtractFiles('*.*');
   Check(FileExists(TestFileName),'Unzip Test File not Found');
   DeleteFile(TestFileName)
@@ -233,7 +232,7 @@ begin
   if FileExists(TestFileName) then
      DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
-  Component.FileName := TestFileDir + 'mpl.zip';
+  Component.FileName := TestFileDir + 'MPL.ZIP';
   Component.ExtractFiles('*.*');
   Check(FileExists(TestFileName),'Unzip Test File not Found');
   DeleteFile(TestFileName);
@@ -241,8 +240,8 @@ end;
 
 procedure TAbUnZipperTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
 end;
 
 procedure TAbUnZipperTests.TestDefaultStreaming;
@@ -310,7 +309,7 @@ begin
   // Create New Directory
   //236 changes into a ? on my machine in the delphi editor
   // so I thought it would be a good character to test with
-  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú' + PathDelim;
   ForceDirectories(ltestDir);
 
   // copy fresh MPL.ZIP to locale1.zip in the new directory
@@ -318,7 +317,7 @@ begin
   if FileExists(lTestFile) then
      DeleteFile(lTestFile);
   ltestzip := TestFileDir + 'MPL.ZIP';
-  CopyFile(pchar(ltestzip),pchar(ltestFile),false);
+  CopyFileTo(ltestzip,ltestFile,false);
 
 
   Component.FileName := lTestFile;
@@ -344,7 +343,7 @@ begin
   // Create New Directory
   //236 changes into a ? on my machine in the delphi editor
   // so I thought it would be a good character to test with
-  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú' + PathDelim;
   ForceDirectories(ltestDir);
 
   ltestFile := TestFileDir + 'MPL.ZIP';
@@ -373,7 +372,7 @@ begin
   if FileExists(lTestFile) then
      DeleteFile(lTestFile);
   ltestzip := TestFileDir + 'MPL.ZIP';
-  CopyFile(pchar(ltestzip),pchar(ltestFile),false);
+  CopyFileTo(ltestzip,ltestFile,false);
 
 
   Component.FileName := lTestFile;
@@ -471,7 +470,7 @@ procedure TAbUnZipperTests.TestZipCopiedFromFloppy;
 begin
 //[ 858945 ] copy of File saved to floppy cannot be opened
 // Error of File Not Found appears if it fails.
-  Component.FileName := TestFileDir + 'cpFromFloppy.zip';
+  Component.FileName := TestFileDir + 'CpFromFloppy.zip';
   Component.BaseDirectory := TestTempDir;
   ChDir(TestTempDir);
   Component.ExtractFiles('*.*');

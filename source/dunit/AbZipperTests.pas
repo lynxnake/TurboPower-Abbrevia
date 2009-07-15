@@ -301,9 +301,9 @@ end;
 
 procedure TAbZipperTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
 end;
 
 procedure TAbZipperTests.TestDefaultStreaming;

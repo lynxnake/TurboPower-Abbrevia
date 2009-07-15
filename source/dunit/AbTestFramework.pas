@@ -31,9 +31,7 @@ interface
 
 uses
   TestFramework,
-{$IFDEF VERSION6}
   Variants,
-{$ENDIF}
 {$IFDEF LINUX}
   QControls, QForms,
 {$ELSE}
@@ -122,6 +120,9 @@ uses
 {$ENDIF}
   SysUtils,
   AbUtils;
+
+var
+  ExePath : string;
 
 { TAbTestCase }
 
@@ -227,8 +228,8 @@ var
   I : Integer;
 begin
   // Force Slash
-  if aDir[Length(aDir)] <> '\' then
-    aDir := aDir + '\';
+  if aDir[Length(aDir)] <> PathDelim then
+    aDir := aDir + PathDelim;
   // If a File is found
   if FindFirst(aDir + '*', faAnyFile, SR) = 0 then begin
     Directories := TStringList.Create;
@@ -311,31 +312,24 @@ end;
 
 function TAbTestCase.GetTestFileDir: string;
 begin
-// May want to place in ini file in the future but this will do for now
-{$IFDEF LINUX}
-// I don't think this will work with linux so may need to change
- result := ExtractFilePath(ParamStr(0)) + 'testfiles/';
-{$ELSE}
- result := ExtractFilePath(ParamStr(0)) + 'testfiles\';
-{$ENDIF}
+  // May want to place in ini file in the future but this will do for now
+  Result := ExePath + 'testfiles' + PathDelim;
 end;
 
 function TAbTestCase.GetTestTempDir: string;
 begin
-  {$IFDEF LINUX}
-    Result := GetTestFileDir + 'temp/';
-  {$ELSE}
-    Result := GetTestFileDir + 'temp\';
-  {$ENDIF}
+  Result := GetTestFileDir + 'temp' + PathDelim;
 end;
 
 function TAbTestCase.GetWindowsDir: string;
+{$IFDEF MSWINDOWS}
 var
- aDirBuf : Array[0..MAX_PATH] of Char;
+  aDirBuf : Array[0..MAX_PATH] of Char;
+{$ENDIF}
 begin
 // Windows Directory is used to find
  {$IFDEF LINUX}
-   result := '/etc/
+   result := '/etc/'
  {$ELSE}
    GetWindowsDirectory(aDirBuf,SizeOf(aDirBuf));
    result := AbAddBackSlash(string(aDirBuf));
@@ -495,7 +489,7 @@ begin
              ErrStream := TFileStream.Create('parse.err',fmCreate);
              StrStream.Seek(0,soFromBeginning);
              ErrStream.CopyFrom(StrStream,StrStream.Size);
-             ErrStream.Free;	
+             ErrStream.Free;
              Fail('Check parse.err ' + E.Message,nil);
              raise;
           end
@@ -617,5 +611,9 @@ begin
     Format('Notification does not work for %s.%s', [AComponent.ClassName, APropName]));
 end;
 
+initialization
+  // Cache on startup;  on Linux ParamStr(0) may not be fully qualified, and
+  // the tests change the working directory.
+  ExePath := ExtractFilePath(ExpandFileName(ParamStr(0)))
+
 end.
- 

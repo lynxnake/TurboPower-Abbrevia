@@ -44,7 +44,7 @@ type
 
   TAbVCLMeterLinkTests = class(TabCompTestCase)
   private
-    Component : TAbVCLMeterLink;
+    Component : TAbMeterLink;
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -90,7 +90,7 @@ end;
 procedure TAbVCLMeterLinkTests.SetUp;
 begin
   inherited;
-  Component :=  TAbVCLMeterLink.Create(TestForm);
+  Component :=  TAbMeterLink.Create(TestForm);
 end;
 
 procedure TAbVCLMeterLinkTests.TearDown;
@@ -107,13 +107,13 @@ end;
 procedure TAbVCLMeterLinkTests.TestDefaultStreaming;
 var
   CompStr : String;
-  CompTest : TAbVCLMeterLink;
+  CompTest : TAbMeterLink;
 begin
-  RegisterClass(TAbVCLMeterLink);
+  RegisterClass(TAbMeterLink);
   CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbVCLMeterLink);
+  CompTest := (UnStreamComponent(CompStr) as TAbMeterLink);
   CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbVCLMeterLink);
+  UnRegisterClass(TAbMeterLink);
 end;
 
 initialization

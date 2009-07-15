@@ -28,7 +28,7 @@ unit AbUnzPrcTests;
 interface
 
 uses
-  TestFrameWork,abUnzPrc,abTestFramework,abTestConsts,SysUtils,Classes;
+  TestFrameWork,AbUnzPrc,AbTestFramework,AbTestConsts,SysUtils,Classes;
 
 type
 
@@ -66,12 +66,12 @@ begin
   InflateStream(FCompressedStream,FUnCompressedStream);
 
   {$IFDEF LINUX}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests/Testdoc1.txt',fmOpenRead);
+  FS := TFileStream.Create(TestFileDir + 'StreamTests/TestDoc1.txt',fmOpenRead);
   {$ELSE}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests\Testdoc1.txt',fmOpenRead);
+  FS := TFileStream.Create(TestFileDir + 'StreamTests\TestDoc1.txt',fmOpenRead);
   {$ENDIF}
   try
-  CheckStreamMatch(FUnCompressedStream,FS,'Streamtests\Testdoc1.cmp UnCompressed did not match contents of Streamtests\Testdoc1.txt');
+  CheckStreamMatch(FUnCompressedStream,FS,'Streamtests\Testdoc1.cmp UnCompressed did not match contents of Streamtests\TestDoc1.txt');
   finally
     fs.free;
   end;

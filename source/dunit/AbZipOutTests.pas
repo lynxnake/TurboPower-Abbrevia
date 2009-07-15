@@ -46,7 +46,8 @@ type
 implementation
 
 uses
-  Classes, Menus, SysUtils,
+  {$IFDEF LINUX}QMenus{$ELSE}Menus{$ENDIF},
+  Classes, SysUtils,
   AbMeter, AbZBrows;
 
 { TAbZipOutlineTests }

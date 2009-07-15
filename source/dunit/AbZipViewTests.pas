@@ -28,7 +28,8 @@ unit AbZipViewTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZView,AbZBrows,SysUtils,Classes,Menus,abMeter;
+  {$IFDEF LINUX}QMenus{$ELSE}Menus{$ENDIF},
+  TestFrameWork,AbTestFramework,AbZView,AbZBrows,SysUtils,Classes,AbMeter;
 
 type
 

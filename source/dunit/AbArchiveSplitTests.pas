@@ -27,7 +27,7 @@ unit AbArchiveSplitTests;
 interface
 
 uses
-  TestFrameWork, abTestFramework, Windows,SysUtils,Classes, abZipper,abExcept,abUnzper;
+  TestFrameWork, AbTestFramework, SysUtils, Classes, AbZipper, AbExcept, AbUnzper;
 
 type
 
@@ -53,29 +53,29 @@ implementation
 
 procedure TAbArchiveSplitTests.AbortOnImageRequest;
 var
- Zip : TabZipper;
+  Zip : TAbZipper;
+  SplitDir: string;
 begin
- // [ 783614 ] Item #1
- // 3.05 Beta Code produced EAbBadStream, it should be EabUserAbort
-   ExpectedException := EabUserAbort;
-   if DirectoryExists(TestTempDir+'SPLIT-ABORT\') then
-      DelTree(TestTempDir + 'SPLIT-ABORT\');
-     CreateDir(TestTempDir+'SPLIT-ABORT\');
-   // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
-   // Compares each file byte by byte to original.
-   Zip := TAbZipper.create(nil);
-   try
-   Zip.BaseDirectory := GetWindowsDir;
-   Zip.FileName := TestTempDir + 'SPLIT-ABORT\SPLITTEST.ZIP';
-   Zip.SpanningThreshold := 50000;
-   Zip.OnRequestImage := AbortOnImageRequestEVENT;
-   Zip.AddFiles('*.DLL',faAnyFile);
-   Zip.Save;
-   finally
-     Zip.Free;
-   end;
-
-
+  // [ 783614 ] Item #1
+  // 3.05 Beta Code produced EAbBadStream, it should be EabUserAbort
+  ExpectedException := EAbUserAbort;
+  SplitDir := TestTempDir + 'SPLIT-ABORT' + PathDelim;
+  if DirectoryExists(SplitDir) then
+    DelTree(SplitDir);
+  CreateDir(SplitDir);
+  // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
+  // Compares each file byte by byte to original.
+  Zip := TAbZipper.create(nil);
+  try
+    Zip.BaseDirectory := GetWindowsDir;
+    Zip.FileName := SplitDir + 'SPLITTEST.ZIP';
+    Zip.SpanningThreshold := 50000;
+    Zip.OnRequestImage := AbortOnImageRequestEVENT;
+    Zip.AddFiles('*.DLL',faAnyFile);
+    Zip.Save;
+  finally
+    Zip.Free;
+  end;
 end;
 
 procedure TAbArchiveSplitTests.AbortOnImageRequestEVENT(Sender: TObject;
@@ -87,22 +87,24 @@ end;
 procedure TAbArchiveSplitTests.CreateBasicSplitArchive;
 var
   Zip : TAbZipper;
+  SplitDir : string;
 begin
-   if DirectoryExists(TestTempDir+'SPLIT\') then
-      DelTree(TestTempDir + 'SPLIT\');
-     CreateDir(TestTempDir+'SPLIT\');
-   // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
-   // Compares each file byte by byte to original.
-   Zip := TAbZipper.create(nil);
-   try
-   Zip.BaseDirectory := GetWindowsDir;
-   Zip.FileName := TestTempDir + 'SPLIT\SPLITTEST.ZIP';
-   Zip.SpanningThreshold := 50000;
-   Zip.AddFiles('*.DLL',faAnyFile);
-   Zip.Save;
-   finally
-     Zip.Free;
-   end;
+  SplitDir := TestTempDir + 'SPLIT' + PathDelim;
+  if DirectoryExists(SplitDir) then
+    DelTree(SplitDir);
+  CreateDir(SplitDir);
+  // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
+  // Compares each file byte by byte to original.
+  Zip := TAbZipper.create(nil);
+  try
+    Zip.BaseDirectory := GetWindowsDir;
+    Zip.FileName := SplitDir + 'SPLITTEST.ZIP';
+    Zip.SpanningThreshold := 50000;
+    Zip.AddFiles('*.DLL',faAnyFile);
+    Zip.Save;
+  finally
+    Zip.Free;
+  end;
 end;
 
 procedure TAbArchiveSplitTests.SetUp;
@@ -130,15 +132,16 @@ var
   UnZip : TAbUnZipper;
   mStream : TMemoryStream;
   I : Integer;
-  TestFile : string;
+  SplitDir, TestFile : string;
 begin
   // Create a Basic Span by zipping all .EXE Files in C:\WINDOWS\
   UnZip := TAbUnZipper.create(nil);
   mStream := TMemoryStream.Create;
   try
+    SplitDir := TestTempDir + 'SPLIT' + PathDelim;
     UnZip.BaseDirectory := GetTestTempDir;
-    CheckFileExists(TestTempDir + 'SPLIT\SPLITTEST.ZIP');
-    UnZip.FileName := TestTempDir + 'SPLIT\SPLITTEST.ZIP';
+    CheckFileExists(SplitDir + 'SPLITTEST.ZIP');
+    UnZip.FileName := SplitDir + 'SPLITTEST.ZIP';
     Check(Unzip.Count > 0,'Archive SPLITTEST.ZIP is empty');
     for I := 0 to Unzip.Count -1 do begin
       testFile := GetWindowsDir + ExtractFileName(UnZip.Items[I].FileName);

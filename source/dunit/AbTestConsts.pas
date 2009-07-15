@@ -23,7 +23,7 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
-unit abTestConsts;
+unit AbTestConsts;
 {$I AbDefine.inc}
 interface
 
