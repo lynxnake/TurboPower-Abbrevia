@@ -175,28 +175,32 @@ begin
                                           Archive.Password)
   else { just use data stream as-is }
     DestStrm := OutStream;
-
-  { get first bufferful }
-  DataRead := InStream.Read(Buffer, SizeOf(Buffer));
-  { while more data has been read and we're not told to bail }
-  while (DataRead <> 0) and not Abort do begin
-    {report the progress}
-    if Assigned(Archive.OnProgress) then begin
-      Total := Total + DataRead;
-      Percent := Round((100.0 * Total) / InSize);
-      if (LastPercent <> Percent) then
-        Archive.OnProgress(Percent, Abort);
-      LastPercent := Percent;
-    end;
-
-    { update CRC}
-    AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
-
-    { write data (encrypting if needed) }
-    DestStrm.WriteBuffer(Buffer, DataRead);
-
-    { get next bufferful }
+  try
+    { get first bufferful }
     DataRead := InStream.Read(Buffer, SizeOf(Buffer));
+    { while more data has been read and we're not told to bail }
+    while (DataRead <> 0) and not Abort do begin
+      {report the progress}
+      if Assigned(Archive.OnProgress) then begin
+        Total := Total + DataRead;
+        Percent := Round((100.0 * Total) / InSize);
+        if (LastPercent <> Percent) then
+          Archive.OnProgress(Percent, Abort);
+        LastPercent := Percent;
+      end;
+
+      { update CRC}
+      AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
+
+      { write data (encrypting if needed) }
+      DestStrm.WriteBuffer(Buffer, DataRead);
+
+      { get next bufferful }
+      DataRead := InStream.Read(Buffer, SizeOf(Buffer));
+    end;
+  finally
+    if Archive.Password <> '' then
+      DestStrm.Free;
   end;
 
   { finish CRC calculation }
@@ -205,11 +209,6 @@ begin
   { show final progress increment }
   if (Percent < 100) and Assigned(Archive.OnProgress) then
     Archive.OnProgress(100, Abort);
-
-  { DestStrm was created under these conditions it needs to be freed. }
-  //  [ 890888 ] Memory Leak in abZipPrc
-  if Archive.Password <> '' then  { encrypt the stream }
-    DestStrm.Free;
 
   { User wants to bail }
   if Abort then begin
@@ -249,10 +248,6 @@ begin
 {$ENDIF}
 end;
 
-procedure Validate;
-begin
-end;
-
 procedure UpdateItem;
 begin
   if (Item.CompressionMethod = cmDeflated) then
@@ -276,9 +271,6 @@ begin
   try
     { configure Item }
     ConfigureItem;
-
-    { validate }
-    Validate;
 
     if InStream.Size > 0 then begin                                      {!!.01}
 

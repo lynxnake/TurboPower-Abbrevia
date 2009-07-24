@@ -28,12 +28,12 @@ unit _ZipKit;
 interface
 
 uses
-  ComObj, Classes, Windows, Abbrevia3_TLB, ActiveX, axctrls, AbZipKit, AbArcTyp,
+  ComObj, Classes, Windows, Abbrevia_TLB, ActiveX, axctrls, AbZipKit, AbArcTyp,
   AbUtils, _ZipItem, _GZipItem, _TarItem, AbZipTyp, AbTarTyp, AbGzTyp,
   AbConst, AbBrowse;
 
 type
-
+  {$IFNDEF VER130}{$WARN SYMBOL_PLATFORM OFF}{$ENDIF}
   TZipKit = class(TAutoObject, IConnectionPointContainer, IEnumVariant, IZipKit)
   private
     {private declarations}
@@ -71,8 +71,8 @@ type
 
 
     {IEnumVariant}
-    function Next(celt: Longint; out elt; pceltFetched: PLongint): HResult; stdcall;
-    function Skip(celt: Longint): HResult; stdcall;
+    function Next(celt: LongWord; var rgvar : OleVariant; out pceltFetched: LongWord): HResult; stdcall;
+    function Skip(celt: LongWord): HResult; stdcall;
     function Reset: HResult; stdcall;
     function Clone(out Enum: IEnumVariant): HResult; stdcall;
 
@@ -156,38 +156,38 @@ end;
 {------------------------------------------------------------------------------}
 {IEnumVariant}
 {------------------------------------------------------------------------------}
-function TZipKit.Next(celt: Longint; out elt; pceltFetched: PLongint): HResult;
+function TZipKit.Next(celt: LongWord; var rgvar : OleVariant; out pceltFetched: LongWord): HResult; stdcall;
 var
   V : OleVariant;
   I : Integer;
 begin
   Result := S_FALSE;
   try
-    if pceltFetched <> nil then
-      pceltFetched^ := 0;
+    if @pceltFetched <> nil then
+      pceltFetched := 0;
     for I := 0 to celt - 1 do begin
       if FEnumPos >= FOwner.Count then begin
         FEnumPos := 0;
         Exit;
       end;
       V := Get_Item(FEnumPos);
-      TVariantArgList(elt)[I] := TVariantArg(V);
+      PVariantArgList(@rgvar)[I] := TVariantArg(V);
 
       { Prevent COM garbage collection }
       TVarData(V).VType := varEmpty;
       TVarData(V).VInteger := 0;
 
       Inc(FEnumPos);
-      if pceltFetched <> nil then
-        Inc(pceltFetched^);
+      if @pceltFetched <> nil then
+        Inc(pceltFetched);
     end;
   except
   end;
-  if (pceltFetched = nil) or ((pceltFetched <> nil) and (pceltFetched^ = celt)) then
+  if (@pceltFetched = nil) or (pceltFetched = celt) then
    Result := S_OK;
 end;
 {------------------------------------------------------------------------------}
-function TZipKit.Skip(celt: Longint): HResult;
+function TZipKit.Skip(celt: LongWord): HResult;
 begin
   Inc(FEnumPos, celt);
   Result := S_OK;
@@ -334,9 +334,9 @@ var
   TempOptions : TAbExtractOptions;
 begin
   TempOptions := [];
-  if (Value or Integer(eoCreateDirs)) = Value then
+  if (Value or Abbrevia_TLB.eoCreateDirs) = Value then
     Include(TempOptions, AbArcTyp.eoCreateDirs);
-  if (Value or Integer(eoRestorePath)) = Value then
+  if (Value or Abbrevia_TLB.eoRestorePath) = Value then
     Include(TempOptions, AbArcTyp.eoRestorePath);
   FOwner.ExtractOptions := TempOptions
 end;
@@ -468,17 +468,17 @@ var
   TempOptions : TAbStoreOptions;
 begin
   TempOptions := [];
-  if (Value or Integer(soStripDrive)) = Value then
+  if (Value or Abbrevia_TLB.soStripDrive) = Value then
     Include(TempOptions, AbArcTyp.soStripDrive);
-  if (Value or Integer(soStripPath)) = Value then
+  if (Value or Abbrevia_TLB.soStripPath) = Value then
     Include(TempOptions, AbArcTyp.soStripPath);
-  if (Value or Integer(soRemoveDots)) = Value then
+  if (Value or Abbrevia_TLB.soRemoveDots) = Value then
     Include(TempOptions, AbArcTyp.soRemoveDots);
-  if (Value or Integer(soRecurse)) = Value then
+  if (Value or Abbrevia_TLB.soRecurse) = Value then
     Include(TempOptions, AbArcTyp.soRecurse);
-  if (Value or Integer(soFreshen)) = Value then
+  if (Value or Abbrevia_TLB.soFreshen) = Value then
     Include(TempOptions, AbArcTyp.soFreshen);
-  if (Value or Integer(soReplace)) = Value then
+  if (Value or Abbrevia_TLB.soReplace) = Value then
     Include(TempOptions, AbArcTyp.soReplace);
   FOwner.StoreOptions := TempOptions
 end;

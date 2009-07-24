@@ -28,7 +28,7 @@ unit _GZipItem;
 interface
 
 uses
-  ComObj, Abbrevia3_TLB, AbGzTyp, AbZipKit;
+  ComObj, Abbrevia_TLB, AbGzTyp, AbZipKit;
 
 type
 

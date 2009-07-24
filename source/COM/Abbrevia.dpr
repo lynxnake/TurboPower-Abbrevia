@@ -31,7 +31,7 @@ uses
   _ZipItem in '_ZipItem.pas',
   _GZipItem in '_GZipItem.pas',
   _TarItem in '_TarItem.pas',
-  Abbrevia3_TLB in 'Abbrevia3_TLB.pas';
+  Abbrevia_TLB in 'Abbrevia_TLB.pas';
 
 exports
   DllGetClassObject,

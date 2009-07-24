@@ -392,12 +392,12 @@ begin
   FFileName := aFileName;
   if (csDesigning in ComponentState) then
     Exit;
-  {!!.05 Remove Try|Except Raise and double Free }
+
   if Assigned(FArchive) then
-   begin
-     FArchive.Save;
-     FreeAndNil(FArchive);
-   end;
+  begin
+    FArchive.Save;
+    FreeAndNil(FArchive);
+  end;
 
   ArcType := ArchiveType;
 

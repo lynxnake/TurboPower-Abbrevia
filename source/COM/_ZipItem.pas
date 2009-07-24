@@ -28,7 +28,7 @@ unit _ZipItem;
 interface
 
 uses
-  ComObj, Abbrevia3_TLB, AbZipTyp, AbZipKit;
+  ComObj, Abbrevia_TLB, AbZipTyp, AbZipKit;
 
 type
   TZipItem = class(TAutoIntfObject, IZipItem)
@@ -210,13 +210,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipItem.Get_ExtraField: WideString;
 begin
-  result := FOwner.ExtraField;
+  result := '';
 end;
 {------------------------------------------------------------------------------}
 procedure TZipItem.Set_ExtraField(const Value: WideString);
 begin
-  FOwner.ExtraField := Value;
-  FParent.ZipArchive.IsDirty := True;
+
 end;
 {------------------------------------------------------------------------------}
 function  TZipItem.Get_FileComment: WideString;

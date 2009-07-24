@@ -23,43 +23,54 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
-unit Abbrevia3_TLB;
+unit Abbrevia_TLB;
 
 // ************************************************************************ //
-// WARNING                                                                  //
-// -------                                                                  //
-// The types declared in this file were generated from data read from a     //
-// Type Library. If this type library is explicitly or indirectly (via      //
-// another type library referring to this type library) re-imported, or the //
-// 'Refresh' command of the Type Library Editor activated while editing the //
-// Type Library, the contents of this file will be regenerated and all      //
-// manual modifications will be lost.                                       //
+// WARNING                                                                    
+// -------                                                                    
+// The types declared in this file were generated from data read from a       
+// Type Library. If this type library is explicitly or indirectly (via        
+// another type library referring to this type library) re-imported, or the   
+// 'Refresh' command of the Type Library Editor activated while editing the   
+// Type Library, the contents of this file will be regenerated and all        
+// manual modifications will be lost.                                         
 // ************************************************************************ //
 
-// PASTLWTR : $Revision$
-// File generated on 4/17/2002 4:48:26 PM from Type Library described below.
+// $Rev$
+// File generated on 7/23/2009 9:45:45 PM from Type Library described below.
 
-// ************************************************************************ //
+// ************************************************************************  //
 // Type Lib: C:\Abbrevia\COM\abbrevia.dll
-// IID\LCID: {AF804E20-4043-499E-BB14-237B9F26F89F}\0
+// LIBID: {AF804E20-4043-499E-BB14-237B9F26F89F}
+// LCID: 0
 // Helpfile: C:\Abbrevia\COM\abrv-com.hlp
 // HelpString: TurboPower Abbrevia Compression Library v3.03
-// Version:    3.0
+// DepndLst: 
+//   (1) v2.0 stdole, (C:\WINDOWS\System32\stdole2.tlb)
 // ************************************************************************ //
-
+{$TYPEDADDRESS OFF} // Unit must be compiled without type-checked pointers. 
+{$WARN SYMBOL_PLATFORM OFF}
+{$WRITEABLECONST ON}
+{$VARPROPSETTER ON}
 interface
 
-uses Windows, ActiveX, Classes, Graphics, OleCtrls, StdVCL;
+uses Windows, ActiveX, Classes, Graphics, StdVCL, Variants;
+  
 
 // *********************************************************************//
-// GUIDS declared in the TypeLibrary. Following prefixes are used:      //
-//   Type Libraries     : LIBID_xxxx                                    //
-//   CoClasses          : CLASS_xxxx                                    //
-//   DISPInterfaces     : DIID_xxxx                                     //
-//   Non-DISP interfaces: IID_xxxx                                      //
+// GUIDS declared in the TypeLibrary. Following prefixes are used:        
+//   Type Libraries     : LIBID_xxxx                                      
+//   CoClasses          : CLASS_xxxx                                      
+//   DISPInterfaces     : DIID_xxxx                                       
+//   Non-DISP interfaces: IID_xxxx                                        
 // *********************************************************************//
 const
-  LIBID_Abbrevia3: TGUID = '{AF804E20-4043-499E-BB14-237B9F26F89F}';
+  // TypeLibrary Major and minor versions
+  AbbreviaMajorVersion = 3;
+  AbbreviaMinorVersion = 0;
+
+  LIBID_Abbrevia: TGUID = '{AF804E20-4043-499E-BB14-237B9F26F89F}';
+
   IID_IZipItem: TGUID = '{851699A1-422A-4C65-8E08-D0499ACDD834}';
   IID_IGZipItem: TGUID = '{8FA78CE0-FD29-441E-9777-93B63EF1A9EE}';
   IID_ITarItem: TGUID = '{729E9F52-C489-4A41-A770-4E2C5282AE39}';
@@ -71,9 +82,9 @@ const
   CLASS_ZipKit: TGUID = '{730B4B32-9127-492A-BF02-196A7E6B4E1B}';
 
 // *********************************************************************//
-// Declaration of Enumerations defined in Type Library                  //
+// Declaration of Enumerations defined in Type Library                    
 // *********************************************************************//
-// TArchiveAction constants
+// Constants for enum TArchiveAction
 type
   TArchiveAction = TOleEnum;
 const
@@ -85,7 +96,7 @@ const
   aaMove = $00000005;
   aaStreamAdd = $00000006;
 
-// TArchiveStatus constants
+// Constants for enum TArchiveStatus
 type
   TArchiveStatus = TOleEnum;
 const
@@ -93,7 +104,7 @@ const
   asIdle = $00000001;
   asBusy = $00000002;
 
-// TErrorClass constants
+// Constants for enum TErrorClass
 type
   TErrorClass = TOleEnum;
 const
@@ -104,7 +115,7 @@ const
   eclFileOpenError = $00000004;
   eclOther = $00000005;
 
-// TFileAttributes constants
+// Constants for enum TFileAttributes
 type
   TFileAttributes = TOleEnum;
 const
@@ -115,7 +126,7 @@ const
   faDirectory = $00000010;
   faArchive = $00000020;
 
-// TProcessType constants
+// Constants for enum TProcessType
 type
   TProcessType = TOleEnum;
 const
@@ -126,7 +137,7 @@ const
   ptMove = $00000004;
   ptReplace = $00000005;
 
-// TStoreOptions constants
+// Constants for enum TStoreOptions
 type
   TStoreOptions = TOleEnum;
 const
@@ -137,7 +148,7 @@ const
   soFreshen = $00000010;
   soReplace = $00000020;
 
-// TZipCompressionMethod constants
+// Constants for enum TZipCompressionMethod
 type
   TZipCompressionMethod = TOleEnum;
 const
@@ -154,7 +165,7 @@ const
   cmDCLImploded = $0000000A;
   cmBestMethod = $0000000B;
 
-// TZipDeflateOption constants
+// Constants for enum TZipDeflateOption
 type
   TZipDeflateOption = TOleEnum;
 const
@@ -164,7 +175,7 @@ const
   doFast = $00000003;
   doSuperFast = $00000004;
 
-// TZipDictionarySize constants
+// Constants for enum TZipDictionarySize
 type
   TZipDictionarySize = TOleEnum;
 const
@@ -172,14 +183,14 @@ const
   ds4K = $00000001;
   ds8K = $00000002;
 
-// TZipExtractOptions constants
+// Constants for enum TZipExtractOptions
 type
   TZipExtractOptions = TOleEnum;
 const
   eoCreateDirs = $00000000;
   eoRestorePath = $00000001;
 
-// TZipSupportMethod constants
+// Constants for enum TZipSupportMethod
 type
   TZipSupportMethod = TOleEnum;
 const
@@ -187,7 +198,7 @@ const
   smDeflated = $00000001;
   smBestMethod = $00000002;
 
-// TErrorCode constants
+// Constants for enum TErrorCode
 type
   TErrorCode = TOleEnum;
 const
@@ -200,7 +211,7 @@ const
   ecZipVersionNumber = $00000006;
   ecSpannedItemNotFound = $00000007;
 
-// TArchiveType constants
+// Constants for enum TArchiveType
 type
   TArchiveType = TOleEnum;
 const
@@ -212,7 +223,7 @@ const
   atGZippedTar = $00000005;
   atCab = $00000006;
 
-// TFileSystem constants
+// Constants for enum TFileSystem
 type
   TFileSystem = TOleEnum;
 const
@@ -236,7 +247,7 @@ const
 type
 
 // *********************************************************************//
-// Forward declaration of interfaces defined in Type Library            //
+// Forward declaration of types defined in TypeLibrary                    
 // *********************************************************************//
   IZipItem = interface;
   IZipItemDisp = dispinterface;
@@ -249,8 +260,8 @@ type
   IZipKitEvents = dispinterface;
 
 // *********************************************************************//
-// Declaration of CoClasses defined in Type Library                     //
-// (NOTE: Here we map each CoClass to its Default Interface)            //
+// Declaration of CoClasses defined in Type Library                       
+// (NOTE: Here we map each CoClass to its Default Interface)              
 // *********************************************************************//
   ZipItem = IZipItem;
   GZipItem = IGZipItem;
@@ -711,21 +722,49 @@ type
     procedure OnSave; dispid 14;
   end;
 
+// *********************************************************************//
+// The Class CoZipItem provides a Create and CreateRemote method to          
+// create instances of the default interface IZipItem exposed by              
+// the CoClass ZipItem. The functions are intended to be used by             
+// clients wishing to automate the CoClass objects exposed by the         
+// server of this typelibrary.                                            
+// *********************************************************************//
   CoZipItem = class
     class function Create: IZipItem;
     class function CreateRemote(const MachineName: string): IZipItem;
   end;
 
+// *********************************************************************//
+// The Class CoGZipItem provides a Create and CreateRemote method to          
+// create instances of the default interface IGZipItem exposed by              
+// the CoClass GZipItem. The functions are intended to be used by             
+// clients wishing to automate the CoClass objects exposed by the         
+// server of this typelibrary.                                            
+// *********************************************************************//
   CoGZipItem = class
     class function Create: IGZipItem;
     class function CreateRemote(const MachineName: string): IGZipItem;
   end;
 
+// *********************************************************************//
+// The Class CoTarItem provides a Create and CreateRemote method to          
+// create instances of the default interface ITarItem exposed by              
+// the CoClass TarItem. The functions are intended to be used by             
+// clients wishing to automate the CoClass objects exposed by the         
+// server of this typelibrary.                                            
+// *********************************************************************//
   CoTarItem = class
     class function Create: ITarItem;
     class function CreateRemote(const MachineName: string): ITarItem;
   end;
 
+// *********************************************************************//
+// The Class CoZipKit provides a Create and CreateRemote method to          
+// create instances of the default interface IZipKit exposed by              
+// the CoClass ZipKit. The functions are intended to be used by             
+// clients wishing to automate the CoClass objects exposed by the         
+// server of this typelibrary.                                            
+// *********************************************************************//
   CoZipKit = class
     class function Create: IZipKit;
     class function CreateRemote(const MachineName: string): IZipKit;

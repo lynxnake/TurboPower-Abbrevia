@@ -88,13 +88,11 @@ type
 
   TAbGzTailRec = packed record
     CRC32 : LongInt;  { crc for uncompressed data }
-    ISize : Cardinal;  { size of uncompressed data }
+    ISize : LongWord;  { size of uncompressed data }
   end;
 
 type
   TAbGzipItem = class(TAbArchiveItem)
-  private
-//    FCRC32: LongInt;
   protected {private}
     FGZHeader : TAbGzHeader;
     FIsText : Boolean;
@@ -133,7 +131,6 @@ type
     procedure SaveGzHeaderToStream(AStream : TStream);
     procedure LoadGzHeaderFromStream(AStream : TStream);
   public
-
     property CompressionMethod : Byte
       read FGZHeader.CompMethod write FGZHeader.CompMethod;
 
@@ -211,7 +208,7 @@ type
       read GetFileSize;
     property TailCRC : LongInt
       read FTail.CRC32;
-    property TailSize : Cardinal
+    property TailSize : LongWord
       read FTail.ISize;
   end;
 
@@ -254,7 +251,8 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       override;
-    constructor CreateFromStream(aStream : TStream; const aArchiveName : string); override;
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
+      override;
     destructor  Destroy;
       override;
 
@@ -372,7 +370,6 @@ begin
       PartialTarData := TMemoryStream.Create;
       GHlp.SeekToItemData;
       Hlpr := TAbDeflateHelper.Create;
-//      Hlpr.LogFile := 'c:\gzip.log'; {REMOVE}
       Hlpr.PartialSize := 512;
       PartialTarData.SetSize(512 * 2);
       Inflate(Strm, PartialTarData, Hlpr);
@@ -511,7 +508,7 @@ begin
   Helper := TAbDeflateHelper.Create;
   try
     FItem.CRC32 := Deflate(AStream, FStream, Helper);
-    FItem.UncompressedSize := AStream.Size;                         {!!.02}
+    FItem.UncompressedSize := AStream.Size;                              {!!.02}
 //    FItem.UncompressedSize := FStream.Size{Helper.NormalSize};         {!!.02}
   finally
     Helper.Free;
@@ -937,7 +934,6 @@ begin
   FGZHeader.ModTime := UT;
 end;
 
-
 { TAbGzipArchive }
 
 constructor TAbGzipArchive.Create(const FileName: string; Mode: Word);
@@ -951,6 +947,20 @@ begin
   fStream.Free;
   FGZStream  := TFileStream.Create(FileName,Mode);
   fStream    := FGZStream;
+  FGZItem    := FItemList;
+  FTarStream := TAbVirtualMemoryStream.Create;
+  FTarList   := TAbArchiveList.Create;
+end;
+
+constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
+  const aArchiveName: string);
+begin
+  //  [ 1240845 ] Fix suggested by JOvergaard
+ // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
+  FGZStream := aStream;
+  inherited CreateFromStream(aStream,aArchiveName);
+  FTarLoaded := False;
+  FState     := gsGzip;
   FGZItem    := FItemList;
   FTarStream := TAbVirtualMemoryStream.Create;
   FTarList   := TAbArchiveList.Create;
@@ -1093,7 +1103,6 @@ begin
       { Get validation data }
       GzHelp.ReadTail;
 
-
       {$IFDEF STRICTGZIP}
       { According to
           http://www.gzip.org/zlib/rfc1952.txt
@@ -1112,7 +1121,6 @@ begin
       if GzHelp.FItem.UncompressedSize <> GZHelp.TailSize then
         raise EAbGzipBadFileSize.Create;
       {$ENDIF}
-
     finally
       GzHelp.Free;
     end;
@@ -1194,10 +1202,8 @@ begin
 
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
         GZHelp.ReadTail;
-        Item.CRC32 := GZHelp.FTail.CRC32;
-        Item.UncompressedSize := GZHelp.FTail.ISize;
-//        Item.CRC32 := GZHelp.FItem.FCRC32;
-        Item.UncompressedSize := GZHelp.FItem.UncompressedSize;
+        Item.CRC32 := GZHelp.TailCRC;
+        Item.UncompressedSize := GZHelp.TailSize;
 
         Item.Action := aaNone;
         FItemList.Clear;
@@ -1465,20 +1471,6 @@ procedure TAbGzipArchive.DoSpanningMediaRequest(Sender: TObject;
   ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
 begin
   Abort := False;
-end;
-
-constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
-  const aArchiveName: string);
-begin
-  //  [ 1240845 ] Fix suggested by JOvergaard
- // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
-  FGZStream := aStream;
-  inherited CreateFromStream(aStream,aArchiveName);
-  FTarLoaded := False;
-  FState     := gsGzip;
-  FGZItem    := FItemList;
-  FTarStream := TAbVirtualMemoryStream.Create;
-  FTarList   := TAbArchiveList.Create;
 end;
 
 end.

@@ -226,7 +226,7 @@ type
   function AbFindNthSlash( const Path : string; n : Integer ) : Integer;
     {return the position of the character just before the nth backslash}
 
-  function AbGetDriveFreeSpace(const ArchiveName : string) : int64;
+  function AbGetDriveFreeSpace(const ArchiveName : string) : Int64;
     {return the available space on the specified drive }
 
   function AbGetPathType( const Value : string ) : TAbPathType;
@@ -326,7 +326,7 @@ const
 
   function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
 
-  function AbFlushOsBuffers(Handle : Integer) : Boolean;
+  procedure AbFlushOsBuffers(Handle : Integer);
 
 { file attributes }
   function AbDOS2UnixFileAttributes(Attr: LongInt): LongInt;
@@ -775,17 +775,16 @@ var
   Found : Integer;
   NameMask: string;
 begin
-
   Found := FindFirst( FileMask, SearchAttr, SR );
   if Found = 0 then begin
     try
       NameMask := UpperCase(ExtractFileName(FileMask));
       while Found = 0 do begin
         NewFile := ExtractFilePath( FileMask ) + SR.Name;
-       if ((sr.Name <> AbThisDir) and (sr.Name <> AbParentDir)) then begin
-            if AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
-            FileList.Add( NewFile );
-        end;
+        if (SR.Name <> AbThisDir) and 
+           (SR.Name <> AbParentDir) and
+           AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
+          FileList.Add( NewFile );
         Found := FindNext( SR );
       end;
     finally
@@ -944,7 +943,7 @@ var
   Ext : string;
   I : Word;
 begin
-  I := (Value +1) mod 100;
+  I := (Value + 1) mod 100;
   Ext := ExtractFileExt(Filename);
   if (Length(Ext) < 2) then
     Ext := '.' + Format('%.2d', [I])
@@ -1319,18 +1318,17 @@ end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
 
-function AbFlushOsBuffers(Handle : Integer) : Boolean;
+procedure AbFlushOsBuffers(Handle : Integer);
 //Taken from StSystem.pas from SysTools, modified to do nothing for linux
 {-Flush the OS's buffers for the specified file}
 begin
-{$IFNDEF LINUX}
-  Result := FlushFileBuffers(Handle);
-  if not Result then
-{$IFDEF Version6}
+{$IFDEF MSWINDOWS}
+  if not FlushFileBuffers(Handle) then
+    {$IFDEF Version6}
     RaiseLastOSError;
-{$ELSE}
+    {$ELSE}
     RaiseLastWin32Error;
-{$ENDIF}
+    {$ENDIF}
 {$ENDIF}
 end;
 

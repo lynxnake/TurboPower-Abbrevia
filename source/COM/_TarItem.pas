@@ -28,7 +28,7 @@ unit _TarItem;
 interface
 
 uses
-  ComObj, Abbrevia3_TLB, AbTarTyp, AbZipKit;
+  ComObj, Abbrevia_TLB, AbTarTyp, AbZipKit;
 
 type
 
@@ -244,7 +244,7 @@ end;
 {------------------------------------------------------------------------------}
 procedure TTarItem.Set_LinkFlag(Value: Byte);
 begin
-  FOwner.LinkFlag := Char(Value);
+  FOwner.LinkFlag := AnsiChar(Value);
   FParent.ZipArchive.IsDirty := True;
 end;
 {------------------------------------------------------------------------------}
