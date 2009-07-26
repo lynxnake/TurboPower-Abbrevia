@@ -1008,14 +1008,8 @@ begin
 end;
 
 destructor TAbGzipArchive.Destroy;
-var
-    i: Integer;
 begin
   SwapToGzip;
-  if FTarList.Count > 0 then begin
-      for I := 0 to FTarList.Count - 1 do TObject(FTarList[i]).Free();
-  end;
-
   FTarList.Free;
   FTarStream.Free;
   inherited Destroy;

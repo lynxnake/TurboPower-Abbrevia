@@ -715,6 +715,7 @@ end;
 { -------------------------------------------------------------------------- }
 destructor TAbArchiveList.Destroy;
 begin
+  Clear;
   FList.Free;
   inherited Destroy;
 end;
@@ -730,7 +731,11 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveList.Clear;
+var
+  i : Integer;
 begin
+  for i := 0 to Count - 1 do
+    TObject(FList[i]).Free;
   FList.Clear;
   FillChar(HashTable, SizeOf(HashTable), #0);
 end;
@@ -901,17 +906,9 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbArchive.Destroy;
-var
-  i : Integer;
 begin
-  if Assigned(FItemList) then begin
-    if Count > 0 then
-      for i := pred(Count) downto 0 do
-        TObject(FItemList.Items[i]).Free;
-    FItemList.Clear;
-    FItemList.Free;
-    FItemList := nil;
-  end;
+  FItemList.Free;
+  FItemList := nil;
   FPadLock.Free;
   FPadLock := nil;
   if FOwnsStream then begin
