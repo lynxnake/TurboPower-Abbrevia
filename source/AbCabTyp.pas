@@ -132,6 +132,8 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       override;
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
+      override;
     destructor Destroy;
       override;
     procedure Add(aItem : TAbArchiveItem);
@@ -467,19 +469,21 @@ constructor TAbCabArchive.Create(const FileName : string; Mode : Word );
 begin
   {Mode is used to identify which interface to use: }
   {  fmOpenWrite - FCI, fmOpenRead - FDI}
+  inherited CreateInit;
   FMode := Mode and fmOpenWrite;
-  FStatus := asInvalid;
   FArchiveName := FileName;
-  BaseDirectory := ExtractFilePath(ParamStr(0));
-  FItemList := TAbArchiveList.Create;
-  FPadLock := TAbPadLock.Create;
-  FStatus := asIdle;
   StrPLCopy(FCabName, AnsiString(ExtractFileName(FileName)), Length(FCabName));
   StrPLCopy(FCabPath, AnsiString(ExtractFilePath(FileName)), Length(FCabPath));
   SpanningThreshold := AbDefCabSpanningThreshold;
   FFolderThreshold := AbDefFolderThreshold;
   FItemInProgress := nil;
   FItemProgress := 0;
+end;
+{ -------------------------------------------------------------------------- }
+constructor TAbCabArchive.CreateFromStream(aStream : TStream;
+  const aArchiveName : string);
+begin
+  raise EAbCabException.Create('TAbCabArchive does not support CreateFromStream');
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbCabArchive.Destroy;

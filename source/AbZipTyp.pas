@@ -564,7 +564,8 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word );
       override;
-    constructor CreateFromStream( aStream : TStream; const ArchiveName : string ); override;
+    constructor CreateFromStream( aStream : TStream; const ArchiveName : string );
+      override;
     destructor Destroy;
       override;
     function CreateItem(const FileName : string): TAbArchiveItem; override; {!!.05}
@@ -1726,8 +1727,24 @@ end;
 
 { TAbZipArchive implementation ============================================= }
 constructor TAbZipArchive.Create(const FileName : string; Mode : Word );
+var
+  Stream: TAbSpanStream;
 begin
-  inherited Create( FileName, Mode );
+  FOwnsStream := True;
+  if AbDriveIsRemovable(FileName) then
+    Stream := TAbSpanStream.Create(FileName, Mode, mtRemoveable, FSpanningThreshold)
+  else
+    Stream := TAbSpanStream.Create(FileName, Mode, mtLocal, FSpanningThreshold);
+  Stream.OnRequestImage := DoSpanningMediaRequest;
+  Stream.OnArchiveProgress := DoArchiveSaveProgress;
+  CreateFromStream(Stream, FileName);
+  FMode := Mode;
+end;
+{ -------------------------------------------------------------------------- }
+constructor TAbZipArchive.CreateFromStream( aStream : TStream;
+                                      const ArchiveName : string );
+begin
+  inherited CreateFromStream( aStream, ArchiveName );
   FCompressionMethodToUse := smBestMethod;
   FInfo := TAbZipDirectoryFileFooter.Create;
   StoreOptions := StoreOptions + [soStripDrive];
@@ -1736,14 +1753,6 @@ begin
   FTempDir := '';
   SpanningThreshold := AbDefZipSpanningThreshold;
   FCurrentDisk := Word(-1); {!!}
-end;
-{ -------------------------------------------------------------------------- }
-constructor TAbZipArchive.CreateFromStream( aStream : TStream;
-                                      const ArchiveName : string );
-begin
-  inherited CreateFromStream( aStream, ArchiveName );
-  FInfo := TAbZipDirectoryFileFooter.Create;
-  FPasswordRetries := AbDefPasswordRetries;                            
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipArchive.Destroy;
@@ -2754,9 +2763,9 @@ begin
     if TAbSpanStream(FStream).SpanMode = smWriting then begin
       MediaType := TAbSpanStream(FStream).MediaType;
       if FOwnsStream then begin //  914427
-      FStream.Free;
-      FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
-        MediaType, FSpanningThreshold);
+        FStream.Free;
+        FStream := TAbSpanstream.Create(ArchiveName, fmOpenRead or fmShareDenyWrite,
+          MediaType, FSpanningThreshold);
       end;
       TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;
       TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}

@@ -226,17 +226,10 @@ type
     procedure PutItem(Index: Integer; const Value: TAbTarItem);
     class function SupportsEmptyFolder: Boolean; override;     {!!.03}
   public {methods}
-    constructor Create(const FileName : string; Mode : Word);
-      override;
-    destructor  Destroy;
-      override;
-
     property Items[Index : Integer] : TAbTarItem                    {!!.03}
       read GetItem                                                  {!!.03}
       write PutItem; default;                                       {!!.03}
-
-
- end;
+  end;
 
 function VerifyTar(Strm : TStream) : TAbArchiveType;
 
@@ -882,17 +875,6 @@ end;
 
 { TAbTarArchive }
 
-constructor TAbTarArchive.Create(const FileName: string; Mode: Word);
-begin
-  inherited Create(FileName, Mode);
-end;
-
-destructor TAbTarArchive.Destroy;
-begin
-  inherited Destroy;
-end;
-
-
 function TAbTarArchive.CreateItem(const FileName: string): TAbArchiveItem;
 var
   FileSpec: string;
@@ -1236,12 +1218,9 @@ begin
         TAbVirtualMemoryStream(FStream).CopyFrom(NewStream, NewStream.Size)
       else begin
         { need new stream to write }
-        FStream.Free;
-        FStream := TAbSpanStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite, mtLocal, FSpanningThreshold);
-          FStream.CopyFrom(NewStream, NewStream.Size);
-
-        TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;
-        TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
+        FreeAndNil(FStream);
+        FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
+        FStream.CopyFrom(NewStream, NewStream.Size);
       end;
 
       {update Items list}

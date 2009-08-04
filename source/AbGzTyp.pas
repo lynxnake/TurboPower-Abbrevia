@@ -249,8 +249,6 @@ type
     function GetItem(Index: Integer): TAbGzipItem;                  {!!.03}
     procedure PutItem(Index: Integer; const Value: TAbGzipItem);    {!!.03}
   public {methods}
-    constructor Create(const FileName : string; Mode : Word);
-      override;
     constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
       override;
     destructor  Destroy;
@@ -936,31 +934,13 @@ end;
 
 { TAbGzipArchive }
 
-constructor TAbGzipArchive.Create(const FileName: string; Mode: Word);
+constructor TAbGzipArchive.CreateFromStream(aStream : TStream;
+  const aArchiveName : string);
 begin
-  inherited Create(FileName, Mode);
-  FTarLoaded := False;
-  FState    := gsGzip;
-// Replaced to use TFileStream instead of TabSpanStream
-// This feels like a hack to do this here.
-//  FGZStream  := FStream;  { save reference to opened file stream }
-  fStream.Free;
-  FGZStream  := TFileStream.Create(FileName,Mode);
-  fStream    := FGZStream;
-  FGZItem    := FItemList;
-  FTarStream := TAbVirtualMemoryStream.Create;
-  FTarList   := TAbArchiveList.Create;
-end;
-
-constructor TAbGzipArchive.CreateFromStream(aStream: TStream;
-  const aArchiveName: string);
-begin
-  //  [ 1240845 ] Fix suggested by JOvergaard
- // [ 858209 ] GZip from stream to stream with TAbGzipArchive renders error
-  FGZStream := aStream;
-  inherited CreateFromStream(aStream,aArchiveName);
+  inherited CreateFromStream(aStream, aArchiveName);
   FTarLoaded := False;
   FState     := gsGzip;
+  FGZStream  := FStream;
   FGZItem    := FItemList;
   FTarStream := TAbVirtualMemoryStream.Create;
   FTarList   := TAbArchiveList.Create;
@@ -1373,12 +1353,8 @@ begin
       TMemoryStream(FStream).LoadFromStream(NewStream)
     else begin
       { need new stream to write }
-      FStream.Free;
-      // GZIP does not support spanning, removing use of AbSpanStream.
-//      FStream := TAbSpanStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite, mtLocal, FSpanningThreshold);
-      FStream := TFileStream.Create(FArchiveName,fmOpenWrite or fmShareDenyWrite);
-//    TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;   {!!.01}
-//    TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress; {!!.04}
+      FreeAndNil(FStream);
+      FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
       try
         FStream.CopyFrom(NewStream, NewStream.Size);
         FGZStream := FStream;

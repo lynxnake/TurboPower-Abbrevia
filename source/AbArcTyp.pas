@@ -296,6 +296,7 @@ type
     FOnSave                : TAbArchiveEvent;
 
   protected {methods}
+    constructor CreateInit;
     procedure CheckValid;
     function  ConfirmPath(Item : TAbArchiveItem; const NewName : string;
       out UseName : string) : Boolean;
@@ -303,7 +304,6 @@ type
     function  FreshenRequired(Item : TAbArchiveItem) : Boolean;
     procedure GetFreshenTarget(Item : TAbArchiveItem);
     function  GetItemCount : Integer;
-    procedure Init;
     procedure Lock;
     procedure MakeLogEntry(const FN: string; LT : TAbLogType);
     procedure ReplaceAt(Index : Integer);
@@ -370,7 +370,8 @@ type
   public {methods}
     constructor Create(const FileName : string; Mode : Word);
       virtual;
-    constructor CreateFromStream(aStream : TStream; const aArchiveName : string); virtual; {!!.05 Added Virtual}
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
+      virtual;
     destructor  Destroy;
       override;
     procedure Add(aItem : TAbArchiveItem);
@@ -859,50 +860,34 @@ end;
 
 { TAbArchive implementation ================================================ }
 { TAbArchive }
+constructor TAbArchive.CreateInit;
+begin
+  inherited Create;
+  FIsDirty := False;
+  FAutoSave := False;
+  FItemList := TAbArchiveList.Create;
+  FPadLock := TAbPadLock.Create;
+  StoreOptions := [];
+  ExtractOptions := [];
+  FStatus := asIdle;
+  FOnProgress := DoProgress;
+  BaseDirectory := ExtractFilePath(ParamStr(0));
+end;
+{ -------------------------------------------------------------------------- }
 constructor TAbArchive.Create(const FileName : string; Mode : Word);
   {create an archive by opening a filestream on filename with the given mode}
 begin
-  inherited Create;
-  FStatus := asInvalid;
-  if AbDriveIsRemovable(FileName) then
-    FStream := TAbSpanStream.Create(FileName, Mode, mtRemoveable, FSpanningThreshold)
-  else
-    FStream := TAbSpanStream.Create(FileName, Mode, mtLocal, FSpanningThreshold);
-// !!.05 The following is a test to use TFileStream directly if not spanning
-// This removes the headaches of not being able to seek() when not spanning.
-// Allowing features such as TestTagged, and Add then Extract to work without
-// having to close reopen the archive.
-//   FStream := TFileStream.Create(FileName,Mode);
-
-  if (FStream is TAbSpanStream) then {!!.05}
-   begin
-    TAbSpanStream(FStream).OnRequestImage := DoSpanningMediaRequest;
-    TAbSpanStream(FStream).OnArchiveProgress := DoArchiveSaveProgress;   {!!.04}
-   end;
-
-  FLogStream := nil;
   FOwnsStream := True;
-  FArchiveName := FileName;
-  FOnProgress := DoProgress;
-  FSpanned := False;
+  CreateFromStream(TFileStream.Create(FileName, Mode), FileName);
   FMode := Mode;
-  BaseDirectory := ExtractFilePath(ParamStr(0));
-  Init;
 end;
 { -------------------------------------------------------------------------- }
 constructor TAbArchive.CreateFromStream(aStream : TStream; const aArchiveName : string);
   {create an archive based on an existing stream}
 begin
-  inherited Create;
-  FStatus := asInvalid;
-  FLogStream := nil;
+  CreateInit;
   FArchiveName := aArchiveName;
-  FOnProgress := DoProgress;
-  FOwnsStream := False;
-  FSpanned := False;
   FStream := aStream;
-  FMode := 0;
-  Init;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbArchive.Destroy;
@@ -1677,17 +1662,6 @@ begin
     Result := FItemList.Count
   else
     Result := 0;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbArchive.Init;
-begin
-  FIsDirty := False;
-  FAutoSave := False;
-  FItemList := TAbArchiveList.Create;
-  FPadLock := TAbPadLock.Create;
-  StoreOptions := [];
-  ExtractOptions := [];
-  FStatus := asIdle;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Load;
