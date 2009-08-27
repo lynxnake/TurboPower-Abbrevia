@@ -384,6 +384,11 @@ resourcestring
   AbGzOsNTFS        = 'NTFS File System (NT)';
   AbGzOsQDOS        = 'QDOS';
   AbGzOsAcornRISCOS = 'Acorn RISCOS';
+  AbGzOsVFAT        = 'VFAT File System (Win95, NT)';
+  AbGzOsMVS         = 'MVS';
+  AbGzOsBeOS        = 'BeOS (BeBox or PowerMac)';
+  AbGzOsTandem      = 'Tandem/NSK';
+  AbGzOsTHEOS       = 'THEOS';
   AbGzOsunknown     = 'unknown';
   AbGzOsUndefined   = 'ID undefined by gzip';
 

@@ -47,7 +47,7 @@ uses
   {$ENDIF}
   SysUtils, Classes,
 
-  AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp, 
+  AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp,
   AbDfBase, AbDfDec, AbDfEnc, AbVMStrm, AbBitBkt, AbSpanSt;
 
 type
@@ -56,7 +56,8 @@ type
   TAbGzFileSystem =
     (osFat, osAmiga, osVMS, osUnix, osVM_CMS, osAtariTOS,
     osHPFS, osMacintosh, osZSystem, osCP_M, osTOPS20,
-    osNTFS, osQDOS, osAcornRISCOS, osUnknown, osUndefined);
+    osNTFS, osQDOS, osAcornRISCOS, osVFAT, osMVS, osBeOS,
+    osTandem, osTHEOS, osUnknown, osUndefined);
 
 type
   PAbGzHeader = ^TAbGzHeader;
@@ -300,6 +301,11 @@ const
   AB_GZ_OS_ID_NTFS        = 11;
   AB_GZ_OS_ID_QDOS        = 12;
   AB_GZ_OS_ID_AcornRISCOS = 13;
+  AB_GZ_OS_ID_VFAT        = 14;
+  AB_GZ_OS_ID_MVS         = 15;
+  AB_GZ_OS_ID_BEOS        = 16;
+  AB_GZ_OS_ID_TANDEM      = 17;
+  AB_GZ_OS_ID_THEOS       = 18;
   AB_GZ_OS_ID_unknown     = 255;
 
 function GZOsToStr(OS: Byte) : string;
@@ -322,6 +328,11 @@ begin
     AB_GZ_OS_ID_NTFS        : Result := AbGzOsNTFS;
     AB_GZ_OS_ID_QDOS        : Result := AbGzOsQDOS;
     AB_GZ_OS_ID_AcornRISCOS : Result := AbGzOsAcornRISCOS;
+    AB_GZ_OS_ID_VFAT        : Result := AbGzOsVFAT;
+    AB_GZ_OS_ID_MVS         : Result := AbGzOsMVS;
+    AB_GZ_OS_ID_BEOS        : Result := AbGzOsBeOS;
+    AB_GZ_OS_ID_TANDEM      : Result := AbGzOsTandem;
+    AB_GZ_OS_ID_THEOS       : Result := AbGzOsTHEOS;
     AB_GZ_OS_ID_unknown     : Result := AbGzOsunknown;
   else
     Result := AbGzOsUndefined;
@@ -382,7 +393,7 @@ begin
     GHlp.Free;
     Hlpr.Free;
     PartialTarData.Free;
-    
+
     Strm.Position := CurPos;
   end;
 end;
@@ -597,7 +608,7 @@ end;
 function TAbGzipItem.GetFileSystem: TAbGzFileSystem;
 begin
   case FGzHeader.OS of
-    0..13: Result := TAbGzFileSystem(FGzHeader.OS);
+    0..18: Result := TAbGzFileSystem(FGzHeader.OS);
     255:   Result := osUnknown;
     else
       Result := osUndefined;
