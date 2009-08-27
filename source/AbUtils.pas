@@ -308,7 +308,7 @@ type
 const
   Date1900 {: LongInt} = $0001AC05;  {Julian day count for 01/01/1900 -- TDateTime Start Date}
   Date1970 {: LongInt} = $00020FE4;  {Julian day count for 01/01/1970 -- Unix Start Date}
-  Unix0Date: TDateTime = 25568;      {Date1970 - Date1900}
+  Unix0Date: TDateTime = 25569;      {Date1970 - Date1900}
 
   SecondsInDay    = 86400;  {Number of seconds in a day}
   SecondsInHour   =  3600;  {Number of seconds in an hour}
