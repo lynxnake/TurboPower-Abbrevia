@@ -98,14 +98,11 @@ type
     FGZHeader : TAbGzHeader;
     FIsText : Boolean;
     FCRC16 : ShortInt;
-    FXLen  : ShortInt;
     FExtraField, FFileComment : string;
     FIncludeHeaderCrc: Boolean;
 
   protected
-    function GetExtraField: string;
     function GetFileSystem: TAbGzFileSystem;
-    function GetFileComment: string;
     function GetHeaderCRC: Word;
     function GetHasExtraField: Boolean;
     function GetHasFileComment: Boolean;
@@ -142,13 +139,13 @@ type
       read FGZHeader.Flags write FGZHeader.Flags;
 
     property FileComment : string
-      read GetFileComment write SetFileComment;
+      read FFileComment write SetFileComment;
 
     property FileSystem : TAbGzFileSystem {Default: osFat (Windows); osUnix (Linux)}
       read GetFileSystem write SetFileSystem;
 
     property ExtraField : string
-      read GetExtraField write SetExtraField;
+      read FExtraField write SetExtraField;
 
     property HeaderCRC : Word
       read GetHeaderCRC;
@@ -588,23 +585,6 @@ begin
   Result := 0;
 end;
 
-function TAbGzipItem.GetExtraField: string;
-begin
-  Result := '';
-  if HasExtraField then begin
-    SetLength(Result, FXLen);
-    Move(FExtraField, Result[1], FXLen);
-  end;
-end;
-
-function TAbGzipItem.GetFileComment: string;
-begin
-  Result := '';
-  if HasFileComment then
-    Result := FFileComment;
-end;
-
-
 function TAbGzipItem.GetFileSystem: TAbGzFileSystem;
 begin
   case FGzHeader.OS of
@@ -843,42 +823,29 @@ end;
 
 procedure TAbGzipItem.SetExtraField(const Value: string);
 begin
-  FExtraField := '';
-
-  if Value > '' then begin
-    FExtraField := Value;
-    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FEXTRA;
-  end
-  else begin
+  FExtraField := Value;
+  if Value > '' then
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FEXTRA
+  else
     FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
-  end;
 end;
 
 procedure TAbGzipItem.SetFileComment(const Value: string);
 begin
-  FFileComment := '';
-
-  if Value > '' then begin
-    FFileComment := Value;
-    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FCOMMENT;
-  end
-  else begin
+  FFileComment := Value;
+  if FFileComment <> '' then
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FCOMMENT
+  else
     FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FCOMMENT;
-  end;
 end;
 
 procedure TAbGzipItem.SetFileName(const Value: string);
 begin
-  if inherited FileName <> '' then
-     inherited SetFileName('');
-
-  if Value > '' then begin
-    inherited SetFileName(Value) { + #0};
-    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME;
-  end
-  else begin
+  inherited SetFileName(Value);
+  if Value <> '' then
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME
+  else
     FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FNAME;
-  end;
 end;
 
 procedure TAbGzipItem.SetFileSystem(const Value: TAbGzFileSystem);
@@ -897,10 +864,10 @@ end;
 procedure TAbGzipItem.SetIsText(const Value: Boolean);
 begin
   FIsText := Value;
-  case FIsText of
-    True  : FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FTEXT;
-    False : FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FTEXT;
-  end;
+  if Value then
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FTEXT
+  else
+    FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FTEXT;
 end;
 
 procedure TAbGzipItem.SetLastModFileDate(const Value: Word);
@@ -973,12 +940,10 @@ end;
 
 function TAbGzipArchive.CreateItem(const FileSpec: string): TAbArchiveItem;
 var
-  Buff : array [0..511] of Char;
   GzItem : TAbGzipItem;
 begin
   if IsGZippedTar and TarAutoHandle then begin
-    if FState <> gsTar then
-      SwapToTar;
+    SwapToTar;
     Result := inherited CreateItem(FileSpec);
   end
   else begin
@@ -987,10 +952,8 @@ begin
     try
       GzItem.CompressedSize := 0;
       GzItem.CRC32 := 0;
-      StrPCopy(Buff, ExpandFileName(FileSpec));
-      GzItem.DiskFileName := StrPas(Buff);
-      StrPCopy(Buff, FixName(FileSpec));
-      GzItem.FileName := StrPas(Buff);
+      GzItem.DiskFileName := ExpandFileName(FileSpec);
+      GzItem.FileName := FixName(FileSpec);
       Result := GzItem;
     except
       Result := nil;
@@ -1393,15 +1356,10 @@ end;
 
 procedure TAbGzipArchive.SetTarAutoHandle(const Value: Boolean);
 begin
-  case Value of
-    True  : begin
-      SwapToTar;
-    end;
-
-    False : begin
-      SwapToGzip;
-    end;
-  end;
+  if Value then
+    SwapToTar
+  else
+    SwapToGzip;
   FTarAutoHandle := Value;
 end;
 
