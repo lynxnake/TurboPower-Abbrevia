@@ -47,7 +47,7 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  SysUtils, Classes,
+  SysUtils, Classes, Types,
 
   AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp,
   AbDfBase, AbDfDec, AbDfEnc, AbVMStrm, AbBitBkt, AbSpanSt;
@@ -102,11 +102,47 @@ type
     ISize : LongWord;  { size of uncompressed data }
   end;
 
+  TAbGzExtraFieldSubID = array[0..1] of AnsiChar;
+
+  PAbGzExtraSubField = ^TAbGzExtraSubField;
+  TAbGzExtraSubField = packed record
+    ID : TAbGzExtraFieldSubID;
+    Len : Word;
+    Data : record end;
+  end;
+
 type
+  TAbGzipExtraField = class
+  private
+    FBuffer : TByteDynArray;
+    FGZHeader : PAbGzHeader;
+
+    procedure DeleteField(aSubField : PAbGzExtraSubField);
+    function FindField(aID : TAbGzExtraFieldSubID;
+      out aSubField : PAbGzExtraSubField) : Boolean;
+    function FindNext(var aCurField : PAbGzExtraSubField) : Boolean;
+    function GetCount : Integer;
+    function GetID(aIndex : Integer): TAbGzExtraFieldSubID;
+    procedure SetBuffer(const aValue : TByteDynArray);
+
+  public
+    constructor Create(aGZHeader : PAbGzHeader);
+    procedure Clear;
+    procedure Delete(aID : TAbGzExtraFieldSubID);
+    function Get(aID : TAbGzExtraFieldSubID; out aData : Pointer;
+      out aDataSize : Word) : Boolean;
+    procedure Put(aID : TAbGzExtraFieldSubID; const aData; aDataSize : Word);
+
+    property Count : Integer read GetCount;
+    property Buffer : TByteDynArray read FBuffer write SetBuffer;
+    property IDs[aIndex : Integer]: TAbGzExtraFieldSubID read GetID;
+  end;
+
   TAbGzipItem = class(TAbArchiveItem)
   protected {private}
     FGZHeader : TAbGzHeader;
-    FExtraField, FFileComment : AnsiString;
+    FExtraField : TAbGzipExtraField;
+    FFileComment : AnsiString;
 
   protected
     function GetFileSystem: TAbGzFileSystem;
@@ -115,7 +151,6 @@ type
     function GetHasFileName: Boolean;
     function GetIsText: Boolean;
 
-    procedure SetExtraField(const Value: AnsiString);
     procedure SetFileComment(const Value : AnsiString);
     procedure SetFileSystem(const Value: TAbGzFileSystem);
     procedure SetIsText(const Value: Boolean);
@@ -149,8 +184,8 @@ type
     property FileSystem : TAbGzFileSystem {Default: osFat (Windows); osUnix (Linux)}
       read GetFileSystem write SetFileSystem;
 
-    property ExtraField : AnsiString
-      read FExtraField write SetExtraField;
+    property ExtraField : TAbGzipExtraField
+      read FExtraField;
 
     property IsEncrypted : Boolean
       read GetIsEncrypted;
@@ -171,6 +206,7 @@ type
       read FGZHeader;
 
     constructor Create;
+    destructor Destroy; override;
   end;
 
   TAbGzipStreamHelper = class(TAbArchiveStreamHelper)
@@ -266,6 +302,9 @@ function VerifyGZip(Strm : TStream) : TAbArchiveType;
 function GZOsToStr(OS: Byte) : string;
 
 implementation
+
+uses
+  RTLConsts;
 
 const
   { Header Signature Values}
@@ -391,6 +430,149 @@ begin
 
     Strm.Position := CurPos;
   end;
+end;
+
+{ TAbGzipExtraField }
+
+constructor TAbGzipExtraField.Create(aGZHeader : PAbGzHeader);
+begin
+  inherited Create;
+  FGZHeader := aGZHeader;
+end;
+
+procedure TAbGzipExtraField.Clear;
+begin
+  FBuffer := nil;
+  FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
+end;
+
+procedure TAbGzipExtraField.Delete(aID : TAbGzExtraFieldSubID);
+var
+  SubField : PAbGzExtraSubField;
+begin
+  if FindField(aID, SubField) then begin
+    DeleteField(SubField);
+    if FBuffer = nil then
+      FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
+  end;
+end;
+
+procedure TAbGzipExtraField.DeleteField(aSubField : PAbGzExtraSubField);
+var
+  Len, Offset : Integer;
+begin
+  Len := SizeOf(TAbGzExtraSubField) + aSubField.Len;
+  Offset := Cardinal(aSubField) - Cardinal(FBuffer);
+  if Offset + Len < Length(FBuffer) then
+    Move(FBuffer[Offset + Len], aSubField^, Length(FBuffer) - Offset - Len);
+  SetLength(FBuffer, Length(FBuffer) - Len);
+end;
+
+function TAbGzipExtraField.FindField(aID : TAbGzExtraFieldSubID;
+  out aSubField : PAbGzExtraSubField) : Boolean;
+begin
+  Result := False;
+  aSubField := nil;
+  while FindNext(aSubField) do
+    if aSubField.ID = aID then begin
+      Result := True;
+      Break;
+    end;
+end;
+
+function TAbGzipExtraField.FindNext(var aCurField : PAbGzExtraSubField) : Boolean;
+var
+  BytesLeft : Integer;
+begin
+  if aCurField = nil then begin
+    aCurField := PAbGzExtraSubField(FBuffer);
+    BytesLeft := Length(FBuffer);
+  end
+  else begin
+    BytesLeft := Length(FBuffer) -
+      Integer(Cardinal(aCurField) - Cardinal(FBuffer)) -
+      SizeOf(TAbGzExtraSubField) - aCurField.Len;
+    Inc(Cardinal(aCurField), aCurField.Len + SizeOf(TAbGzExtraSubField));
+  end;
+  Result := (BytesLeft >= SizeOf(TAbGzExtraSubField));
+  if Result and (BytesLeft < SizeOf(TAbGzExtraSubField) + aCurField.Len) then
+    aCurField.Len := BytesLeft - SizeOf(TAbGzExtraSubField);
+end;
+
+function TAbGzipExtraField.Get(aID : TAbGzExtraFieldSubID; out aData : Pointer;
+  out aDataSize : Word) : Boolean;
+var
+  SubField : PAbGzExtraSubField;
+begin
+  Result := FindField(aID, SubField);
+  if Result then begin
+    aData := @SubField.Data;
+    aDataSize := SubField.Len;
+  end
+  else begin
+    aData := nil;
+    aDataSize := 0;
+  end;
+end;
+
+function TAbGzipExtraField.GetCount : Integer;
+var
+  SubField : PAbGzExtraSubField;
+begin
+  Result := 0;
+  SubField := nil;
+  while FindNext(SubField) do
+    Inc(Result);
+end;
+
+function TAbGzipExtraField.GetID(aIndex : Integer): TAbGzExtraFieldSubID;
+var
+  i: Integer;
+  SubField : PAbGzExtraSubField;
+begin
+  i := 0;
+  SubField := nil;
+  while FindNext(SubField) do
+    if i = aIndex then begin
+      Result := SubField.ID;
+      Exit;
+    end
+    else
+      Inc(i);
+  raise EListError.CreateFmt(SListIndexError, [aIndex]);
+end;
+
+procedure TAbGzipExtraField.Put(aID : TAbGzExtraFieldSubID; const aData;
+  aDataSize : Word);
+var
+  Offset : Cardinal;
+  SubField : PAbGzExtraSubField;
+begin
+  FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FEXTRA;
+  if FindField(aID, SubField) then begin
+    if SubField.Len = aDataSize then begin
+      Move(aData, SubField.Data, aDataSize);
+      Exit;
+    end
+    else DeleteField(SubField);
+  end;
+  Offset := Length(FBuffer);
+  SetLength(FBuffer, Length(FBuffer) + SizeOf(TAbGzExtraSubField) + aDataSize);
+  SubField := PAbGzExtraSubField(@FBuffer[Offset]);
+  SubField.ID := aID;
+  SubField.Len := aDataSize;
+  Move(aData, SubField.Data, aDataSize);
+end;
+
+procedure TAbGzipExtraField.SetBuffer(const aValue : TByteDynArray);
+begin
+  SetLength(FBuffer, Length(aValue));
+  if Length(FBuffer) > 0 then begin
+    Move(aValue[0], FBuffer[0], Length(FBuffer));
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FEXTRA;
+  end
+  else
+    FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
 end;
 
 
@@ -570,7 +752,7 @@ begin
 
   FileName := '';
   FFileComment := '';
-  FExtraField := '';
+  FExtraField := TAbGzipExtraField.Create(@FGzHeader);
 
   { source OS ID }
 {$IFDEF LINUX } {assume EXT2 system }
@@ -579,6 +761,12 @@ begin
 {$IFDEF MSWINDOWS } {assume FAT system }
   FGzHeader.OS := AB_GZ_OS_ID_FAT;
 {$ENDIF MSWINDOWS }
+end;
+
+destructor TAbGzipItem.Destroy;
+begin
+  FExtraField.Free;
+  inherited;
 end;
 
 function TAbGzipItem.GetExternalFileAttributes: LongInt;
@@ -665,11 +853,11 @@ begin
   if HasExtraField then begin
     { get length of extra data }
     AStream.Read(LenW, SizeOf(Word));
-    SetLength(FExtraField, LenW);
-    AStream.Read(FExtraField[1], LenW);
+    SetLength(FExtraField.FBuffer, LenW);
+    AStream.Read(FExtraField.FBuffer[0], LenW);
   end
   else
-    FExtraField := '';
+    FExtraField.FBuffer := nil;
 
   { Get Filename, if any }
   if HasFileName then begin
@@ -728,9 +916,9 @@ begin
 
   { add extra field if any }
   if HasExtraField then begin
-    LenW := Length(FExtraField);
+    LenW := Length(FExtraField.FBuffer);
     AStream.Write(LenW, SizeOf(LenW));
-    AStream.Write(FExtraField[1], LenW);
+    AStream.Write(FExtraField.FBuffer[0], LenW);
   end;
 
   { add filename if any (and include final #0 from string) }
@@ -747,15 +935,6 @@ end;
 procedure TAbGzipItem.SetExternalFileAttributes(Value: LongInt);
 begin
   { do nothing }
-end;
-
-procedure TAbGzipItem.SetExtraField(const Value: AnsiString);
-begin
-  FExtraField := Value;
-  if Value > '' then
-    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FEXTRA
-  else
-    FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
 end;
 
 procedure TAbGzipItem.SetFileComment(const Value: AnsiString);
