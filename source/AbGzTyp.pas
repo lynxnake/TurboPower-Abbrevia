@@ -1078,11 +1078,15 @@ end;
 function TAbGzipArchive.FixName(const Value: string): string;
 { fix up fileaname for storage }
 begin
-  {GZip files Always strip the file path}
-  StoreOptions := StoreOptions + [soStripDrive, soStripPath];
-  Result := '';
-  if Value <> '' then
-    Result := ExtractFileName(Value);
+  if FState = gsTar then
+    Result := inherited FixName( Value )
+  else begin
+    {GZip files Always strip the file path}
+    StoreOptions := StoreOptions + [soStripDrive, soStripPath];
+    Result := '';
+    if Value <> '' then
+      Result := ExtractFileName(Value);
+  end;
 end;
 
 function TAbGzipArchive.GetIsGzippedTar: Boolean;
