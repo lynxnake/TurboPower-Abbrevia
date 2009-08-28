@@ -251,7 +251,6 @@ type
     FTarStream : TStream;        { stream for possible contained Tar }
     FTarList   : TAbArchiveList; { items in possible contained Tar }
     FTarAutoHandle: Boolean;
-    FTarLoaded : Boolean;
     FState     : TAbGzipArchiveState;
     FIsGzippedTar : Boolean;
 
@@ -1022,7 +1021,6 @@ constructor TAbGzipArchive.CreateFromStream(aStream : TStream;
   const aArchiveName : string);
 begin
   inherited CreateFromStream(aStream, aArchiveName);
-  FTarLoaded := False;
   FState     := gsGzip;
   FGZStream  := FStream;
   FGZItem    := FItemList;
@@ -1211,72 +1209,32 @@ end;
 
 procedure TAbGzipArchive.LoadArchive;
 var
-  GzHelp       : TAbGzipStreamHelper;
-  Item         : TAbGzipItem;
-  ItemFound    : Boolean;
-  Abort        : Boolean;
-  TotalEntries : Integer;
-  i            : Integer;
-  Progress     : Byte;
+  GzHelp : TAbGzipStreamHelper;
+  Item   : TAbGzipItem;
+  Abort  : Boolean;
 begin
-  if FGzStream.Size = 0 then
-    Exit;
-
-  if IsGzippedTar and TarAutoHandle then begin
-    { extract Tar and set stream up }
-
+  SwapToGzip;
+  if FGzStream.Size > 0 then begin
     GzHelp := TAbGzipStreamHelper.Create(FGzStream);
     try
-      if not FTarLoaded then begin
-        GzHelp.SeekToItemData;
-        GzHelp.ExtractItemData(FTarStream);
-        SwapToTar;
-        inherited LoadArchive;
-        FTarLoaded := True;
-      end;
-    finally
-      GzHelp.Free;
-    end;
-  end
-  else begin
-    SwapToGzip;
-
-    { create helper }
-    GzHelp := TAbGzipStreamHelper.Create(FGzStream);
-    try
-      TotalEntries := GzHelp.GetItemCount;
-
-      {build Items list from tar header records}
-      i := 0;
-
-      { reset Tar }
-      ItemFound := GzHelp.FindFirstItem;
-
-      { while more data in Tar }
-
-      if ItemFound then begin
+      if GzHelp.FindFirstItem then begin
         Item := TAbGzipItem.Create;
         Item.LoadGzHeaderFromStream(FGzStream);
-
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
         GZHelp.ReadTail;
         Item.CRC32 := GZHelp.TailCRC;
         Item.UncompressedSize := GZHelp.TailSize;
 
         Item.Action := aaNone;
-        FItemList.Clear;
-        FItemList.Add(Item);
-        Inc(i);
+        FGZItem.Add(Item);
 
-        { show progress and allow for aborting }
-        Progress := (i * 100) div TotalEntries;
-        DoArchiveProgress(Progress, Abort);
-        if Abort then begin
-          FStatus := asInvalid;
-          raise EAbUserAbort.Create;
+        if IsGzippedTar and TarAutoHandle then begin
+          { extract Tar and set stream up }
+          GzHelp.SeekToItemData;
+          GzHelp.ExtractItemData(FTarStream);
+          SwapToTar;
+          inherited LoadArchive;
         end;
-
-        { get the next item }
       end;
 
       DoArchiveProgress(100, Abort);
@@ -1302,7 +1260,6 @@ var
   Abort               : Boolean;
   i                   : Integer;
   NewStream           : TAbVirtualMemoryStream;
-  WorkingStream       : TAbVirtualMemoryStream;
   UncompressedStream  : TStream;
   DateTime            : LongInt;
   SaveDir             : string;
@@ -1311,48 +1268,11 @@ begin
   {prepare for the try..finally}
   OutGzHelp := nil;
   NewStream := nil;
-  WorkingStream := nil;
 
   try
     InGzHelp := TAbGzipStreamHelper.Create(FGzStream);
 
     try
-      if IsGzippedTar and TarAutoHandle then begin
-        { save the Tar data first }
-        SwapToTar;
-        inherited SaveArchive;
-
-        { update contents of GZip Stream with new Tar }
-        FGZStream.Position := 0;
-        InGzHelp.ReadHeader;
-        FGZStream.Size := 0;
-        InGzHelp.WriteArchiveHeader;
-        InGzHelp.WriteArchiveItem(FTarStream);
-        InGzHelp.WriteArchiveTail;
-
-        CurItem := TAbGzipItem.Create();
-        try
-            FGZItem.Add(CurItem);
-            CurItem.Action := aaNone;
-            CurItem.CRC32 := InGzHelp.CRC;
-            CurItem.UncompressedSize := InGzHelp.FileSize;
-        except
-            CurItem.Free(); raise;
-        end;
-
-      end;
-
-      {
-        When Is Gzipperd Tar and Tar Auto Handle
-        it does not seems as if any item is being added to the
-        Archive, because AddFiles add all files to the tar and
-        the single item is never added.
-      }
-
-      {TODO -cGZip : Find a better way of saving}
-
-      SwapToGzip;
-
       {init new archive stream}
       NewStream := TAbVirtualMemoryStream.Create;
       OutGzHelp := TAbGzipStreamHelper.Create(NewStream);
@@ -1360,91 +1280,108 @@ begin
       { create helper }
       NewStream.SwapFileDirectory := ExtractFilePath(AbGetTempFile(FTempDir, False));
 
-      {build new archive from existing archive}
-      for i := 0 to pred(Count) do begin
-        FCurrentItem := ItemList[i];
-        CurItem      := TAbGzipItem(ItemList[i]);
-        InGzHelp.SeekToItemData;
+      { save the Tar data }
+      if IsGzippedTar and TarAutoHandle then begin
+        SwapToTar;
+        inherited SaveArchive;
+        if FGZItem.Count = 0 then begin
+          CurItem := TAbGzipItem.Create;
+          FGZItem.Add(CurItem);
+        end;
+        CurItem := FGZItem[0] as TAbGzipItem;
+        CurItem.Action := aaNone;
+        CurItem.LastModTimeAsDateTime := Now;
+        CurItem.SaveGzHeaderToStream(NewStream);
+        FTarStream.Position := 0;
+        OutGzHelp.WriteArchiveItem(FTarStream);
+        CurItem.CRC32 := OutGzHelp.CRC;
+        CurItem.UncompressedSize := OutGzHelp.FileSize;
+        OutGzHelp.WriteArchiveTail;
+      end
+      else begin
+        SwapToGzip;
 
-        case CurItem.Action of
-          aaNone, aaMove : begin
-          {just copy the file to new stream}
-            WorkingStream := TAbVirtualMemoryStream.Create;
-            InGzHelp.SeekToItemData;
-            InGzHelp.ExtractItemData(WorkingStream);
-            WorkingStream.Position := 0;
-            CurItem.SaveGzHeaderToStream(NewStream);
-            OutGzHelp.WriteArchiveItem(WorkingStream);
-          end;
+        {build new archive from existing archive}
+        for i := 0 to pred(Count) do begin
+          FCurrentItem := ItemList[i];
+          CurItem      := TAbGzipItem(ItemList[i]);
+          InGzHelp.SeekToItemData;
 
-          aaDelete: {doing nothing omits file from new stream} ;
-
-          aaAdd, aaFreshen, aaReplace, aaStreamAdd: begin
-            try
-              if (CurItem.Action = aaStreamAdd) then begin
-              { adding from a stream }
-                CurItem.SaveGzHeaderToStream(NewStream);
-                CurItem.UncompressedSize := InStream.Size;
-                OutGzHelp.WriteArchiveItem(InStream);
-              end
-              else begin
-              { it's coming from a file }
-                UncompressedStream := TFileStream.Create(CurItem.DiskFileName,
-                    fmOpenRead or fmShareDenyWrite );
-                try
-                  GetDir(0, SaveDir);
-                  try {SaveDir}
-                    if (BaseDirectory <> '') then
-                      ChDir(BaseDirectory);
-
-                    {Now get the file's attributes}
-                    CurItem.ExternalFileAttributes := AbFileGetAttr(CurItem.DiskFileName);
-
-                    CurItem.UncompressedSize := UncompressedStream.Size;
-                  finally {SaveDir}
-                    ChDir( SaveDir );
-                  end; {SaveDir}
-
-{$WARN SYMBOL_DEPRECATED OFF}
-                  DateTime := FileAge(CurItem.DiskFileName);
-{$WARN SYMBOL_DEPRECATED ON}
-                  CurItem.LastModFileTime := LongRec(DateTime).Lo;
-                  CurItem.LastModFileDate := LongRec(DateTime).Hi;
-
-                  CurItem.SaveGzHeaderToStream(NewStream);
-                  OutGzHelp.WriteArchiveItem(UncompressedStream);
-
-                finally {UncompressedStream}
-                  UncompressedStream.Free;
-                end; {UncompressedStream}
-
-              end;
-            except
-              ItemList[i].Action := aaDelete;
-              DoProcessItemFailure(ItemList[i], ptAdd, ecFileOpenError, 0);
+          case CurItem.Action of
+            aaNone, aaMove : begin
+            {just copy the file to new stream}
+              CurItem.SaveGzHeaderToStream(NewStream);
+              InGzHelp.SeekToItemData;
+              NewStream.CopyFrom(FGZStream, FGZStream.Size - FGZStream.Position);
             end;
-          end;
-        end; {case}
-      end; { for }
+
+            aaDelete: {doing nothing omits file from new stream} ;
+
+            aaAdd, aaFreshen, aaReplace, aaStreamAdd: begin
+              try
+                if (CurItem.Action = aaStreamAdd) then begin
+                { adding from a stream }
+                  CurItem.SaveGzHeaderToStream(NewStream);
+                  CurItem.UncompressedSize := InStream.Size;
+                  OutGzHelp.WriteArchiveItem(InStream);
+                  OutGzHelp.WriteArchiveTail;
+                end
+                else begin
+                { it's coming from a file }
+                  UncompressedStream := TFileStream.Create(CurItem.DiskFileName,
+                      fmOpenRead or fmShareDenyWrite );
+                  try
+                    GetDir(0, SaveDir);
+                    try {SaveDir}
+                      if (BaseDirectory <> '') then
+                        ChDir(BaseDirectory);
+
+                      {Now get the file's attributes}
+                      CurItem.ExternalFileAttributes := AbFileGetAttr(CurItem.DiskFileName);
+
+                      CurItem.UncompressedSize := UncompressedStream.Size;
+                    finally {SaveDir}
+                      ChDir( SaveDir );
+                    end; {SaveDir}
+
+                    {$WARN SYMBOL_DEPRECATED OFF}
+                    DateTime := FileAge(CurItem.DiskFileName);
+                    {$WARN SYMBOL_DEPRECATED ON}
+                    CurItem.LastModFileTime := LongRec(DateTime).Lo;
+                    CurItem.LastModFileDate := LongRec(DateTime).Hi;
+
+                    CurItem.SaveGzHeaderToStream(NewStream);
+                    OutGzHelp.WriteArchiveItem(UncompressedStream);
+                    OutGzHelp.WriteArchiveTail;
+
+                  finally {UncompressedStream}
+                    UncompressedStream.Free;
+                  end; {UncompressedStream}
+                end;
+              except
+                ItemList[i].Action := aaDelete;
+                DoProcessItemFailure(ItemList[i], ptAdd, ecFileOpenError, 0);
+              end;
+            end;
+          end; {case}
+        end; { for }
+      end;
     finally
       InGzHelp.Free;
     end;
 
     {copy new stream to FStream}
-    OutGzHelp.WriteArchiveTail;
+    SwapToGzip;
     NewStream.Position := 0;
     if (FStream is TMemoryStream) then
       TMemoryStream(FStream).LoadFromStream(NewStream)
     else begin
       { need new stream to write }
       FreeAndNil(FStream);
+      FGZStream := nil;
       FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
-      try
-        FStream.CopyFrom(NewStream, NewStream.Size);
-        FGZStream := FStream;
-      except
-        raise EAbException.Create('Unable to create new Spanned stream');
-      end;
+      FGZStream := FStream;
+      FStream.CopyFrom(NewStream, NewStream.Size);
     end;
 
     {update Items list}
@@ -1455,10 +1392,12 @@ begin
         ItemList[i].Action := aaNone;
     end;
 
+    if IsGzippedTar and TarAutoHandle then
+      SwapToTar;
+
     DoArchiveSaveProgress( 100, Abort );                               {!!.04}
     DoArchiveProgress( 100, Abort );
   finally {NewStream}
-    WorkingStream.Free;
     OutGzHelp.Free;
     NewStream.Free;
   end;
