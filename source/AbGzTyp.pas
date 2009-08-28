@@ -98,7 +98,7 @@ type
     FGZHeader : TAbGzHeader;
     FIsText : Boolean;
     FCRC16 : ShortInt;
-    FExtraField, FFileComment : string;
+    FExtraField, FFileComment : AnsiString;
     FIncludeHeaderCrc: Boolean;
 
   protected
@@ -110,8 +110,8 @@ type
     function GetHasFileName: Boolean;
     function GetIsText: Boolean;
 
-    procedure SetExtraField(const Value: string);
-    procedure SetFileComment(const Value : string);
+    procedure SetExtraField(const Value: AnsiString);
+    procedure SetFileComment(const Value : AnsiString);
     procedure SetFileSystem(const Value: TAbGzFileSystem);
     procedure SetIsText(const Value: Boolean);
 
@@ -138,13 +138,13 @@ type
     property Flags : Byte
       read FGZHeader.Flags write FGZHeader.Flags;
 
-    property FileComment : string
+    property FileComment : AnsiString
       read FFileComment write SetFileComment;
 
     property FileSystem : TAbGzFileSystem {Default: osFat (Windows); osUnix (Linux)}
       read GetFileSystem write SetFileSystem;
 
-    property ExtraField : string
+    property ExtraField : AnsiString
       read FExtraField write SetExtraField;
 
     property HeaderCRC : Word
@@ -821,7 +821,7 @@ begin
   { do nothing }
 end;
 
-procedure TAbGzipItem.SetExtraField(const Value: string);
+procedure TAbGzipItem.SetExtraField(const Value: AnsiString);
 begin
   FExtraField := Value;
   if Value > '' then
@@ -830,7 +830,7 @@ begin
     FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FEXTRA;
 end;
 
-procedure TAbGzipItem.SetFileComment(const Value: string);
+procedure TAbGzipItem.SetFileComment(const Value: AnsiString);
 begin
   FFileComment := Value;
   if FFileComment <> '' then
