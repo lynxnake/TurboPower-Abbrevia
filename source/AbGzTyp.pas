@@ -96,14 +96,11 @@ type
   TAbGzipItem = class(TAbArchiveItem)
   protected {private}
     FGZHeader : TAbGzHeader;
-    FIsText : Boolean;
-    FCRC16 : ShortInt;
+    FCRC16 : Word;
     FExtraField, FFileComment : AnsiString;
-    FIncludeHeaderCrc: Boolean;
 
   protected
     function GetFileSystem: TAbGzFileSystem;
-    function GetHeaderCRC: Word;
     function GetHasExtraField: Boolean;
     function GetHasFileComment: Boolean;
     function GetHasHeaderCRC: Boolean;
@@ -113,6 +110,7 @@ type
     procedure SetExtraField(const Value: AnsiString);
     procedure SetFileComment(const Value : AnsiString);
     procedure SetFileSystem(const Value: TAbGzFileSystem);
+    procedure SetHasHeaderCRC(Value: Boolean);
     procedure SetIsText(const Value: Boolean);
 
     function GetExternalFileAttributes : LongInt; override;
@@ -130,13 +128,13 @@ type
     procedure LoadGzHeaderFromStream(AStream : TStream);
   public
     property CompressionMethod : Byte
-      read FGZHeader.CompMethod write FGZHeader.CompMethod;
+      read FGZHeader.CompMethod;
 
     property ExtraFlags : Byte {Default: 2}
       read FGZHeader.XtraFlags write FGZHeader.XtraFlags;
 
     property Flags : Byte
-      read FGZHeader.Flags write FGZHeader.Flags;
+      read FGZHeader.Flags;
 
     property FileComment : AnsiString
       read FFileComment write SetFileComment;
@@ -148,7 +146,7 @@ type
       read FExtraField write SetExtraField;
 
     property HeaderCRC : Word
-      read GetHeaderCRC;
+      read FCRC16;
 
     property IsEncrypted : Boolean
       read GetIsEncrypted;
@@ -163,16 +161,16 @@ type
       read GetHasFileComment;
 
     property HasHeaderCRC : Boolean
-      read GetHasHeaderCRC;
+      read GetHasHeaderCRC write SetHasHeaderCRC;
 
     property IsText : Boolean
       read GetIsText write SetIsText;
 
     property GZHeader : TAbGzHeader
-      read FGZHeader write FGZHeader;
+      read FGZHeader;
 
     property IncludeHeaderCrc : Boolean
-      read FIncludeHeaderCrc write FIncludeHeaderCrc;
+      read GetHasHeaderCRC write SetHasHeaderCRC;
 
     constructor Create;
   end;
@@ -482,7 +480,7 @@ begin
   FStream.Seek(0, soFromBeginning);
   DataRead := FStream.Read(GZH, SizeOf(TAbGzHeader));
   if (DataRead = SizeOf(TAbGzHeader)) and VerifyHeader(GZH) then begin
-    FItem.GZHeader := GZH;
+    FItem.FGZHeader := GZH;
     Result := True;
   end;
   FStream.Seek(0, soFromBeginning);
@@ -560,7 +558,13 @@ end;
 
 constructor TAbGzipItem.Create;
 begin
-{ set defaults }
+  { default ID fields }
+  FGzHeader.ID1 := AB_GZ_HDR_ID1;
+  FGzHeader.ID2 := AB_GZ_HDR_ID2;
+
+  { compression method }
+  FGzHeader.CompMethod := 8;  { deflate }
+
   { Maxium Compression }
   FGzHeader.XtraFlags := 2;
 
@@ -575,8 +579,6 @@ begin
 {$IFDEF MSWINDOWS } {assume FAT system }
   FGzHeader.OS := AB_GZ_OS_ID_FAT;
 {$ENDIF MSWINDOWS }
-
-  FIncludeHeaderCrc := False;
 end;
 
 function TAbGzipItem.GetExternalFileAttributes: LongInt;
@@ -593,13 +595,6 @@ begin
     else
       Result := osUndefined;
   end; { case }
-end;
-
-function TAbGzipItem.GetHeaderCRC: Word;
-begin
-  Result := 0;
-  if HasHeaderCRC then
-    Result := FCRC16;
 end;
 
 function TAbGzipItem.GetIsEncrypted: Boolean;
@@ -664,7 +659,6 @@ var
   StartPos : LongInt;
   Len      : LongInt;
   LenW     : Word;
-  CRC16    : ShortInt;
   AnsiName : AnsiString;
   tempFileName : string;
 begin
@@ -687,11 +681,10 @@ begin
     AStream.Seek(StartPos, soFromBeginning);
     SetLength(AnsiName, Len);
     AStream.Read(AnsiName[1], Len + 1);
+    inherited SetFileName(string(AnsiName));
   end
   else
-    AnsiName := 'unknown';
-
-  FileName := string(AnsiName);
+    inherited SetFileName('unknown');
 
   { any comment present? }
   if HasFileComment then begin
@@ -706,10 +699,10 @@ begin
     FFileComment := '';
 
   { any 16-bit CRC for header present? }
-  if HasHeaderCRC then begin
-    AStream.Read(CRC16, SizeOf(CRC16));
-    FCRC16 := CRC16;
-  end;
+  if HasHeaderCRC then
+    AStream.Read(FCRC16, SizeOf(FCRC16))
+  else
+    FCRC16 := 0;
 
   {Assert: stream should now be located at start of compressed data }
   {If file was compressed with 3.3 spec this will be invalid so use with care}
@@ -740,38 +733,23 @@ begin
   { compression method }
   FGzHeader.CompMethod := 8;  { deflate }
 
-  { flags }
-  FGzHeader.Flags := 0;
-
   { provide for the header CRC }
-  if IncludeHeaderCRC then begin
-    FGzHeader.Flags := AB_GZ_FLAG_FHCRC;
+  if IncludeHeaderCRC then
     Inc(HSize, 2);
-  end;
-
-  { add Text flag if user has set it }
-  if IsText then
-    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FTEXT;
 
   { any Extra Field Present? }
-  if FExtraField > '' then begin
-    FGzHeader.Flags := FGZHeader.Flags or AB_GZ_FLAG_FEXTRA;
+  if HasExtraField then
     HSize := HSize + 2 + Length(FExtraField);
-  end;
 
   tempFileName := FileName;
 
   { any File Name present? }
-  if tempFileName > '' then begin
-    FGzHeader.Flags := FGZHeader.Flags or AB_GZ_FLAG_FNAME;
+  if HasFileName then
     HSize := HSize + Length(tempFileName) + 1;
-  end;
 
   { any File Comment present? }
-  if FFileComment > '' then begin
-    FGzHeader.Flags := FGZHeader.Flags or AB_GZ_FLAG_FCOMMENT;
+  if HasFileComment then
     HSize := HSize + Length(FFileComment) + 1;
-  end;
 
   { build the header plus extra info }
   GetMem(HBuff, HSize);
@@ -863,11 +841,18 @@ end;
 
 procedure TAbGzipItem.SetIsText(const Value: Boolean);
 begin
-  FIsText := Value;
   if Value then
     FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FTEXT
   else
     FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FTEXT;
+end;
+
+procedure TAbGzipItem.SetHasHeaderCRC(Value: Boolean);
+begin
+  if Value then
+    FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FHCRC
+  else
+    FGzHeader.Flags := FGzHeader.Flags and not AB_GZ_FLAG_FHCRC;
 end;
 
 procedure TAbGzipItem.SetLastModFileDate(const Value: Word);
