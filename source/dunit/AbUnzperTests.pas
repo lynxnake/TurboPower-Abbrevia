@@ -36,6 +36,9 @@ unit AbUnzperTests;
 interface
 
 uses
+{$IFDEF MSWINDOWS}
+  Windows,
+{$ENDIF}
   TestFrameWork, abTestFrameWork, AbUnzper,
   SysUtils, Classes, AbMeter, AbZipTyp,
   AbDfBase, abExcept, AbUnzPrc;
@@ -67,7 +70,7 @@ type
     procedure TestLocale1;
     procedure TestLocale2;
     procedure TestLocale3;
-    procedure TestLocale4;          
+    procedure TestLocale4;
 
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
