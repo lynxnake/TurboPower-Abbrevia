@@ -226,9 +226,6 @@ uses
 constructor TAbBaseBrowser.Create(AOwner : TComponent);
 begin
   inherited Create(AOwner);
-  {$IFDEF TrialRun}
-  _TR2_;
-  {$ENDIF}
   FLogFile := '';
   FLogging := False;
   FSpanningThreshold := 0;
