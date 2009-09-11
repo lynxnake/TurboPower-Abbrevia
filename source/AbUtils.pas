@@ -1234,7 +1234,6 @@ begin
   if Mo < 1 then Mo := 1;
   if Mo > 12 then Mo := 12;
 
-
   Dy := FileDate and 31;
   if Dy < 1 then Dy := 1;
   if Dy > DaysInAMonth(Yr, Mo) then
@@ -1247,7 +1246,7 @@ begin
   if Mn > 59 then Mn := 59;
 
   S  := FileTime and 31 shl 1;
-  if S * 2 > 59 then S := 29;
+  if S > 59 then S := 59;
 
   Result :=
     EncodeDate(Yr, Mo, Dy) +
