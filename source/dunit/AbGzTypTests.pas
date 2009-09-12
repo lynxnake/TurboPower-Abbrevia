@@ -108,7 +108,6 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-
 procedure TAbGzipExtraFieldTests.CheckSubfieldCount(aExpected: Integer);
 begin
   CheckEquals(aExpected, FExtraField.Count, 'Subfield count incorrect');

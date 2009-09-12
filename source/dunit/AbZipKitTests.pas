@@ -262,7 +262,7 @@ end;
 procedure TAbZipKitTests.TestComment;
   // Verify that Delphi 2009 handles zip file comments correctly (fixed in rev 158)
 const
-  SComment = 'Test comment';
+  SComment: AnsiString = 'Test comment';
 var
   Zip: TAbZipKit;
 begin
@@ -280,7 +280,7 @@ begin
   Zip := TAbZipKit.Create(nil);
   try
     Zip.FileName := TestTempDir + 'comment.zip';
-    CheckEqualsString(SComment, Zip.ZipFileComment);
+    CheckEquals(SComment, Zip.ZipFileComment);
   finally
     Zip.Free
   end;
