@@ -49,7 +49,7 @@ type
   private
     function GetLastModTimeAsDateTime: TDateTime;                        {!!.01}
     procedure SetLastModTimeAsDateTime(const Value: TDateTime);          {!!.01}
-  private
+  protected {private}
     NextItem          : TAbArchiveItem;
     FAction           : TAbArchiveAction;
     FCompressedSize   : Int64;
@@ -664,9 +664,9 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveItem.SetIsDirectory(const Value: Boolean);
 begin
-    FIsDirectory := Value;
+  FIsDirectory := Value;
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbArchiveItem.SetIsEncrypted(Value : Boolean);
 begin
   FIsEncrypted := Value;
@@ -1900,19 +1900,20 @@ begin
           Tagged := False;
       end;
 end;
-{ ========================================================================== }
-
+{ -------------------------------------------------------------------------- }
 procedure TAbArchive.DoSpanningMediaRequest(Sender: TObject;
   ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
 begin
   raise EAbSpanningNotSupported.Create;
 end;
-
+{ -------------------------------------------------------------------------- }
 class function TAbArchive.SupportsEmptyFolder: Boolean;
 begin
 	Result := false;
 end;
+{ -------------------------------------------------------------------------- }
 
+{ ========================================================================== }
 { TAbArchiveStreamHelper }
 
 constructor TAbArchiveStreamHelper.Create(AStream: TStream);

@@ -749,7 +749,7 @@ begin
   { Maxium Compression }
   FGzHeader.XtraFlags := 2;
 
-  FileName := '';
+  FFileName := '';
   FFileComment := '';
   FExtraField := TAbGzipExtraField.Create(@FGzHeader);
 
@@ -841,7 +841,6 @@ var
   Len      : LongInt;
   LenW     : Word;
   AnsiName : AnsiString;
-  tempFileName : string;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
 
@@ -866,10 +865,10 @@ begin
     AStream.Seek(StartPos, soFromBeginning);
     SetLength(AnsiName, Len);
     AStream.Read(AnsiName[1], Len + 1);
-    inherited SetFileName(string(AnsiName));
+    FFileName := string(AnsiName);
   end
   else
-    inherited SetFileName('unknown');
+    FFileName := 'unknown';
 
   { any comment present? }
   if HasFileComment then begin
@@ -888,9 +887,8 @@ begin
   {If file was compressed with 3.3 spec this will be invalid so use with care}
   CompressedSize := AStream.Size - AStream.Position - SizeOf(TAbGzTailRec);
 
-  tempFileName := FileName;
-  AbUnfixName(tempFileName);
-  DiskFileName := tempFileName;
+  FDiskFileName := FileName;
+  AbUnfixName(FDiskFileName);
   Action := aaNone;
   Tagged := False;
 end;
@@ -947,7 +945,7 @@ end;
 
 procedure TAbGzipItem.SetFileName(const Value: string);
 begin
-  inherited SetFileName(Value);
+  FFileName := Value;
   if Value <> '' then
     FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME
   else

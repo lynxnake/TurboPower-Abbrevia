@@ -1552,20 +1552,17 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.LoadFromStream( Stream : TStream );
-var
-    tempFileName: string;
 begin
   FItemInfo.LoadFromStream( Stream );
   if FItemInfo.FileName <> '' then
-    FileName := FItemInfo.FileName
+    FFileName := FItemInfo.FileName
   else
-    FileName := '';
+    FFileName := '';
 
   LastModFileTime := FItemInfo.LastModFileTime;
   LastModFileDate := FItemInfo.LastModFileDate;
-  tempFileName := FileName;
-  AbUnfixName( tempFileName );
-  DiskFileName := tempFileName;
+  FDiskFileName := FileName;
+  AbUnfixName( FDiskFileName );
   Action := aaNone;
   Tagged := False;
 end;

@@ -520,15 +520,12 @@ begin
 end;
 
 procedure TAbTarItem.LoadTarHeaderFromStream(AStream: TStream);
-var
-	tempFileName: string;
 begin
   AStream.Read(FTarHeader, SizeOf(TAbTarHeaderRec));
   AStream.Seek(-SizeOf(TAbTarHeaderRec), soFromCurrent);
-  FileName := string(FTarHeader.Name);
-  tempFileName := FileName;
-  AbUnfixName(tempFileName);
-  DiskFileName := tempFileName;
+  FFileName := string(FTarHeader.Name);
+  FDiskFileName := FileName;
+  AbUnfixName(FDiskFileName);
   Action := aaNone;
   Tagged := False;
 end;
