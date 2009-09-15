@@ -338,25 +338,18 @@ procedure AbZip( Sender : TAbZipArchive; Item : TAbZipItem;
 var
   UncompressedStream : TStream;
   SaveDir : string;
-  Filename : string;
   AttrEx : TAbAttrExRec;
 begin
   GetDir(0, SaveDir);
   try {SaveDir}
     if (Sender.BaseDirectory <> '') then
       ChDir(Sender.BaseDirectory);
-    Filename := Item.DiskFileName;
-
-    {$IFDEF MSWINDOWS}
-    if (Item.VersionMadeBy and $FF00) = 0 then
-      OemToChar(PAnsiChar(AnsiString(Filename)), PChar(Filename));
-    {$ENDIF}
-
-    AbFileGetAttrEx(Filename, AttrEx);
+    AbFileGetAttrEx(Item.DiskFileName, AttrEx);
     if ((AttrEx.Attr and faDirectory) <> 0) then
       UncompressedStream := TMemoryStream.Create
     else
-      UncompressedStream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
+      UncompressedStream :=
+        TFileStream.Create(Item.DiskFileName, fmOpenRead or fmShareDenyWrite);
   finally {SaveDir}
     ChDir( SaveDir );
   end; {SaveDir}

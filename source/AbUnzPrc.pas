@@ -1545,7 +1545,7 @@ begin
       raise EAbZipInvalidLFH.Create;
     if (LFH.UncompressedSize <> Item.UncompressedSize) then
       raise EAbZipInvalidLFH.Create;
-    if (CompareStr(LFH.FileName, Item.FileName) <> 0) then
+    if (LFH.FileName <> Item.RawFileName) then
       raise EAbZipInvalidLFH.Create;
     if (LFH.ExtraFieldLength <> Item.ExtraFieldLength) or
        not CompareMem(LFH.ExtraField, Item.ExtraField, Item.ExtraFieldLength) then
