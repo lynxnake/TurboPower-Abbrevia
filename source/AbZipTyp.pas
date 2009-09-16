@@ -228,8 +228,7 @@ type
     FCompressedSize : LongWord;
     FUncompressedSize : LongWord;
     FFileName : AnsiString;
-    FExtraField : Pointer;
-    FExtraFieldLength : Word;
+    FExtraField : TAbExtraField;
     FIsValid : Boolean;
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
@@ -265,10 +264,8 @@ type
       read FUncompressedSize write FUncompressedSize;
     property FileName : AnsiString
       read FFileName write FFileName;
-    property ExtraField : Pointer
+    property ExtraField : TAbExtraField
       read FExtraField;
-    property ExtraFieldLength : Word
-      read FExtraFieldLength;
 
     property CompressionRatio : Double
       read GetCompressionRatio;
@@ -404,8 +401,7 @@ type
     function GetDeflationOption : TAbZipDeflationOption;
     function GetDictionarySize : TAbZipDictionarySize;
     function GetDiskNumberStart : Word;
-    function GetExtraField : Pointer;
-    function GetExtraFieldLength : Word;
+    function GetExtraField : TAbExtraField;
     function GetFileComment : AnsiString;
     function GetGeneralPurposeBitFlag : Word;
     function GetInternalFileAttributes : Word;
@@ -460,10 +456,8 @@ type
     property DiskNumberStart : Word
       read GetDiskNumberStart
       write SetDiskNumberStart;
-    property ExtraField : Pointer
+    property ExtraField : TAbExtraField
       read GetExtraField;
-    property ExtraFieldLength : Word
-      read GetExtraFieldLength;
     property FileComment : AnsiString
       read GetFileComment
       write SetFileComment;
@@ -1050,13 +1044,13 @@ end;
 constructor TAbZipFileHeader.Create;
 begin
   inherited Create;
+  FExtraField := TAbExtraField.Create;
   FValidSignature := $0;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipFileHeader.Destroy;
 begin
-  if FExtraField <> nil then
-    FreeMem(FExtraField);
+  FreeAndNil(FExtraField);
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
@@ -1159,7 +1153,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipLocalFileHeader.LoadFromStream( Stream : TStream );
 var
-  FileNameLength : Word;
+  ExtraFieldLength, FileNameLength : Word;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1172,16 +1166,13 @@ begin
     Read( FCompressedSize, sizeof( FCompressedSize ) );
     Read( FUncompressedSize, sizeof( FUncompressedSize ) );
     Read( FileNameLength, sizeof( FileNameLength ) );
-    Read( FExtraFieldLength, sizeof( FExtraFieldLength ) );
+    Read( ExtraFieldLength, sizeof( ExtraFieldLength ) );
 
     SetLength( FFileName, FileNameLength );
     if FileNameLength > 0 then
       Read( FFileName[1], FileNameLength );
 
-    if FExtraFieldLength > 0 then begin
-      GetMem( FExtraField, FExtraFieldLength );
-      Read( FExtraField^, FExtraFieldLength );
-    end;
+    FExtraField.LoadFromStream( Stream, ExtraFieldLength );
   end;
   if not IsValid then
     raise EAbZipInvalid.Create;
@@ -1189,7 +1180,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipLocalFileHeader.SaveToStream( Stream : TStream );
 var
-  FileNameLength: Word;
+  ExtraFieldLength, FileNameLength: Word;
 begin
   with Stream do begin
     {write the valid signature from the constant}
@@ -1204,11 +1195,12 @@ begin
     Write( FUncompressedSize, sizeof( FUncompressedSize ) );
     FileNameLength := Word( Length( FFileName ) );
     Write( FileNameLength, sizeof( FileNameLength ) );
-    Write( FExtraFieldLength, sizeof( FExtraFieldLength ) );
+    ExtraFieldLength := Length(FExtraField.Buffer);
+    Write( ExtraFieldLength, sizeof( ExtraFieldLength ) );
     if FileNameLength > 0 then
       Write( FFileName[1], FileNameLength );
-    if FExtraFieldLength > 0 then
-      Write(FExtraField^, FExtraFieldLength);
+    if ExtraFieldLength > 0 then
+      Write(FExtraField.Buffer[0], ExtraFieldLength);
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1227,7 +1219,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileHeader.LoadFromStream( Stream : TStream );
 var
-  FileCommentLength, FileNameLength : Word;
+  ExtraFieldLength, FileCommentLength, FileNameLength : Word;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1241,7 +1233,7 @@ begin
     Read( FCompressedSize, sizeof( FCompressedSize ) );
     Read( FUncompressedSize, sizeof( FUncompressedSize ) );
     Read( FileNameLength, sizeof( FileNameLength ) );
-    Read( FExtraFieldLength, sizeof( FExtraFieldLength ) );
+    Read( ExtraFieldLength, sizeof( ExtraFieldLength ) );
     Read( FileCommentLength, sizeof( FileCommentLength ) );
     Read( FDiskNumberStart, sizeof( FDiskNumberStart ) );
     Read( FInternalFileAttributes, sizeof( FInternalFileAttributes ) );
@@ -1252,10 +1244,7 @@ begin
     if FileNameLength > 0 then
       Read( FFileName[1], FileNameLength );
 
-    if FExtraFieldLength > 0 then begin
-      GetMem(FExtraField, FExtraFieldLength);
-      Read(FExtraField^, FExtraFieldLength);
-    end;
+    FExtraField.LoadFromStream( Stream, ExtraFieldLength );
 
     SetLength( FFileComment, FileCommentLength );
     if FileCommentLength > 0 then
@@ -1267,7 +1256,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileHeader.SaveToStream( Stream : TStream );
 var
-  FileCommentLength, FileNameLength : Word;
+  ExtraFieldLength, FileCommentLength, FileNameLength : Word;
 begin
   with Stream do begin
     {write the valid signature from the constant}
@@ -1283,7 +1272,8 @@ begin
     Write( FUncompressedSize, sizeof( FUncompressedSize ) );
     FileNameLength := Word( Length( FFileName ) );
     Write( FileNameLength, sizeof( FileNameLength ) );
-    Write( FExtraFieldLength, sizeof( FExtraFieldLength ) );
+    ExtraFieldLength := Length(FExtraField.Buffer);
+    Write( ExtraFieldLength, sizeof( ExtraFieldLength ) );
     FileCommentLength := Word( Length( FFileComment ) );
     Write( FileCommentLength, sizeof( FileCommentLength ) );
     Write( FDiskNumberStart, sizeof( FDiskNumberStart ) );
@@ -1292,7 +1282,8 @@ begin
     Write( FRelativeOffset, sizeof( FRelativeOffset ) );
     if FileNameLength > 0 then
       Write( FFileName[1], FileNameLength );
-    Write( FExtraField^, FExtraFieldLength );
+    if ExtraFieldLength > 0 then
+      Write( FExtraField.Buffer[0], ExtraFieldLength );
     if FileCommentLength > 0 then
       Write( FFileComment[1], FileCommentLength );
   end;
@@ -1436,14 +1427,9 @@ begin
   Result := FItemInfo.ExternalFileAttributes;
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipItem.GetExtraField : Pointer;
+function TAbZipItem.GetExtraField : TAbExtraField;
 begin
   Result := FItemInfo.ExtraField;
-end;
-{ -------------------------------------------------------------------------- }
-function TAbZipItem.GetExtraFieldLength : Word;
-begin
-  Result := FItemInfo.ExtraFieldLength;
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetFileComment : AnsiString;
@@ -1533,13 +1519,8 @@ begin
     LFH.CompressedSize := CompressedSize;
     LFH.UncompressedSize := UncompressedSize;
     LFH.FileName := RawFileName;
-    LFH.FExtraField := ExtraField;
-    try
-      LFH.FExtraFieldLength := ExtraFieldLength;
-      LFH.SaveToStream( Stream );
-    finally
-      LFH.FExtraField := nil;
-    end;
+    LFH.ExtraField.Buffer := ExtraField.Buffer;
+    LFH.SaveToStream( Stream );
   finally
     LFH.Free;
   end;
@@ -2296,7 +2277,7 @@ begin
     AB_SIZE_LOCAL_HEADER + { local header size }
     AB_SIZE_CD_HEADER +
     (2 * Length(CurrItem.FileName)) +
-    (2 * CurrItem.ExtraFieldLength);
+    (2 * Length(CurrItem.ExtraField.Buffer));
 
   if (CurrItem.CompressionMethod = cmDeflated) and
     ((CurrItem.GeneralPurposeBitFlag and AbHasDataDescriptorFlag) <> 0)

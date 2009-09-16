@@ -40,6 +40,7 @@ uses
   Windows,                                                 {!!.03}
   {$ENDIF Linux}
   Classes,
+  Types,
   AbUtils,
   SysUtils;
 
@@ -495,6 +496,44 @@ type
   end;
 
 
+{ ===== TAbExtraField ======================================================= }
+type
+  PAbExtraSubField = ^TAbExtraSubField;
+  TAbExtraSubField = packed record
+    ID : Word;
+    Len : Word;
+    Data : record end;
+  end;
+
+  TAbExtraField = class
+  private {fields}
+    FBuffer : TByteDynArray;
+  private {methods}
+    procedure DeleteField(aSubField : PAbExtraSubField);
+    function FindField(aID : Word; out aSubField : PAbExtraSubField) : Boolean;
+    function FindNext(var aCurField : PAbExtraSubField) : Boolean;
+    function GetCount : Integer;
+    function GetID(aIndex : Integer): Word;
+    procedure SetBuffer(const aValue : TByteDynArray);
+  protected {methods}
+    procedure Changed; virtual;
+  public {methods}
+    procedure Clear;
+    procedure Delete(aID : Word);
+    function Get(aID : Word; out aData : Pointer; out aDataSize : Word) : Boolean;
+    procedure LoadFromStream(aStream : TStream; aSize : Word);
+    procedure Put(aID : Word; const aData; aDataSize : Word);
+  public {properties}
+    property Count : Integer
+      read GetCount;
+    property Buffer : TByteDynArray
+      read FBuffer
+      write SetBuffer;
+    property IDs[aIndex : Integer]: Word
+      read GetID;
+  end;
+
+
 const
   AbDefAutoSave = False;
   AbDefExtractOptions = [eoCreateDirs];
@@ -508,6 +547,7 @@ implementation
 {.$R ABRES.R32}
 
 uses
+  RTLConsts,
   AbExcept,
   AbSpanSt,
   AbDfBase,
@@ -538,10 +578,9 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-
 class function TAbArchiveItem.GetMaxFileSize: Int64;
 begin
-    Result := $FFFFFFFF;  //Make same as old
+  Result := $FFFFFFFF;  //Make same as old
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetCompressedSize : Int64;
@@ -571,9 +610,9 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetIsDirectory: Boolean;
 begin
-    Result := FIsDirectory;
+  Result := FIsDirectory;
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetIsEncrypted : Boolean;
 begin
   Result := FIsEncrypted;
@@ -1910,6 +1949,151 @@ end;
 class function TAbArchive.SupportsEmptyFolder: Boolean;
 begin
 	Result := false;
+end;
+{ -------------------------------------------------------------------------- }
+
+{ TAbExtraField implementation ============================================= }
+procedure TAbExtraField.Changed;
+begin
+  // No-op
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.Clear;
+begin
+  FBuffer := nil;
+  Changed;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.Delete(aID : Word);
+var
+  SubField : PAbExtraSubField;
+begin
+  if FindField(aID, SubField) then begin
+    DeleteField(SubField);
+    Changed;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.DeleteField(aSubField : PAbExtraSubField);
+var
+  Len, Offset : Integer;
+begin
+  Len := SizeOf(TAbExtraSubField) + aSubField.Len;
+  Offset := Cardinal(aSubField) - Cardinal(FBuffer);
+  if Offset + Len < Length(FBuffer) then
+    Move(FBuffer[Offset + Len], aSubField^, Length(FBuffer) - Offset - Len);
+  SetLength(FBuffer, Length(FBuffer) - Len);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.FindField(aID : Word;
+  out aSubField : PAbExtraSubField) : Boolean;
+begin
+  Result := False;
+  aSubField := nil;
+  while FindNext(aSubField) do
+    if aSubField.ID = aID then begin
+      Result := True;
+      Break;
+    end;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.FindNext(var aCurField : PAbExtraSubField) : Boolean;
+var
+  BytesLeft : Integer;
+begin
+  if aCurField = nil then begin
+    aCurField := PAbExtraSubField(FBuffer);
+    BytesLeft := Length(FBuffer);
+  end
+  else begin
+    BytesLeft := Length(FBuffer) -
+      Integer(Cardinal(aCurField) - Cardinal(FBuffer)) -
+      SizeOf(TAbExtraSubField) - aCurField.Len;
+    Inc(Cardinal(aCurField), aCurField.Len + SizeOf(TAbExtraSubField));
+  end;
+  Result := (BytesLeft >= SizeOf(TAbExtraSubField));
+  if Result and (BytesLeft < SizeOf(TAbExtraSubField) + aCurField.Len) then
+    aCurField.Len := BytesLeft - SizeOf(TAbExtraSubField);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.Get(aID : Word; out aData : Pointer;
+  out aDataSize : Word) : Boolean;
+var
+  SubField : PAbExtraSubField;
+begin
+  Result := FindField(aID, SubField);
+  if Result then begin
+    aData := @SubField.Data;
+    aDataSize := SubField.Len;
+  end
+  else begin
+    aData := nil;
+    aDataSize := 0;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.GetCount : Integer;
+var
+  SubField : PAbExtraSubField;
+begin
+  Result := 0;
+  SubField := nil;
+  while FindNext(SubField) do
+    Inc(Result);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.GetID(aIndex : Integer): Word;
+var
+  i: Integer;
+  SubField : PAbExtraSubField;
+begin
+  i := 0;
+  SubField := nil;
+  while FindNext(SubField) do
+    if i = aIndex then begin
+      Result := SubField.ID;
+      Exit;
+    end
+    else
+      Inc(i);
+  raise EListError.CreateFmt(SListIndexError, [aIndex]);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.LoadFromStream(aStream : TStream; aSize : Word);
+begin
+  SetLength(FBuffer, aSize);
+  if aSize > 0 then
+    aStream.ReadBuffer( FBuffer[0], aSize);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.Put(aID : Word; const aData; aDataSize : Word);
+var
+  Offset : Cardinal;
+  SubField : PAbExtraSubField;
+begin
+  if FindField(aID, SubField) then begin
+    if SubField.Len = aDataSize then begin
+      Move(aData, SubField.Data, aDataSize);
+      Changed;
+      Exit;
+    end
+    else DeleteField(SubField);
+  end;
+  Offset := Length(FBuffer);
+  SetLength(FBuffer, Length(FBuffer) + SizeOf(TAbExtraSubField) + aDataSize);
+  SubField := PAbExtraSubField(@FBuffer[Offset]);
+  SubField.ID := aID;
+  SubField.Len := aDataSize;
+  Move(aData, SubField.Data, aDataSize);
+  Changed;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.SetBuffer(const aValue : TByteDynArray);
+begin
+  SetLength(FBuffer, Length(aValue));
+  if Length(FBuffer) > 0 then
+    Move(aValue[0], FBuffer[0], Length(FBuffer));
+  Changed;
 end;
 { -------------------------------------------------------------------------- }
 
