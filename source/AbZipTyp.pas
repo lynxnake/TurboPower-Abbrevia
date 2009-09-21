@@ -335,7 +335,7 @@ type
     FTotalEntries         : Word;
     FDirectorySize        : LongWord;
     FDirectoryOffset      : LongWord;
-    FZipfileComment       : string;
+    FZipfileComment       : AnsiString;
     function GetValid : Boolean;
   public {methods}
     constructor Create;
@@ -358,7 +358,7 @@ type
       read FDirectoryOffset write FDirectoryOffset;
     property StartDiskNumber : Word
       read FStartDiskNumber write FStartDiskNumber;
-    property ZipfileComment : string
+    property ZipfileComment : AnsiString
       read FZipfileComment write FZipfileComment;
     property IsValid : Boolean
       read GetValid;
@@ -519,7 +519,7 @@ type
       var Abort : Boolean );
     function FindCDTail : Int64;
     function GetItem( Index : Integer ) : TAbZipItem;
-    function GetZipfileComment : string;
+    function GetZipfileComment : AnsiString;
     procedure PutItem( Index : Integer; Value : TAbZipItem );
     procedure DoRequestLastDisk( var Abort : Boolean );
       virtual;
@@ -539,7 +539,7 @@ type
       override;
     procedure SaveArchive;
       override;
-    procedure SetZipfileComment(const Value : string );
+    procedure SetZipfileComment(const Value : AnsiString );
 
   protected {properties}
     property IsExecutable : Boolean
@@ -598,7 +598,7 @@ type
       default AbDefPasswordRetries;
     property StubSize : LongWord
       read FStubSize;
-    property ZipfileComment : string
+    property ZipfileComment : AnsiString
       read GetZipfileComment
       write SetZipfileComment;
 
@@ -1325,7 +1325,6 @@ end;
 procedure TAbZipDirectoryFileFooter.LoadFromStream( Stream : TStream );
 var
   ZipfileCommentLength : Word;
-  sAnsi: AnsiString;
 begin
   with Stream do begin
     Read( FSignature, sizeof( FSignature ) );
@@ -1337,10 +1336,9 @@ begin
     Read( FDirectoryOffset, sizeof( FDirectoryOffset ) );
     Read( ZipfileCommentLength, sizeof( ZipfileCommentLength ) );
 
-    SetLength( sAnsi, ZipfileCommentLength );
+    SetLength( FZipfileComment, ZipfileCommentLength );
     if ZipfileCommentLength > 0 then
-      Read( sAnsi[1], ZipfileCommentLength );
-    FZipfileComment := string(sAnsi);
+      Read( FZipfileComment[1], ZipfileCommentLength );
   end;
   if not IsValid then
     raise EAbZipInvalid.Create;
@@ -1350,7 +1348,6 @@ end;
 procedure TAbZipDirectoryFileFooter.SaveToStream( Stream : TStream );
 var
   ZipfileCommentLength : Word;
-  sAnsi: AnsiString;
 begin
   with Stream do begin
     Write( FValidSignature, sizeof( FValidSignature ) );
@@ -1363,10 +1360,7 @@ begin
     ZipfileCommentLength := Length( FZipfileComment );
     Write( ZipfileCommentLength, sizeof( ZipfileCommentLength ) );
     if ZipfileCommentLength > 0 then
-    begin
-      sAnsi := AnsiString(FZipfileComment);
-      Write( sAnsi[1], ZipfileCommentLength );
-    end;
+      Write( FZipfileComment[1], ZipfileCommentLength );
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -2107,7 +2101,7 @@ begin
   Result := TAbZipItem(FItemList.Items[Index]);
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipArchive.GetZipfileComment : string;
+function TAbZipArchive.GetZipfileComment : AnsiString;
 begin
   Result := FInfo.ZipfileComment;
 end;
@@ -2968,7 +2962,7 @@ begin
 
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchive.SetZipfileComment(const Value : string );
+procedure TAbZipArchive.SetZipfileComment(const Value : AnsiString );
 begin
   FInfo.FZipfileComment := Value;
   FIsDirty := True;

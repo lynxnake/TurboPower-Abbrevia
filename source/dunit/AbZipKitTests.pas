@@ -262,7 +262,7 @@ end;
 procedure TAbZipKitTests.TestComment;
   // Verify that Delphi 2009 handles zip file comments correctly (fixed in rev 158)
 const
-  SComment: String = 'Test comment';
+  SComment: AnsiString = 'Test comment';
 var
   Zip: TAbZipKit;
 begin
