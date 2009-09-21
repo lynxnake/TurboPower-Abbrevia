@@ -357,7 +357,7 @@ type
     function GetSelectedZipItem : TAbZipItem;
     function GetStatus : TAbArchiveStatus;
     function GetVersion : string;
-    function GetZipfileComment : AnsiString;
+    function GetZipfileComment : String;
     procedure InitArchive;
     procedure Loaded; override;
     procedure Notification(Component: TComponent; Operation: TOperation);
@@ -404,7 +404,7 @@ type
     procedure SetTempDirectory(Value : string);
     procedure SetSpanningThreshold(Value : Longint);
     procedure SetVersion(Value : string);
-    procedure SetZipfileComment(Value : AnsiString);
+    procedure SetZipfileComment(Value : String);
     procedure TestItemProc(Sender : TObject; Item : TAbArchiveItem);
     procedure UnzipProc(Sender : TObject; Item : TAbArchiveItem;
                         const NewName : string);
@@ -697,7 +697,7 @@ type
     property TempDirectory : string
              read FTempDirectory
              write SetTempDirectory;
-    property ZipfileComment : AnsiString
+    property ZipfileComment : String
              read GetZipfileComment
              write SetZipfileComment;
   end;
@@ -1876,7 +1876,7 @@ begin
   Result := AbVersion;
 end;
 { -------------------------------------------------------------------------- }
-function TAbCustomZipOutline.GetZipfileComment : AnsiString;
+function TAbCustomZipOutline.GetZipfileComment : String;
 begin
   if Assigned(FArchive) then
     Result := TAbZipArchive(FArchive).ZipfileComment
@@ -2316,7 +2316,7 @@ begin
   {NOP}
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipOutline.SetZipfileComment(Value : AnsiString);
+procedure TAbCustomZipOutline.SetZipfileComment(Value : String);
 begin
   if Assigned(FArchive) then
     TAbZipArchive(FArchive).ZipfileComment := Value;
