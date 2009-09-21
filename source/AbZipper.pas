@@ -71,7 +71,7 @@ type
     procedure SetFileName(const aFileName : string);
       override;
     procedure SetStoreOptions( Value : TAbStoreOptions );
-    procedure SetZipfileComment(const Value : AnsiString);
+    procedure SetZipfileComment(const Value : string);
       override;
     procedure ZipProc(Sender : TObject; Item : TAbArchiveItem;
                       OutStream : TStream);
@@ -483,7 +483,7 @@ begin
     ZipArchive.StoreOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipper.SetZipfileComment(const Value : AnsiString);
+procedure TAbCustomZipper.SetZipfileComment(const Value : string);
 begin
   if (ZipArchive <> nil) then
     (ZipArchive as TAbZipArchive).ZipfileComment := Value

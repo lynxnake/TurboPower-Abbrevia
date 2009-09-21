@@ -56,7 +56,7 @@ type
   protected {methods}
     function  GetItem(Index : Integer) : TAbZipItem; virtual;
     function  GetZipArchive : {TAbZipArchive} TAbArchive;
-    function  GetZipfileComment : AnsiString;
+    function  GetZipfileComment : string;
     procedure InitArchive;
       override;
     procedure SetFileName(const aFileName : string);
@@ -67,7 +67,7 @@ type
     procedure SetOnRequestImage(Value : TAbRequestImageEvent); override;
 
     procedure SetPassword(const Value : string);
-    procedure SetZipfileComment(const Value : AnsiString);
+    procedure SetZipfileComment(const Value : String);
       virtual;
 
   protected {properties}
@@ -95,7 +95,7 @@ type
       read  GetItem; default;
     property ZipArchive : {TAbZipArchive} TAbArchive
       read GetZipArchive;
-    property ZipfileComment : AnsiString
+    property ZipfileComment : String
       read GetZipfileComment
       write SetZipfileComment;
 
@@ -164,7 +164,7 @@ begin
     Result := nil;
 end;
 { -------------------------------------------------------------------------- }
-function TAbCustomZipBrowser.GetZipfileComment : AnsiString;
+function TAbCustomZipBrowser.GetZipfileComment : string;
 begin
   if (ZipArchive <> nil) then
     Result := (ZipArchive as TAbZipArchive).ZipfileComment
@@ -306,7 +306,7 @@ begin
   end;
 end;
 
-procedure TAbCustomZipBrowser.SetZipfileComment(const Value : AnsiString);
+procedure TAbCustomZipBrowser.SetZipfileComment(const Value : string);
 begin
   {NOP - descendents wishing to set this property should override}
 end;
