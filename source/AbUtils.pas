@@ -1443,18 +1443,25 @@ end;
 function AbFileGetAttrEx(const aFileName: string; out aAttr: TAbAttrExRec) : Boolean;
 {$IFDEF MSWINDOWS}
 var
+  FileDate: LongRec;
   FindData: TWin32FindData;
+  LocalFileTime: TFileTime;
 {$ENDIF}
 {$IFDEF LINUX}
 var
   StatBuf: TStatBuf64;
 {$ENDIF}
 begin
+  aAttr.Time := -1;
+  aAttr.Size := -1;
+  aAttr.Attr := -1;
+  aAttr.Mode := 0;
 {$IFDEF MSWINDOWS}
   Result := GetFileAttributesEx(PChar(aFileName), GetFileExInfoStandard, @FindData);
   if Result then begin
-    FileTimeToDosDateTime(FindData.ftLastWriteTime, LongRec(aAttr.Time).Lo,
-      LongRec(aAttr.Time).Hi);
+    if FileTimeToLocalFileTime(FindData.ftLastWriteTime, LocalFileTime) and
+       FileTimeToDosDateTime(LocalFileTime, FileDate.Hi, FileDate.Lo) then
+      aAttr.Time := Integer(FileDate);
     LARGE_INTEGER(aAttr.Size).LowPart := FindData.nFileSizeLow;
     LARGE_INTEGER(aAttr.Size).HighPart := FindData.nFileSizeHigh;
     aAttr.Attr := FindData.dwFileAttributes;
