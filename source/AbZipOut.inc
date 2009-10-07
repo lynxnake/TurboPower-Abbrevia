@@ -972,15 +972,13 @@ var
   FileName : string;
   I : Integer;
   NumFiles : Integer;
-  DroppedName : array [0..79] of Char;
 begin
   Msg.Result := 1;
-  NumFiles := DragQueryFile(Msg.Drop, Cardinal(-1), DroppedName,
-                             sizeof(DroppedName));
+  NumFiles := DragQueryFile(Msg.Drop, Cardinal(-1), nil, 0);
   try
     for I := 0 to pred(NumFiles) do begin
-      DragQueryFile(Msg.Drop, I, DroppedName, sizeof(DroppedName));
-      FileName := StrPas(DroppedName);
+      SetLength(FileName, DragQueryFile(Msg.Drop, I, nil, 0));
+      DragQueryFile(Msg.Drop, I, PChar(FileName), Length(FileName) + 1);
       DoOnWindowsDrop(FileName);
     end;
   finally
