@@ -552,12 +552,6 @@ uses
   AbSpanSt,
   AbDfBase,
   AbConst;
-const
-  CRLF = #13 + #10;
-  ProcessTypeToLogType : array[TAbProcessType] of TAbLogType =
-    (ltAdd, ltDelete, ltExtract, ltFreshen, ltMove, ltReplace, ltFoundUnhandled);
-
-
 
 
 { TAbArchiveItem implementation ============================================ }
@@ -1265,6 +1259,9 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.DoConfirmProcessItem(Item : TAbArchiveItem;
   const ProcessType : TAbProcessType; var Confirm : Boolean);
+const
+  ProcessTypeToLogType : array[TAbProcessType] of TAbLogType =
+    (ltAdd, ltDelete, ltExtract, ltFreshen, ltMove, ltReplace, ltFoundUnhandled);
 begin
   Confirm := True;
   if Assigned(FOnConfirmProcessItem) then
@@ -1723,29 +1720,16 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.MakeLogEntry(const FN: string; LT : TAbLogType);
+const
+  LogTypeRes : array[TAbLogType] of Integer =
+    (AbLtAdd, AbLtDelete, AbLtExtract, AbLtFreshen, AbLtMove, AbLtReplace,
+     AbLtStart, AbUnhandledEntity);
 var
-  Buf : array[0..255] of Char;
+  Buf : string;
 begin
   if Assigned(FLogStream) then begin
-    case LT of
-      ltAdd     : StrPCopy(Buf, FN + AbStrRes(AbLtAdd) +
-        DateTimeToStr(Now) + CRLF);
-      ltDelete  : StrPCopy(Buf, FN + AbStrRes(AbLtDelete) +
-        DateTimeToStr(Now) + CRLF);
-      ltExtract : StrPCopy(Buf, FN + AbStrRes(AbLtExtract) +
-        DateTimeToStr(Now) + CRLF);
-      ltFreshen : StrPCopy(Buf, FN + AbStrRes(AbLtFreshen) +
-        DateTimeToStr(Now) + CRLF);
-      ltMove    : StrPCopy(Buf, FN + AbStrRes(AbLtMove) +
-        DateTimeToStr(Now) + CRLF);
-      ltReplace : StrPCopy(Buf, FN + AbStrRes(AbLtReplace) +
-        DateTimeToStr(Now) + CRLF);
-      ltStart   : StrPCopy(Buf, FN + AbStrRes(AbLtStart) +
-        DateTimeToStr(Now) + CRLF);
-      ltFoundUnhandled : StrPCopy(Buf, FN + AbStrRes(AbUnhandledEntity) +
-        DateTimeToStr(Now) + CRLF);
-    end;
-    FLogStream.Write(Buf, StrLen(Buf));
+    Buf := FN + AbStrRes(LogTypeRes[LT]) + DateTimeToStr(Now) + sLineBreak;
+    FLogStream.Write(Buf[1], Length(Buf) * SizeOf(Char));
   end;
 end;
 { -------------------------------------------------------------------------- }
