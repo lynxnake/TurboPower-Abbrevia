@@ -255,9 +255,9 @@ begin
 
 end;
 
-function IntToOctal(Value : Int64): string;
+function IntToOctal(Value : Int64): AnsiString;
 const
-  OctDigits  : array[0..7] of Char = '01234567';
+  OctDigits  : array[0..7] of AnsiChar = '01234567';
 begin
   if Value = 0 then
     Result := '0'
@@ -327,7 +327,7 @@ begin
   end;
 end;
 
-function PadString(const S : string; Places : Integer) : string;
+function PadString(const S : AnsiString; Places : Integer) : AnsiString;
 {
 Pads a string (S) with one right space and as many left spaces as
 needed to fill Places
@@ -342,7 +342,7 @@ begin
     Result := S
   else begin
     Result := S + ' ';
-    Result := StringOfChar(' ', Places - Length(Result)) + Result;
+    Result := StringOfChar(AnsiChar(' '), Places - Length(Result)) + Result;
   end;
 end;
 
@@ -534,7 +534,7 @@ procedure TAbTarItem.SaveTarHeaderToStream(AStream: TStream);
 var
   j : Integer;
   HdrChkSum : Integer;
-  HdrChkStr : string;
+  HdrChkStr : AnsiString;
   HdrBuffer : PAnsiChar;
   PadSize : Integer;
   PadBuff : array [0..AB_TAR_RECORDSIZE - 1] of byte;
@@ -565,7 +565,7 @@ end;
 
 procedure TAbTarItem.SetCompressedSize(const Value: Int64);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr12));
   Move(S[1], FTarHeader.Size, Length(S));
@@ -573,7 +573,7 @@ end;
 
 procedure TAbTarItem.SetDevMajor(const Value: Integer);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   Move(S[1], FTarHeader.DevMajor, Length(S));
@@ -581,7 +581,7 @@ end;
 
 procedure TAbTarItem.SetDevMinor(const Value: Integer);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   Move(S[1], FTarHeader.DevMinor, Length(S));
@@ -589,7 +589,7 @@ end;
 
 procedure TAbTarItem.SetExternalFileAttributes(Value: Integer);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   Move(S[1], FTarHeader.Mode, Length(S));
@@ -602,7 +602,7 @@ end;
 
 procedure TAbTarItem.SetGroupID(const Value: Integer);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   Move(S[1], FTarHeader.gid, Length(S));
@@ -622,7 +622,7 @@ procedure TAbTarItem.SetLastModFileDate(const Value: Word);
 var
   D : TDateTime;
   UT : LongInt;
-  DStr : string;
+  DStr : AnsiString;
 begin
   { get current date from header record }
   UT := OctalToInt(FTarHeader.ModTime, sizeof(FTarHeader.ModTime));
@@ -645,7 +645,7 @@ procedure TAbTarItem.SetLastModFileTime(const Value: Word);
 var
   T : TDateTime;
   UT : LongInt;
-  TStr : string;
+  TStr : AnsiString;
 begin
   { get current date from header record }
   UT := OctalToInt(FTarHeader.ModTime, sizeof(FTarHeader.ModTime));
@@ -671,7 +671,7 @@ end;
 
 procedure TAbTarItem.SetUncompressedSize(const Value: Int64);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr12));
   Move(S[1], FTarHeader.Size, Length(S));
@@ -679,7 +679,7 @@ end;
 
 procedure TAbTarItem.SetUserID(const Value: Integer);
 var
-  S : string;
+  S : AnsiString;
 begin
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   Move(S[1], FTarHeader.uid, Length(S));

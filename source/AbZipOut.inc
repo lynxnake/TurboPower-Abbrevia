@@ -245,7 +245,7 @@ type
     FLogging                : Boolean;
     FSpanningThreshold      : Longint;
     FOutline                : TAbZipDisplayOutline;
-    FPassword               : string;
+    FPassword               : AnsiString;
     FPasswordRetries        : Byte;
     FStoreOptions           : TAbStoreOptions;
     FTempDirectory          : string;
@@ -329,7 +329,7 @@ type
     procedure DoMouseWheel(Sender : TObject; Shift : TShiftState;
                            Delta, XPos, YPos : Word); virtual;
 {$ENDIF}
-    procedure DoNeedPassword(Sender : TObject; var NewPassword : string);
+    procedure DoNeedPassword(Sender : TObject; var NewPassword : AnsiString);
                              virtual;
     procedure DoSave(Sender : TObject); virtual;
 {$IFDEF WIN32}
@@ -389,7 +389,7 @@ type
     procedure SetOnRequestNthDisk(Value : TAbRequestNthDiskEvent);
     procedure SetOnRequestBlankDisk(Value : TAbRequestDiskEvent);
     procedure SetOnWindowsDrop(Value : TWindowsDropEvent);
-    procedure SetPassword(Value : string);
+    procedure SetPassword(Value : AnsiString);
     procedure SetPasswordRetries(Value : Byte);
     procedure SetPictureDirectory(Value : TBitmap);                   
     procedure SetPictureFile(Value : TBitmap);
@@ -485,7 +485,7 @@ type
     property OnWindowsDrop : TWindowsDropEvent
              read  FOnWindowsDrop
              write SetOnWindowsDrop;
-    property Password : string
+    property Password : AnsiString
              read  FPassword
              write SetPassword;
     property PasswordRetries : Byte
@@ -1596,7 +1596,7 @@ end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.DoNeedPassword(Sender : TObject;
-                                        var NewPassword : string);
+                                        var NewPassword : AnsiString);
 begin
   if Assigned(FOnNeedPassword) then begin
     FOnNeedPassword(Sender, NewPassword);
@@ -2197,7 +2197,7 @@ begin
     FOutline.OnWindowsDrop := nil;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipOutline.SetPassword(Value : string);
+procedure TAbCustomZipOutline.SetPassword(Value : AnsiString);
 begin
   FPassword := Value;
   if Assigned(FArchive) then

@@ -104,42 +104,41 @@ type
 {$M+}
   TAbCompoundFile = class;
 {$M-}
-  TBeforeDirDeleteEvent = procedure(Sender : TAbCompoundFile; Dir : string;
+  TBeforeDirDeleteEvent = procedure(Sender : TAbCompoundFile; Dir : AnsiString;
                                     var AllowDelete : Boolean) of object;
-  TBeforeDirModifiedEvent = procedure(Sender : TAbCompoundFile; Dir : string;
+  TBeforeDirModifiedEvent = procedure(Sender : TAbCompoundFile; Dir : AnsiString;
                                       var AllowModify : Boolean) of object;
-  TBeforeFileDeleteEvent = procedure(Sender : TAbCompoundFile;FileName : string;
+  TBeforeFileDeleteEvent = procedure(Sender : TAbCompoundFile;FileName : AnsiString;
                                      var AllowDelete : Boolean) of object;
   TBeforeFileModifiedEvent = procedure(Sender : TAbCompoundFile;
-                                       FileName : string; var AllowModify :
+                                       FileName : AnsiString; var AllowModify :
                                        Boolean) of object;
 
   TMultiNode = class(TObject)
   protected  {private}
     FParent     : Pointer;       {pointer to the parent node}
-    FKey        : string;        {node identifier}
+    FKey        : AnsiString;    {node identifier}
     FChildren   : TStringList;   {list for child keys & nodes}
     FData       : TObject;       {contained object}
 
-    function GetChildren(Index : Integer) : TMultiNode;
     function GetChildCount : Integer;
   public
-    constructor Create(const Key : string);
+    constructor Create(const Key : AnsiString);
     destructor Destroy; override;
-    function AddChild(const Key : string) : TMultiNode;
+    function AddChild(const Key : AnsiString) : TMultiNode;
     procedure DeleteChild(Index : Integer);
-    function DeleteChildByName(const ChildKey : string) : Boolean;
+    function DeleteChildByName(const ChildKey : AnsiString) : Boolean;
     function DeleteChildren : Boolean;
     function GetChild(Index : integer) : TMultiNode;
-    function GetChildByName(const Key : string) : TMultiNode;
+    function GetChildByName(const Key : AnsiString) : TMultiNode;
     function HasParent : Boolean;
     function HasChildren : Boolean;
-    function Contains(const Key : string) : Boolean;
+    function Contains(const Key : AnsiString) : Boolean;
     property Parent : Pointer read FParent write FParent;
     property ChildCount : Integer read GetChildCount;
-    property Children[Index : Integer] : TMultiNode read GetChildren;
+    property Children[Index : Integer] : TMultiNode read GetChild;
     property Data : TObject read FData write FData;
-    property Key : string read FKey write FKey;
+    property Key : AnsiString read FKey write FKey;
   end;
 
 
@@ -148,14 +147,14 @@ type
     FRoot        : TMultiNode;     {reference to root node}
     FCount       : Integer;        {count of nodes in the tree}
     FCurrentNode : TMultiNode;     {analogous to current directory}
-    FSepChar     : Char;           {directory separator character}
+    FSepChar     : AnsiChar;       {directory separator character}
     FIDCount     : Integer;        {counter incremented during preorder trav.}
                                    {(used to assign unique ID to each node)}
 
     procedure VisitSubNodesPost(Node : TMultiNode; ID : Integer);
     procedure VisitSubNodesPre(Node : TMultiNode; Strm : TStream);
     procedure VisitNode(Node : TMultiNode; Strm : TStream);
-    procedure ParseDirStr(const Key : string; Lst : TStringList);      {!!.01}
+    procedure ParseDirStr(const Key : AnsiString; Lst : TStringList);      {!!.01}
     procedure PopulateSubNodes(ParentNode : TMultiNode;
                                TreeView : TTreeView; TreeNode : TTreeNode);
     procedure TraversePost(ID : Integer);
@@ -164,24 +163,24 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function Insert(ParentNode : TMultiNode; const Key : string) : TMultiNode;
-    function GetNode(const Key : string) : TMultiNode;
-    function DeleteNode(const Key : string) : Boolean;
-    procedure ChangeDir(const Key : string);
+    function Insert(ParentNode : TMultiNode; const Key : AnsiString) : TMultiNode;
+    function GetNode(const Key : AnsiString) : TMultiNode;
+    function DeleteNode(const Key : AnsiString) : Boolean;
+    procedure ChangeDir(const Key : AnsiString);
     function PopulateTreeView(TreeView : TTreeView) : Integer;
     property Root : TMultiNode read FRoot;
     property Count : Integer read FCount;
     property CurrentNode : TMultiNode read FCurrentNode;
-    property SepChar : Char read FSepChar write FSepChar;
+    property SepChar : AnsiChar read FSepChar write FSepChar;
   end;
 
 
   TAbSystemBlock = class(TObject)
   protected {private}
-    FSignature      : string;      {identifies the compound file structure}
-    FVolumeLabel    : string;      {file identification in addition to filename}
+    FSignature      : AnsiString;  {identifies the compound file structure}
+    FVolumeLabel    : AnsiString;  {file identification in addition to filename}
     FAllocationSize : Integer;     {size of allocation block}
-    FVersion        : string;      {version string identifier}
+    FVersion        : AnsiString;  {version string identifier}
     FUpdating       : Boolean;     {internal processing indicator}
 
   {protected methods}
@@ -190,19 +189,19 @@ type
     procedure WriteToStream(Strm : TMemoryStream);
 
   {properties}
-    property Signature : string read FSignature write FSignature;
-    property VolumeLabel : string read FVolumeLabel write FVolumeLabel;
+    property Signature : AnsiString read FSignature write FSignature;
+    property VolumeLabel : AnsiString read FVolumeLabel write FVolumeLabel;
     property Updating : Boolean read FUpdating;
     property AllocationSize : Integer
       read FAllocationSize write FAllocationSize;
-    property Version : string read FVersion;
+    property Version : AnsiString read FVersion;
   public
-    constructor Create(VolLabel : string; AllocationSz : Integer);
+    constructor Create(const VolLabel : AnsiString; AllocationSz : Integer);
   end;
 
   TAbDirectoryEntry = class(TObject)
   protected {private}
-    FName           : string;           {name of file or folder}
+    FName           : AnsiString;       {name of file or folder}
     FEntryID        : Integer;          {unique ID for this dir. entry}
     FParentFolder   : LongInt;          {unique ID of parent folder}
     FEntryType      : TrdEntryType;     {folder or file}
@@ -224,7 +223,7 @@ type
   public
     constructor Create(AsFile : Boolean);
 
-    property EntryName : string read FName write FName;
+    property EntryName : AnsiString read FName write FName;
     property ParentFolder : LongInt read FParentFolder write FParentFolder;
     property Attributes : LongInt read FAttributes write FAttributes;
     property StartBlock : LongInt read FStartBlock write FStartBlock;
@@ -240,14 +239,14 @@ type
   TAbRootDir = class(TMultiTree)
     fAllocSize : Integer;
   protected {private}
-    function AddFolder(FolderName : string) : TAbDirectoryEntry;
-    function AddFile(FileName : string) : TAbDirectoryEntry;
-    procedure DeleteFolder(FolderName : string);
-    procedure DeleteFile(FileName : string);
+    function AddFolder(FolderName : AnsiString) : TAbDirectoryEntry;
+    function AddFile(FileName : AnsiString) : TAbDirectoryEntry;
+    procedure DeleteFolder(FolderName : AnsiString);
+    procedure DeleteFile(FileName : AnsiString);
     procedure WriteToStream(Strm : TMemoryStream);
     procedure GoToEntryID(ID : Integer);
   public
-    constructor Create(VolLabel : string; AllocSize : Integer);
+    constructor Create(VolLabel : AnsiString; AllocSize : Integer);
     destructor Destroy; override;
   end;
 
@@ -298,8 +297,8 @@ type
     FOnBeforeFileDelete   : TBeforeFileDeleteEvent;
     FOnBeforeFileModified : TBeforeFileModifiedEvent;
 
-    function GetVolumeLabel : string;
-    procedure SetVolumeLabel(Val : string);
+    function GetVolumeLabel : AnsiString;
+    procedure SetVolumeLabel(Val : AnsiString);
     function GetDirectoryEntries : Integer;
     function GetSizeOnDisk : Integer;
     procedure PersistFileData(FileData : TStream;
@@ -314,30 +313,30 @@ type
 
     procedure Defrag;                   {!!.03} {not implemented}
   public
-    constructor Create(FileName : string; VolLabel : string;
+    constructor Create(const FileName : string; const VolLabel : AnsiString;
                        AllocSize : Integer); overload;
-    constructor Create(FileName : string; VolLabel : string;
-                       AllocSize : Integer; Signature: string); overload;
+    constructor Create(const FileName : string; const VolLabel : AnsiString;
+                       AllocSize : Integer; const Signature: AnsiString); overload;
     destructor Destroy; override;
     procedure EnumerateFiles(Lst : TStringList);                       {!!.01}
     procedure EnumerateFolders(Lst : TStringList);                     {!!.01}
-    procedure AddFile(FName : string; FileData : TStream; FileSize : Integer);
-    function AddFolder(FName : string) : Boolean;
-    procedure UpdateFile(FName : string; FData : TStream);
-    procedure DeleteFile(FName : string);
-    procedure DeleteFolder(FName : string);
-    procedure Open(FName : string); overload;
-    procedure Open(FName : string; Signature: string); overload;
-    function OpenFile(FileName : string; var Strm : TStream) : Integer;
+    procedure AddFile(FName : AnsiString; FileData : TStream; FileSize : Integer);
+    function AddFolder(FName : AnsiString) : Boolean;
+    procedure UpdateFile(FName : AnsiString; FData : TStream);
+    procedure DeleteFile(FName : AnsiString);
+    procedure DeleteFolder(FName : AnsiString);
+    procedure Open(const FName : string); overload;
+    procedure Open(const FName : string; const Signature: AnsiString); overload;
+    function OpenFile(FileName : AnsiString; var Strm : TStream) : Integer;
     function PopulateTreeView(TreeView : TTreeView) : Integer;
     procedure PopulateSubNodes(ParentNode : TMultiNode;
                      TreeView : TTreeView; TreeNode : TTreeNode);
-    procedure RenameFile(OrigName, NewName : string);
-    procedure RenameFolder(OrigName, NewName : string);
-    procedure SetCurrentDirectory(val : string);
-    function GetCurrentDirectory : string;
+    procedure RenameFile(OrigName, NewName : AnsiString);
+    procedure RenameFolder(OrigName, NewName : AnsiString);
+    procedure SetCurrentDirectory(val : AnsiString);
+    function GetCurrentDirectory : AnsiString;
     function GetAllocationSize : Integer;
-    property CurrentDirectory : string
+    property CurrentDirectory : AnsiString
       read GetCurrentDirectory write SetCurrentDirectory;
     property DirectoryEntries : Integer read GetDirectoryEntries;
     property SizeOnDisk : Integer read GetSizeOnDisk;
@@ -345,7 +344,7 @@ type
 
 
   published
-    property VolumeLabel : string read GetVolumeLabel write SetVolumeLabel;
+    property VolumeLabel : AnsiString read GetVolumeLabel write SetVolumeLabel;
     property FileName : string read FDiskFile;
     property AllocationSize : Integer read GetAllocationSize;
 
@@ -372,7 +371,7 @@ uses StrUtils;
              {TMultiNode}
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
-constructor TMultiNode.Create(const Key : string);
+constructor TMultiNode.Create(const Key : AnsiString);
   {- Creates and initializes a new node}
 begin
   inherited Create;
@@ -396,7 +395,7 @@ begin
   inherited Destroy;
 end;
 {-----------------------------------------------------------------------------}
-function TMultiNode.AddChild(const Key : string) : TMultiNode;
+function TMultiNode.AddChild(const Key : AnsiString) : TMultiNode;
   {- Creates and adds a new node - returns the newly added node}
 begin
   if Contains(Key) then
@@ -404,14 +403,14 @@ begin
   else begin
     Result := TMultiNode.Create(Key);
     Result.Parent := self;
-    FChildren.AddObject(Key, Result);
+    FChildren.AddObject(string(Key), Result);
   end;
 end;
 {-----------------------------------------------------------------------------}
-function TMultiNode.Contains(const Key : string) : Boolean;
+function TMultiNode.Contains(const Key : AnsiString) : Boolean;
   {- Returns true if the node contains a child of the name specified by 'Key'}
 begin
-  Result := (FChildren.IndexOf(Key) >= 0);
+  Result := (FChildren.IndexOf(string(Key)) >= 0);
 end;
 {-----------------------------------------------------------------------------}
 procedure TMultiNode.DeleteChild(Index : Integer);
@@ -423,13 +422,13 @@ begin
   FChildren.Delete(Index);
 end;
 {-----------------------------------------------------------------------------}
-function TMultiNode.DeleteChildByName(const ChildKey : string) : Boolean;
+function TMultiNode.DeleteChildByName(const ChildKey : AnsiString) : Boolean;
   {- If node found, node is deleted and true is returned, else returns false}
 begin
   Result := Contains(ChildKey);
   if Result then begin
-    FChildren.Objects[FChildren.IndexOf(ChildKey)].Free;
-    FChildren.Delete(FChildren.IndexOf(ChildKey));
+    FChildren.Objects[FChildren.IndexOf(string(ChildKey))].Free;
+    FChildren.Delete(FChildren.IndexOf(string(ChildKey)));
   end;
 end;
 {-----------------------------------------------------------------------------}
@@ -453,26 +452,18 @@ begin
   Result := (FChildren.Objects[Index] as TMultiNode);
 end;
 {-----------------------------------------------------------------------------}
-function TMultiNode.GetChildByName(const Key : string) : TMultiNode;
+function TMultiNode.GetChildByName(const Key : AnsiString) : TMultiNode;
   {- Returns the child node specified by 'Key'.  If not found, result = nil}
 begin
   Result := nil;
   if Contains(Key) then
-    Result := (FChildren.Objects[FChildren.IndexOf(Key)] as TMultiNode);
+    Result := (FChildren.Objects[FChildren.IndexOf(string(Key))] as TMultiNode);
 end;
 {-----------------------------------------------------------------------------}
 function TMultiNode.GetChildCount : Integer;
   {- Returns the node's children count}
 begin
   Result := FChildren.Count;
-end;
-{-----------------------------------------------------------------------------}
-function TMultiNode.GetChildren(Index : Integer) : TMultiNode;
-  {- Returns the node at 'Index'}
-begin
-  if ((Index < 0) or (Index > FChildren.Count - 1)) then
-    raise ECompoundFileError.Create(AbCmpndIndexOutOfBounds);
-  Result := (FChildren.Objects[Index] as TMultiNode);
 end;
 {-----------------------------------------------------------------------------}
 function TMultiNode.HasParent : Boolean;
@@ -506,7 +497,7 @@ begin
   Curr := Root;
   while Curr <> nil do begin
     if Curr.HasChildren then
-      Curr := Curr.GetChildren(0)
+      Curr := Curr.Children[0]
     else
       begin
         if Curr = Root then begin
@@ -520,7 +511,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TMultiTree.ChangeDir(const Key : string);
+procedure TMultiTree.ChangeDir(const Key : AnsiString);
   {- Sets current directory of tree if path('Key') is valid}
 var
   Node     : TMultiNode;
@@ -564,7 +555,7 @@ begin
     FCurrentNode := Node;
 end;
 {-----------------------------------------------------------------------------}
-function TMultiTree.DeleteNode(const Key : string) : Boolean;
+function TMultiTree.DeleteNode(const Key : AnsiString) : Boolean;
   {- If node found, deletes the node & returns true, else returns false}
 begin
   Result := False;
@@ -575,7 +566,7 @@ begin
     end;
 end;
 {-----------------------------------------------------------------------------}
-function TMultiTree.GetNode(const Key : string) : TMultiNode;
+function TMultiTree.GetNode(const Key : AnsiString) : TMultiNode;
   {- Returns the node if found, else returns nil}
 begin
   Result := nil;
@@ -585,7 +576,7 @@ begin
 end;
 {-----------------------------------------------------------------------------}
 function TMultiTree.Insert(ParentNode : TMultiNode;
-                        const Key : string) : TMultiNode;
+                        const Key : AnsiString) : TMultiNode;
   {- Adds child node to specified ParentNode}
 var
   NewNode : TMultiNode;
@@ -607,10 +598,10 @@ begin
 end;
 {-----------------------------------------------------------------------------}
 {!!.01 - Complete rewrite}
-procedure TMultiTree.ParseDirStr(const Key : string; Lst : TStringList);
+procedure TMultiTree.ParseDirStr(const Key : AnsiString; Lst : TStringList);
   {- parses Key into individual dir commands adding each to Lst}
 var
-  LocKey : string;
+  LocKey : AnsiString;
   Counter : integer;
 begin
   LocKey := Key;
@@ -636,11 +627,11 @@ begin
     end;
 
     if pos(SepChar,LocKey) > 0 then begin
-      Lst.Add(copy(LocKey, 1, Pos(SepChar, LocKey) - 1));
+      Lst.Add(string(copy(LocKey, 1, Pos(SepChar, LocKey) - 1)));
       Delete(LocKey, 1, Pos(SepChar, LocKey));
     end else
       if Length(LocKey) > 0 then begin
-        Lst.Add(LocKey);
+        Lst.Add(string(LocKey));
         LocKey := '';
       end;
   end;
@@ -654,7 +645,7 @@ var
   i    : Integer;
   Node : TTreeNode;
 begin
-  Node := TreeView.Items.AddChild(TreeNode, ParentNode.Key);
+  Node := TreeView.Items.AddChild(TreeNode, string(ParentNode.Key));
   Curr := ParentNode;
   if Curr <> nil then begin
     if Curr.HasChildren then begin
@@ -672,7 +663,7 @@ var
 begin
   TreeView.Items.Clear;
   if Root <> nil then begin
-    TreeNode := TreeView.Items.Add(nil, Root.Key);
+    TreeNode := TreeView.Items.Add(nil, string(Root.Key));
     if Root.HasChildren then begin
       for i := 0 to Root.ChildCount - 1 do
         PopulateSubNodes(Root.Children[i], TreeView, TreeNode);
@@ -767,7 +758,7 @@ end;
               {TAbSystemBlock}
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
-constructor TAbSystemBlock.Create(VolLabel : string; AllocationSz : Integer);
+constructor TAbSystemBlock.Create(const VolLabel : AnsiString; AllocationSz : Integer);
 {- Creates the System block structure of the compound file}
 begin
   inherited Create;
@@ -793,14 +784,14 @@ end;
 procedure TAbSystemBlock.WriteToStream(Strm : TMemoryStream);
   {- writes the contents to the stream parameter}
 var
-  Sig       : Array[0..sbSignatureSize - 1] of char;
-  VolLabel  : Array[0..sbVolumeLabelSize - 1] of char;
+  Sig       : Array[0..sbSignatureSize - 1] of AnsiChar;
+  VolLabel  : Array[0..sbVolumeLabelSize - 1] of AnsiChar;
   AllocSize : Integer;
-  Version   : Array[0..sbVersionSize - 1] of char;
+  Version   : Array[0..sbVersionSize - 1] of AnsiChar;
   Updt      : Byte;
 begin
   FillChar(Sig, sbSignatureSize, #0);
-  strpcopy(Sig, FSignature);
+  StrPCopy(Sig, FSignature);
 
   FillChar(VolLabel[0], sbVolumeLabelSize, #0);
   StrPCopy(VolLabel, FVolumeLabel);
@@ -940,7 +931,7 @@ end;
 procedure TAbDirectoryEntry.WriteToStream(Strm : TMemoryStream);
   {- writes properties to stream}
 var
-  EntryName : Array[0..rdEntryNameSize] of char;
+  EntryName : Array[0..rdEntryNameSize] of AnsiChar;
   FType     : Integer;
 begin
   FillChar(EntryName, rdEntryNameSize - 1, #0);
@@ -967,7 +958,7 @@ end;
             {TAbRootDir}
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
-constructor TAbRootDir.Create(VolLabel : string; AllocSize : Integer);
+constructor TAbRootDir.Create(VolLabel : AnsiString; AllocSize : Integer);
   {- Creates a single-entry (vol-label) root directory structure}
 begin
   inherited Create;
@@ -982,7 +973,7 @@ begin
   inherited Destroy;
 end;
 {-----------------------------------------------------------------------------}
-function TAbRootDir.AddFile(FileName : string) : TAbDirectoryEntry;
+function TAbRootDir.AddFile(FileName : AnsiString) : TAbDirectoryEntry;
   {- Adds a file to the current directory of the compound file}
 var
   NewNode : TMultiNode;
@@ -1013,7 +1004,7 @@ begin
   Result := NewData;
 end;
 {-----------------------------------------------------------------------------}
-function TAbRootDir.AddFolder(FolderName : string) : TAbDirectoryEntry;
+function TAbRootDir.AddFolder(FolderName : AnsiString) : TAbDirectoryEntry;
   {- Adds a folder to the current directory of the compound file}
 var
   NewNode : TMultiNode;
@@ -1036,13 +1027,13 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbRootDir.DeleteFile(FileName : string);
+procedure TAbRootDir.DeleteFile(FileName : AnsiString);
   {- Deletes the specified file if found}
 begin
   DeleteNode(FileName);
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbRootDir.DeleteFolder(FolderName : string);
+procedure TAbRootDir.DeleteFolder(FolderName : AnsiString);
   {- Deletes the specifed folder if found & empty}
 begin
   if not CurrentNode.Contains(FolderName) then
@@ -1379,7 +1370,7 @@ end;
            {TAbCompoundFile}
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
-constructor TAbCompoundFile.Create(FileName : string; VolLabel : string;
+constructor TAbCompoundFile.Create(const FileName : string; const VolLabel : AnsiString;
                                    AllocSize : Integer);
   {- Creates a new instance}
 var
@@ -1410,8 +1401,8 @@ begin
   end;
 end;
 
-constructor TAbCompoundFile.Create(FileName : string; VolLabel : string;
-                       AllocSize : Integer; Signature: string);
+constructor TAbCompoundFile.Create(const FileName : string; const VolLabel : AnsiString;
+                       AllocSize : Integer; const Signature: AnsiString);
   {- Creates a new instance}
 var
   Buff : Array of Byte;
@@ -1460,9 +1451,9 @@ begin
   inherited;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.AddFile(FName : string; FileData : TStream;
+procedure TAbCompoundFile.AddFile(FName : AnsiString; FileData : TStream;
                                   FileSize : Integer);
-   function JustFilename(const PathName : String) : String;            {!!.01}
+   function JustFilename(const PathName : AnsiString) : AnsiString;    {!!.01}
      {-Return just the filename and extension of a pathname.}          {!!.01}
    var                                                                 {!!.01}
      I : Cardinal;                                                     {!!.01}
@@ -1472,11 +1463,7 @@ procedure TAbCompoundFile.AddFile(FName : string; FileData : TStream;
      I := Succ(Word(Length(PathName)));                                {!!.01}
      repeat                                                            {!!.01}
        Dec(I);                                                         {!!.01}
-{$IFDEF UNICODE}
-     until SysUtils.CharInSet(PathName[I], ['\',':']) or (I = 0);      {!!.01}
-{$ELSE}
      until (PathName[I] in ['\',':']) or (I = 0);                      {!!.01}
-{$ENDIF}
      Result := System.Copy(PathName, Succ(I), rdEntryNameSize);        {!!.01}
    end;                                                                {!!.01}
 
@@ -1554,7 +1541,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-function TAbCompoundFile.AddFolder(FName : string) : Boolean;
+function TAbCompoundFile.AddFolder(FName : AnsiString) : Boolean;
   {- Adds a new folder (directory) to the compound file}
 var
   EntryCount : Integer;
@@ -1644,7 +1631,7 @@ var
   Lst        : TStringList;
 
   {RootDirEntry buffers}
-  EName     : Array[0..rdEntryNameSize - 1] of Char;
+  EName     : Array[0..rdEntryNameSize - 1] of AnsiChar;
   EID       : Array[0..0] of Integer;
   EPF       : Array[0..0] of Integer;
   EType     : Array[0..0] of Integer;
@@ -1729,9 +1716,9 @@ procedure TAbCompoundFile.BuildSysBlock;
   {- Constructs System block from the contents of FStream
      (used when opening an existing compound file)}
 var
-  Sig          : Array[0..sbSignatureSize - 1] of Char;
-  VolLabel     : Array[0..sbVolumeLabelSize - 1] of Char;
-  Version      : Array[0..sbVersionSize - 1] of Char;
+  Sig          : Array[0..sbSignatureSize - 1] of AnsiChar;
+  VolLabel     : Array[0..sbVolumeLabelSize - 1] of AnsiChar;
+  Version      : Array[0..sbVersionSize - 1] of AnsiChar;
   AllocationSz : Array[0..0] of Integer;
 begin
   FStream.Seek(0, soFromBeginning);
@@ -1753,7 +1740,7 @@ begin
 { not implemeneted }
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.DeleteFile(FName : string);
+procedure TAbCompoundFile.DeleteFile(FName : AnsiString);
   {- Deletes the file from the RootDirectory and FAT blocks (data remains)}
 var
   StartBlock  : Integer;
@@ -1783,7 +1770,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.DeleteFolder(FName : string);
+procedure TAbCompoundFile.DeleteFolder(FName : AnsiString);
   {- Deletes the folder from the RootDirectory block}
 var
   Allow       : Boolean;
@@ -1815,8 +1802,8 @@ var
 begin
   Lst.Clear;
   for i := 0 to FRootDir.CurrentNode.ChildCount - 1 do begin
-    if (FRootDir.CurrentNode.GetChildren(i).Data as TAbDirectoryEntry).EntryType = etFile then
-      Lst.Add((FRootDir.CurrentNode.GetChildren(i).Data as TAbDirectoryEntry).EntryName);
+    if (FRootDir.CurrentNode.Children[i].Data as TAbDirectoryEntry).EntryType = etFile then
+      Lst.Add(string((FRootDir.CurrentNode.Children[i].Data as TAbDirectoryEntry).EntryName));
   end;
 end;
 {-----------------------------------------------------------------------------}
@@ -1826,8 +1813,8 @@ var
 begin
   Lst.Clear;
   for i := 0 to FRootDir.CurrentNode.ChildCount - 1 do begin
-    if (FRootDir.CurrentNode.GetChildren(i).Data as TAbDirectoryEntry).EntryType = etFolder then
-      Lst.Add((FRootDir.CurrentNode.GetChildren(i).Data as TAbDirectoryEntry).EntryName);
+    if (FRootDir.CurrentNode.Children[i].Data as TAbDirectoryEntry).EntryType = etFolder then
+      Lst.Add(string((FRootDir.CurrentNode.Children[i].Data as TAbDirectoryEntry).EntryName));
   end;
 end;
 {-----------------------------------------------------------------------------}
@@ -1837,7 +1824,7 @@ begin
   result := FSystemBlock.AllocationSize;
 end;
 {-----------------------------------------------------------------------------}
-function TAbCompoundFile.GetCurrentDirectory : string;
+function TAbCompoundFile.GetCurrentDirectory : AnsiString;
   {- Returns the current directory}
 begin
   Result := FRootDir.CurrentNode.Key;
@@ -1855,7 +1842,7 @@ begin
   Result := FStream.Size;
 end;
 {-----------------------------------------------------------------------------}
-function TAbCompoundFile.GetVolumeLabel : string;
+function TAbCompoundFile.GetVolumeLabel : AnsiString;
   {- Returns the volume label of the compound file}
 begin
   Result := FSystemBlock.VolumeLabel;
@@ -1867,10 +1854,10 @@ begin
   TraversePost(ID);
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.Open(FName : string);
+procedure TAbCompoundFile.Open(const FName : string);
 {- Opens an existing compound file and builds Sys, Root Dir, and FAT blocks}
 var
-  Sig : Array[0..sbSignatureSize - 1] of Char;
+  Sig : Array[0..sbSignatureSize - 1] of AnsiChar;
 begin
   if FStream <> nil then
     FStream.Free;
@@ -1893,10 +1880,10 @@ begin
     FOnAfterOpen(self);
 end;
 
-procedure TAbCompoundFile.Open(FName : string; Signature: string);
+procedure TAbCompoundFile.Open(const FName : string; const Signature: AnsiString);
 {- Opens an existing compound file and builds Sys, Root Dir, and FAT blocks}
 var
-  Sig : Array[0..sbSignatureSize - 1] of Char;
+  Sig : Array[0..sbSignatureSize - 1] of AnsiChar;
 begin
   if FStream <> nil then
     FStream.Free;
@@ -1919,7 +1906,7 @@ begin
     FOnAfterOpen(self);
 end;
 {-----------------------------------------------------------------------------}
-function TAbCompoundFile.OpenFile(FileName : string; var Strm : TStream)
+function TAbCompoundFile.OpenFile(FileName : AnsiString; var Strm : TStream)
                                   : Integer;
   {- Opens the file and writes the file contents to Strm}
 var
@@ -2084,20 +2071,20 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.SetCurrentDirectory(val : string);
+procedure TAbCompoundFile.SetCurrentDirectory(val : AnsiString);
   {- Changes the current directory to the val parameter}
 begin
   FRootDir.ChangeDir(Val);
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.SetVolumeLabel(Val : string);
+procedure TAbCompoundFile.SetVolumeLabel(Val : AnsiString);
   {- Sets the volume label of the compound file}
 begin
   FSystemBlock.VolumeLabel := Val;
   PersistSystemBlock;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.UpdateFile(FName : string; FData : TStream);
+procedure TAbCompoundFile.UpdateFile(FName : AnsiString; FData : TStream);
 var
   StartBlk    : Integer;
   ChainArray  : TFATChainArray;
@@ -2169,7 +2156,7 @@ var
 begin
   TreeView.Items.Clear;
   if FRootDir.Root <> nil then begin
-    TreeNode := TreeView.Items.Add(nil, FRootDir.Root.Key);
+    TreeNode := TreeView.Items.Add(nil, string(FRootDir.Root.Key));
     TreeNode.ImageIndex := 0;
     TreeNode.SelectedIndex := 0;
     if FRootDir.Root.HasChildren then begin
@@ -2188,7 +2175,7 @@ var
   i    : Integer;
   Node : TTreeNode;
 begin
-  Node := TreeView.Items.AddChild(TreeNode, ParentNode.Key);
+  Node := TreeView.Items.AddChild(TreeNode, string(ParentNode.Key));
   if TAbDirectoryEntry(ParentNode.Data).EntryType = etFolder then begin
     Node.ImageIndex := 0;
     Node.SelectedIndex := 0;
@@ -2205,7 +2192,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.RenameFile(OrigName, NewName : string);
+procedure TAbCompoundFile.RenameFile(OrigName, NewName : AnsiString);
   {- Renames the file if file is found}
 var
   MultNode    : TMultiNode;
@@ -2245,7 +2232,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.RenameFolder(OrigName, NewName : string);
+procedure TAbCompoundFile.RenameFolder(OrigName, NewName : AnsiString);
   {- Renames the folder if the folder is found}
 var
   MultNode    : TMultiNode;

@@ -187,7 +187,7 @@ type
 
 type
   TAbNeedPasswordEvent = procedure(Sender : TObject;
-                                   var NewPassword : string) of object;
+                                   var NewPassword : AnsiString) of object;
 
 const
   AbDefCompressionMethodToUse = smBestMethod;
@@ -492,7 +492,7 @@ type
     FDriveIsRemovable       : Boolean;
     FInfo                   : TAbZipDirectoryFileFooter;
     FIsExecutable           : Boolean;
-    FPassword               : string;
+    FPassword               : AnsiString;
     FPasswordRetries        : Byte;
     FStubSize               : LongWord;
     FAutoGen                : Boolean;                               {!!.02}
@@ -589,7 +589,7 @@ type
     property InsertFromStreamHelper : TAbArchiveItemInsertFromStreamEvent
       read FInsertFromStreamHelper
       write FInsertFromStreamHelper;
-    property Password : string
+    property Password : AnsiString
       read FPassword
       write FPassword;
     property PasswordRetries : Byte

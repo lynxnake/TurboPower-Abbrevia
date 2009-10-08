@@ -1018,7 +1018,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure RequestPassword(Archive : TAbZipArchive; var Abort : Boolean);
 var
-  APassPhrase : string;
+  APassPhrase : AnsiString;
 begin
   APassPhrase := Archive.Password; {!!.05  SF.NET Bug 698162}
   Abort := False;

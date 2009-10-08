@@ -47,7 +47,7 @@ type
     procedure SetTarAutoHandle(const Value: Boolean);
   protected {private}
     FSpanStream        : TAbSpanStream;
-    FPassword          : string;
+    FPassword          : AnsiString;
     FOnRequestLastDisk : TAbRequestDiskEvent;
     FOnRequestNthDisk  : TAbRequestNthDiskEvent;
     FOnRequestBlankDisk     : TAbRequestDiskEvent;
@@ -66,12 +66,12 @@ type
     procedure SetOnRequestBlankDisk(Value : TAbRequestDiskEvent);
     procedure SetOnRequestImage(Value : TAbRequestImageEvent); override;
 
-    procedure SetPassword(const Value : string);
+    procedure SetPassword(const Value : AnsiString);
     procedure SetZipfileComment(const Value : AnsiString);
       virtual;
 
   protected {properties}
-    property Password : string
+    property Password : AnsiString
       read  FPassword
       write SetPassword;
 
@@ -285,7 +285,7 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomZipBrowser.SetPassword(const Value : string);
+procedure TAbCustomZipBrowser.SetPassword(const Value : AnsiString);
 begin
   FPassword := Value;
   if (ZipArchive <> nil) then

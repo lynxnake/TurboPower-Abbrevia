@@ -88,7 +88,7 @@ type
       FReady : boolean;
       FState : array [0..2] of longint;
     protected
-      procedure zeeInitState(const aPassphrase : string);
+      procedure zeeInitState(const aPassphrase : AnsiString);
     public
       constructor Create;
 
@@ -98,7 +98,7 @@ type
         {-encodes a buffer}
 
       procedure CreateHeader(var aHeader     : TAbZipEncryptHeader;
-                           const aPassphrase : string;
+                           const aPassphrase : AnsiString;
                                  aCheckValue : longint);
         {-generate an encryption header}
     end;
@@ -113,7 +113,7 @@ type
     public
       constructor Create(aStream     : TStream;
                          aCheckValue : longint;
-                   const aPassphrase : string);
+                   const aPassphrase : AnsiString);
       destructor Destroy; override;
 
       function Read(var aBuffer; aCount : longint) : longint; override;
@@ -375,7 +375,7 @@ end;
 {--------}
 procedure TAbZipEncryptEngine.CreateHeader(
                                 var aHeader     : TAbZipEncryptHeader;
-                              const aPassphrase : string;
+                              const aPassphrase : AnsiString;
                                     aCheckValue : longint);
 type
   TLongAsBytes = packed record
@@ -530,7 +530,7 @@ begin
   FState[2] := WorkState[2];
 end;
 {--------}
-procedure TAbZipEncryptEngine.zeeInitState(const aPassphrase : string);
+procedure TAbZipEncryptEngine.zeeInitState(const aPassphrase : AnsiString);
 var
   i : integer;
 begin
@@ -553,7 +553,7 @@ end;
 {===TAbDfEncryptStream===============================================}
 constructor TAbDfEncryptStream.Create(aStream     : TStream;
                                       aCheckValue : longint;
-                                const aPassphrase : string);
+                                const aPassphrase : AnsiString);
 var
   Header : TAbZipEncryptHeader;
 begin
