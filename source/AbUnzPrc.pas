@@ -625,11 +625,11 @@ var
 
   function uzReadTree(var T) : Byte;
     {-Read next byte using a Shannon-Fano tree}
-  const
-    Bits : Integer = 0;
-    CV   : Word = 0;
-    E    : Integer = 0;
-    Cur  : Integer = 0;
+  var
+    Bits : Integer;
+    CV   : Word;
+    E    : Integer;
+    Cur  : Integer;
   var
     Tree : TAbSfTree absolute T;
   begin

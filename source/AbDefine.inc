@@ -45,7 +45,6 @@
 
 {$B- Incomplete boolean evaluation}
 {$H+ Long string support}
-{$J+ Writeable typed constants}
 {$P- No open string parameters}
 {$Q- Arithmetic overflow checking} {!! - Needs to be turned on!}
 {$R- Range checking}               {!! - Needs to be turned on!}
