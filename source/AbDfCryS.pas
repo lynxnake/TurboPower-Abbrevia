@@ -47,7 +47,7 @@ type
       FReady : boolean;
       FState : array [0..2] of longint;
     protected
-      procedure zdeInitState(const aPassphrase : string);
+      procedure zdeInitState(const aPassphrase : AnsiString);
     public
       constructor Create;
 
@@ -57,7 +57,7 @@ type
         {-decodes a buffer}
 
       function VerifyHeader(const aHeader     : TAbZipEncryptHeader;
-                            const aPassphrase : string;
+                            const aPassphrase : AnsiString;
                                   aCheckValue : longint) : boolean;
         {-validate an encryption header}
     end;
@@ -66,14 +66,14 @@ type
     private
       FCheckValue : longint;
       FEngine     : TAbZipDecryptEngine;
-      FPassphrase : string;
+      FPassphrase : AnsiString;
       FReady      : boolean;
       FStream     : TStream;
     protected
     public
       constructor Create(aStream     : TStream;
                          aCheckValue : longint;
-                   const aPassphrase : string);
+                   const aPassphrase : AnsiString);
       destructor Destroy; override;                            {!!.02}
 
       function IsValid : boolean;
@@ -228,7 +228,7 @@ begin
 end;
 {--------}
 function TAbZipDecryptEngine.VerifyHeader(const aHeader     : TAbZipEncryptHeader;
-                                          const aPassphrase : string;
+                                          const aPassphrase : AnsiString;
                                                 aCheckValue : longint) : boolean;
 type
   TLongAsBytes = packed record
@@ -270,7 +270,7 @@ begin
   FReady := Result;
 end;
 {--------}
-procedure TAbZipDecryptEngine.zdeInitState(const aPassphrase : string);
+procedure TAbZipDecryptEngine.zdeInitState(const aPassphrase : AnsiString);
 var
   i : integer;
 begin
@@ -293,7 +293,7 @@ end;
 {====================================================================}
 constructor TAbDfDecryptStream.Create(aStream     : TStream;
                                       aCheckValue : longint;
-                                const aPassphrase : string);
+                                const aPassphrase : AnsiString);
 begin
   {create the ancestor}
   inherited Create;
