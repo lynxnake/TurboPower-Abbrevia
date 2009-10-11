@@ -742,7 +742,6 @@ const
 var
   C, Last : Byte;
   OpI : LongInt;
-  OpO : LongInt;
   I, J, Sz : Integer;
   D : Word;
   SPos : LongInt;
@@ -784,7 +783,7 @@ begin
         Followers^[I].FSet[J] := uzReadBits(8);
     end;
 
-    while (not FInEof) and ((FOutSent + LongInt(FOutPos)) < FUncompressedSize) do begin 
+    while (not FInEof) and ((FOutSent + LongInt(FOutPos)) < FUncompressedSize) do begin
       Last := C;
       with Followers^[Last] do
         if Size = 0 then
@@ -842,24 +841,19 @@ begin
              line}
             OpI := (FOutSent + LongInt(FOutPos))-(Swap(D)+C+1);
 
-            if OpI >= 8192 then
-              OpO := OpI mod 8192
-            else
-              OpO := OpI;
             for I := 0 to Len+2 do begin
               if OpI < 0 then
                 uzWriteByte(0)
+              else if OpI >= FOutSent then
+                uzWriteByte(FOutBuf[OpI - FOutSent])
               else begin
                 SPos := FOutWriter.Position;
-                FOutWriter.Position := OpO;
+                FOutWriter.Position := OpI;
                 FOutWriter.Read( MyByte, 1 );
                 FOutWriter.Position := SPos;
                 uzWriteByte(MyByte);
               end;
               Inc(OpI);
-              Inc(OpO);
-              if OpO >= 8192 then
-                OpO := 0;
             end;
 
             State := 0;
