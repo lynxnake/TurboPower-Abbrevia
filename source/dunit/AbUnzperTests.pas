@@ -320,7 +320,7 @@ begin
   if FileExists(lTestFile) then
      DeleteFile(lTestFile);
   ltestzip := TestFileDir + 'MPL.ZIP';
-  CopyFileTo(ltestzip,ltestFile,false);
+  AbCopyFile(ltestzip,ltestFile,false);
 
 
   Component.FileName := lTestFile;

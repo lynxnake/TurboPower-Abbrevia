@@ -186,6 +186,8 @@ type
   end;
 
   {===Helper functions===}
+  function AbCopyFile(const Source, Destination: string; FailIfExists: Boolean): Boolean;
+
   procedure AbCreateDirectory( const Path : string );
     {creates the requested directory tree.  CreateDir is insufficient,
      because if you have a path x:\dir, and request x:\dir\sub1\sub2,
@@ -450,6 +452,37 @@ end;
 
 
 { ========================================================================== }
+function AbCopyFile(const Source, Destination: string; FailIfExists: Boolean): Boolean;
+{$IFDEF LINUX}
+var
+  DesStream, SrcStream: TFileStream;
+{$ENDIF}
+begin
+{$IFDEF LINUX}
+  Result := False;
+  if not FailIfExists or not FileExists(Destination) then
+    try
+      SrcStream := TFileStream.Create(Source, fmOpenRead or fmShareDenyWrite);
+      try
+        DesStream := TFileStream.Create(Destination, fmCreate);
+        try
+          DesStream.CopyFrom(SrcStream, 0);
+          Result := True;
+        finally
+          DesStream.Free;
+        end;
+      finally
+        SrcStream.Free;
+      end;
+    except
+      // Ignore errors and just return false
+    end;
+{$ENDIF LINUX}
+{$IFDEF MSWINDOWS}
+  Result := CopyFile(PChar(Source), PChar(Destination), FailIfExists);
+{$ENDIF MSWINDOWS}
+end;
+{ -------------------------------------------------------------------------- }
 procedure AbCreateDirectory( const Path : string );
   {creates the requested directory tree.  CreateDir is insufficient,
    because if you have a path x:\dir, and request x:\dir\sub1\sub2,
@@ -1323,11 +1356,7 @@ procedure AbFlushOsBuffers(Handle : Integer);
 begin
 {$IFDEF MSWINDOWS}
   if not FlushFileBuffers(Handle) then
-    {$IFDEF Version6}
     RaiseLastOSError;
-    {$ELSE}
-    RaiseLastWin32Error;
-    {$ENDIF}
 {$ENDIF}
 end;
 

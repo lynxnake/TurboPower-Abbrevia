@@ -183,7 +183,6 @@ type
     no encryption is tried, no check on CRC is done, uses the whole
     compressedstream - no Progress events - no Frills!}
 
-  function CopyFileTo(const Source, Destination: string;FailifExists:boolean): Boolean;
 implementation
 
 uses
@@ -1186,48 +1185,47 @@ begin
       { check for valid password }
       DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
       try 
-          while not Abort and not DecryptStream.IsValid and (Tries < Archive.PasswordRetries) do begin
-            RequestPassword(Archive, Abort);
-            if Abort then
-              raise EAbUserAbort.Create;
-            DecryptStream.Free;
-            DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
-            Inc(Tries);
-          end;
-          if (Tries > Archive.PasswordRetries) then
-            raise EAbZipInvalidPassword.Create;
+        while not Abort and not DecryptStream.IsValid and (Tries < Archive.PasswordRetries) do begin
+          RequestPassword(Archive, Abort);
+          if Abort then
+            raise EAbUserAbort.Create;
+          DecryptStream.Free;
+          DecryptStream := TAbDfDecryptStream.Create(Archive.FStream, TheCRC, Archive.Password);
+          Inc(Tries);
+        end;
+        if (Tries > Archive.PasswordRetries) then
+          raise EAbZipInvalidPassword.Create;
 
-          { got good Password, so extract }
-          { get first bufferful (decrypting) }
-          {  DecryptStream.Position := 0;                            }{!!.01}{!!.02}
+        { got good Password, so extract }
+        { get first bufferful (decrypting) }
+        {  DecryptStream.Position := 0;                            }{!!.01}{!!.02}
+        DataRead := DecryptStream.Read(Buffer, SizeToRead);
+        { while more data has been read and we're not told to bail }
+        while (DataRead > 0) and not Abort do begin
+          { report progress }
+          if Assigned(Archive.OnProgress) then begin
+            Total := Total + DataRead;
+            Remaining := Remaining - DataRead;                             {!!.01}
+            Percent := Round((100.0 * Total) / Item.UncompressedSize);
+            if (LastPercent <> Percent) then
+              Archive.OnProgress(Percent, Abort);
+            LastPercent := Percent;
+          end;
+
+          { update CRC }
+          AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
+
+          { write data }
+          OutStream.WriteBuffer(Buffer, DataRead);
+
+          { get next bufferful (decrypting) }
+          SizeToRead := SizeOf(Buffer);
+          if SizeToRead > Remaining then
+            SizeToRead := Remaining;
           DataRead := DecryptStream.Read(Buffer, SizeToRead);
-          { while more data has been read and we're not told to bail }
-          while (DataRead > 0) and not Abort do begin
-            { report progress }
-            if Assigned(Archive.OnProgress) then begin
-              Total := Total + DataRead;
-              Remaining := Remaining - DataRead;                             {!!.01}
-              Percent := Round((100.0 * Total) / Item.UncompressedSize);
-              if (LastPercent <> Percent) then
-                Archive.OnProgress(Percent, Abort);
-              LastPercent := Percent;
-            end;
-
-            { update CRC }
-            AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
-
-            { write data }
-            OutStream.WriteBuffer(Buffer, DataRead);
-
-            { get next bufferful (decrypting) }
-            SizeToRead := SizeOf(Buffer);
-            if SizeToRead > Remaining then
-              SizeToRead := Remaining;
-            DataRead := DecryptStream.Read(Buffer, SizeToRead);
-          end;
+        end;
       finally
-      	DecryptStream.Free();
-
+        DecryptStream.Free;
       end;
     except
       on EAbUserAbort do
@@ -1453,7 +1451,7 @@ begin
       TempOut.Free;
     end;
     // Now copy the temp File to correct location
-    CopyFileTo(pchar(TempFile),pchar(UseName),false);
+    AbCopyFile(TempFile, UseName, False);
     // Check that it exists
     if not FileExists(UseName) then
       raise EAbException.CreateFmt(abMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
@@ -1563,36 +1561,5 @@ begin
   Inflate(CompressedStream, UncompressedStream, nil);
 end;
 
-function CopyFileTo(const Source, Destination: string;failifExists:boolean): Boolean;
-{$IFDEF LINUX}
-var
-SourceStream: TFileStream;
-{$ENDIF}
-begin
-// -TODO: Change to use a Linux copy function
-// There is no native Linux copy function (at least "cp" doesn't use one
-// and I can't find one anywhere (Johannes Berg))
-{$IFDEF LINUX}
-   Result := false;
-   if not FileExists(Destination) then
-   begin
-      SourceStream := TFileStream.Create(Source, fmOpenRead);
-      try
-         with TFileStream.Create(Destination, fmCreate) do
-         try
-            CopyFrom(SourceStream, 0);
-         finally
-            Free;
-         end;
-      finally
-         SourceStream.free;
-      end;
-      Result := true;
-   end;
-{$ENDIF LINUX}
-{$IFDEF MSWINDOWS}
-   Result := CopyFile(PChar(Source), PChar(Destination), failifExists);
-{$ENDIF MSWINDOWS}
-end;
 end.
 

@@ -221,10 +221,9 @@ type
     function FixName(const Value: string): string;
       override;
 
-
     function GetItem(Index: Integer): TAbTarItem;                   {!!.03}
-    procedure PutItem(Index: Integer; const Value: TAbTarItem);
-    class function SupportsEmptyFolder: Boolean; override;     {!!.03}
+    procedure PutItem(Index: Integer; const Value: TAbTarItem);     {!!.03}
+    class function SupportsEmptyFolder: Boolean; override;
   public {methods}
     property Items[Index : Integer] : TAbTarItem                    {!!.03}
       read GetItem                                                  {!!.03}
@@ -1143,7 +1142,7 @@ begin
               { adding from a stream }
                 CurItem.SaveTarHeaderToStream(NewStream);
                 OutTarHelp.WriteArchiveItem(InStream);
-              end else if (CurItem.IsDiskFileADirectory) then begin
+              end else if CurItem.IsDirectory then begin
               
                 DateTime := FindFirst(ExcludeTrailingPathDelimiter(CurItem.DiskFileName), faAnyFile, SR);
                 if (DateTime <> 0) then begin

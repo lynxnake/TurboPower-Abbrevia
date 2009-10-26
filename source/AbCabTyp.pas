@@ -34,8 +34,6 @@
 {$I AbDefine.inc}
 
 unit AbCabTyp;
-{$WARN UNIT_PLATFORM OFF}  
-{$WARN SYMBOL_PLATFORM OFF}
 
 interface
 
@@ -175,6 +173,9 @@ implementation
 
 uses
   AbExcept;
+
+{$WARN UNIT_PLATFORM OFF}  
+{$WARN SYMBOL_PLATFORM OFF}
 
 type
   PWord    = ^Word;
@@ -528,7 +529,6 @@ begin
     @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
     raise EAbFCIAddFileError.Create;
 
-	//TODO: Verify after flushing cab we can write to it again
   FIsDirty := True;
 end;
 { -------------------------------------------------------------------------- }
@@ -757,6 +757,5 @@ procedure TAbCabArchive.TestItemAt(Index : Integer);
 begin
   {not implemented for cabinet archives}
 end;
-{$WARN UNIT_PLATFORM ON}
-{$WARN SYMBOL_PLATFORM ON}
+
 end.

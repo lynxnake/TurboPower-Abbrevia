@@ -58,22 +58,20 @@ type
     FDiskFileName     : string;
     FExternalFileAttributes : Longint;
     FFileName         : string;
+    FIsDirectory      : Boolean;
     FIsEncrypted      : Boolean;
     FLastModFileTime  : Word;
     FLastModFileDate  : Word;
     FTagged           : Boolean;
     FUncompressedSize : Int64;
-    FIsDirectory      : Boolean;
-  protected
-    function GetIsDirectory(): Boolean;
-    procedure SetIsDirectory(const Value: Boolean); 
-    class function GetMaxFileSize(): Int64; virtual;
+
   protected {property methods}
     function GetCompressedSize : Int64; virtual;
     function GetCRC32 : Longint; virtual;
     function GetDiskPath : string;
     function GetExternalFileAttributes : LongInt; virtual;
     function GetFileName : string; virtual;
+    function GetIsDirectory: Boolean;
     function GetIsEncrypted : Boolean; virtual;
     function GetLastModFileDate : Word; virtual;
     function GetLastModFileTime : Word; virtual;
@@ -83,6 +81,7 @@ type
     procedure SetCRC32(const Value : Longint); virtual;
     procedure SetExternalFileAttributes( Value : LongInt ); virtual;
     procedure SetFileName(const Value : string); virtual;
+    procedure SetIsDirectory(const Value: Boolean);
     procedure SetIsEncrypted(Value : Boolean); virtual;
     procedure SetLastModFileDate(const Value : Word); virtual;
     procedure SetLastModFileTime(const Value : Word); virtual;
@@ -117,6 +116,9 @@ type
     property FileName : string
       read GetFileName
       write SetFileName;
+    property IsDirectory: Boolean
+      read GetIsDirectory
+      write SetIsDirectory;
     property IsEncrypted : Boolean
       read GetIsEncrypted
       write SetIsEncrypted;
@@ -134,10 +136,6 @@ type
     property UncompressedSize : Int64
       read GetUncompressedSize
       write SetUncompressedSize;
-
-    property IsDiskFileADirectory: Boolean
-        read GetIsDirectory
-        write SetIsDirectory;
 
     property LastModTimeAsDateTime : TDateTime                           {!!.01}
       read GetLastModTimeAsDateTime                                      {!!.01}
@@ -313,7 +311,6 @@ type
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
     procedure Unlock;
-    class function GetMaxFileSize: Int64; virtual;
    	class Function SupportsEmptyFolder: Boolean; virtual;
 
 
@@ -572,11 +569,6 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-class function TAbArchiveItem.GetMaxFileSize: Int64;
-begin
-  Result := $FFFFFFFF;  //Make same as old
-end;
-{ -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetCompressedSize : Int64;
 begin
   Result := FCompressedSize;
@@ -717,8 +709,9 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveItem.SetUnCompressedSize(const Value : Int64);
 begin
+  if Value > High(LongWord) then
+    raise EAbFileTooLarge.Create;
   FUnCompressedSize := Value;
-  if Value > GetMaxFileSize() then raise EAbFileTooLarge.Create();
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
@@ -1031,9 +1024,8 @@ var
   end;
 
 begin
-   if (not SupportsEmptyFolder()) then begin
+   if not SupportsEmptyFolder then
     SearchAttr := SearchAttr and not faDirectory;
-   end;
 
   CheckValid;
   IsWild := (Pos('*', FileMask) > 0) or (Pos('?', FileMask) > 0);
@@ -1903,12 +1895,6 @@ begin
   if FStatus = asBusy then                                             
     FStatus := asIdle;
   FPadLock.Locked := False;
-end;
-{ -------------------------------------------------------------------------- }
-//TODO: Remove
-class function TAbArchive.GetMaxFileSize: Int64;
-begin
-    Result := High(LongWord);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.UnTagItems(const FileMask : string);
