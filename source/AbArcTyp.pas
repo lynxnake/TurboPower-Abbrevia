@@ -1772,18 +1772,11 @@ procedure TAbArchive.Replace(aItem : TAbArchiveItem);
   {replace the item}
 var
   Index : Integer;
-  existingItem: TAbArchiveItem;
 begin
   CheckValid;
   Index := FindItem(aItem);
-  if Index <> -1 then begin
-  	{HACK: find a better way of doing this}
-  	// why are we searching for the file more than once?
-    //for mask like ..\*.* with soStripPath it looses disk information
-    existingItem := FItemList.Items[index];
-    existingItem.FDiskFileName := aItem.FDiskFileName;
+  if Index <> -1 then
     ReplaceAt(Index);
-  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.ReplaceAt(Index : Integer);
