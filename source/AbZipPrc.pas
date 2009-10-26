@@ -279,13 +279,13 @@ begin
         smDeflated : begin
         { Item is to be deflated regarless }
           { deflate item }
-          DoDeflate(ZipArchive, Item, OutStream, InStream);                {!!.01}
+          DoDeflate(ZipArchive, Item, TempOut, InStream);                {!!.01}
         end;
 
         smStored : begin
         { Item is to be stored regardless }
           { store item }
-          DoStore(ZipArchive, Item, OutStream, InStream);                  {!!.01}
+          DoStore(ZipArchive, Item, TempOut, InStream);                  {!!.01}
         end;
 
         smBestMethod : begin
@@ -308,9 +308,6 @@ begin
             { store item }
             DoStore(ZipArchive, Item, TempOut, InStream);                {!!.01}
           end {if};
-
-          TempOut.Seek(0, soBeginning);                                  {!!.01}
-          OutStream.CopyFrom(TempOut, TempOut.Size);
         end;
       end; { case }
 
@@ -324,6 +321,9 @@ begin
 
     { update item }
     UpdateItem;
+
+    TempOut.Seek(0, soFromBeginning);                                    {!!.01}
+    OutStream.CopyFrom(TempOut, TempOut.Size);                           {!!.01}
 
   finally                                                                {!!.01}
     TempOut.Free;                                                        {!!.01}
