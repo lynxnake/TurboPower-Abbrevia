@@ -986,7 +986,7 @@ end;
 procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
 begin
   Stream.Read( FCRC32, sizeof(FCRC32) );
-  if Sig = Ab_ZipSpannedSetSignature then
+  if FCRC32 = Ab_ZipSpannedSetSignature then
   	Stream.Read( FCRC32, sizeof( FCRC32 ) );
   Stream.Read( FCompressedSize, sizeof( FCompressedSize ) );
   Stream.Read( FUncompressedSize, sizeof( FUncompressedSize ) );
