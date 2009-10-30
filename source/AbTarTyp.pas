@@ -206,7 +206,7 @@ type
 
   TAbTarArchive = class(TAbArchive)
   protected
-    function CreateItem(const FileName : string): TAbArchiveItem;
+    function CreateItem(const FileSpec : string): TAbArchiveItem;
       override;
     procedure ExtractItemAt(Index : Integer; const UseName : string);
       override;
@@ -223,7 +223,7 @@ type
 
     function GetItem(Index: Integer): TAbTarItem;                   {!!.03}
     procedure PutItem(Index: Integer; const Value: TAbTarItem);     {!!.03}
-    class function SupportsEmptyFolder: Boolean; override;
+
   public {methods}
     property Items[Index : Integer] : TAbTarItem                    {!!.03}
       read GetItem                                                  {!!.03}
@@ -871,21 +871,15 @@ end;
 
 { TAbTarArchive }
 
-function TAbTarArchive.CreateItem(const FileName: string): TAbArchiveItem;
+function TAbTarArchive.CreateItem(const FileSpec: string): TAbArchiveItem;
 var
-  FileSpec: string;
   Item : TAbTarItem;
 begin
-  FileSpec := FileName;
   Item := TAbTarItem.Create;
   try
     Item.CompressedSize := 0;
     Item.CRC32 := 0;
-    if (AbDirectoryExists(FileSpec)) then begin
-        Item.SetIsDirectory(True);
-        FileSpec := IncludeTrailingPathDelimiter(FileSpec);
-    end;
-    Item.DiskFileName := ExcludeTrailingPathDelimiter(ExpandFileName(FileSpec));
+    Item.DiskFileName := ExpandFileName(FileSpec);
     Item.FileName := FixName(FileSpec);
   finally
     Result := Item;
@@ -1087,7 +1081,6 @@ end;
 
 procedure TAbTarArchive.SaveArchive;
 var
-  SR                 : TSearchRec;
   InTarHelp,
   OutTarHelp         : TAbTarStreamHelper;
   Abort              : Boolean;
@@ -1142,22 +1135,6 @@ begin
               { adding from a stream }
                 CurItem.SaveTarHeaderToStream(NewStream);
                 OutTarHelp.WriteArchiveItem(InStream);
-              end else if CurItem.IsDirectory then begin
-              
-                DateTime := FindFirst(ExcludeTrailingPathDelimiter(CurItem.DiskFileName), faAnyFile, SR);
-                if (DateTime <> 0) then begin
-                    try
-                        DateTime := sr.Time;
-                        CurItem.UncompressedSize := 0;
-                        CurItem.LastModFileTime := LongRec(DateTime).Lo;
-                        CurItem.LastModFileDate := LongRec(DateTime).Hi;
-                        CurItem.ExternalFileAttributes := AbDOS2UnixFileAttributes(sr.Attr);
-                    finally
-                        FindClose(SR);
-                    end;
-                end;
-
-                CurItem.SaveTarHeaderToStream(NewStream);
               end else begin
               { it's coming from a file }
                 GetDir(0, SaveDir);
@@ -1238,11 +1215,6 @@ begin
     { Clean Up }
     InTarHelp.Free;
   end;
-end;
-
-class function TAbTarArchive.SupportsEmptyFolder: Boolean;
-begin
-    Result := True;
 end;
 
 procedure TAbTarArchive.TestItemAt(Index: Integer);
