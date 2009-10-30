@@ -369,7 +369,6 @@ type
   TAbZipItem = class( TAbArchiveItem )
   protected {private}
     FItemInfo : TAbZipDirectoryFileHeader;
-    FDecoder : TObject;
 
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
@@ -1328,15 +1327,12 @@ constructor TAbZipItem.Create;
 begin
   inherited Create;
   FItemInfo := TAbZipDirectoryFileHeader.Create;
-  FDecoder := nil;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipItem.Destroy;
 begin
   FItemInfo.Free;
   FItemInfo := nil;
-  FDecoder.Free;
-  FDecoder := nil;
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
