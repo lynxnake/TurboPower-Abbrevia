@@ -1454,6 +1454,8 @@ begin
     OemToCharBuff(PAnsiChar(FItemInfo.FileName), PChar(FFileName),
       Length(FFileName));
   {$ENDIF}
+  IsDirectory := ((FItemInfo.ExternalFileAttributes and faDirectory) <> 0) or
+    ((FFileName <> '') and (FFilename[Length(FFilename)] in ['\','/']));
   LastModFileTime := FItemInfo.LastModFileTime;
   LastModFileDate := FItemInfo.LastModFileDate;
   FDiskFileName := FileName;
