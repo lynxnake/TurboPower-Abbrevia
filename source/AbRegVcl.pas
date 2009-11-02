@@ -206,8 +206,7 @@ begin
                         TAbCabKit,
                         TAbCabView,
                         TAbMeter,
-                        TAbMeterLink,
-                        TAbVclMeterLink,
+                        TAbVCLMeterLink,
                         TAbMakeSelfExe ]);
 end;
 

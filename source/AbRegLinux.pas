@@ -140,7 +140,7 @@ begin
   RegisterPropertyEditor( TypeInfo( TAbColHeadings ), TAbZipView, 'Headings',
                           TAbColHeadingsProperty );
   RegisterComponents( 'Abbrevia',
-                      [TAbMeterLink,
+                      [TAbCLXMeterLink,
                         TAbZipBrowser,
                         TAbUnzipper,
                         TAbZipper,
