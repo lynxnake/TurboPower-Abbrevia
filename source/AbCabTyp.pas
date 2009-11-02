@@ -73,8 +73,8 @@ type
   TAbCabArchive = class(TAbArchive)
   protected {private}
     {internal variables}
-    FCabName         : array[0..255] of AnsiChar;
-    FCabPath         : array[0..255] of AnsiChar;
+    FCabName         : AnsiString;
+    FCabPath         : AnsiString;
     FFCICabInfo      : FCICabInfo;
     FFCIContext      : HFCI;
     FFDIContext      : HFDI;
@@ -473,8 +473,8 @@ begin
   inherited CreateInit;
   FMode := Mode and fmOpenWrite;
   FArchiveName := FileName;
-  StrPLCopy(FCabName, AnsiString(ExtractFileName(FileName)), Length(FCabName));
-  StrPLCopy(FCabPath, AnsiString(ExtractFilePath(FileName)), Length(FCabPath));
+  FCabName := AnsiString(ExtractFileName(FileName));
+  FCabPath := AnsiString(ExtractFilePath(FileName));
   SpanningThreshold := AbDefCabSpanningThreshold;
   FFolderThreshold := AbDefFolderThreshold;
   FItemInProgress := nil;
@@ -570,8 +570,8 @@ begin
     fFailOnIncompressible := 0;
     setID             := SetID;
     StrPCopy(szDisk, '');
-    StrCopy(szCab, FCabName);
-    StrCopy(szCabPath , FCabPath);
+    StrPLCopy(szCab, FCabName, Length(szCab));
+    StrPLCopy(szCabPath, FCabPath, Length(szCabPath));
   end;
 
     {obtain an FCI context}
@@ -634,8 +634,8 @@ begin
   FItemInProgress := GetItem(Index);
   FIIPName := NewName;
   try
-    if not FDICopy(FFDIContext, FCabName, FCabPath, 0, @FDI_ExtractFiles,
-                   nil, Self) then
+    if not FDICopy(FFDIContext, PAnsiChar(FCabName), PAnsiChar(FCabPath), 0,
+                   @FDI_ExtractFiles, nil, Self) then
       DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
   finally
     FIIPName := '';
@@ -705,7 +705,7 @@ begin
   FHasNext := FFDICabInfo.hasNext;
 
     {Enumerate the files and build the file list}
-  if not FDICopy(FFDIContext, FCabName, FCabPath, 0,
+  if not FDICopy(FFDIContext, PAnsiChar(FCabName), PAnsiChar(FCabPath), 0,
     @FDI_EnumerateFiles, nil, Self) then begin
     CloseCabFile;
     raise EAbFDICopyError.Create;
