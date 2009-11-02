@@ -311,8 +311,8 @@ type
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
     procedure Unlock;
-   	class Function SupportsEmptyFolder: Boolean; virtual;
 
+   	class function SupportsEmptyFolder: Boolean; virtual;
 
   protected {abstract methods}
     function CreateItem(const FileSpec : string): TAbArchiveItem;
@@ -1911,7 +1911,7 @@ end;
 { -------------------------------------------------------------------------- }
 class function TAbArchive.SupportsEmptyFolder: Boolean;
 begin
-	Result := false;
+	Result := False;
 end;
 { -------------------------------------------------------------------------- }
 

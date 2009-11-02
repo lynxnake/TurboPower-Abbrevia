@@ -200,12 +200,6 @@ type
 
   function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 
-  function AbdMax(Var1, Var2: Longint): Longint;
-    {-Return the maximum of two values}
-
-  function AbdMin(Var1, Var2: DWord): DWord;
-    {-Return the minimum of two values}
-
   function AbDirectoryExists( const Path : string ) : Boolean;
     {Returns true if Path is an existing directory
      returns False on blank strings, filenames...}
@@ -557,24 +551,6 @@ begin
       FileClose(hFile);
   end;
 {$ENDIF}
-end;
-{ -------------------------------------------------------------------------- }
-function AbdMax(Var1, Var2: Longint): Longint;
-  {-Return the maximum of two values}
-begin
-  if (Var2 > Var1) then
-    Result := Var2
-  else
-    Result := Var1;
-end;
-{ -------------------------------------------------------------------------- }
-function AbdMin(Var1, Var2: DWord): DWord;
-  {-Return the minimum of two values}
-begin
-  if (Var2 < Var1) then
-    Result := Var2
-  else
-    Result := Var1;
 end;
 { -------------------------------------------------------------------------- }
 function AbDrive(const ArchiveName : string) : Char;

@@ -460,7 +460,6 @@ type
 { TAbZipArchive interface ================================================== }
   TAbZipArchive = class( TAbArchive )
   protected {private}
-    FIsZip64                : Boolean;
     FCompressionMethodToUse : TAbZipSupportedMethod;
     FCurrentDisk            : Word;
     FDeflationOption        : TAbZipDeflationOption;
@@ -2197,13 +2196,6 @@ procedure TAbZipArchive.PutItem( Index : Integer; Value : TAbZipItem );
 begin
   FItemList.Items[Index] := Value;
 end;
-{ -------------------------------------------------------------------------- }
-
-type
-  TAbItemDataRec = record
-    StreamOffset : Int64;
-  end;
-
 { -------------------------------------------------------------------------- }
 const
   AB_SIZE_LOCAL_HEADER = 30;

@@ -1135,7 +1135,8 @@ begin
               { adding from a stream }
                 CurItem.SaveTarHeaderToStream(NewStream);
                 OutTarHelp.WriteArchiveItem(InStream);
-              end else begin
+              end
+              else begin
               { it's coming from a file }
                 GetDir(0, SaveDir);
                 try {SaveDir}
