@@ -71,6 +71,7 @@ type
     procedure CheckFileMatchesStream(const aFileName : string; aStream : TStream; Msg : string);
     procedure CheckStreamMatch(aStream1, aStream2 : TStream; Msg : string);
     procedure CheckFileExists(aFileName : string);
+    procedure CheckDirExists(aFileName : string);
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
     procedure SetUp; override;
     procedure TearDown; override;
@@ -150,7 +151,12 @@ end;
 
 procedure TAbTestCase.CheckFileExists(aFileName : string);
 begin
-  Check(FileExists(aFileName), 'Unable to locate: ' + aFileName);
+  Check(FileExists(aFileName), 'Unable to locate file: ' + aFileName);
+end;
+
+procedure TAbTestCase.CheckDirExists(aFileName : string);
+begin
+  Check(DirectoryExists(aFileName), 'Unable to locate directory: ' + aFileName);
 end;
 
 procedure TAbTestCase.CheckFilesMatch(const aFileName1, aFileName2, Msg: string);

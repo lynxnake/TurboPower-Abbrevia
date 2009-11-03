@@ -1400,64 +1400,64 @@ var
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  // The problem with Create the FileStream here is that overwrites the existing
-  // File which is no problem, unless the archive is password protected and
-  // then Password is found out to be wrong.   Ways to resolve:
-  // 1. extract to TMemoryStream then Write MemoryStream to Disk if everything is ok.
-  // 2. Move the password check up in the process (if possible)
-  // 3. Write to a Temp File if everything ok copy to new location.
-  // Given all the options that I have now, I am going to try option #1 for now,
-  // it may cause problems on memory overhead for some, but lets see if it does.
-  // It also may speed up this routine for many.
-  // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
-  {$IFDEF AbUnZipClobber}
-    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
-    try
-    try    {OutStream}
-      AbUnZipToStream(Sender, Item, OutStream);
-    // Some Network Operating Systems cache the file and when we set attributes they are truncated
-      AbFlushOsBuffers(OutStream.Handle);
-    finally {OutStream}
-      OutStream.Free;
-    end;   {OutStream}
-  {$ENDIF}
-  {$IFDEF AbUnZipMemory}
   try
-  TempOut := TMemoryStream.Create;
-  try
-    TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
-    TempOut.Position := 0;
-    AbUnZipToStream(Sender, Item, TempOut);
-    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
-    try
-      // Copy Memory Stream To File Stream.
-      TempOut.SaveToStream(OutStream);
-      // Some Operating Systems cache the file and when we set attributes they are truncated
-      AbFlushOsBuffers(OutStream.Handle);
-    finally
-     OutStream.Free;
+    if not Item.IsDirectory then begin
+      // The problem with Create the FileStream here is that overwrites the existing
+      // File which is no problem, unless the archive is password protected and
+      // then Password is found out to be wrong.   Ways to resolve:
+      // 1. extract to TMemoryStream then Write MemoryStream to Disk if everything is ok.
+      // 2. Move the password check up in the process (if possible)
+      // 3. Write to a Temp File if everything ok copy to new location.
+      // Given all the options that I have now, I am going to try option #1 for now,
+      // it may cause problems on memory overhead for some, but lets see if it does.
+      // It also may speed up this routine for many.
+      // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
+      {$IFDEF AbUnZipClobber}
+      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+      try    {OutStream}
+        AbUnZipToStream(Sender, Item, OutStream);
+      // Some Network Operating Systems cache the file and when we set attributes they are truncated
+        AbFlushOsBuffers(OutStream.Handle);
+      finally {OutStream}
+        OutStream.Free;
+      end;   {OutStream}
+      {$ENDIF}
+      {$IFDEF AbUnZipMemory}
+      TempOut := TMemoryStream.Create;
+      try
+        TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
+        TempOut.Position := 0;
+        AbUnZipToStream(Sender, Item, TempOut);
+        OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+        try
+          // Copy Memory Stream To File Stream.
+          TempOut.SaveToStream(OutStream);
+          // Some Operating Systems cache the file and when we set attributes they are truncated
+          AbFlushOsBuffers(OutStream.Handle);
+        finally
+         OutStream.Free;
+        end;
+      finally
+        TempOut.Free;
+      end;
+      {$ENDIF}
+      {$IFDEF AbUnZipTempFile}
+      TempOut := TAbTempFileStream.Create(false);
+      try
+        AbUnZipToStream(Sender, Item, TempOut);
+        TempFile := TempOut.FileName;
+      finally
+        TempOut.Free;
+      end;
+      // Now copy the temp File to correct location
+      AbCopyFile(TempFile, UseName, False);
+      // Check that it exists
+      if not FileExists(UseName) then
+        raise EAbException.CreateFmt(abMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
+      // Now Delete the Temp File
+      DeleteFile(TempFile);
+      {$ENDIF}
     end;
-  finally
-    TempOut.Free;
-  end;
-  {$ENDIF}
-  {$IFDEF AbUnZipTempFile}
-  try
-    TempOut := TAbTempFileStream.Create(false);
-    try
-      AbUnZipToStream(Sender, Item, TempOut);
-      TempFile := TempOut.FileName;
-    finally
-      TempOut.Free;
-    end;
-    // Now copy the temp File to correct location
-    AbCopyFile(TempFile, UseName, False);
-    // Check that it exists
-    if not FileExists(UseName) then
-      raise EAbException.CreateFmt(abMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
-    // Now Delete the Temp File
-    DeleteFile(TempFile);
-    {$ENDIF}
 
 //  [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
     {$IFDEF MSWINDOWS}

@@ -646,6 +646,8 @@ begin
   Value := Dir + Name;
   Name := FileName;
   AbUnfixName(Name);
+  if IsDirectory then
+    Name := ExcludeTrailingPathDelimiter(Name);
   Result := AbFileMatch(Name, Value);
 end;
 { -------------------------------------------------------------------------- }
@@ -1119,6 +1121,8 @@ var
 begin
   if (NewName = '') then begin
     UseName := Item.FileName;
+    if Item.IsDirectory then
+      UseName := ExcludeTrailingPathDelimiter(UseName);
     AbUnfixName(UseName);
     if (not (eoRestorePath in ExtractOptions)) then
       UseName := ExtractFileName(UseName);
@@ -1401,9 +1405,10 @@ begin
   if Count > 0 then begin
     for i := 0 to pred(Count) do begin
       with TAbArchiveItem(FItemList[i]) do
-        if MatchesStoredNameEx(FileMask) then
-          if not MatchesStoredNameEx(ExclusionMask) then
-            ExtractAt(i, '');
+        if MatchesStoredNameEx(FileMask) and
+           not MatchesStoredNameEx(ExclusionMask) and
+           ((eoCreateDirs in ExtractOptions) or not IsDirectory) then
+          ExtractAt(i, '');
       DoArchiveProgress(AbPercentage(succ(i), Count), Abort);
       if Abort then
         raise EAbUserAbort.Create;

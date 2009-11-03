@@ -71,6 +71,7 @@ type
     procedure TestLocale2;
     procedure TestLocale3;
     procedure TestLocale4;
+    procedure TestEmptyFolders;
 
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
@@ -83,7 +84,7 @@ uses
 {$IFDEF BUILDTESTS}
   AbZipper,
 {$ENDIF}
-  AbUtils;
+  AbArcTyp, AbUtils;
 
 { TAbUnZipperTests }
 
@@ -480,6 +481,26 @@ begin
   Component.BaseDirectory := TestTempDir;
   ChDir(TestTempDir);
   Component.ExtractFiles('*.*');
+end;
+
+procedure TAbUnZipperTests.TestEmptyFolders;
+var
+  i: Integer;
+  OutDir: string;
+begin
+  OutDir := TestTempDir + 'EmptyFolders';
+  Check(CreateDir(OutDir), 'Unable to create target directory');
+  try
+    Component.FileName := TestFileDir + 'EmptyFolders.zip';
+    Component.BaseDirectory := OutDir;
+    Component.ExtractOptions := [eoCreateDirs, eoRestorePath];
+    CheckEquals(4, Component.Count, 'archive item count incorrect');
+    Component.ExtractFiles('*.*');
+    for i := 0 to Component.Count - 1 do
+      CheckDirExists(OutDir + PathDelim + Component.Items[i].DiskFileName);
+  finally
+    DelTree(OutDir);
+  end;
 end;
 
 initialization

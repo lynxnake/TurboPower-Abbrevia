@@ -59,7 +59,8 @@ type
     procedure TestLocale1;
     procedure TestLocale2;
     procedure TestLocale3;
-    procedure TestLocale4;    
+    procedure TestLocale4;
+    procedure TestEmptyFolders;
   end;
 
 implementation
@@ -555,6 +556,48 @@ begin
 
   CheckFileExists(lTestFile);
 end;
+
+procedure TAbZipperTests.TestEmptyFolders;
+{ Test creating a zip with empty directories }
+  procedure CheckExists(const AFilename: string);
+  begin
+    Check(Component.FindFile(AFilename) >= 0,
+      'Item "' + AFilename + '" not found in archive');
+  end;
+
+var
+  SrcDir: string;
+  i: Integer;
+begin
+  SrcDir := TestTempDir + 'EmptyFolders';
+  Check(CreateDir(SrcDir), 'Unable to create source folder');
+  try
+    // Create directories to compress
+    CreateDir(SrcDir + PathDelim + 'A');
+    CreateDir(SrcDir + PathDelim + 'B');
+    CreateDir(SrcDir + PathDelim + 'A' + PathDelim + '1');
+    CreateDir(SrcDir + PathDelim + 'A' + PathDelim + '2');
+    // Create archive
+    Component.FileName := TestTempDir + 'EmptyFolders.zip';
+    Component.BaseDirectory := SrcDir;
+    Component.StoreOptions := [soStripDrive, soRemoveDots, soRecurse];
+    Component.AddFiles('*', faAnyFile);
+    Component.Save;
+    // Verify
+    CheckEquals(4, Component.Count, 'item count does not match directory count');
+    for i := 0 to Component.Count - 1 do
+      Check(Component.Items[i].IsDirectory, 'item is not a directory');
+    CheckExists('A/');
+    CheckExists('B/');
+    CheckExists('A/1/');
+    CheckExists('A/2/');
+    Component.CloseArchive;
+  finally
+    DeleteFile(TestTempDir + 'EmptyFolders.zip');
+    DelTree(SrcDir);
+  end;
+end;
+
 
 initialization
 
