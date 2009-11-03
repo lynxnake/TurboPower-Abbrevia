@@ -1447,7 +1447,7 @@ begin
       Length(FFileName));
   {$ENDIF}
   IsDirectory := ((FItemInfo.ExternalFileAttributes and faDirectory) <> 0) or
-    ((FFileName <> '') and (FFilename[Length(FFilename)] in ['\','/']));
+    ((FFileName <> '') and CharInSet(FFilename[Length(FFilename)], ['\','/']));
   LastModFileTime := FItemInfo.LastModFileTime;
   LastModFileDate := FItemInfo.LastModFileDate;
   FDiskFileName := FileName;

@@ -358,7 +358,10 @@ const
     AB_FPERMISSION_GROUPREAD or
     AB_FPERMISSION_OTHERREAD;
 
-
+{ Unicode backwards compatibility functions }
+{$IFNDEF UNICODE}
+function CharInSet(C: AnsiChar; CharSet: TSysCharSet): Boolean;
+{$ENDIF}
 
 implementation
 
@@ -850,11 +853,7 @@ begin
   Result := DirName;
   if Length(DirName) = 0 then
     Exit;
-{$IFDEF UNICODE}
-  if not SysUtils.CharInSet(DirName[Length(DirName)], AbDelimSet) then
-{$ELSE}
-  if not (DirName[Length(DirName)] in AbDelimSet) then
-{$ENDIF}
+  if not CharInSet(DirName[Length(DirName)], AbDelimSet) then
     Result := DirName + AbPathDelim;
 end;
 { -------------------------------------------------------------------------- }
@@ -1532,5 +1531,12 @@ begin
 end;
 {!!.04 - Added End }
 
+{ Unicode backwards compatibility functions }
+{$IFNDEF UNICODE}
+function CharInSet(C: AnsiChar; CharSet: TSysCharSet): Boolean;
+begin
+Result := C in CharSet;
+end;
+{$ENDIF}
 
 end.
