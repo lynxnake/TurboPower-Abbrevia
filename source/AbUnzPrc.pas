@@ -64,14 +64,7 @@ type
     FDictionarySize : TAbZipDictionarySize;
     FShannonFanoTreeCount : Byte;
     FOnProgress : TAbProgressEvent;
-    FOnRequestNthDisk : TAbRequestNthDiskEvent;
     FCurrentProgress : Byte;
-    {spanning variables}
-    FSpanned : Boolean;
-    FArchiveName : string;
-    FArchive : TAbArchive;
-    FCurrentDisk : Word;
-    FMode : Word;
 
     FOutBuf : PAbByteArray;          {output buffer}
     FOutSent : LongInt;              {number of bytes sent to output buffer}
@@ -85,20 +78,10 @@ type
     FInEof  : Boolean;               {set when FInLeft = 0}
     FCurByte : Byte;                 {current input byte}
     FBitsLeft : Byte;                {bits left to process in FCurByte}
-    FdBitStrBuf : Word;              {Bit string output buffer}
-    {cannot change FdBitStrBuf to a Cardinal}
-    FiOverflowBuf : Cardinal;        {Bit overflow holding buffer}
-
-
-    FiSlide : PAbiSlide;             {Sliding window buffer}
-    FiSlidePos : Cardinal;               {Current position in Slide}
-
 
     FZStream : TStream;
   protected
     procedure DoProgress( Progress : Byte; var Abort : Boolean );
-      virtual;
-    procedure DoRequestNthDisk( DiskNumber : Byte; var Abort : Boolean );
       virtual;
     procedure uzFlushOutBuf;
       {-Flushes the output buffer}
@@ -130,28 +113,11 @@ type
     destructor Destroy;
       override;
 
-    property Archive : TAbArchive
-      read FArchive write FArchive;
-    property ArchiveName : string
-      read FArchiveName
-      write FArchiveName;
-    property CurrentDisk : Word
-      read FCurrentDisk
-      write FCurrentDisk;
     function Execute : LongInt;
       {returns the CRC}
-    property Mode : Word
-      read FMode
-      write FMode;
     property OnProgress : TAbProgressEvent
       read FOnProgress
       write FOnProgress;
-    property OnRequestNthDisk : TAbRequestNthDiskEvent
-      read FOnRequestNthDisk
-      write FOnRequestNthDisk;
-    property Spanned : Boolean
-      read FSpanned
-      write FSpanned;
     property CompressedSize : LongInt
       read FCompressedSize
       write FCompressedSize;
@@ -245,7 +211,7 @@ constructor TAbUnzipHelper.Create( var InputStream : TStream;
                                    aDecoder : TObject );
 begin
   inherited Create;
-  FOutBuf := AllocMem( AbBufferSize );                                 
+  FOutBuf := AllocMem( AbBufferSize );
   FOutPos := 0;                                                        
   FZStream := InputStream;
   FOutStream := OutputStream;
@@ -258,10 +224,6 @@ begin
   {starting value for output CRC}
   FCRC32 := -1;
   FCurrentProgress := 0;
-  FSpanned := False;
-  FMode := 0;
-  FArchiveName := '';
-  FCurrentDisk := 0;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbUnzipHelper.Destroy;
@@ -335,9 +297,6 @@ end;
 procedure TAbUnzipHelper.uzReadNextPrim;
 var
   L : LongInt;
-  {i : Integer;}
-  NeedDisk : Boolean;
-  Abort : Boolean;
 begin
   if (FInLeft = 0) then begin
     {we're done}
@@ -345,32 +304,18 @@ begin
     FInPos := FInCnt+1;
   end
   else begin
-      {spanning stuff}
-    if Spanned and (FZStream.Size = FZStream.Position) then begin
-      {need the next disk!}
-      CurrentDisk := CurrentDisk + 1;
-      if not (FZStream is TFileStream) then                           
-        raise EAbZipBadSpanStream.Create;
-      TAbZipArchive(FArchive).DoRequestNthImage(CurrentDisk, FZStream, Abort );
-    end;
-    NeedDisk := False;
     if FInLeft > sizeof( FInBuf ) then
-      L := sizeOf( FInBuf )
+      L := sizeof( FInBuf )
     else
       L := FInLeft;
-    if L >= ( FZStream.Size - FZStream.Position ) then begin
-      NeedDisk := True;
-      L := FZStream.Size - FZStream.Position;
-    end;
     FInCnt := FZStream.Read( FInBuf, L );
-    if (FInCnt = 0) then                                               
+    if (FInCnt = 0) then
       raise EAbReadError.Create;
     if FDecoder <> nil then
-      FDecoder.DecodeBuffer( FInBuf[1], FInCnt );                      
+      FDecoder.DecodeBuffer( FInBuf[1], FInCnt );
 
     {decrement count of bytes left to go}
     Dec(FInLeft, FInCnt);
-    FInEof :=  ( not NeedDisk ) and ( FZStream.Position = FZStream.Size );
 
     {load first byte in buffer and set position counter}
     FCurByte := FInBuf[1];
@@ -410,31 +355,6 @@ begin
   if (FOutPos = AbBufferSize) or
      (LongInt(FOutPos) + FOutSent = FUncompressedSize) then
     uzFlushOutBuf;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbUnzipHelper.DoRequestNthDisk( DiskNumber : Byte;
-                                           var Abort : Boolean );
-var
-  pMessage : string;
-  pCaption : string;
-begin
-  if Assigned( FOnRequestNthDisk ) then
-    FOnRequestNthDisk( Self, DiskNumber, Abort )
-  else begin
-    pMessage:= Format(AbStrRes(AbDiskNumRequest), [DiskNumber]);
-    pCaption := AbStrRes(AbDiskRequest);
-    {$IFDEF MSWINDOWS}
-    Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
-      MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
-    {$ENDIF}
-    {$IFDEF LINUX}
-    {$IFDEF NoQt}
-    WriteLn(pMessage);
-    {$ELSE }
-    Abort := QDialogs.MessageDlg(pCaption, pMessage, mtWarning, mbOKCancel, 0) = mrCancel;
-    {$ENDIF}
-    {$ENDIF}
-  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbUnzipHelper.DoProgress(Progress : Byte; var Abort : Boolean);
@@ -1271,15 +1191,6 @@ begin
     Helper.CompressionMethod    := Item.CompressionMethod;
     Helper.ShannonFanoTreeCount := Item.ShannonFanoTreeCount;
     Helper.OnProgress           := Archive.OnProgress;
-    Helper.OnRequestNthDisk     := Archive.OnRequestNthDisk;
-    Helper.Archive              := Archive;
-    if Archive.Spanned then
-      with Archive do begin
-        Helper.ArchiveName := ArchiveName;
-        Helper.CurrentDisk := CurrentDisk;
-        Helper.Spanned := True;
-        Helper.Mode := Mode;
-      end;
     Result := Helper.Execute;
   finally
     Helper.Free;
