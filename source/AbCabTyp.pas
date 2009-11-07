@@ -81,6 +81,7 @@ type
     FFDICabInfo      : FDICabInfo;
     FErrors          : CabErrorRecord;
     FItemInProgress  : TAbCabItem;
+    FItemStream      : TStream;
     FIIPName         : string;
     FItemProgress    : DWord;
     FNextCabinet     : string;
@@ -360,36 +361,42 @@ end;
 function FDI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer) : Integer;
   cdecl;
   {open a file}
+var
+  Handle : Integer;
 begin
-  Result := _lopen(lpPathName, Mode);
+  Handle := FileOpen(string(lpPathName), fmOpenRead or fmShareDenyWrite);
+  if Handle <> -1 then
+    Result := Integer(TFileStream.Create(Handle))
+  else
+    Result := -1;
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileRead(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
   cdecl;
   {read from a file}
 begin
-  Result := _lread(hFile, lpBuffer, uBytes);
+  Result := TStream(hFile).Read(lpBuffer^, uBytes);
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileWrite(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
   cdecl;
   {write to a file}
 begin
-  Result := _lwrite(hFile, lpBuffer, uBytes);
+  Result := TStream(hFile).Write(lpBuffer^, uBytes);
 end;
 { -------------------------------------------------------------------------- }
 procedure FDI_FileClose(hFile : HFILE);
   cdecl;
   {close a file}
 begin
-  _lclose(hFile);
+  TStream(hFile).Free;
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileSeek(hFile : HFILE; Offset : Longint; Origin : Integer) : Longint;
   cdecl;
   {reposition file pointer}
 begin
-  Result := _llseek(hFile, Offset, Origin);
+  Result := TStream(hFile).Seek(Offset, Origin);
 end;
 { -------------------------------------------------------------------------- }
 function FDI_EnumerateFiles(fdint : FDINOTIFICATIONTYPE;
@@ -438,12 +445,15 @@ var
   NextCabName : string;
 begin
   Result := 0;
-  Archive :=pfdin^.pv;
+  Archive := pfdin^.pv;
   case fdint of
     FDINT_Copy_File :
       begin
         if (string(pfdin^.psz1) = Archive.FItemInProgress.FileName) then
-          Result := FileCreate(Archive.FIIPName)
+          if Archive.FIIPName <> '' then
+            Result := Integer(TFileStream.Create(Archive.FIIPName, fmCreate))
+          else
+            Result := Integer(Archive.FItemStream)
         else
           Result := 0;
       end;
@@ -454,10 +464,13 @@ begin
       end;
     FDINT_Close_File_Info :
       begin
-        FileSetDate(pfdin^.hf, Longint(pfdin^.date) shl 16 + pfdin^.time);
-        _lclose(pfdin^.hf);
-        // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-        AbFileSetAttr(Archive.FIIPName, pfdin^.attribs);
+        if Archive.FIIPName <> '' then begin
+          FileSetDate(TFileStream(pfdin^.hf).Handle,
+            Longint(pfdin^.date) shl 16 + pfdin^.time);
+          TFileStream(pfdin^.hf).Free;
+          // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+          AbFileSetAttr(Archive.FIIPName, pfdin^.attribs);
+        end;
         Archive.DoCabItemProcessed;
       end;
   end;
@@ -644,6 +657,15 @@ end;
 procedure TAbCabArchive.ExtractItemToStreamAt(Index : Integer; OutStream : TStream);
 begin
   {not implemented for cabinet archives}
+  FItemInProgress := GetItem(Index);
+  FItemStream := OutStream;
+  try
+    if not FDICopy(FFDIContext, PAnsiChar(FCabName), PAnsiChar(FCabPath), 0,
+                   @FDI_ExtractFiles, nil, Self) then
+      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
+  finally
+    FItemStream := nil;
+  end;
 end;
 {----------------------------------------------------------------------------}
 function TAbCabArchive.GetItem(ItemIndex : Integer) : TAbCabItem;
@@ -684,19 +706,17 @@ procedure TAbCabArchive.OpenCabFile;
   {Open an existing cabinet}
 var
   Abort : Boolean;
-  FileHandle : Integer;
+  Stream : TFileStream;
 begin
     {verify that the archive can be opened and is a cabinet}
-  FileHandle := FileOpen(FArchiveName, fmOpenRead or fmShareDenyNone);
-  if (FileHandle <= 0) then
-    raise EAbReadError.Create;
+  Stream := TFileStream.Create(FArchiveName, fmOpenRead or fmShareDenyNone);
   try
-    if not FDIIsCabinet(FFDIContext, FileHandle, @FFDICabInfo) then begin
+    if not FDIIsCabinet(FFDIContext, Integer(Stream), @FFDICabInfo) then begin
       CloseCabFile;
       raise EAbInvalidCabFile.Create;
     end;
   finally
-    FileClose(FileHandle);
+    Stream.Free;
   end;
 
     {store information about the cabinet}
