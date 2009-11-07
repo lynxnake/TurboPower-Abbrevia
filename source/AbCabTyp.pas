@@ -80,7 +80,6 @@ type
     FFDIContext      : HFDI;
     FFDICabInfo      : FDICabInfo;
     FErrors          : CabErrorRecord;
-    FFileHandle      : Integer;
     FItemInProgress  : TAbCabItem;
     FIIPName         : string;
     FItemProgress    : DWord;
@@ -174,7 +173,7 @@ implementation
 uses
   AbExcept;
 
-{$WARN UNIT_PLATFORM OFF}  
+{$WARN UNIT_PLATFORM OFF}
 {$WARN SYMBOL_PLATFORM OFF}
 
 type
@@ -685,18 +684,22 @@ procedure TAbCabArchive.OpenCabFile;
   {Open an existing cabinet}
 var
   Abort : Boolean;
+  FileHandle : Integer;
 begin
     {verify that the archive can be opened and is a cabinet}
-  FFileHandle := FileOpen(FArchiveName, fmOpenRead or fmShareDenyNone);
-  if (FFileHandle <= 0) then
+  FileHandle := FileOpen(FArchiveName, fmOpenRead or fmShareDenyNone);
+  if (FileHandle <= 0) then
     raise EAbReadError.Create;
-  if not FDIIsCabinet(FFDIContext, FFileHandle, @FFDICabInfo) then begin
-    CloseCabFile;
-    raise EAbInvalidCabFile.Create;
+  try
+    if not FDIIsCabinet(FFDIContext, FileHandle, @FFDICabInfo) then begin
+      CloseCabFile;
+      raise EAbInvalidCabFile.Create;
+    end;
+  finally
+    FileClose(FileHandle);
   end;
 
     {store information about the cabinet}
-  FileClose(FFileHandle);
   FCabSize := FFDICabInfo.cbCabinet;
   FFolderCount := FFDICabInfo.cFolders;
   FFileCount := FFDICabInfo.cFiles;
