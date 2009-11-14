@@ -999,10 +999,10 @@ var
         try
 
           AbFindFilesEx(Mask, SearchAttr, Files, Recursing);
-          if (Files.Count > 0) then begin
+          if (Files.Count > 0) then
             for i := 0 to pred(Files.Count) do
-              if FilterList.IndexOf(Files[i]) < 0 then               
-                if not Wild then begin                               
+              if FilterList.IndexOf(Files[i]) < 0 then
+                if not Wild then begin
                   if (Files[i] <> FArchiveName) then begin
                     Item := CreateItem(Files[i]);
                     Add(Item);
@@ -1014,8 +1014,6 @@ var
                       Add(Item);
                     end;
                 end;
-            FIsDirty := true;
-          end;
         finally
           Files.Free;
         end;
