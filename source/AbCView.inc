@@ -49,6 +49,7 @@ type
   TAbCabView = class(TAbBaseViewer)
   protected
     FCabComponent : TAbCustomCabBrowser;
+    FEmptyItemList: TAbArchiveList;
     function GetItem(RowNum : Longint) : TAbCabItem;
     procedure SetCabComponent(Value : TAbCustomCabBrowser);
     procedure Notification(AComponent : TComponent; Operation : TOperation);
@@ -56,6 +57,10 @@ type
     procedure DoChange(Sender : TObject);
       override;
   public
+    constructor Create(AOwner : TComponent);
+      override;
+    destructor  Destroy;
+      override;
     property Items[RowNum : Longint] : TAbCabItem
       read GetItem;
   published {properties}
@@ -117,6 +122,18 @@ type
 
 
 { ===== TAbCabView ========================================================= }
+constructor TAbCabView.Create(AOwner : TComponent);
+begin
+  inherited;
+  FEmptyItemList := FItemList;
+end;
+{ -------------------------------------------------------------------------- }
+destructor TAbCabView.Destroy;
+begin
+  FItemList := FEmptyItemList;
+  inherited;
+end;
+{ -------------------------------------------------------------------------- }
 function TAbCabView.GetItem(RowNum : Longint) : TAbCabItem;
 begin
   if Assigned(FItemList) then
@@ -145,13 +162,10 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabView.DoChange(Sender : TObject);
 begin
-  if Assigned(FCabComponent) then
-    if Assigned(TAbCabBrowserFriend(FCabComponent).Archive) then
-      FItemList := TAbCabBrowserFriend(FCabComponent).Archive.ItemList
-    else
-      FItemList := nil
-  else
-    FItemList := nil;
+  if Assigned(FCabComponent) and Assigned(TAbCabBrowserFriend(FCabComponent).Archive) then
+    FItemList := TAbCabBrowserFriend(FCabComponent).Archive.ItemList
+  else if FEmptyItemList <> nil then
+    FItemList := FEmptyItemList;
   inherited DoChange(Sender);
 end;
 

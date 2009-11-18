@@ -901,7 +901,7 @@ begin
   FGZStream  := FStream;
   FGZItem    := FItemList;
   FTarStream := TAbVirtualMemoryStream.Create;
-  FTarList   := TAbArchiveList.Create;
+  FTarList   := TAbArchiveList.Create(True);
 end;
 
 procedure TAbGzipArchive.SwapToTar;

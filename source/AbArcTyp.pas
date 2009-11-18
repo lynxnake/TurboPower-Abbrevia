@@ -148,15 +148,15 @@ type
   TAbArchiveList = class
   protected {private}
     FList     : TList;
+    FOwnsItems: Boolean;
     HashTable : array[0..1020] of TAbArchiveItem;
   protected {methods}
     function GenerateHash(const S : string) : LongInt;
     function GetCount : Integer;
-    procedure SetCount(NewCount : Integer);
     function Get(Index : Integer) : TAbArchiveItem;
     procedure Put(Index : Integer; Item : TAbArchiveItem);
   public {methods}
-    constructor Create;
+    constructor Create(AOwnsItems: Boolean);
     destructor Destroy; override;
     function Add(Item : Pointer): Integer;
     procedure Clear;
@@ -165,8 +165,7 @@ type
     function IsActiveDupe(const FN : string) : Boolean;
   public {properties}
     property Count : Integer
-      read GetCount
-      write SetCount;
+      read GetCount;
     property Items[Index : Integer] : TAbArchiveItem
       read Get
       write Put; default;
@@ -736,10 +735,11 @@ end;
 { TAbArchiveList implementation ============================================ }
 
 { TAbArchiveList }
-constructor TAbArchiveList.Create;
+constructor TAbArchiveList.Create(AOwnsItems: Boolean);
 begin
   inherited Create;
   FList := TList.Create;
+  FOwnsItems := AOwnsItems;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbArchiveList.Destroy;
@@ -753,9 +753,11 @@ function TAbArchiveList.Add(Item : Pointer) : Integer;
 var
   H : LongInt;
 begin
-  H := GenerateHash(TAbArchiveItem(Item).FileName);
-  TAbArchiveItem(Item).NextItem := HashTable[H];
-  HashTable[H] := TAbArchiveItem(Item);
+  if FOwnsItems then begin
+    H := GenerateHash(TAbArchiveItem(Item).FileName);
+    TAbArchiveItem(Item).NextItem := HashTable[H];
+    HashTable[H] := TAbArchiveItem(Item);
+  end;
   Result := FList.Add(Item);
 end;
 { -------------------------------------------------------------------------- }
@@ -763,8 +765,9 @@ procedure TAbArchiveList.Clear;
 var
   i : Integer;
 begin
-  for i := 0 to Count - 1 do
-    TObject(FList[i]).Free;
+  if FOwnsItems then
+    for i := 0 to Count - 1 do
+      TObject(FList[i]).Free;
   FList.Clear;
   FillChar(HashTable, SizeOf(HashTable), #0);
 end;
@@ -775,32 +778,44 @@ var
   Last : Pointer;
   FN : string;
 begin
-  FN := TAbArchiveItem(FList[Index]).FileName;
-  Last := @HashTable[GenerateHash(FN)];
-  Look := TAbArchiveItem(Last^);
-  while Look <> nil do begin
-    if CompareText(Look.FileName, FN) = 0 then begin
-      Move(Look.NextItem, Last^, 4);
-      Break;
-    end;
-    Last := @Look.NextItem;
+  if FOwnsItems then begin
+    FN := TAbArchiveItem(FList[Index]).FileName;
+    Last := @HashTable[GenerateHash(FN)];
     Look := TAbArchiveItem(Last^);
+    while Look <> nil do begin
+      if CompareText(Look.FileName, FN) = 0 then begin
+        Move(Look.NextItem, Last^, 4);
+        Break;
+      end;
+      Last := @Look.NextItem;
+      Look := TAbArchiveItem(Last^);
+    end;
+    TObject(FList[Index]).Free;
   end;
-  TObject(FList[Index]).Free;
   FList.Delete(Index);
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveList.Find(const FN : string) : Integer;
 var
   Look : TAbArchiveItem;
+  I : Integer;
 begin
-  Look := HashTable[GenerateHash(FN)];
-  while Look <> nil do begin
-    if CompareText(Look.FileName, FN) = 0 then begin
-      Result := FList.IndexOf(Look);
-      Exit;
+  if FOwnsItems then begin
+    Look := HashTable[GenerateHash(FN)];
+    while Look <> nil do begin
+      if CompareText(Look.FileName, FN) = 0 then begin
+        Result := FList.IndexOf(Look);
+        Exit;
+      end;
+      Look := Look.NextItem;
     end;
-    Look := Look.NextItem;
+  end
+  else begin
+    for I := 0 to FList.Count - 1 do
+      if CompareText(Items[I].FileName, FN) = 0 then begin
+        Result := I;
+        Exit;
+      end;
   end;
   Result := -1;
 end;
@@ -838,15 +853,26 @@ end;
 function TAbArchiveList.IsActiveDupe(const FN : string) : Boolean;
 var
   Look : TAbArchiveItem;
+  I : Integer;
 begin
-  Look := HashTable[GenerateHash(FN)];
-  while Look <> nil do begin
-    if (CompareText(Look.FileName, FN) = 0) and
-       (Look.Action <> aaDelete) then begin
-      Result := True;
-      Exit;
+  if FOwnsItems then begin
+    Look := HashTable[GenerateHash(FN)];
+    while Look <> nil do begin
+      if (CompareText(Look.FileName, FN) = 0) and
+         (Look.Action <> aaDelete) then begin
+        Result := True;
+        Exit;
+      end;
+      Look := Look.NextItem;
     end;
-    Look := Look.NextItem;
+  end
+  else begin
+    for I := 0 to Count - 1 do
+      if (CompareText(Items[I].FileName, FN) = 0) and
+         (Items[I].Action <> aaDelete) then begin
+        Result := True;
+        Exit;
+      end;
   end;
   Result := False;
 end;
@@ -858,31 +884,28 @@ var
   Last : Pointer;
   FN : string;
 begin
-  FN := TAbArchiveItem(FList[Index]).FileName;
-  Last := @HashTable[GenerateHash(FN)];
-  Look := TAbArchiveItem(Last^);
-  { Delete old index }
-  while Look <> nil do begin
-    if CompareText(Look.FileName, FN) = 0 then begin
-      Move(Look.NextItem, Last^, 4);
-      Break;
-    end;
-    Last := @Look.NextItem;
+  if FOwnsItems then begin
+    FN := TAbArchiveItem(FList[Index]).FileName;
+    Last := @HashTable[GenerateHash(FN)];
     Look := TAbArchiveItem(Last^);
+    { Delete old index }
+    while Look <> nil do begin
+      if CompareText(Look.FileName, FN) = 0 then begin
+        Move(Look.NextItem, Last^, 4);
+        Break;
+      end;
+      Last := @Look.NextItem;
+      Look := TAbArchiveItem(Last^);
+    end;
+    { Free old instance }
+    TObject(FList[Index]).Free;
+    { Add new index }
+    H := GenerateHash(TAbArchiveItem(Item).FileName);
+    TAbArchiveItem(Item).NextItem := HashTable[H];
+    HashTable[H] := TAbArchiveItem(Item);
   end;
-  { Free old instance }
-  TObject(FList[Index]).Free;
-  { Add new index }
-  H := GenerateHash(TAbArchiveItem(Item).FileName);
-  TAbArchiveItem(Item).NextItem := HashTable[H];
-  HashTable[H] := TAbArchiveItem(Item);
   { Replace pointer }
   FList[Index] := Item;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbArchiveList.SetCount(NewCount : Integer);
-begin
-  FList.Count := NewCount;
 end;
 
 
@@ -893,7 +916,7 @@ begin
   inherited Create;
   FIsDirty := False;
   FAutoSave := False;
-  FItemList := TAbArchiveList.Create;
+  FItemList := TAbArchiveList.Create(True);
   FPadLock := TAbPadLock.Create;
   StoreOptions := [];
   ExtractOptions := [];

@@ -731,7 +731,7 @@ constructor TAbBaseViewer.Create(AOwner : TComponent);
 begin
   inherited Create(AOwner);
 
-  FItemList := TAbArchiveList.Create;
+  FItemList := TAbArchiveList.Create(False);
 
   RowCount := 2;
   FixedCols := 0;
