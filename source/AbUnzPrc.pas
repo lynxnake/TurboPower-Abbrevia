@@ -1293,9 +1293,9 @@ end;
 procedure AbUnzip(Sender : TObject; Item : TAbZipItem; const UseName : string);
   {create the output filestream and pass it to AbUnzipToStream}
 var
-{$IFDEF AbUnZipClobber}
+  {$IFNDEF AbUnZipTempFile}
   OutStream  : TFileStream;
-{$ENDIF}
+  {$ENDIF}
   {$IFDEF AbUnZipMemory}
   TempOut    : TMemoryStream;
   {$ENDIF}
