@@ -275,7 +275,7 @@ function FCI_FileDelete(lpFilename: PAnsiChar;  PError: PInteger;
   {delete a file}
 begin
   Result := SysUtils.DeleteFile(string(lpFilename));
-  if (Result = False) then
+  if not Result then
     raise EAbFCIFileDeleteError.Create;
 end;
 { -------------------------------------------------------------------------- }
@@ -366,7 +366,7 @@ var
 begin
   Handle := FileOpen(string(lpPathName), fmOpenRead or fmShareDenyWrite);
   if Handle <> -1 then
-    Result := Integer(TFileStream.Create(Handle))
+    Result := Integer(THandleStream.Create(Handle))
   else
     Result := -1;
 end;
@@ -554,7 +554,6 @@ begin
     FFDIContext := nil;
   end;
   if (FFCIContext <> nil) then begin
-    FCIFlushCabinet(FFCIContext, False, @FCI_GetNextCab, @FCI_Status);
     FCIDestroy(FFCIContext);
     FFCIContext := nil;
   end;
