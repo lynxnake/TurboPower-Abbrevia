@@ -366,7 +366,7 @@ var
 begin
   Handle := FileOpen(string(lpPathName), fmOpenRead or fmShareDenyWrite);
   if Handle <> -1 then
-    Result := Integer(THandleStream.Create(Handle))
+    Result := Integer(TFileStream.Create(Handle))
   else
     Result := -1;
 end;
