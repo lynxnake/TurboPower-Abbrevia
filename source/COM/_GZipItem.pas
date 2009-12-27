@@ -194,19 +194,17 @@ end;
 {------------------------------------------------------------------------------}
 procedure TGzipItem.Set_CompressionMethod(Value: Byte);
 begin
-  FOwner.CompressionMethod := Value;
-  FParent.ZipArchive.IsDirty := True;
+
 end;
 {------------------------------------------------------------------------------}
 function  TGzipItem.Get_ExtraField: WideString;
 begin
-  result := FOwner.ExtraField;
+  result := '';
 end;
 {------------------------------------------------------------------------------}
 procedure TGzipItem.Set_ExtraField(const Value: WideString);
 begin
-  FOwner.ExtraField := Value;
-  FParent.ZipArchive.IsDirty := True;
+
 end;
 {------------------------------------------------------------------------------}
 function  TGzipItem.Get_ExtraFlags: Byte;
@@ -249,13 +247,12 @@ end;
 {------------------------------------------------------------------------------}
 procedure TGzipItem.Set_Flags(Value: Byte);
 begin
-  FOwner.Flags := Value;
-  FParent.ZipArchive.IsDirty := True;
+
 end;
 {------------------------------------------------------------------------------}
 function  TGzipItem.Get_HeaderCRC: Integer;
 begin
-  result := FOwner.HeaderCRC;
+  result := 0;
 end;
 {------------------------------------------------------------------------------}
 
