@@ -46,7 +46,7 @@ uses
 {$ELSE}
   ComCtrls,
 {$ENDIF}
-  AbBase, AbConst, AbDfDec, AbDfEnc, AbDfBase;
+  AbBase, AbResString, AbDfDec, AbDfEnc, AbDfBase;
 
 const
   AbCompoundFileVersion = '3.1';                                {!!.03}

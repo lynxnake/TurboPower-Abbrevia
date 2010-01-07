@@ -547,7 +547,8 @@ uses
   AbExcept,
   AbSpanSt,
   AbDfBase,
-  AbConst;
+  AbConst,
+  AbResString;
 
 
 { TAbArchiveItem implementation ============================================ }
@@ -1300,7 +1301,7 @@ var
 begin
   DoProgress(aPercentDone, Abort);
   if Abort then
-    raise EAbAbortProgress.Create(AbStrRes(AbUserAbort));
+    raise EAbAbortProgress.Create(AbUserAbortS);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.DoInflateProgress(aPercentDone: integer);
@@ -1309,7 +1310,7 @@ var
 begin
   DoProgress(aPercentDone, Abort);
   if Abort then
-    raise EAbAbortProgress.Create(AbStrRes(AbUserAbort));
+    raise EAbAbortProgress.Create(AbUserAbortS);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.DoLoad;
@@ -1739,14 +1740,14 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.MakeLogEntry(const FN: string; LT : TAbLogType);
 const
-  LogTypeRes : array[TAbLogType] of Integer =
-    (AbLtAdd, AbLtDelete, AbLtExtract, AbLtFreshen, AbLtMove, AbLtReplace,
-     AbLtStart, AbUnhandledEntity);
+  LogTypeRes : array[TAbLogType] of string =
+    (AbLtAddS, AbLtDeleteS, AbLtExtractS, AbLtFreshenS, AbLtMoveS, AbLtReplaceS,
+     AbLtStartS, AbUnhandledEntityS);
 var
   Buf : string;
 begin
   if Assigned(FLogStream) then begin
-    Buf := FN + AbStrRes(LogTypeRes[LT]) + DateTimeToStr(Now) + sLineBreak;
+    Buf := FN + LogTypeRes[LT] + DateTimeToStr(Now) + sLineBreak;
     FLogStream.Write(Buf[1], Length(Buf) * SizeOf(Char));
   end;
 end;

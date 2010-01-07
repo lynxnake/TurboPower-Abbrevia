@@ -622,7 +622,7 @@ uses
   {$ENDIF}
   {$ENDIF}
   {$ENDIF}
-  AbConst,
+  AbResString,
   AbExcept,
   AbVMStrm,
   SysUtils;
@@ -1699,8 +1699,8 @@ begin
   if Assigned( FOnRequestLastDisk ) then
     FOnRequestLastDisk( Self, Abort )
   else begin
-    pMessage := AbStrRes(AbLastDiskRequest);
-    pCaption := AbStrRes(AbDiskRequest);
+    pMessage := AbLastDiskRequestS;
+    pCaption := AbDiskRequestS;
 {$IFDEF MSWINDOWS}
     Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
       MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
@@ -1726,10 +1726,10 @@ begin
   if Assigned( FOnRequestNthDisk ) then
     FOnRequestNthDisk( Self, DiskNumber, Abort )
   else begin
-    pMessage := AbStrRes(AbDiskNumRequest);
+    pMessage := AbDiskNumRequestS;
     FMessage := Format(pMessage, [DiskNumber] );
     pMessage := FMessage;
-    pCaption := AbStrRes(AbDiskRequest);
+    pCaption := AbDiskRequestS;
 {$IFDEF MSWINDOWS}
     Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
       MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;                      
@@ -1759,8 +1759,8 @@ begin
   if Assigned( FOnRequestBlankDisk ) then
     FOnRequestBlankDisk( Self, Abort )
   else begin
-    pMessage := AbStrRes(AbBlankDisk);
-    pCaption := AbStrRes(AbDiskRequest);
+    pMessage := AbBlankDiskS;
+    pCaption := AbDiskRequestS;
 {$IFDEF MSWINDOWS}
     Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
       MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
@@ -1901,8 +1901,8 @@ begin
    end
   else if Mode = smReading then begin
 
-    pMessage := Format(AbStrRes(AbImageNumRequest), [ImageNumber]);
-    pCaption := AbStrRes(AbImageRequest);
+    pMessage := Format(AbImageNumRequestS, [ImageNumber]);
+    pCaption := AbImageRequestS;
 {$IFDEF MSWINDOWS}
 {!!.04}
 //    Abort := not InputQuery(pCaption, pMessage, ImageName);

@@ -78,8 +78,9 @@ var
   PassWordDlg: TPassWordDlg;
 
 implementation
+
 uses
-  AbConst;
+  AbResString;
 
 procedure TPassWordDlg.Edit1Change(Sender: TObject);
 begin
@@ -114,12 +115,12 @@ end;
 
 procedure TPassWordDlg.FormCreate(Sender: TObject);
 begin
-  Caption := AbStrRes(AbEnterPassword);
-  OKBtn.Caption := AbStrRes(AbOK);
-  CancelBtn.Caption := AbStrRes(AbCancel);
-  Label1.Caption := AbStrRes(AbPassword);
+  Caption := AbEnterPasswordS;
+  OKBtn.Caption := AbOKS;
+  CancelBtn.Caption := AbCancelS;
+  Label1.Caption := AbPasswordS;
 {$IFDEF MSWINDOWS}
-  Label2.Caption := AbStrRes(AbVerify);
+  Label2.Caption := AbVerifyS;
 {$ENDIF}
 end;
 

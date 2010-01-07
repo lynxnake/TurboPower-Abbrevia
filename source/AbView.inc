@@ -62,6 +62,7 @@ uses
   AbExcept,
   AbUtils,
   AbConst,
+  AbResString,
   AbArcTyp,
   AbZipTyp;
 
@@ -822,22 +823,22 @@ begin
 {$IFNDEF LINUX}
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
         if (faReadOnly and ExternalFileAttributes) = faReadOnly then
-          Result := Result + AbStrRes(AbReadOnly);
+          Result := Result + AbReadOnlyS;
         if (faHidden and ExternalFileAttributes) = faHidden then
-          Result := Result + AbStrRes(AbHidden);
+          Result := Result + AbHiddenS;
         if (faSysFile and ExternalFileAttributes) = faSysFile then
-          Result := Result + AbStrRes(AbSystem);
+          Result := Result + AbSystemS;
         if (faArchive and ExternalFileAttributes) = faArchive then
-          Result := Result + AbStrRes(AbArchived);
+          Result := Result + AbArchivedS;
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
 {$ENDIF LINUX}
       end;
     vaEncryption :
       if IsEncrypted then
-        Result := AbStrRes(AbEncrypted);
+        Result := AbEncryptedS;
     vaTimeStamp :
       if (LastModFileDate + LastModFileTime = 0) then
-        Result := AbStrRes(AbUnknown)
+        Result := AbUnknownS
       else begin
         LI := LongInt(LastModFileDate) shl 16 + LastModFileTime;
         Result := DateTimeToStr(FileDateToDateTime(LI));
@@ -850,9 +851,9 @@ begin
   if (aItem is TAbZipItem) then with TAbZipItem(aItem) do case Attr of
     vaFileType :
       if (InternalFileAttributes = 1) then
-        Result := AbStrRes(AbText)
+        Result := AbTextS
       else
-        Result := AbStrRes(AbBinary);
+        Result := AbBinaryS;
     vaMethod :
       Result := FMethodStrings[CompressionMethod];
     vaRatio :
@@ -1289,22 +1290,32 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.InitColMap;
+const
+  cResString: array[TAbViewAttribute] of string = (AbItemNameHeadingS,
+    AbPackedHeadingS, AbMethodHeadingS, AbRatioHeadingS, AbCRCHeadingS,
+    AbFileAttrHeadingS, AbFileFormatHeadingS, AbEncryptionHeadingS,
+    AbTimeStampHeadingS, AbFileSizeHeadingS, AbVersionMadeHeadingS,
+    AbVersionNeededHeadingS, AbPathHeadingS);
 var
   i : TAbViewAttribute;
 begin
   FHeadings.Clear;
   for i := Low(TAbViewAttribute) to High(TAbViewAttribute) do begin
-    FHeadings.Add(AbStrRes(AbDefColHeadings + Ord(i)));
+    FHeadings.Add(cResString[i]);
     FColMap[i] := Ord(i);
   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.InitMethodStrings;
+const
+  cResString: array[TAbZipCompressionMethod] of string = (AbMethod0S, AbMethod1S,
+    AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S, AbMethod6S, AbMethod7S,
+    AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   i : TAbZipCompressionMethod;
 begin
   for i := Low(TAbZipCompressionMethod) to High(TAbZipCompressionMethod) do
-    FMethodStrings[i] := AbStrRes(AbMethod + Ord(i));
+    FMethodStrings[i] := cResString[i];
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.InvalidateRow(ARow: Longint);

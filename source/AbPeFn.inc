@@ -92,7 +92,7 @@ type
 implementation
 
 uses
-  AbConst,
+  AbResString,
   AbArcTyp;
 
 { -------------------------------------------------------------------------- }
@@ -129,14 +129,7 @@ var
   FN : string;
 begin
   FN := Value;
-{$IFDEF WIN32}
-  AbGetFilename(AbStrRes(AbDefaultExt), AbStrRes(AbFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
-{$IFDEF LINUX}
-  AbGetFilename(AbStrRes(AbDefaultExt), AbStrRes(AbFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
+  AbGetFilename(AbDefaultExtS, AbFilterS, AbFileNameTitleS, FN);
   Value := FN;
 end;
 
@@ -151,14 +144,7 @@ var
   FN : string;
 begin
   FN := Value;
-{$IFDEF WIN32}
-  AbGetFilename(AbStrRes(AbExeExt), AbStrRes(AbExeFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
-{$IFDEF LINUX}
-  AbGetFilename(AbStrRes(AbExeExt), AbStrRes(AbExeFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
+  AbGetFilename(AbExeExtS, AbExeFilterS, AbFileNameTitleS, FN);
   Value := FN;
 end;
 
@@ -173,14 +159,7 @@ var
   FN : string;
 begin
   FN := Value;
-{$IFDEF WIN32}
-  AbGetFilename(AbStrRes(AbCabExt), AbStrRes(AbCabFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
-{$IFDEF LINUX}
-  AbGetFilename(AbStrRes(AbCabExt), AbStrRes(AbCabFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
+  AbGetFilename(AbCabExtS, AbCabFilterS, AbFileNameTitleS, FN);
   Value := FN;
 end;
 
@@ -195,14 +174,7 @@ var
   FN : string;
 begin
   FN := Value;
-{$IFDEF WIN32}
-  AbGetFilename(AbStrRes(AbLogExt), AbStrRes(AbLogFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
-{$IFDEF LINUX}
-  AbGetFilename(AbStrRes(AbLogExt), AbStrRes(AbLogFilter),
-    AbStrRes(AbFileNameTitle), FN);
-{$ENDIF}
+  AbGetFilename(AbLogExtS, AbLogFilterS, AbFileNameTitleS, FN);
   Value := FN;
 end;
 { -------------------------------------------------------------------------- }

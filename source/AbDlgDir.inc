@@ -50,7 +50,7 @@ uses
   FileCtrl,
   {$IFDEF Version6} {$WARN UNIT_PLATFORM ON} {$ENDIF}
 {$ENDIF}
-  AbConst;
+  AbResString;
 
 type  
 {$IFNDEF UsingClx}
@@ -223,9 +223,9 @@ end;
 procedure TDirDlg.FormCreate(Sender: TObject);
 begin
   DirectoryListBox1Change(nil);
-  OKBtn.Caption := AbStrRes(AbOK);
-  CancelBtn.Caption := AbStrRes(AbCancel);
-  Caption := AbStrRes(AbSelectDirectory);
+  OKBtn.Caption := AbOKS;
+  CancelBtn.Caption := AbCancelS;
+  Caption := AbSelectDirectoryS;
 end;
 { -------------------------------------------------------------------------- }
 procedure TDirDlg.DirectoryListBox1Change(Sender: TObject);

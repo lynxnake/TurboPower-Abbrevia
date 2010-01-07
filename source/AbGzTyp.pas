@@ -287,7 +287,7 @@ function GZOsToStr(OS: Byte) : string;
 implementation
 
 uses
-  RTLConsts;
+  RTLConsts, AbResString;
 
 const
   { Header Signature Values}

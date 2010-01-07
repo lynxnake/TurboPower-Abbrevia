@@ -126,6 +126,7 @@ implementation
 
 uses
   AbArcTyp,
+  AbResString,
   AbConst;
 
 
@@ -261,11 +262,7 @@ procedure TAbAboutBox.FormCreate(Sender: TObject);
 begin
   Top := (Screen.Height - Height ) div 3;
   Left := (Screen.Width - Width ) div 2;
-{$IFDEF UsingClx}
-  lblVersion.Caption := Format( AbStrRes(AbVersionFormat), [AbVersion]);
-{$ELSE}
-  lblVersion.Caption := Format( AbStrRes(AbVersionFormat), [AbVersion] );
-{$ENDIF}
+  lblVersion.Caption := Format(AbVersionFormatS, [AbVersion] );
 end;
 
 function TAbVersionProperty.GetAttributes: TPropertyAttributes;

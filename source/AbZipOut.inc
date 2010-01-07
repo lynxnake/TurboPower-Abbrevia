@@ -808,7 +808,8 @@ uses
 {$IFDEF WIN32}
   ShellApi,
 {$ENDIF}
-  AbConst;
+  AbConst,
+  AbResString;
 
 {$R AbZipOut.res}
 
@@ -1210,35 +1211,35 @@ begin
   with Item do begin
     if zaCompressedSize in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,
-                         Format(AbStrRes(AbCompressedSizeFormat),
+                         Format(AbCompressedSizeFormatS,
                                  [CompressedSize]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaUnCompressedSize in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                       
-                         Format(AbStrRes(AbUncompressedSizeFormat),
+                         Format(AbUncompressedSizeFormatS,
                                  [UncompressedSize]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaCompressionMethod in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                       
-                         Format(AbStrRes(AbCompressionMethodFormat),
+                         Format(AbCompressionMethodFormatS,
                                  [MethodStrings[CompressionMethod]]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaCompressionRatio in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                       
-                         Format(AbStrRes(AbCompressionRatioFormat),
+                         Format(AbCompressionRatioFormatS,
                                  [CompressionRatio]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaCRC in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                       
-                         Format(AbStrRes(AbCRCFormat),
+                         Format(AbCRCFormatS,
                                  [CRC32]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
@@ -1248,17 +1249,17 @@ begin
 {$IFDEF MSWINDOWS}
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
       if (faReadOnly and ExternalFileAttributes) = faReadOnly then
-        ExtAttrString := ExtAttrString + AbStrRes(AbReadOnly);
+        ExtAttrString := ExtAttrString + AbReadOnlyS;
       if (faHidden and ExternalFileAttributes) = faHidden then
-        ExtAttrString := ExtAttrString + AbStrRes(AbHidden);
+        ExtAttrString := ExtAttrString + AbHiddenS;
       if (faSysFile and ExternalFileAttributes) = faSysFile then
-        ExtAttrString := ExtAttrString + AbStrRes(AbSystem);
+        ExtAttrString := ExtAttrString + AbSystemS;
       if (faArchive and ExternalFileAttributes) = faArchive then
-        ExtAttrString := ExtAttrString + AbStrRes(AbArchived);
+        ExtAttrString := ExtAttrString + AbArchivedS;
 {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
 {$ENDIF}
       tmpNode := FOutline.Items.AddChild(oNode,
-                         Format(AbStrRes(AbEFAFormat),
+                         Format(AbEFAFormatS,
                                  [ExtAttrString]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
@@ -1266,61 +1267,61 @@ begin
     if zaInternalFileAttributes in Attributes then
       if InternalFileAttributes = 1 then begin
         tmpNode := FOutline.Items.AddChild(oNode,                     
-                           Format(AbStrRes(AbIFAFormat),
-                                   [AbStrRes(AbText)]));
+                           Format(AbIFAFormatS,
+                                   [AbTextS]));
         tmpNode.ImageIndex    := FOutline.FAttrIndex;
         tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
       end else begin
         tmpNode := FOutline.Items.AddChild(oNode,
-                           Format(AbStrRes(AbIFAFormat),
-                                   [AbStrRes(AbBinary)]));
+                           Format(AbIFAFormatS,
+                                   [AbBinaryS]));
         tmpNode.ImageIndex    := FOutline.FAttrIndex;
         tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
       end;
     if zaEncryption in Attributes then
       if IsEncrypted then begin
         tmpNode := FOutline.Items.AddChild(oNode,                     
-                           Format(AbStrRes(AbEncryptionFormat),
-                                   [AbStrRes(AbEncrypted)]));
+                           Format(AbEncryptionFormatS,
+                                   [AbEncryptedS]));
         tmpNode.ImageIndex    := FOutline.FAttrIndex;
         tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
       end else begin
         tmpNode := FOutline.Items.AddChild(oNode,                     
-                           Format(AbStrRes(AbEncryptionFormat),
-                                   [AbStrRes(AbNotEncrypted)]));
+                           Format(AbEncryptionFormatS,
+                                   [AbNotEncryptedS]));
         tmpNode.ImageIndex    := FOutline.FAttrIndex;
         tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
       end;
     if zaTimeStamp in Attributes then begin
       if (LastModFileDate + LastModFileTime = 0) then
-        s := AbStrRes(AbUnknown)
+        s := AbUnknownS
       else begin
         li := LongInt(LastModFileDate) shl 16 + LastModFileTime;
         dt := FileDateToDateTime(li);
         s := DateTimeToStr(dt);
       end;
       tmpNode := FOutline.Items.AddChild(oNode,                     
-                         Format(AbStrRes(AbTimeStampFormat), [s]));
+                         Format(AbTimeStampFormatS, [s]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaVersionMade in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                     
-                         Format(AbStrRes(AbMadeByFormat),
+                         Format(AbMadeByFormatS,
                                  [Lo(VersionMadeBy)/ 10.0]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaVersionNeeded in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                     
-                         Format(AbStrRes(AbNeededFormat),
+                         Format(AbNeededFormatS,
                                  [Lo(VersionNeededToExtract)/ 10.0]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
     if zaComment in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,
-                         Format(AbStrRes(AbCommentFormat),
+                         Format(AbCommentFormatS,
                                  [FileComment]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
@@ -2540,11 +2541,15 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure InitStrings;
+const
+  cResString: array[TAbZipCompressionMethod] of string = (AbMethod0S, AbMethod1S,
+    AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S, AbMethod6S, AbMethod7S,
+    AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   i : TAbZipCompressionMethod;
 begin
   for i := Low(TAbZipCompressionMethod) to High(TAbZipCompressionMethod) do
-    MethodStrings[i] := AbStrRes(AbMethod + Ord(i));
+    MethodStrings[i] := cResString[i];
 end;
 { -------------------------------------------------------------------------- }
 initialization

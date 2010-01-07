@@ -153,6 +153,7 @@ implementation
 
 uses
   AbConst,
+  AbResString,
   AbExcept,
   AbTempFileStream,  
   AbBitBkt,
@@ -1364,7 +1365,7 @@ begin
       AbCopyFile(TempFile, UseName, False);
       // Check that it exists
       if not FileExists(UseName) then
-        raise EAbException.CreateFmt(abMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
+        raise EAbException.CreateFmt(AbMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
       // Now Delete the Temp File
       DeleteFile(TempFile);
       {$ENDIF}

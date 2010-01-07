@@ -108,6 +108,9 @@ var
 
 implementation
 
+uses
+  AbResString;
+
 type
   TAbViewerFriend = class(TAbBaseViewer)
 end;
@@ -137,18 +140,19 @@ function TAbColHeadingsProperty.GetAttributes: TPropertyAttributes;
 {===TAbColHeadingsEditor============================================}
 
 procedure TAbColHeadingsEditor.FormShow(Sender: TObject);
+const
+  cResString: array[TAbViewAttribute] of string = (AbItemNameHeadingS,
+    AbPackedHeadingS, AbMethodHeadingS, AbRatioHeadingS, AbCRCHeadingS,
+    AbFileAttrHeadingS, AbFileFormatHeadingS, AbEncryptionHeadingS,
+    AbTimeStampHeadingS, AbFileSizeHeadingS, AbVersionMadeHeadingS,
+    AbVersionNeededHeadingS, AbPathHeadingS);
 var
   i : TAbViewAttribute;
 begin
   with Attribute1 do begin
     Clear;
     for i := Low(TAbViewAttribute) to High(TAbViewAttribute) do
-{$IFDEF WIN32}
-      Items.Add(AbStrRes(AbDefColHeadings + Ord(i)));
-{$ENDIF}
-{$IFDEF LINUX}
-      Items.Add(AbStrRes(AbDefColHeadings + Ord(i)));
-{$ENDIF}
+      Items.Add(cResString[i]);
 
     ItemIndex := 0;
   end;
