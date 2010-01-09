@@ -59,6 +59,7 @@ contains
   AbBitBkt in '..\source\AbBitBkt.pas',
   AbCabTyp in '..\source\AbCabTyp.pas',
   AbConst in '..\source\AbConst.pas',
+  AbResString in '..\source\AbResString.pas',
   AbExcept in '..\source\AbExcept.pas',
   AbFciFdi in '..\source\AbFciFdi.pas',
   AbUnzPrc in '..\source\AbUnzPrc.pas',
