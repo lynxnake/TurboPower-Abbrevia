@@ -24,16 +24,163 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeFn.PAS 3.05                             *}
+{* ABBREVIA: AbPeFn.pas 3.05                             *}
 {*********************************************************}
-{* ABBREVIA: Property Editor - FileName (VCL)            *}
-{*   See AbQPeFn.pas for the CLX header                  *}
+{* ABBREVIA: Property Editor - FileName                  *}
+{*   Use AbQPeFn.pas for CLX                             *}
 {*********************************************************}
 
-{$UNDEF UsingClx}
-
+{$IFNDEF UsingCLX}
 unit AbPeFn;
+{$ENDIF}
 
-{$I AbPeFn.inc}
+{$I AbDefine.inc}
 
+interface
+
+uses
+{$IFDEF UsingClx }
+  QDialogs, QForms,
+{$ELSE}
+  Dialogs, Forms,
+{$ENDIF}
+
+{$IFDEF LINUX}
+  DesignIntf,
+  DesignEditors,
+{$ELSE}
+{$IFDEF VERSION6}
+  DesignIntf,
+  DesignEditors,
+{$ELSE}
+  DsgnIntf,
+{$ENDIF VERSION6}
+{$ENDIF LINUX}
+  SysUtils;
+
+
+type
+  TAbFileNameProperty = class(TStringProperty)
+  public
+    function GetAttributes: TPropertyAttributes;
+      override;
+    procedure Edit;
+      override;
+  end;
+
+  TAbExeNameProperty = class(TStringProperty)
+  public
+    function GetAttributes: TPropertyAttributes;
+      override;
+    procedure Edit;
+      override;
+  end;
+
+  TAbCabNameProperty = class( TStringProperty )
+  public
+    function GetAttributes: TPropertyAttributes;
+      override;
+    procedure Edit;
+      override;
+  end;
+
+  TAbLogNameProperty = class( TStringProperty )
+  public
+    function GetAttributes: TPropertyAttributes;
+      override;
+    procedure Edit;
+      override;
+  end;
+
+implementation
+
+uses
+  AbResString,
+  AbArcTyp;
+
+{ -------------------------------------------------------------------------- }
+procedure AbGetFilename(const Ext : string;
+                        const Filter : string;
+                        const Title : string;
+                          var aFilename : string);
+var
+  D : TOpenDialog;
+begin
+  D := TOpenDialog.Create( Application );
+  try
+    D.DefaultExt := Ext;
+    D.Filter := Filter;
+    D.FilterIndex := 0;
+    D.Options := [];
+    D.Title := Title;
+    D.FileName := aFilename;
+    if D.Execute then
+      aFilename := D.FileName;
+  finally
+    D.Free;
+  end;
+end;
+
+{ == for zip files ========================================================= }
+function TAbFileNameProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := [paDialog];
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFileNameProperty.Edit;
+var
+  FN : string;
+begin
+  FN := Value;
+  AbGetFilename(AbDefaultExtS, AbFilterS, AbFileNameTitleS, FN);
+  Value := FN;
+end;
+
+{ == for exe files ========================================================= }
+function TAbExeNameProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := [paDialog];
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExeNameProperty.Edit;
+var
+  FN : string;
+begin
+  FN := Value;
+  AbGetFilename(AbExeExtS, AbExeFilterS, AbFileNameTitleS, FN);
+  Value := FN;
+end;
+
+{ == for cab files ========================================================= }
+function TAbCabNameProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := [paDialog];
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCabNameProperty.Edit;
+var
+  FN : string;
+begin
+  FN := Value;
+  AbGetFilename(AbCabExtS, AbCabFilterS, AbFileNameTitleS, FN);
+  Value := FN;
+end;
+
+{ == for log files ========================================================= }
+function TAbLogNameProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := [paDialog];
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbLogNameProperty.Edit;
+var
+  FN : string;
+begin
+  FN := Value;
+  AbGetFilename(AbLogExtS, AbLogFilterS, AbFileNameTitleS, FN);
+  Value := FN;
+end;
+{ -------------------------------------------------------------------------- }
+
+end.
 

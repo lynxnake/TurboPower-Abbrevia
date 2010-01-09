@@ -27,13 +27,13 @@
 {* ABBREVIA: AbQZView.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Zip archive viewer component (CLX)          *}
-{*   See AbZView.pas for the VCL header                  *}
+{*   Use AbZView.pas for VCL                             *}
 {*********************************************************}
 
 {$DEFINE UsingCLX}
 
 unit AbQZView;
 
-{$I AbZView.inc}
+{$I AbZView.pas}
 
 

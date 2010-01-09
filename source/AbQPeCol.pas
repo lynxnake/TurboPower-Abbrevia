@@ -28,7 +28,7 @@
 {*********************************************************}
 {* ABBREVIA: Property Editor - ZipView column headings   *}
 {* (CLX)                                                 *}
-{*   See AbPeCol.pas for the VCL header                  *}
+{*   Use AbPeCol.pas for VCL                             *}
 {*********************************************************}
 
 {$DEFINE UsingClx}
@@ -37,7 +37,7 @@ unit AbQPeCol;
 
 {$R *.xfm}
 
-{$I AbPeCol.inc}
+{$I AbPeCol.pas}
 
 
 

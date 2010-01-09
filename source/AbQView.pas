@@ -27,12 +27,12 @@
 {* ABBREVIA: AbQView.pas 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Base archive viewer component (CLX)         *}
-{*   See AbView.pas for the VCL header                   *}
+{*   Use AbView.pas for VCL                              *}
 {*********************************************************}
 
 {$DEFINE UsingCLX}
 
 unit AbQView;
 
-{$I AbView.inc}
+{$I AbView.pas}
 

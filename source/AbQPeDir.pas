@@ -27,11 +27,11 @@
 {* ABBREVIA: AbPeDir.pas 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - Directory (CLX)           *}
-{*   See AbPeDir.pas for the VCL header                  *}
+{*   Use AbPeDir.pas for VCL                             *}
 {*********************************************************}
 
 {$DEFINE UsingCLX}
 
 unit AbQPeDir;
 
-{$I AbPeDir.inc}
+{$I AbPeDir.pas}

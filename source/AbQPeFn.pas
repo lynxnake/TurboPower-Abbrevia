@@ -27,12 +27,12 @@
 {* ABBREVIA: AbQPeFn.PAS 3.05                            *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - FileName (CLX)            *}
-{*   See AbPeFn.pas for the VCL header                   *}
+{*   Use AbPeFn.pas for VCL                              *}
 {*********************************************************}
 
 {$DEFINE UsingClx}
 
 unit AbQPeFn;
 
-{$I AbPeFn.inc}
+{$I AbPeFn.pas}
 

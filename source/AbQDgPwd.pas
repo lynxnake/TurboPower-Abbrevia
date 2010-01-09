@@ -27,12 +27,14 @@
 {* ABBREVIA: AbQDgPwd.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Password (CLX)                     *}
-{*   See AbDlgPwd.pas for the VCL header                 *}
+{*   Use AbDlgPwd.pas for VCL                            *}
 {*********************************************************}
 
 {$DEFINE UsingClx}
 
 unit AbQDgPwd;
 
-{$I AbDlgPwd.inc}
+{$R *.xfm}
+
+{$I AbDlgPwd.pas}
 

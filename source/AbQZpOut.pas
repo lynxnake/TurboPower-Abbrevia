@@ -28,13 +28,13 @@
 {*********************************************************}
 {* ABBREVIA: Visual Component with Zip and unzip support *}
 {* (CLX)                                                 *}
-{*   See AbZipOut.pas for the VCL header                 *}
+{*   Use AbZipOut.pas for VCL                            *}
 {*********************************************************}
 
 {$DEFINE UsingCLX}
 
 unit AbQZpOut;
 
-{$I AbZipOut.inc}
+{$I AbZipOut.pas}
 
 

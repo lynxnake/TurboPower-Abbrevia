@@ -27,12 +27,12 @@
 {* ABBREVIA: AbQMeter.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Progress meter (CLX)                        *}
-{*   See AbMeter.pas for the VCL header                  *}
+{*   Use AbMeter.pas for VCL                             *}
 {*********************************************************}
 
 {$DEFINE UsingCLX}
 
 unit AbQMeter;
 
-{$I AbMeter.inc}
+{$I AbMeter.pas}
 

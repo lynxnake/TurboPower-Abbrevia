@@ -27,13 +27,13 @@
 {* ABBREVIA: AbQCmpnd.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Compound File classes and component (CLX)   *}
-{*   See AbCompnd.pas for the VCL header                 *}
+{*   Use AbCompnd.pas for VCL                            *}
 {*********************************************************}
 
 unit AbQCmpnd;
 
 {$DEFINE UsingCLX}
 
-{$I AbCompnd.inc}
+{$I AbCompnd.pas}
 
 

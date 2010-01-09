@@ -26,16 +26,106 @@
 {*********************************************************}
 {* ABBREVIA: AbDlgPwd.pas 3.05                           *}
 {*********************************************************}
-{* ABBREVIA: Dialog - Password (VCL)                     *}
-{*   See AbQDgPwd.pas for the CLX header                 *}
+{* ABBREVIA: Dialog - Password                           *}
+{*   Use AbQDgPwd.pas for CLX                            *}
 {*********************************************************}
 
-{$UNDEF UsingClx}
-
+{$IFNDEF UsingCLX}
 unit AbDlgPwd;
+{$ENDIF}
 
-{$R *.dfm}
+{$I AbDefine.inc}
 
-{$I AbDlgPwd.inc}
+interface
 
+uses
+  SysUtils,
+{$IFDEF MSWINDOWS}
+  Windows,
+{$ENDIF}
+{$IFDEF LINUX}
+  Libc,
+{$ENDIF}
+{$IFDEF UsingClx}
+  QGraphics, QForms, QControls, QStdCtrls,
+  QButtons, QExtCtrls,
+{$ELSE}
+  Graphics, Forms, Controls, StdCtrls,
+  Buttons, ExtCtrls,
+{$ENDIF}
+  Classes;
 
+type
+  TPassWordDlg = class(TForm)
+    OKBtn: TButton;
+    CancelBtn: TButton;
+    Bevel1: TBevel;
+    Edit1: TEdit;
+{$IFDEF MSWINDOWS}
+    Edit2: TEdit;
+{$ENDIF}
+    Label1: TLabel;
+{$IFDEF MSWINDOWS}
+    Label2: TLabel;
+{$ENDIF}
+    procedure Edit1Change(Sender: TObject);
+    procedure Edit2Change(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  PassWordDlg: TPassWordDlg;
+
+implementation
+
+uses
+  AbResString;
+
+procedure TPassWordDlg.Edit1Change(Sender: TObject);
+begin
+{$IFDEF MSWINDOWS}
+  Edit2.Text := '';
+  OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
+{$ENDIF}
+{$IFDEF LINUX}
+  OKBtn.Enabled := true;
+{$ENDIF}
+end;
+
+procedure TPassWordDlg.Edit2Change(Sender: TObject);
+begin
+{$IFDEF MSWINDOWS}
+  OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
+{$ENDIF}
+{$IFDEF LINUX}
+  OKBtn.Enabled := true;
+{$ENDIF}
+end;
+
+procedure TPassWordDlg.FormActivate(Sender: TObject);
+begin
+{$IFDEF MSWINDOWS}
+  OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
+{$ENDIF}
+{$IFDEF LINUX}
+  OKBtn.Enabled := true;
+{$ENDIF}
+end;
+
+procedure TPassWordDlg.FormCreate(Sender: TObject);
+begin
+  Caption := AbEnterPasswordS;
+  OKBtn.Caption := AbOKS;
+  CancelBtn.Caption := AbCancelS;
+  Label1.Caption := AbPasswordS;
+{$IFDEF MSWINDOWS}
+  Label2.Caption := AbVerifyS;
+{$ENDIF}
+end;
+
+end.

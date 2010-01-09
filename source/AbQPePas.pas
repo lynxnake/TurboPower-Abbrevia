@@ -27,13 +27,13 @@
 {* ABBREVIA: AbQPePas.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Password property editor (CLX)              *}
-{*   See AbPePass.pas for the VCL header                 *}
+{*   Use AbPePass.pas for VCL                            *}
 {*********************************************************}
 
 {$DEFINE UsingClx}
 
 unit AbQPePas;
 
-{$I AbPePass.inc}
+{$I AbPePass.pas}
 
 

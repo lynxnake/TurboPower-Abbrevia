@@ -27,14 +27,14 @@
 {* ABBREVIA: AbQDgDir.pas 3.05                           *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Directory (CLX)                    *}
-{*   See AbDlgDir.pas for the VCL header                 *}
+{*   Use AbDlgDir.pas for VCL                            *}
 {*********************************************************}
 
 {$DEFINE UsingClx }
 
 unit AbQDgDir;
 
-{$I AbDlgDir.inc}
+{$R *.xfm}
 
-{$R AbQDgDir.xfm}
+{$I AbDlgDir.pas}
 
