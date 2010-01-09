@@ -95,8 +95,6 @@ type
 
   TAbZipAttributes = set of TAbZipAttribute;
 
-  TMethodStrings = array [ TAbZipCompressionMethod ] of string;
-
 const
   AbDefZipAttributes =
     [zaCompressedSize, zaCompressionMethod, zaCompressionRatio, zaCRC,
@@ -815,9 +813,6 @@ uses
 
 {$R AbZipOut.res}
 
-var
-  MethodStrings : TMethodStrings;
-
 type
   TAbZipArchiveFriend = class(TAbZipArchive)
   end;
@@ -1203,6 +1198,10 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.AddAttributeNodes( Item : TAbZipItem;
                                                  oNode : TTreeNode );
+const
+  MethodStrings: array [TAbZipCompressionMethod] of string = (
+    AbMethod0S, AbMethod1S, AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S,
+    AbMethod6S, AbMethod7S, AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   ExtAttrString : string;
   dt : TDateTime;
@@ -2542,19 +2541,5 @@ begin
   FileName := AFileName;
 end;
 { -------------------------------------------------------------------------- }
-procedure InitStrings;
-const
-  cResString: array[TAbZipCompressionMethod] of string = (AbMethod0S, AbMethod1S,
-    AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S, AbMethod6S, AbMethod7S,
-    AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
-var
-  i : TAbZipCompressionMethod;
-begin
-  for i := Low(TAbZipCompressionMethod) to High(TAbZipCompressionMethod) do
-    MethodStrings[i] := cResString[i];
-end;
-{ -------------------------------------------------------------------------- }
-initialization
-  InitStrings;
 end.
 

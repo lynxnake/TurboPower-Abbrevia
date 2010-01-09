@@ -220,7 +220,6 @@ type
     FFontSize : Integer;
     FItemIndex : Longint;
     FColors : TAbColors;
-    FMethodStrings : array [TAbZipCompressionMethod] of string;
     FButtonDown : Boolean;
     FIcons : TStringList;
     FSelList : TAbSelList;
@@ -257,7 +256,6 @@ type
     function GetSelected(RowNum : Longint) : Boolean;
     function GetVersion : string;
     procedure InitColMap;
-    procedure InitMethodStrings;
     procedure InvalidateRow(ARow: Longint);
     procedure MoveColumn(FromCol, ToCol : Integer);
     procedure RefreshCell(ARow, ACol: Longint);
@@ -801,6 +799,10 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbBaseViewer.AttrToStr(Attr : TAbViewAttribute;
   aItem : TAbArchiveItem) : string;
+const
+  MethodStrings: array [TAbZipCompressionMethod] of string = (
+    AbMethod0S, AbMethod1S, AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S,
+    AbMethod6S, AbMethod7S, AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   FN : string;
   LI : Longint;
@@ -858,7 +860,7 @@ begin
       else
         Result := AbBinaryS;
     vaMethod :
-      Result := FMethodStrings[CompressionMethod];
+      Result := MethodStrings[CompressionMethod];
     vaRatio :
       Result := IntToStr(Round(CompressionRatio));
     vaVersionMade :
@@ -1307,18 +1309,6 @@ begin
     FHeadings.Add(cResString[i]);
     FColMap[i] := Ord(i);
   end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbBaseViewer.InitMethodStrings;
-const
-  cResString: array[TAbZipCompressionMethod] of string = (AbMethod0S, AbMethod1S,
-    AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S, AbMethod6S, AbMethod7S,
-    AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
-var
-  i : TAbZipCompressionMethod;
-begin
-  for i := Low(TAbZipCompressionMethod) to High(TAbZipCompressionMethod) do
-    FMethodStrings[i] := cResString[i];
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.InvalidateRow(ARow: Longint);
