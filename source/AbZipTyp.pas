@@ -876,7 +876,7 @@ begin
       end;
 {      else}                                                             {!!.01}
 {        write('.');}                                                    {!!.01}
-      dec(Offset, BufSize - SizeOf(longint));
+      dec(Offset, BufSize - SizeOf(TailRec));
     end;
 
     {if we reach this point, the CD tail is not present}
