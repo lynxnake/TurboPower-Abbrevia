@@ -72,7 +72,6 @@ type
   public
     property Items[RowNum : Longint] : TAbZipItem
       read GetItem;
-    constructor Create(AOwner : TComponent); override;                   {!!.01}
   published {properties}
     property Align;
     property Attributes;
@@ -128,14 +127,6 @@ end;
 implementation
 
 { ===== TAbZipView ========================================================= }
-{!!.01 --  Added }
-constructor TAbZipView.Create(AOwner : TComponent);
-begin
-  inherited Create(AOwner);
-  InitMethodStrings;
-end;
-{!!.01 --  End Added }
-{ -------------------------------------------------------------------------- }
 function TAbZipView.GetItem(RowNum : Longint) : TAbZipItem;
 begin
   if Assigned(FItemList) then
