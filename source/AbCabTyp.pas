@@ -647,7 +647,7 @@ begin
   try
     if not FDICopy(FFDIContext, PAnsiChar(FCabName), PAnsiChar(FCabPath), 0,
                    @FDI_ExtractFiles, nil, Self) then
-      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
+      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, FErrors.ErrorCode);
   finally
     FIIPName := '';
   end;
@@ -661,7 +661,7 @@ begin
   try
     if not FDICopy(FFDIContext, PAnsiChar(FCabName), PAnsiChar(FCabPath), 0,
                    @FDI_ExtractFiles, nil, Self) then
-      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, 0);
+      DoProcessItemFailure(FItemInProgress, ptExtract, ecCabError, FErrors.ErrorCode);
   finally
     FItemStream := nil;
   end;
