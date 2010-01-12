@@ -58,6 +58,7 @@ uses
   AbZBrowsTests in 'AbZBrowsTests.pas',
   AbMeterTests in 'AbMeterTests.pas',
   AbSelfExTests in 'AbSelfExTests.pas',
+  AbArcTypTests in 'AbArcTypTests.pas',
   AbGzTypTests in 'AbGzTypTests.pas',
   AbArchiveSplitTests in 'AbArchiveSplitTests.pas';
 

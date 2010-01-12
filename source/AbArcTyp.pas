@@ -821,13 +821,13 @@ begin
   Result := -1;
 end;
 { -------------------------------------------------------------------------- }
+{$IFOPT Q+}{$DEFINE OVERFLOW_CHECKS_ON}{$Q-}{$ENDIF}
 function TAbArchiveList.GenerateHash(const S : string) : LongInt;
 var
   G : LongInt;
   I : Integer;
   U : string;
 begin
-{$Q-}
   Result := 0;
   U := AnsiUpperCase(S);
   for I := 1 to Length(U) do begin
@@ -838,8 +838,8 @@ begin
     Result := Result and (not G);
   end;
   Result := Result mod 1021;
-{$Q+}
 end;
+{$IFDEF OVERFLOW_CHECKS_ON}{$Q+}{$ENDIF}
 { -------------------------------------------------------------------------- }
 function TAbArchiveList.Get(Index : Integer): TAbArchiveItem;
 begin
