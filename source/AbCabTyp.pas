@@ -167,7 +167,8 @@ type
       write SetSetID;
   end;
 
-function VerifyCab(const Fn : string) : TAbArchiveType;
+function VerifyCab(const Fn : string) : TAbArchiveType; overload;
+function VerifyCab(Strm : TStream) : TAbArchiveType; overload;
 
 implementation
 
@@ -180,25 +181,6 @@ uses
 type
   PWord    = ^Word;
   PInteger = ^Integer;
-
-function VerifyCab(const Fn : string) : TAbArchiveType;
-var
-  CabArchive : TAbCabArchive;
-begin
-  Result := atCab;
-  CabArchive := TAbCabArchive.Create(Fn, fmOpenRead or fmShareDenyNone);
-  try
-    try
-      CabArchive.LoadArchive;
-    except
-      on EAbCabException do
-        Result := atUnknown;
-    end;
-  finally
-    CabArchive.Free;
-  end;
-end;
-
 
 { == FDI/FCI Callback Functions - cdecl calling convention ================= }
 function FXI_GetMem(uBytes : Integer) : Pointer;
@@ -473,6 +455,40 @@ begin
         end;
         Archive.DoCabItemProcessed;
       end;
+  end;
+end;
+
+
+{ == TAbCabArchive ========================================================= }
+function VerifyCab(const Fn : string) : TAbArchiveType;
+var
+  Stream : TFileStream;
+begin
+  Stream := TFileStream.Create(FN, fmOpenRead or fmShareDenyNone);
+  try
+    Result := VerifyCab(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+function VerifyCab(Strm : TStream) : TAbArchiveType; overload;
+var
+  Context : HFDI;
+  Info : FDICabInfo;
+  Errors : CabErrorRecord;
+begin
+  Result := atUnknown;
+  Context := FDICreate(@FXI_GetMem, @FXI_FreeMem, @FDI_FileOpen,
+    @FDI_FileRead, @FDI_FileWrite, @FDI_FileClose, @FDI_FileSeek, cpuDefault,
+    @Errors);
+  if Context = nil then
+    Exit;
+  try
+    if FDIIsCabinet(Context, Integer(Strm), @Info) then
+      Result := atCab;
+  finally
+    FDIDestroy(Context);
   end;
 end;
 

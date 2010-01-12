@@ -525,7 +525,7 @@ begin
         end;
 {$IFDEF MSWINDOWS}
         atCab : begin
-          Result := VerifyCab(FN);
+          Result := VerifyCab(FS);
         end;
 {$ENDIF}
       end;
