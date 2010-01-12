@@ -1300,28 +1300,25 @@ var
   TempOut    : TAbTempFileStream;
   TempFile   : String;
   {$ENDIF}
-  ZipArchive : TAbZipArchive;
 {$IFDEF LINUX}                                                           {!!.01}
   FileDateTime  : TDateTime;                                             {!!.01}
   LinuxFileTime : LongInt;                                               {!!.01}
 {$ENDIF LINUX}                                                           {!!.01}
 begin
-  ZipArchive := TAbZipArchive(Sender);
-
-  try
-    if not Item.IsDirectory then begin
-      // The problem with Create the FileStream here is that overwrites the existing
-      // File which is no problem, unless the archive is password protected and
-      // then Password is found out to be wrong.   Ways to resolve:
-      // 1. extract to TMemoryStream then Write MemoryStream to Disk if everything is ok.
-      // 2. Move the password check up in the process (if possible)
-      // 3. Write to a Temp File if everything ok copy to new location.
-      // Given all the options that I have now, I am going to try option #1 for now,
-      // it may cause problems on memory overhead for some, but lets see if it does.
-      // It also may speed up this routine for many.
-      // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
-      {$IFDEF AbUnZipClobber}
-      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+  if not Item.IsDirectory then begin
+    // The problem with Create the FileStream here is that overwrites the existing
+    // File which is no problem, unless the archive is password protected and
+    // then Password is found out to be wrong.   Ways to resolve:
+    // 1. extract to TMemoryStream then Write MemoryStream to Disk if everything is ok.
+    // 2. Move the password check up in the process (if possible)
+    // 3. Write to a Temp File if everything ok copy to new location.
+    // Given all the options that I have now, I am going to try option #1 for now,
+    // it may cause problems on memory overhead for some, but lets see if it does.
+    // It also may speed up this routine for many.
+    // NOTE: Instead of doing what I stated above, I added compiler define logic to allow you to chose for now.
+    {$IFDEF AbUnZipClobber}
+    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+    try
       try    {OutStream}
         AbUnZipToStream(Sender, Item, OutStream);
       // Some Network Operating Systems cache the file and when we set attributes they are truncated
@@ -1329,28 +1326,35 @@ begin
       finally {OutStream}
         OutStream.Free;
       end;   {OutStream}
-      {$ENDIF}
-      {$IFDEF AbUnZipMemory}
-      TempOut := TMemoryStream.Create;
+    except
+      if ExceptObject is EAbUserAbort then
+        TAbZipArchive(Sender).FStatus := asInvalid;
+      DeleteFile(UseName);
+      raise;
+    end;
+    {$ENDIF}
+    {$IFDEF AbUnZipMemory}
+    TempOut := TMemoryStream.Create;
+    try
+      TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
+      TempOut.Position := 0;
+      AbUnZipToStream(Sender, Item, TempOut);
+      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
       try
-        TempOut.Size := Item.UncompressedSize;// This causes all the memory to allocated at once which is faster
-        TempOut.Position := 0;
-        AbUnZipToStream(Sender, Item, TempOut);
-        OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
-        try
-          // Copy Memory Stream To File Stream.
-          TempOut.SaveToStream(OutStream);
-          // Some Operating Systems cache the file and when we set attributes they are truncated
-          AbFlushOsBuffers(OutStream.Handle);
-        finally
-         OutStream.Free;
-        end;
+        // Copy Memory Stream To File Stream.
+        TempOut.SaveToStream(OutStream);
+        // Some Operating Systems cache the file and when we set attributes they are truncated
+        AbFlushOsBuffers(OutStream.Handle);
       finally
-        TempOut.Free;
+       OutStream.Free;
       end;
-      {$ENDIF}
-      {$IFDEF AbUnZipTempFile}
-      TempOut := TAbTempFileStream.Create(false);
+    finally
+      TempOut.Free;
+    end;
+    {$ENDIF}
+    {$IFDEF AbUnZipTempFile}
+    TempOut := TAbTempFileStream.Create(false);
+    try
       try
         AbUnZipToStream(Sender, Item, TempOut);
         TempFile := TempOut.FileName;
@@ -1358,41 +1362,28 @@ begin
         TempOut.Free;
       end;
       // Now copy the temp File to correct location
-      AbCopyFile(TempFile, UseName, False);
-      // Check that it exists
-      if not FileExists(UseName) then
+      if not AbCopyFile(TempFile, UseName, False) then
         raise EAbException.CreateFmt(AbMoveFileErrorS, [TempFile, UseName]); // TODO: Add Own Exception Class
+    finally
       // Now Delete the Temp File
       DeleteFile(TempFile);
-      {$ENDIF}
     end;
-
-//  [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-    {$IFDEF MSWINDOWS}
-    AbSetFileDate(UseName, (Longint(Item.LastModFileDate) shl 16)
-      + Item.LastModFileTime);
     {$ENDIF}
-    {$IFDEF LINUX}
-    FileDateTime := AbDosFileDateToDateTime(Item.LastModFileDate,        {!!.01}
-      Item.LastModFileTime);                                             {!!.01}
-    LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);                 {!!.01}
-    FileSetDate(UseName, LinuxFileTime);                                 {!!.01}
-    {$ENDIF}
-
-    AbFileSetAttr(UseName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
-
-  except
-    on E : EAbUserAbort do begin
-      ZipArchive.FStatus := asInvalid;
-      if FileExists(UseName) then
-        DeleteFile(UseName);
-      raise;
-    end else begin
-      if FileExists(UseName) then
-        DeleteFile(UseName);
-      raise;
-    end;
   end;
+
+  // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
+  {$IFDEF MSWINDOWS}
+  AbSetFileDate(UseName, (Longint(Item.LastModFileDate) shl 16)
+    + Item.LastModFileTime);
+  {$ENDIF}
+  {$IFDEF LINUX}
+  FileDateTime := AbDosFileDateToDateTime(Item.LastModFileDate,        {!!.01}
+    Item.LastModFileTime);                                             {!!.01}
+  LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);                 {!!.01}
+  FileSetDate(UseName, LinuxFileTime);                                 {!!.01}
+  {$ENDIF}
+
+  AbFileSetAttr(UseName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
 end;
 { -------------------------------------------------------------------------- }
 procedure AbTestZipItem(Sender : TObject; Item : TAbZipItem);
