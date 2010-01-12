@@ -49,6 +49,7 @@ type
     procedure FreshenTest;
     procedure FreshenBaseDir;
     procedure TestComment;
+    procedure TestRenameCollision;
   end;
 
 implementation
@@ -283,6 +284,25 @@ begin
     CheckEquals(SComment, Zip.ZipFileComment);
   finally
     Zip.Free
+  end;
+end;
+
+procedure TAbZipKitTests.TestRenameCollision;
+var
+  Zip: TAbZipKit;
+  FN: string;
+begin
+  Zip := TAbZipKit.Create(nil);
+  try
+    Zip.FileName := TestFileDir + 'MPL.ZIP';
+    FN := UpperCase(Zip[0].FileName);
+    CheckNotEquals(Zip[0].FileName, FN, 'Initial filenames match');
+    Zip.Move(Zip[0], FN);
+    CheckEquals(Zip[0].FileName, FN, 'Changing only case failed');
+    Zip.Move(Zip[0], Zip[1].FileName);
+    CheckEquals(Zip[0].FileName, FN, 'Collision succeeded');
+  finally
+    Zip.Free;
   end;
 end;
 

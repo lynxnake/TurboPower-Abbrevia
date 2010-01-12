@@ -1757,17 +1757,17 @@ var
   Confirm : Boolean;
   Found : Boolean;
   i : Integer;
+  FixedPath: string;
 begin
   CheckValid;
+  FixedPath := FixName(NewStoredPath);
   Found := False;
   if Count > 0 then
     for i := 0 to pred(Count) do
-      with TAbArchiveItem(FItemList[i]) do begin
-        if CompareText(FixName(NewStoredPath), FileName) = 0 then
-          if Action <> aaDelete then begin
-            Found := True;
-            break;
-          end;
+      if (ItemList[i] <> aItem) and SameText(FixedPath, ItemList[i].FileName) and
+         (ItemList[i].Action <> aaDelete) then begin
+        Found := True;
+        Break;
       end;
   if Found then begin
     DoProcessItemFailure(aItem, ptMove, ecAbbrevia, AbDuplicateName);
@@ -1784,7 +1784,7 @@ begin
       Exit;
 
     with aItem do begin
-      FileName := FixName(NewStoredPath);
+      FileName := FixedPath;
       Action := aaMove;
     end;
     FIsDirty := True;
