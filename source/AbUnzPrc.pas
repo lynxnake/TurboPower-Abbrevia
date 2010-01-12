@@ -968,7 +968,6 @@ function DoInflate(Archive : TAbZipArchive; Item : TAbZipItem; OutStream : TStre
 var
   Hlpr  : TAbDeflateHelper;
   Tries : Integer;
-  Successful : Boolean;
   Abort : Boolean;
 begin
   Hlpr := TAbDeflateHelper.Create;
@@ -991,22 +990,22 @@ begin
     end
     else begin { it's encrypted }
       Tries := 0;
-      Successful := False;
       Abort := False;
       CheckPassword(Archive, Tries, Abort);
       if Abort then
         raise EAbUserAbort.Create;
 
-
       Hlpr.CheckValue := TheCRC;
-      repeat
+      while True do begin
         try
           { attempt to inflate }
           Hlpr.Passphrase := Archive.Password;
           Result := Inflate(Archive.FStream, OutStream, Hlpr);
-          Successful := True;
+          Break;
         except
           on E:EAbInflatePasswordError do begin { bad password? }
+            if (Tries >= Archive.PasswordRetries) then
+              raise EAbZipInvalidPassword.Create;
             { request password }
             RequestPassword(Archive, Abort);
             if Abort then
@@ -1015,10 +1014,7 @@ begin
             Inc(Tries);
           end;
         end;
-        if (Tries > Archive.PasswordRetries) then begin
-          raise EAbZipInvalidPassword.Create;
-        end;
-      until Successful or Abort or (Tries >= Archive.PasswordRetries);
+      end;
 
     end; { if encrypted }
 

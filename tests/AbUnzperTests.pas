@@ -48,6 +48,9 @@ type
   TAbUnZipperTests = class(TabCompTestCase)
   private
     Component : TAbUnZipper;
+    FPasswordTry : Integer;
+    procedure NeedPassword3Tries(Sender : TObject; var NewPassword : AnsiString);
+
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -66,6 +69,7 @@ type
     procedure TestArchiveNotFound;
     procedure TestZipCopiedFromFloppy;
     procedure DecompressSimplePW;
+    procedure DecompressPasswordTries;
     procedure CheckBadPWOverwrite;
     procedure TestLocale1;
     procedure TestLocale2;
@@ -178,6 +182,35 @@ begin
       'simplepw.zip MPL-1_1.txt does not match original');
   finally
     MS.free;
+  end;
+end;
+
+procedure TAbUnZipperTests.NeedPassword3Tries(Sender : TObject; var NewPassword : AnsiString);
+begin
+  Inc(FPasswordTry);
+  case FPasswordTry of
+    1: NewPassword := 'invalid1';
+    2: NewPassword := 'invalid2';
+    3: NewPassword := 'simple';
+    else Fail('NeedPassword called too many times');
+  end;
+end;
+
+procedure TAbUnZipperTests.DecompressPasswordTries;
+var
+  MS: TMemoryStream;
+begin
+  FPasswordTry := 0;
+  MS := TMemoryStream.Create;
+  try
+    Component.FileName := TestFileDir + 'simplepw.zip';
+    Component.PasswordRetries := 3;
+    Component.OnNeedPassword := NeedPassword3Tries;
+    Component.ExtractToStream(Component.Items[0].FileName, MS);
+    CheckEquals(FPasswordTry, 3, 'NeedPassword not called enough times');
+    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.txt', MS, '');
+  finally
+    MS.Free;
   end;
 end;
 
