@@ -640,8 +640,7 @@ begin
 
   Strm.Position := 0;                                                {!!.02}
   Strm.Read(Sig, SizeOf(LongInt));                                   {!!.02}
-  if (Sig = Ab_ZipSpannedSetSignature) or                            {!!.02}
-     (Sig = Ab_ZipPossiblySpannedSignature) then                     {!!.02}
+  if (Sig = Ab_ZipSpannedSetSignature) then                          {!!.02}
     Result := atSpannedZip                                           {!!.02}
   else begin                                                         {!!.02}
 
@@ -2095,8 +2094,7 @@ begin
 
 
   { try to locate central directory tail }
-  if (FileSignature = DWord(Ab_ZipSpannedSetSignature)) or           {!!.02}
-     (FileSignature = DWord(Ab_ZipPossiblySpannedSignature)) then    {!!.02}
+  if (FileSignature = DWord(Ab_ZipSpannedSetSignature)) then         {!!.02}
   begin
     if FDriveIsRemovable then        {!!.05}
       TailPosition := -1              {!!.02}
