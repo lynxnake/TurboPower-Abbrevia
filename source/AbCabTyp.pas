@@ -191,7 +191,7 @@ begin
     try
       CabArchive.LoadArchive;
     except
-      on EAbFDICreateError do
+      on EAbCabException do
         Result := atUnknown;
     end;
   finally
