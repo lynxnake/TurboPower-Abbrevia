@@ -72,6 +72,7 @@ type
     procedure TestLocale3;
     procedure TestLocale4;
     procedure TestEmptyFolders;
+    procedure TestFindCentralDirTail;
 
     {$IFDEF BUILDTESTS}
     procedure CreateTestFiles;
@@ -500,6 +501,19 @@ begin
       CheckDirExists(OutDir + PathDelim + Component.Items[i].DiskFileName);
   finally
     DelTree(OutDir);
+  end;
+end;
+
+procedure TAbUnZipperTests.TestFindCentralDirTail;
+{ Test finding the central directory tail when it spans a search block }
+var
+  FS: TFileStream;
+begin
+  FS := TFileStream.Create(TestFileDir + 'FindCDTailBug.zip', fmOpenRead);
+  try
+    Check(VerifyZip(FS) = atZip);
+  finally
+    FS.Free;
   end;
 end;
 
