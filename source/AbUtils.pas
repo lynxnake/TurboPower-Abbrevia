@@ -166,25 +166,6 @@ const
 type
   TAbPathType = ( ptNone, ptRelative, ptAbsolute );
 
-  {===Multithread lock===}
-  TAbPadLock = class
-  protected {public}
-    FCount  : integer;
-    plCritSect : TRTLCriticalSection;
-  protected
-    function GetLocked : boolean;
-    procedure SetLocked(L : boolean);
-  public
-    constructor Create;
-      {-Create a multithread padlock}
-    destructor Destroy; override;
-      {-Free a multithread padlock}
-    property Locked : boolean
-             read GetLocked
-             write SetLocked;
-      {-Lock/unlock a multithread padlock}
-  end;
-
   {===Helper functions===}
   function AbCopyFile(const Source, Destination: string; FailIfExists: Boolean): Boolean;
 
@@ -410,42 +391,6 @@ begin
   {$ENDIF}
 end;
 {====================================================================}
-
-
-{ TAbPadLock implementation ================================================ }
-constructor TAbPadLock.Create;
-begin
-  inherited Create;
-  InitializeCriticalSection(plCritSect);
-end;
-{ -------------------------------------------------------------------------- }
-destructor TAbPadLock.Destroy;
-begin
-  DeleteCriticalSection(plCritSect);
-  inherited Destroy;
-end;
-{ -------------------------------------------------------------------------- }
-function TAbPadLock.GetLocked : boolean;
-begin
-  Result := FCount > 0;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbPadLock.SetLocked(L : boolean);
-begin
-  if L {locking} then begin
-    if IsMultiThread then begin
-      EnterCriticalSection(plCritSect);
-      inc(FCount);
-    end;
-  end
-  else {unlocking} begin
-    if (FCount > 0) then begin
-      dec(FCount);
-      LeaveCriticalSection(plCritSect);
-    end;
-  end;
-end;
-{ ========================================================================== }
 
 
 { ========================================================================== }

@@ -275,7 +275,6 @@ type
     FLogStream      : TFileStream;
     FMode           : Word;
     FOwnsStream     : Boolean;
-    FPadLock        : TAbPadLock;
     FSpanned        : Boolean;
     FStoreOptions   : TAbStoreOptions;
     FTempDir        : string;
@@ -302,14 +301,12 @@ type
     function  FreshenRequired(Item : TAbArchiveItem) : Boolean;
     procedure GetFreshenTarget(Item : TAbArchiveItem);
     function  GetItemCount : Integer;
-    procedure Lock;
     procedure MakeLogEntry(const FN: string; LT : TAbLogType);
     procedure ReplaceAt(Index : Integer);
     procedure SaveIfNeeded(aItem : TAbArchiveItem);
     procedure SetBaseDirectory(Value : string);
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
-    procedure Unlock;
 
    	class function SupportsEmptyFolder: Boolean; virtual;
 
@@ -918,7 +915,6 @@ begin
   FIsDirty := False;
   FAutoSave := False;
   FItemList := TAbArchiveList.Create(True);
-  FPadLock := TAbPadLock.Create;
   StoreOptions := [];
   ExtractOptions := [];
   FStatus := asIdle;
@@ -946,8 +942,6 @@ destructor TAbArchive.Destroy;
 begin
   FItemList.Free;
   FItemList := nil;
-  FPadLock.Free;
-  FPadLock := nil;
   if FOwnsStream then begin
    if Assigned(FStream) then {!!.05 avoid A/V if Nil (Only occurs if exception is raised)}
      FStream.Free;
@@ -978,16 +972,11 @@ begin
     DoConfirmProcessItem(aItem, ptAdd, Confirm);
     if not Confirm then
       Exit;
-    Lock;
-    try
-      aItem.Action := aaAdd;
-      FItemList.Add(aItem);
-      FIsDirty := True;
-      if AutoSave then
-        Save;
-    finally
-      Unlock;
-    end;
+    aItem.Action := aaAdd;
+    FItemList.Add(aItem);
+    FIsDirty := True;
+    if AutoSave then
+      Save;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1106,18 +1095,14 @@ begin
 
   if not Confirm then
     Exit;
-  Lock;
-  try
-    FInStream := aStream;
-    Item.Action := aaStreamAdd;
-    if (PT = ptAdd) then                                             
-      FItemList.Add(Item);
-    FIsDirty := True;
-    Save;
-    FInStream := nil;
-  finally
-    Unlock;
-  end;
+
+  FInStream := aStream;
+  Item.Action := aaStreamAdd;
+  if (PT = ptAdd) then
+    FItemList.Add(Item);
+  FIsDirty := True;
+  Save;
+  FInStream := nil;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.CheckValid;
@@ -1184,19 +1169,14 @@ var
 begin
   CheckValid;
   SaveIfNeeded(FItemList[Index]);
-  Lock;
-  try
-    DoConfirmProcessItem(FItemList[Index], ptDelete, Confirm);
-    if not Confirm then
-      Exit;
+  DoConfirmProcessItem(FItemList[Index], ptDelete, Confirm);
+  if not Confirm then
+    Exit;
 
-    TAbArchiveItem(FItemList[Index]).Action := aaDelete;
-    FIsDirty := True;
-    if AutoSave then
-      Save;
-  finally
-    Unlock;
-  end;
+  TAbArchiveItem(FItemList[Index]).Action := aaDelete;
+  FIsDirty := True;
+  if AutoSave then
+    Save;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.DeleteFiles(const FileMask : string);
@@ -1352,27 +1332,21 @@ var
 begin
   CheckValid;
   SaveIfNeeded(FItemList[Index]);
-  Lock;
+  DoConfirmProcessItem(FItemList[Index], ptExtract, Confirm);
+  if not Confirm then
+    Exit;
+
+  if not ConfirmPath(FItemList[Index], NewName, UseName) then
+    Exit;
+
   try
-    DoConfirmProcessItem(FItemList[Index], ptExtract, Confirm);
-    if not Confirm then
-      Exit;
-
-    if not ConfirmPath(FItemList[Index], NewName, UseName) then
-      Exit;
-
-    try
-      FCurrentItem := FItemList[Index];
-      ExtractItemAt(Index, UseName);
-    except
-      on E : Exception do begin
-        AbConvertException(E, ErrorClass, ErrorCode);
-        DoProcessItemFailure(FItemList[Index], ptExtract, ErrorClass,
-                              ErrorCode);
-      end;
+    FCurrentItem := FItemList[Index];
+    ExtractItemAt(Index, UseName);
+  except
+    on E : Exception do begin
+      AbConvertException(E, ErrorClass, ErrorCode);
+      DoProcessItemFailure(FItemList[Index], ptExtract, ErrorClass, ErrorCode);
     end;
-  finally
-    Unlock;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1391,23 +1365,18 @@ begin
     Exit;
 
   SaveIfNeeded(FItemList[Index]);
-  Lock;
+
+  DoConfirmProcessItem(FItemList[Index], ptExtract, Confirm);
+  if not Confirm then
+    Exit;
+  FCurrentItem := FItemList[Index];
   try
-    DoConfirmProcessItem(FItemList[Index], ptExtract, Confirm);
-    if not Confirm then
-      Exit;
-    FCurrentItem := FItemList[Index];
-    try
-      ExtractItemToStreamAt(Index, aStream);
-    except
-      on E : Exception do begin
-        AbConvertException(E, ErrorClass, ErrorCode);
-        DoProcessItemFailure(FItemList[Index], ptExtract, ErrorClass,
-                             ErrorCode);
-      end;
+    ExtractItemToStreamAt(Index, aStream);
+  except
+    on E : Exception do begin
+      AbConvertException(E, ErrorClass, ErrorCode);
+      DoProcessItemFailure(FItemList[Index], ptExtract, ErrorClass, ErrorCode);
     end;
-  finally
-    Unlock;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1561,32 +1530,27 @@ var
 begin
   CheckValid;
   SaveIfNeeded(FItemList[Index]);
-  Lock;
-  try
-    GetFreshenTarget(FItemList[Index]);
-    FR := False;
-    try
-      FR := FreshenRequired(FItemList[Index]);
-    except
-      on E : Exception do begin
-        AbConvertException(E, ErrorClass, ErrorCode);
-        DoProcessItemFailure(FItemList[Index], ptFreshen, ErrorClass,
-                              ErrorCode);
-      end;
-    end;
-    if not FR then
-      Exit;
-    DoConfirmProcessItem(FItemList[Index], ptFreshen, Confirm);
-    if not Confirm then
-      Exit;
 
-    TAbArchiveItem(FItemList[Index]).Action := aaFreshen;
-    FIsDirty := True;
-    if AutoSave then
-      Save;
-  finally
-    Unlock;
+  GetFreshenTarget(FItemList[Index]);
+  FR := False;
+  try
+    FR := FreshenRequired(FItemList[Index]);
+  except
+    on E : Exception do begin
+      AbConvertException(E, ErrorClass, ErrorCode);
+      DoProcessItemFailure(FItemList[Index], ptFreshen, ErrorClass, ErrorCode);
+    end;
   end;
+  if not FR then
+    Exit;
+  DoConfirmProcessItem(FItemList[Index], ptFreshen, Confirm);
+  if not Confirm then
+    Exit;
+
+  TAbArchiveItem(FItemList[Index]).Action := aaFreshen;
+  FIsDirty := True;
+  if AutoSave then
+    Save;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.FreshenFiles(const FileMask : string);
@@ -1722,20 +1686,12 @@ end;
 procedure TAbArchive.Load;
   {load the archive}
 begin
-  Lock;
   try
     LoadArchive;
     FStatus := asIdle;
   finally
     DoLoad;
-    Unlock;
   end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbArchive.Lock;
-begin
-  FPadLock.Locked := True;
-  FStatus := asBusy;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.MakeLogEntry(const FN: string; LT : TAbLogType);
@@ -1777,22 +1733,18 @@ begin
   end;
 
   SaveIfNeeded(aItem);
-  Lock;
-  try
-    DoConfirmProcessItem(aItem, ptMove, Confirm);
-    if not Confirm then
-      Exit;
 
-    with aItem do begin
-      FileName := FixedPath;
-      Action := aaMove;
-    end;
-    FIsDirty := True;
-    if AutoSave then
-      Save;
-  finally
-    Unlock;
+  DoConfirmProcessItem(aItem, ptMove, Confirm);
+  if not Confirm then
+    Exit;
+
+  with aItem do begin
+    FileName := FixedPath;
+    Action := aaMove;
   end;
+  FIsDirty := True;
+  if AutoSave then
+    Save;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Replace(aItem : TAbArchiveItem);
@@ -1813,20 +1765,16 @@ var
 begin
   CheckValid;
   SaveIfNeeded(FItemList[Index]);
-  Lock;
-  try
-    GetFreshenTarget(FItemList[Index]);
-    DoConfirmProcessItem(FItemList[Index], ptReplace, Confirm);
-    if not Confirm then
-      Exit;
 
-    TAbArchiveItem(FItemList[Index]).Action := aaReplace;
-    FIsDirty := True;
-    if AutoSave then
-      Save;
-  finally
-    Unlock;
-  end;
+  GetFreshenTarget(FItemList[Index]);
+  DoConfirmProcessItem(FItemList[Index], ptReplace, Confirm);
+  if not Confirm then
+    Exit;
+
+  TAbArchiveItem(FItemList[Index]).Action := aaReplace;
+  FIsDirty := True;
+  if AutoSave then
+    Save;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Save;
@@ -1838,18 +1786,14 @@ begin
     Exit;
   if (not FIsDirty) and (Count > 0) then
     Exit;
-  Lock;
-  try
-    DoConfirmSave(Confirm);
-    if not Confirm then
-      Exit;
 
-    SaveArchive;
-    FIsDirty := False;
-    DoSave;
-  finally
-    Unlock;
-  end;
+  DoConfirmSave(Confirm);
+  if not Confirm then
+    Exit;
+
+  SaveArchive;
+  FIsDirty := False;
+  DoSave;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.SaveIfNeeded(aItem : TAbArchiveItem);
@@ -1908,13 +1852,6 @@ begin
         if MatchesStoredNameEx(FileMask) then                            
           Tagged := True;
       end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbArchive.Unlock;
-begin
-  if FStatus = asBusy then                                             
-    FStatus := asIdle;
-  FPadLock.Locked := False;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.UnTagItems(const FileMask : string);
