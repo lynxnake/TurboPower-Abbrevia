@@ -956,27 +956,34 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Add(aItem : TAbArchiveItem);
 var
-  Confirm : Boolean;
+  Confirm, ItemAdded : Boolean;
 begin
-  CheckValid;
-  if FItemList.IsActiveDupe(aItem.FileName) then begin
-    if (soFreshen in StoreOptions) then
-      Freshen(aItem)
-    else if (soReplace in StoreOptions) then
-      Replace(aItem)
-    else begin                                                          
-      DoProcessItemFailure(aItem, ptAdd, ecAbbrevia, AbDuplicateName);  
-      aItem.Free;                                                       
-    end;
-  end else begin
-    DoConfirmProcessItem(aItem, ptAdd, Confirm);
-    if not Confirm then
+  ItemAdded := False;
+  try
+    CheckValid;
+    if FItemList.IsActiveDupe(aItem.FileName) then begin
+      if (soFreshen in StoreOptions) then
+        Freshen(aItem)
+      else if (soReplace in StoreOptions) then
+        Replace(aItem)
+      else
+        DoProcessItemFailure(aItem, ptAdd, ecAbbrevia, AbDuplicateName);
       Exit;
+    end;
+    DoConfirmProcessItem(aItem, ptAdd, Confirm);
+    if not Confirm then begin
+      aItem.Free;
+      Exit;
+    end;
     aItem.Action := aaAdd;
     FItemList.Add(aItem);
+    ItemAdded := True;
     FIsDirty := True;
     if AutoSave then
       Save;
+  finally
+    if not ItemAdded then
+      aItem.Free;
   end;
 end;
 { -------------------------------------------------------------------------- }
