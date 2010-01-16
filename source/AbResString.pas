@@ -16,8 +16,6 @@ resourcestring
   AbArchiveBusyS = 'Archive is busy - cannot process new requests';
   AbLastDiskRequestS = 'Insert the last disk in the spanned disk set';
   AbDiskRequestS = 'Insert floppy';
-  AbNthImageRequestS = 'Specify spanned image file # ';
-  AbLastImageRequestS = 'Specify the last file name in the spanned image set';
   AbImageRequestS = 'Image file name';
   AbBadSpanStreamS = 'Spanned archives must be opened as file streams';
   AbDiskNumRequestS = 'Insert disk number %d of the spanned disk set';
