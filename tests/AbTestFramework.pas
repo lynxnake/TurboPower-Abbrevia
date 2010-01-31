@@ -67,9 +67,11 @@ type
     function GetTestFileDir : string;
     function GetTestTempDir : string;
     function GetWindowsDir : string;
-    procedure CheckFilesMatch(const AFileName1, aFileName2, Msg : string);
-    procedure CheckFileMatchesStream(const aFileName : string; aStream : TStream; Msg : string);
-    procedure CheckStreamMatch(aStream1, aStream2 : TStream; Msg : string);
+    procedure CheckFilesMatch(const AFileName1, aFileName2 : string;
+      const aMsg : string = '');
+    procedure CheckFileMatchesStream(const aFileName : string; aStream : TStream;
+      const aMsg : string = '');
+    procedure CheckStreamMatch(aStream1, aStream2 : TStream; const aMsg : string = '');
     procedure CheckFileExists(aFileName : string);
     procedure CheckDirExists(aFileName : string);
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
@@ -119,7 +121,7 @@ uses
   // to run winzip compatability tests
   stSpawn,
 {$ENDIF}
-  SysUtils,
+  Math, SysUtils,
   AbUtils;
 
 var
@@ -159,7 +161,8 @@ begin
   Check(DirectoryExists(aFileName), 'Unable to locate directory: ' + aFileName);
 end;
 
-procedure TAbTestCase.CheckFilesMatch(const aFileName1, aFileName2, Msg: string);
+procedure TAbTestCase.CheckFilesMatch(const aFileName1, aFileName2: string;
+  const aMsg: string = '');
 var
   Stream1, Stream2 : TStream;
 begin
@@ -167,7 +170,7 @@ begin
   try
     Stream2 := TFileStream.Create(AFileName2, fmOpenRead or fmShareDenyWrite);
     try
-      CheckStreamMatch(Stream1, Stream2, Msg);
+      CheckStreamMatch(Stream1, Stream2, aMsg);
     finally
       Stream2.Free;
     end;
@@ -177,13 +180,13 @@ begin
 end;
 
 procedure TAbTestCase.CheckFileMatchesStream(const aFileName : string;
-  aStream : TStream; Msg : string);
+  aStream : TStream; const aMsg : string = '');
 var
   FileStream : TStream;
 begin
   FileStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
   try
-    CheckStreammatch(FileStream, aStream, Msg);
+    CheckStreamMatch(FileStream, aStream, aMsg);
   finally
     FileStream.Free;
   end;
@@ -191,18 +194,28 @@ end;
 
 
 procedure TAbTestCase.CheckStreamMatch(aStream1, aStream2 : TStream;
-  Msg: string);
+  const aMsg: string = '');
 var
-  I : Integer;
-  b1, b2 : Byte;
+  I, BytesRead, BufSize : Integer;
+  Buf1, Buf2 : array of Byte;
 begin
+  CheckEquals(aStream1.Size, aStream2.Size, aMsg);
+  if aStream1.Size = 0 then
+    Exit;
   aStream1.Seek(0, soFromBeginning);
   aStream2.Seek(0, soFromBeginning);
-  CheckEquals(aStream1.Size, aStream2.Size, Msg);
-  for I := 0 to aStream1.Size - 1 do begin
-    aStream1.Read(b1, 1);
-    aStream2.Read(b2, 1);
-    Check(b1 = b2, Msg);
+  BufSize := Min(aStream1.Size, 32768);
+  SetLength(Buf1, BufSize);
+  SetLength(Buf2, BufSize);
+  while True do begin
+    BytesRead := aStream1.Read(Buf1[0], BufSize);
+    Check(BytesRead = aStream2.Read(Buf2[0], BufSize), 'Bytes read mismatch');
+    if BytesRead = 0 then
+      Exit;
+    if not CompareMem(Pointer(Buf1), Pointer(Buf2), BytesRead) then
+      for i := 0 to BytesRead - 1 do
+        if Buf1[i] <> Buf2[i] then
+          FailEquals(IntToHex(Buf1[i], 2), IntToHex(Buf2[i], 2), 'Bytes do not match: ' + aMsg);
   end;
 end;
 
