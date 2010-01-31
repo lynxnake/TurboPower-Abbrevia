@@ -20,6 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ *   Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -54,22 +55,16 @@ const
   Ab_DigitalSignature                       : Longint = $05054B50;
   Ab_Zip64EndCetralDirectory                : Longint = $06064B50;
   Ab_Zip64EndCetralDirectoryLocator         : Longint = $07064B50;
+  Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
 
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
   Ab_LinuxExeSigWord1                       : Word    = $457F;       {!!.02}
   Ab_LinuxExeSigWord2                       : Word    = $464C;       {!!.02}
 
-  Ab_iWindowSize            = $8000;  {Inflate window size}
-  Ab_iMaxCodeLen            = 16;     {Maximum bit length of any code}
-  Ab_iMaxCodes              = 288;    {Maximum number of codes in any set}
-  Size32K                   = 32768;
   AbDefZipSpanningThreshold = 0;
   AbDefPasswordRetries      = 3;
   AbFileIsEncryptedFlag     = $0001;
   AbHasDataDescriptorFlag   = $0008;
-
-var
-  Ab_ZipEndCentralDirectorySignature : Longint = $06054B50;
 
 type
   PAbByteArray4K = ^TAbByteArray4K;
@@ -88,20 +83,6 @@ type
 
   PAbIntegerArray = ^TAbIntegerArray;
   TAbIntegerArray = array[0..65535 div sizeof(integer)-1] of integer;
-
-  PAbiSlide = ^TAbiSlide;
-  TAbiSlide = array[0..Ab_iWindowSize] of Byte;
-
-  PPAbHuft           = ^PAbHuft;
-  PAbHuft            = ^TAbHuft;
-  TAbHuft             = packed record
-    ExtraBits      : Byte;   {Number of extra bits}
-    NumBits        : Byte;   {Number of bits in this code or subcode}
-    Filler : Word;
-    case Byte of
-      0: (N        : Word);  {Literal, length base, or distance base}
-      1: (NextLevel: PAbHuft); {Pointer to next level of table}
-  end;
 
   TAbFollower =                      {used to expand reduced files}
     packed record
@@ -127,44 +108,8 @@ type
       Entry : array[0..256] of TAbSfEntry;
     end;
 
-  PAbWord = ^Word;
-
-  TAbFCData = packed record
-    case Byte of
-      0 : (Freq : Word);  {frequency count}
-      1 : (Code : Word);  {bit string}
-  end;
-
-  TAbDLData = packed record
-    case Byte of
-      0 : (Dad : Word);  {father node in Huffman tree}
-      1 : (Len : Word);  {length of bit string}
-  end;
-
-  {Data structure describing a single value and its code string}
-  TAbCTData = packed record
-    FC : TAbFCData;
-    Filler : word;
-    DL : TAbDLData;
-  end;
-  PAbCTDataArray = ^TAbCTDataArray;
-  TAbCTDataArray = array[0..65535 div SizeOf(TAbCTData) - 1] of TAbCTData;
-
-  TAbTreeDescription = packed record
-    DynamicTree : PAbCTDataArray;  {the dynamic tree}
-    StaticTree  : PAbCTDataArray;  {corresponding static tree or NULL}
-    ExtraBits   : PAbWordArray;    {extra bits for each code or NULL}
-    ExtraBase   : SmallInt;         {base index for ExtraBits}
-    MaxElements : SmallInt;         {max number of elements in the tree}
-    MaxLength   : SmallInt;         {max bit length for the codes}
-    MaxCode     : SmallInt;         {largest code with non zero frequency}
-  end;
-
 
 type
-  TAbFileType =
-    (Binary, Ascii, Unknown);
-
   TAbZipCompressionMethod =
     (cmStored, cmShrunk, cmReduced1, cmReduced2, cmReduced3,
      cmReduced4, cmImploded, cmTokenized, cmDeflated,
