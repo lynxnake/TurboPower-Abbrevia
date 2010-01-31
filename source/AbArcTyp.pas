@@ -971,10 +971,8 @@ begin
       Exit;
     end;
     DoConfirmProcessItem(aItem, ptAdd, Confirm);
-    if not Confirm then begin
-      aItem.Free;
+    if not Confirm then
       Exit;
-    end;
     aItem.Action := aaAdd;
     FItemList.Add(aItem);
     ItemAdded := True;

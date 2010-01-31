@@ -50,7 +50,7 @@ uses
   SysUtils, Classes, Types,
 
   AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp,
-  AbDfBase, AbDfDec, AbDfEnc, AbVMStrm, AbBitBkt, AbSpanSt;
+  AbDfBase, AbDfDec, AbDfEnc, AbVMStrm, AbBitBkt;
 
 type
   { pre-defined "operating system" (really more FILE system)
