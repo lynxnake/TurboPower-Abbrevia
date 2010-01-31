@@ -20,6 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ *   Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -45,10 +46,14 @@ type
   TAbCabItem = class(TAbArchiveItem)
   protected {private}
     FPartialFile : Boolean;
+    FRawFileName : AnsiString;
   public
     property PartialFile : Boolean
       read  FPartialFile
       write FPartialFile;
+    property RawFileName : AnsiString
+      read FRawFileName
+      write FRawFileName;
   end;
 
 type
@@ -59,6 +64,7 @@ type
 
 const
   faExtractAndExecute  = $040;
+  faUTF8Name = $080;
   AbDefCabSpanningThreshold  = 0;
   AbDefFolderThreshold = 0;
   AbDefCompressionType = ctMSZIP;
@@ -173,7 +179,7 @@ function VerifyCab(Strm : TStream) : TAbArchiveType; overload;
 implementation
 
 uses
-  AbExcept;
+  AbConst, AbExcept;
 
 {$WARN UNIT_PLATFORM OFF}
 {$WARN SYMBOL_PLATFORM OFF}
@@ -288,21 +294,28 @@ begin
   Result := 0;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_GetOpenInfo(lpPathname: PAnsiChar; PDate, PTime, PAttribs : PWord;
+function FCI_GetOpenInfo(lpPathname: Pointer; PDate, PTime, PAttribs : PWord;
   PError: PInteger; Archive: TAbCabArchive) : Integer;
   cdecl;
   {open a file and return date/attributes}
 var
-  DT : Integer;
+  AttrEx: TAbAttrExRec;
+  I: Integer;
+  RawName: RawByteString;
 begin
-  Result := _lopen(lpPathname, OF_READ or OF_SHARE_DENY_NONE);
+  Result := FileOpen(string(lpPathname), fmOpenRead or fmShareDenyNone);
   if (Result = -1) then
     raise EAbFCIFileOpenError.Create;
-  PAttribs^ := AbFileGetAttr(string(lpPathname));
-  DT := FileGetDate(Result);
-  PDate^ := DT shr 16;
-  PTime^ := DT and $0FFFF;
+  AbFileGetAttrEx(string(lpPathname), AttrEx);
+  PAttribs^ := AttrEx.Attr;
+  PDate^ := AttrEx.Time shr 16;
+  PTime^ := AttrEx.Time and $0FFFF;
   Archive.ItemProgress := 0;
+  Archive.FItemInProgress.UncompressedSize := AttrEx.Size;
+  RawName := Archive.FItemInProgress.RawFileName;
+  for I := 1 to Length(RawName) do
+    if Ord(RawName[I]) > 127 then
+      PAttribs^ := PAttribs^ or faUTF8Name;
 end;
 { -------------------------------------------------------------------------- }
 function FCI_Status(Status: Word; cb1, cb2: DWord;
@@ -404,7 +417,11 @@ begin
       begin
         Item := TAbCabItem.Create;
         with Item do begin
-          Filename := string(pfdin^.psz1);
+          RawFileName := AnsiString(pfdin^.psz1);
+          if (pfdin^.attribs and faUTF8Name) = faUTF8Name then
+            Filename := UTF8ToString(RawFileName)
+          else
+            Filename := string(RawFileName);
           UnCompressedSize := pfdin^.cb;
           LastModFileDate := pfdin^.date;
           LastModFileTime := pfdin^.time;
@@ -431,7 +448,7 @@ begin
   case fdint of
     FDINT_Copy_File :
       begin
-        if (string(pfdin^.psz1) = Archive.FItemInProgress.FileName) then
+        if (AnsiString(pfdin^.psz1) = Archive.FItemInProgress.RawFileName) then
           if Archive.FIIPName <> '' then
             Result := Integer(TFileStream.Create(Archive.FIIPName, fmCreate))
           else
@@ -524,40 +541,40 @@ end;
 procedure TAbCabArchive.Add(aItem : TAbArchiveItem);
   {add a file to the cabinet}
 var
-  Confirm, DoExecute : Boolean;
-  FP, FN : array[0..255] of AnsiChar;
-  FH : HFILE;
+  Confirm, ItemAdded : Boolean;
   Item : TAbCabItem;
 begin
-  if (FMode <> fmOpenWrite) then begin
-    DoProcessItemFailure(aItem, ptAdd, ecCabError, 0);
-    Exit;
-  end;
-  CheckValid;
-  DoExecute := False;
-  if FItemList.IsActiveDupe(aItem.FileName) then
-    raise EAbDuplicateName.Create;
-  Item := TAbCabItem(aItem);
-  DoConfirmProcessItem(Item, ptAdd, Confirm);
-  if not Confirm then
-    Exit;
-  Item.Action := aaAdd;
-  StrPLCopy(FP, AnsiString(Item.DiskFilename), Length(FP));              {!!.02}
-  FH := _lopen(FP, OF_READ or OF_SHARE_DENY_NONE);                       {!!.02}
-  if (FH <> HFILE_ERROR) then begin
-    aItem.UncompressedSize := _llseek(FH, 0, 2);
+  ItemAdded := False;
+  try
+    CheckValid;
+    if (FMode <> fmOpenWrite) then begin
+      DoProcessItemFailure(aItem, ptAdd, ecCabError, 0);
+      Exit;
+    end;
+    if FItemList.IsActiveDupe(aItem.FileName) then begin
+      DoProcessItemFailure(aItem, ptAdd, ecAbbrevia, AbDuplicateName);
+      Exit;
+    end;
+    DoConfirmProcessItem(aItem, ptAdd, Confirm);
+    if not Confirm then
+      Exit;
+    Item := TAbCabItem(aItem);
     FItemInProgress := Item;
+    Item.Action := aaAdd;
+
+    Item.RawFileName := UTF8Encode(Item.FileName);
+    if not FCIAddFile(FFCIContext, Pointer(Item.DiskFileName),
+       PAnsiChar(Item.RawFileName), False, @FCI_GetNextCab, @FCI_Status,
+       @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
+      raise EAbFCIAddFileError.Create;
     FItemList.Add(Item);
-    _lclose(FH);
-  end else
-    raise EAbFileNotFound.Create;
+    ItemAdded := True;
 
-  StrPLCopy(FN, AnsiString(Item.FileName), Length(FN));                  {!!.02}
-  if not FCIAddFile(FFCIContext, FP, FN, DoExecute, @FCI_GetNextCab,
-    @FCI_Status, @FCI_GetOpenInfo, CompressionTypeMap[FCompressionType]) then
-    raise EAbFCIAddFileError.Create;
-
-  FIsDirty := True;
+    FIsDirty := True;
+  finally
+    if not ItemAdded then
+      aItem.Free;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchive.CloseCabFile;

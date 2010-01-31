@@ -30,11 +30,12 @@
 interface
 
 uses
-  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbCabTyp;
+  Windows, SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbCabTyp;
 
 type
   TAbCabArchiveTests = class(TAbTestCase)
   private
+    procedure TestCompressDir(const ADirName: string);
 
   protected
     procedure SetUp; override;
@@ -42,6 +43,10 @@ type
 
   published
     procedure TestVerifyCab;
+    procedure TestExtract;
+    procedure TestExtractToStream;
+    procedure TestCompressCanterbury;
+    procedure TestCompressUnicode;
   end;
 
 implementation
@@ -65,6 +70,80 @@ procedure TAbCabArchiveTests.TestVerifyCab;
 begin
   Check(VerifyCab(TestFileDir + 'MPL.CAB') = atCab, 'VerifyCab failed on valid CAB');
   Check(VerifyCab(TestFileDir + 'MPL.ZIP') = atUnknown, 'VerifyCab succeeded on ZIP');
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestExtract;
+var
+  Cab: TAbCabArchive;
+begin
+  DeleteFile(TestTempDir + 'MPL-1_1.TXT');
+  Cab := TAbCabArchive.Create(TestFileDir + 'MPL.CAB', fmOpenRead);
+  try
+    Cab.Load;
+    Cab.ExtractAt(0, TestTempDir + 'MPL-1_1.TXT');
+    CheckFilesMatch(TestFileDir + 'MPL-1_1.TXT', TestTempDir + 'MPL-1_1.TXT', '');
+  finally
+    Cab.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestExtractToStream;
+var
+  Cab: TAbCabArchive;
+  Stream: TMemoryStream;
+begin
+  Cab := TAbCabArchive.Create(TestFileDir + 'MPL.CAB', fmOpenRead);
+  try
+    Cab.Load;
+    Stream := TMemoryStream.Create;
+    try
+      Cab.ExtractToStream('MPL-1_1.TXT', Stream);
+      CheckFileMatchesStream(TestFileDir + 'MPL-1_1.TXT', Stream);
+    finally
+      Stream.Free;
+    end;
+  finally
+    Cab.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestCompressDir(const ADirName: string);
+var
+  Cab: TAbCabArchive;
+  FileName: string;
+begin
+  FileName := TestTempDir + ADirName + '.cab';
+  DeleteFile(FileName);
+  Cab := TAbCabArchive.Create(FileName, fmCreate);
+  try
+    Cab.BaseDirectory := TestFileDir + ADirName;
+    Cab.Load; // TODO: This shouldn't be necessary
+    Cab.AddFiles('*', faAnyFile);
+    Cab.Save;
+  finally
+    Cab.Free;
+  end;
+  DelTree(TestTempDir + ADirName);
+  Cab := TAbCabArchive.Create(FileName, fmOpenRead);
+  try
+    ForceDirectories(TestTempDir + ADirName);
+    Cab.BaseDirectory := TestTempDir + ADirName;
+    Cab.Load;
+    Cab.ExtractFiles('*');
+  finally
+    Cab.Free;
+  end;
+  CheckDirMatch(TestFileDir + ADirName, TestTempDir + ADirName, False);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestCompressCanterbury;
+begin
+  TestCompressDir('Canterbury');
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestCompressUnicode;
+begin
+  TestCompressDir('Unicode');
 end;
 {----------------------------------------------------------------------------}
 

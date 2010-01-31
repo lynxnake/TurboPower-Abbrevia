@@ -65,6 +65,11 @@ const
   AbDefPasswordRetries      = 3;
   AbFileIsEncryptedFlag     = $0001;
   AbHasDataDescriptorFlag   = $0008;
+  AbLanguageEncodingFlag    = $0800;
+
+  Ab_InfoZipUnicodePathSubfieldID           : Word    = $7075;
+  Ab_XceedUnicodePathSubfieldID             : Word    = $554E;
+  Ab_XceedUnicodePathSignature              : LongWord= $5843554E;
 
 type
   PAbByteArray4K = ^TAbByteArray4K;
@@ -108,6 +113,19 @@ type
       Entry : array[0..256] of TAbSfEntry;
     end;
 
+  PInfoZipUnicodePathRec = ^TInfoZipUnicodePathRec;
+  TInfoZipUnicodePathRec = packed record
+    Version: Byte;
+    NameCRC32: LongInt;
+    UnicodeName: array[0..0] of AnsiChar;
+  end;
+
+  PXceedUnicodePathRec = ^TXceedUnicodePathRec;
+  TXceedUnicodePathRec = packed record
+    Signature: LongWord;
+    Length: Integer;
+    UnicodeName: array[0..0] of WideChar;
+  end;
 
 type
   TAbZipCompressionMethod =
@@ -182,9 +200,11 @@ type
     function GetDeflationOption : TAbZipDeflationOption;
     function GetDictionarySize : TAbZipDictionarySize;
     function GetEncrypted : Boolean;
+    function GetIsUTF8 : Boolean;
     function GetShannonFanoTreeCount : Byte;
     function GetValid : Boolean;
     procedure SetCompressionMethod( Value : TAbZipCompressionMethod );
+    procedure SetIsUTF8( Value : Boolean );
   public {methods}
     constructor Create;
     destructor Destroy; override;
@@ -224,6 +244,8 @@ type
       read GetValid;
     property IsEncrypted : Boolean
       read GetEncrypted;
+    property IsUTF8 : Boolean
+      read GetIsUTF8 write SetIsUTF8;
     property ShannonFanoTreeCount : Byte
       read GetShannonFanoTreeCount;
   end;
@@ -921,6 +943,171 @@ begin
   end;
 end;         
 {============================================================================}
+{$IFDEF MSWINDOWS}
+function IsOEM(const aValue: RawByteString): Boolean;
+const
+  // Byte values of alpha-numeric characters in OEM and ANSI codepages.
+  // Excludes NBSP, ordinal indicators, exponents, the florin symbol, and, for
+  // ANSI codepages matched to certain OEM ones, the micro character.
+  //
+  // US (OEM 437, ANSI 1252)
+  Oem437AnsiChars =
+    [138, 140, 142, 154, 156, 158, 159, 181, 192..214, 216..246, 248..255];
+  Oem437OemChars =
+    [128..154, 160..165, 224..235, 237, 238];
+  // Arabic (OEM 720, ANSI 1256)
+  Oem720AnsiChars =
+    [129, 138, 140..144, 152, 154, 156, 159, 170, 181, 192..214, 216..239, 244,
+     249, 251, 252, 255];
+  Oem720OemChars =
+    [130, 131, 133, 135..140, 147, 149..155, 157..173, 224..239];
+  // Greek (OEM 737, ANSI 1253)
+  Oem737AnsiChars =
+    [162, 181, 184..186, 188, 190..209, 211..254];
+  Oem737OemChars =
+    [128..175, 224..240, 244, 245];
+  // Baltic Rim (OEM 775, ANSI 1257)
+  Oem775AnsiChars =
+    [168, 170, 175, 184, 186, 191..214, 216..246, 248..254];
+  Oem775OemChars =
+    [128..149, 151..155, 157, 160..165, 173, 181..184, 189, 190, 198, 199,
+     207..216, 224..238];
+  // Western European (OEM 850, ANSI 1252)
+  Oem850AnsiChars =
+    [138, 140, 142, 154, 156, 158, 159, 192..214, 216..246, 248..255];
+  Oem850OemChars =
+    [128..155, 157, 160..165, 181..183, 198, 199, 208..216, 222, 224..237];
+  // Central & Eastern European (OEM 852, ANSI 1250)
+  Oem852AnsiChars =
+    [138, 140..143, 154, 156..159, 163, 165, 170, 175, 179, 185, 186, 188,
+     190..214, 216..246, 248..254];
+  Oem852OemChars =
+    [128..157, 159..169, 171..173, 181..184, 189, 190, 198, 199, 208..216, 221,
+     222, 224..238, 251..253];
+  // Cyrillic (OEM 855, ANSI 1251)
+  Oem855AnsiChars =
+    [128, 129, 131, 138, 140..144, 154, 156..159, 161..163, 165, 168, 170, 175,
+     178..180, 184, 186, 188..255];
+  Oem855OemChars =
+    [128..173, 181..184, 189, 190, 198, 199, 208..216, 221, 222, 224..238,
+     241..252];
+  // Turkish (OEM 857, ANSI 1254)
+  Oem857AnsiChars =
+    [138, 140, 154, 156, 159, 192..214, 216..246, 248..255];
+  Oem857OemChars =
+    [128..155, 157..167, 181..183, 198, 199, 210..212, 214..216, 222, 224..230,
+     233..237];
+  // Hebrew (OEM 862, ANSI 1255)
+  Oem862AnsiChars =
+    [181, 212..214, 224..250];
+  Oem862OemChars =
+    [128..154, 160..165, 224..235, 237, 238];
+  // Cyrillic CIS (OEM 866, ANSI 1251)
+  Oem866AnsiChars =
+    [128, 129, 131, 138, 140..144, 154, 156..159, 161..163, 165, 168, 170, 175,
+     178..181, 184, 186, 188..255];
+  Oem866OemChars =
+    [128..175, 224..247];
+var
+  AnsiChars, OemChars: set of Byte;
+  IsANSI: Boolean;
+  i: Integer;
+begin
+  case GetOEMCP of
+    437:
+    begin
+      AnsiChars := Oem437AnsiChars;
+      OemChars := Oem437OemChars;
+    end;
+    720:
+    begin
+      AnsiChars := Oem720AnsiChars;
+      OemChars := Oem720OemChars;
+    end;
+    737:
+    begin
+      AnsiChars := Oem737AnsiChars;
+      OemChars := Oem737OemChars;
+    end;
+    775:
+    begin
+      AnsiChars := Oem775AnsiChars;
+      OemChars := Oem775OemChars;
+    end;
+    850:
+    begin
+      AnsiChars := Oem850AnsiChars;
+      OemChars := Oem850OemChars;
+    end;
+    852:
+    begin
+      AnsiChars := Oem852AnsiChars;
+      OemChars := Oem852OemChars;
+    end;
+    855:
+    begin
+      AnsiChars := Oem855AnsiChars;
+      OemChars := Oem855OemChars;
+    end;
+    857:
+    begin
+      AnsiChars := Oem857AnsiChars;
+      OemChars := Oem857OemChars;
+    end;
+    862:
+    begin
+      AnsiChars := Oem862AnsiChars;
+      OemChars := Oem862OemChars;
+    end;
+    866:
+    begin
+      AnsiChars := Oem866AnsiChars;
+      OemChars := Oem866OemChars;
+    end;
+    else
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
+
+  IsANSI := True;
+  Result := True;
+  for i := 0 to Length(aValue) do
+    if Ord(aValue[i]) >= $80 then
+    begin
+      if IsANSI then
+        IsANSI := Ord(aValue[i]) in AnsiChars;
+      if Result then
+        Result := Ord(aValue[i]) in OemChars;
+      if not IsANSI and not Result then
+        Break
+    end;
+  if IsANSI then
+    Result := False;
+end;
+{============================================================================}
+function TryEncode(const aValue: string; aCodePage: UINT; aAllowBestFit: Boolean;
+  out aResult: AnsiString): Boolean;
+const
+  WC_NO_BEST_FIT_CHARS = $00000400;
+  Flags: array[Boolean] of DWORD = (WC_NO_BEST_FIT_CHARS, 0);
+var
+  UsedDefault: BOOL;
+begin
+  if not aAllowBestFit and not CheckWin32Version(4, 1) then
+    Result := False
+  else begin
+    SetLength(aResult, WideCharToMultiByte(aCodePage, Flags[aAllowBestFit],
+      PWideChar(aValue), Length(aValue), nil, 0, nil, @UsedDefault));
+    SetLength(aResult, WideCharToMultiByte(aCodePage, Flags[aAllowBestFit],
+      PWideChar(aValue), Length(aValue), PAnsiChar(aResult),
+      Length(aResult), nil, @UsedDefault));
+    Result := not UsedDefault;
+  end;
+end;
+{$ENDIF}
+{============================================================================}
 { TAbZipDataDescriptor implementation ====================================== }
 procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
 begin
@@ -1018,6 +1205,11 @@ begin
   Result := ( ( FGeneralPurposeBitFlag and AbFileIsEncryptedFlag ) <> 0 );
 end;
 { -------------------------------------------------------------------------- }
+function TAbZipFileHeader.GetIsUTF8 : Boolean;
+begin
+  Result := ( ( GeneralPurposeBitFlag and AbLanguageEncodingFlag ) <> 0 );
+end;
+{ -------------------------------------------------------------------------- }
 function TAbZipFileHeader.GetShannonFanoTreeCount : Byte;
 begin
   if CompressionMethod = cmImploded then
@@ -1038,6 +1230,14 @@ procedure TAbZipFileHeader.SetCompressionMethod( Value :
                                                TAbZipCompressionMethod );
 begin
   FCompressionMethod := Ord( Value );
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipFileHeader.SetIsUTF8( Value : Boolean );
+begin
+  if Value then
+    GeneralPurposeBitFlag := GeneralPurposeBitFlag or AbLanguageEncodingFlag
+  else
+    GeneralPurposeBitFlag := GeneralPurposeBitFlag and not AbLanguageEncodingFlag;
 end;
 { -------------------------------------------------------------------------- }
 
@@ -1382,14 +1582,40 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.LoadFromStream( Stream : TStream );
+var
+  FieldSize: Word;
+  InfoZipField: PInfoZipUnicodePathRec;
+  UnicodeName: UnicodeString;
+  UTF8Name: UTF8String;
+  XceedField: PXceedUnicodePathRec;
 begin
   FItemInfo.LoadFromStream( Stream );
-  FFileName := string(FItemInfo.FileName);
+  if FItemInfo.IsUTF8 or (AbDetectCharSet(FItemInfo.FileName) in [csASCII, csUTF8]) then
+    FFileName := UTF8ToString(FItemInfo.FileName)
+  else if FItemInfo.ExtraField.Get(Ab_InfoZipUnicodePathSubfieldID, Pointer(InfoZipField), FieldSize) and
+     (FieldSize > SizeOf(TInfoZipUnicodePathRec)) and
+     (InfoZipField.Version = 1) and
+     (InfoZipField.NameCRC32 = AbCRC32Of(FItemInfo.FileName)) then begin
+    SetString(UTF8Name, InfoZipField.UnicodeName,
+      FieldSize - SizeOf(TInfoZipUnicodePathRec) + 1);
+    FFileName := UTF8ToString(UTF8Name);
+  end
+  else if FItemInfo.ExtraField.Get(Ab_XceedUnicodePathSubfieldID, Pointer(XceedField), FieldSize) and
+     (FieldSize > SizeOf(TXceedUnicodePathRec)) and
+     (XceedField.Signature = Ab_XceedUnicodePathSignature) and
+     (XceedField.Length * SizeOf(WideChar) = FieldSize - SizeOf(TXceedUnicodePathRec) + SizeOf(WideChar)) then begin
+    SetString(UnicodeName, XceedField.UnicodeName, XceedField.Length);
+    FFileName := string(UnicodeName);
+  end
   {$IFDEF MSWINDOWS}
-  if (Hi(VersionMadeBy) = 0) and (GetACP <> GetOEMCP) then
-    OemToCharBuff(PAnsiChar(FItemInfo.FileName), PChar(FFileName),
-      Length(FFileName));
+  else if (GetACP <> GetOEMCP) and ((Hi(VersionMadeBy) = 0) or IsOEM(FItemInfo.FileName)) then begin
+    SetLength(FFileName, Length(FItemInfo.FileName));
+    OemToCharBuff(PAnsiChar(FItemInfo.FileName), PChar(FFileName), Length(FFileName));
+  end
   {$ENDIF}
+  else
+    FFileName := string(FItemInfo.FileName);
+
   IsDirectory := ((FItemInfo.ExternalFileAttributes and faDirectory) <> 0) or
     ((FFileName <> '') and CharInSet(FFilename[Length(FFilename)], ['\','/']));
   LastModFileTime := FItemInfo.LastModFileTime;
@@ -1474,21 +1700,65 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetFileName(const Value : string );
-{$IFDEF MSWINDOWS}
 var
+  {$IFDEF MSWINDOWS}
+  AnsiName : AnsiString;
+  {$ENDIF}
+  UTF8Name : AnsiString;
+  FieldSize : Word;
   I : Integer;
-{$ENDIF}
+  InfoZipField : PInfoZipUnicodePathRec;
+  UseExtraField: Boolean;
 begin
   inherited SetFileName(Value);
+  {$IFDEF MSWINDOWS}
+  FItemInfo.IsUTF8 := False;
+  VersionMadeBy := Low(VersionMadeBy);
+  if TryEncode(Value, CP_OEMCP, False, AnsiName) then
+    {no-op}
+  else if (GetACP <> GetOEMCP) and TryEncode(Value, CP_ACP, False, AnsiName) then
+    VersionMadeBy := VersionMadeBy or $0B00
+  else if TryEncode(Value, CP_OEMCP, True, AnsiName) then
+    {no-op}
+  else if (GetACP <> GetOEMCP) and TryEncode(Value, CP_ACP, True, AnsiName) then
+    VersionMadeBy := VersionMadeBy or $0B00
+  else
+    FItemInfo.IsUTF8 := True;
+  if FItemInfo.IsUTF8 then
+    FItemInfo.FileName := Utf8Encode(Value)
+  else
+    FItemInfo.FileName := AnsiName;
+  {$ENDIF}
+  {$IFDEF LINUX}
   FItemInfo.FileName := AnsiString(Value);
-  VersionMadeBy := Lo(VersionMadeBy);
-{$IFDEF MSWINDOWS}
-  for I := 1 to Length(FItemInfo.FileName) do
-    if Ord(FItemInfo.FileName[I]) >= 128 then begin
-      VersionMadeBy := VersionMadeBy or $0B00;
-      Break;
+  FItemInfo.IsUTF8 := AbSysCharSetIsUTF8;
+  {$ENDIF}
+
+  UseExtraField := False;
+  if not FItemInfo.IsUTF8 then
+    for i := 1 to Length(Value) do begin
+      if Ord(Value[i]) > 127 then begin
+        UseExtraField := True;
+        Break;
+      end;
     end;
-{$ENDIF}
+
+  if UseExtraField then begin
+    UTF8Name := AnsiToUTF8(Value);
+    FieldSize := SizeOf(TInfoZipUnicodePathRec) + Length(UTF8Name) - 1;
+    GetMem(InfoZipField, FieldSize);
+    try
+      InfoZipField.Version := 1;
+      InfoZipField.NameCRC32 := AbCRC32Of(FItemInfo.FileName);
+      Move(UTF8Name[1], InfoZipField.UnicodeName, Length(UTF8Name));
+      FItemInfo.ExtraField.Put(Ab_XceedUnicodePathSubfieldID, InfoZipField, FieldSize);
+    finally
+      FreeMem(InfoZipField);
+    end;
+  end
+  else
+    FItemInfo.ExtraField.Delete(Ab_InfoZipUnicodePathSubfieldID);
+  FItemInfo.ExtraField.Delete(Ab_XceedUnicodePathSubfieldID);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetGeneralPurposeBitFlag( Value : Word );
