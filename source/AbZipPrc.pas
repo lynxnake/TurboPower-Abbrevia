@@ -354,13 +354,13 @@ begin
     ChDir( SaveDir );
   end; {SaveDir}
   try {UncompressedStream}
-    AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
     Item.ExternalFileAttributes := AttrEx.Attr;
     {$IFDEF Linux}
     AttrEx.Time := AbDateTimeToDosFileDate(FileDateToDateTime(AttrEx.Time));
     {$ENDIF}
     Item.LastModFileTime := LongRec(AttrEx.Time).Lo;
     Item.LastModFileDate := LongRec(AttrEx.Time).Hi;
+    AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
   finally {UncompressedStream}
     UncompressedStream.Free;
   end; {UncompressedStream}
