@@ -1087,7 +1087,7 @@ begin
     Result := False;
 end;
 {============================================================================}
-function TryEncode(const aValue: string; aCodePage: UINT; aAllowBestFit: Boolean;
+function TryEncode(const aValue: UnicodeString; aCodePage: UINT; aAllowBestFit: Boolean;
   out aResult: AnsiString): Boolean;
 const
   WC_NO_BEST_FIT_CHARS = $00000400;
@@ -1106,7 +1106,7 @@ begin
     Result := not UsedDefault;
   end;
 end;
-{$ENDIF}
+{$ENDIF MSWINDOWS}
 {============================================================================}
 { TAbZipDataDescriptor implementation ====================================== }
 procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
@@ -1590,7 +1590,7 @@ var
   XceedField: PXceedUnicodePathRec;
 begin
   FItemInfo.LoadFromStream( Stream );
-  if FItemInfo.IsUTF8 or (AbDetectCharSet(FItemInfo.FileName) in [csASCII, csUTF8]) then
+  if FItemInfo.IsUTF8 or (AbDetectCharSet(FItemInfo.FileName) = csUTF8) then
     FFileName := UTF8ToString(FItemInfo.FileName)
   else if FItemInfo.ExtraField.Get(Ab_InfoZipUnicodePathSubfieldID, Pointer(InfoZipField), FieldSize) and
      (FieldSize > SizeOf(TInfoZipUnicodePathRec)) and
@@ -1704,7 +1704,7 @@ var
   {$IFDEF MSWINDOWS}
   AnsiName : AnsiString;
   {$ENDIF}
-  UTF8Name : AnsiString;
+  UTF8Name : UTF8String;
   FieldSize : Word;
   I : Integer;
   InfoZipField : PInfoZipUnicodePathRec;
@@ -1751,7 +1751,7 @@ begin
       InfoZipField.Version := 1;
       InfoZipField.NameCRC32 := AbCRC32Of(FItemInfo.FileName);
       Move(UTF8Name[1], InfoZipField.UnicodeName, Length(UTF8Name));
-      FItemInfo.ExtraField.Put(Ab_XceedUnicodePathSubfieldID, InfoZipField, FieldSize);
+      FItemInfo.ExtraField.Put(Ab_InfoZipUnicodePathSubfieldID, InfoZipField^, FieldSize);
     finally
       FreeMem(InfoZipField);
     end;

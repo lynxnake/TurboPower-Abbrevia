@@ -228,7 +228,7 @@ var
 procedure ConfigureItem;
 begin
   Item.UncompressedSize := InStream.Size;
-  Item.GeneralPurposeBitFlag := 0;
+  Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag and AbLanguageEncodingFlag;
   Item.CompressedSize := 0;
 
   { if not reading from a file, then set defaults for storing the item }
