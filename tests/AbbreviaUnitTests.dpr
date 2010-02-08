@@ -61,7 +61,8 @@ uses
   AbSelfExTests in 'AbSelfExTests.pas',
   AbArcTypTests in 'AbArcTypTests.pas',
   AbGzTypTests in 'AbGzTypTests.pas',
-  AbArchiveSplitTests in 'AbArchiveSplitTests.pas';
+  AbArchiveSplitTests in 'AbArchiveSplitTests.pas',
+  AbZipTypTests in 'AbZipTypTests.pas';
 
 {$R *.res}
 

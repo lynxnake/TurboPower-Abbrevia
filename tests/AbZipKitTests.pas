@@ -73,8 +73,6 @@ var
   MS : TMemoryStream;
 begin
   TestFile := TestTempDir + 'freshenBaseDir.zip';
-  if FileExists(TestFile) then
-    DeleteFile(TestFile);
 
   Component.StoreOptions := Component.StoreOptions + [soRecurse,soFreshen];
   Component.FileName := TestFile;
@@ -99,31 +97,27 @@ begin
     // Modify the 2nd File
     SL.Add('Modification');
     SL.SaveToFile(TestTempDir + 'Freshen2base.fsh');
-
-    // Freshen the archive
-    Component.FileName := TestFile;
-    Component.DeflationOption := doMaximum;
-    Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
-    Component.AddFiles(TestTempDir + 'Freshen1base.fsh', 0);
-    Component.AddFiles(TestTempDir + 'Freshen2base.fsh', 0);
-    Component.AddFiles(TestTempDir + 'Freshen3base.fsh', 0);
-    Component.Save;
-
-    // Make sure modified file and archive value matches
-    MS := TMemoryStream.create;
-    try
-      Component.ExtractToStream(Component.Items[1].FileName, MS);
-      CheckFileMatchesStream(TestTempDir + 'Freshen2base.fsh', MS,
-        'Freshened file on disk did not match archived value');
-    finally
-      MS.Free;
-    end;
   finally
     SL.Free;
-    DeleteFile(TestTempDir + 'Freshen1base.fsh');
-    DeleteFile(TestTempDir + 'Freshen2base.fsh');
-    DeleteFile(TestTempDir + 'Freshen3base.fsh');
-    DeleteFile(TestFile);
+  end;
+
+  // Freshen the archive
+  Component.FileName := TestFile;
+  Component.DeflationOption := doMaximum;
+  Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
+  Component.AddFiles(TestTempDir + 'Freshen1base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen2base.fsh', 0);
+  Component.AddFiles(TestTempDir + 'Freshen3base.fsh', 0);
+  Component.Save;
+
+  // Make sure modified file and archive value matches
+  MS := TMemoryStream.create;
+  try
+    Component.ExtractToStream(Component.Items[1].FileName, MS);
+    CheckFileMatchesStream(TestTempDir + 'Freshen2base.fsh', MS,
+      'Freshened file on disk did not match archived value');
+  finally
+    MS.Free;
   end;
 end;
 
@@ -156,30 +150,26 @@ begin
     // Modify the 2nd File
     SL.Add('Modification');
     SL.SaveToFile(TestTempDir + 'Freshen2.fsh');
-
-    // Freshen the archive
-    Component.FileName := TestTempDir + 'Freshen.zip';
-    Component.BaseDirectory := TestTempDir;
-    Component.DeflationOption := doMaximum;
-    Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
-    Component.AddFiles('*.fsh',0);
-    Component.Save;
-
-    // Make sure modified file and archive value matches
-    MS := TMemoryStream.create;
-    try
-      Component.ExtractToStream('Freshen2.fsh',MS);
-      CheckFileMatchesStream(TestTempDir + 'Freshen2.fsh', MS,
-        'Freshened file on disk did not match archived value');
-    finally
-      MS.Free;
-    end;
   finally
     SL.Free;
-    DeleteFile(TestTempDir + 'Freshen1.fsh');
-    DeleteFile(TestTempDir + 'Freshen2.fsh');
-    DeleteFile(TestTempDir + 'Freshen3.fsh');
-    DeleteFile(TestTempDir + 'Freshen.zip');
+  end;
+
+  // Freshen the archive
+  Component.FileName := TestTempDir + 'Freshen.zip';
+  Component.BaseDirectory := TestTempDir;
+  Component.DeflationOption := doMaximum;
+  Component.StoreOptions := Component.StoreOptions + [soRecurse, soFreshen];
+  Component.AddFiles('*.fsh',0);
+  Component.Save;
+
+  // Make sure modified file and archive value matches
+  MS := TMemoryStream.create;
+  try
+    Component.ExtractToStream('Freshen2.fsh',MS);
+    CheckFileMatchesStream(TestTempDir + 'Freshen2.fsh', MS,
+      'Freshened file on disk did not match archived value');
+  finally
+    MS.Free;
   end;
 end;
 
@@ -191,6 +181,7 @@ end;
 
 procedure TAbZipKitTests.TearDown;
 begin
+  Component.Free;
   inherited;
 end;
 
@@ -199,29 +190,26 @@ var
   MS : TMemoryStream;
   I : Integer;
 begin
+  //TODO: This is broken.  The BaseDirectory is wrong, so it never actually adds anything
   // [ 785769 ] SF.NET Tracker ID is the Bug this is testing for.
 
   // This test is designed to add to an archive
   // Then extract from it without having to close/reopen archive.
 
-  if FileExists(TestTempDir + 'ZKitTest.zip') then
-    DeleteFile(TestTempDir + 'ZKitTest.zip');
-
   Component.FileName := TestTempDir + 'ZKitTest.zip';
   Component.BaseDirectory := GetWindowsDir;
-  Component.AddFiles('*.ZIP',faAnyFile);
+  Component.AddFiles('*.ZIP', faAnyFile);
   Component.Save;
-  MS := TMemoryStream.Create;
-  try
-    for I := 0 to Component.Count - 1 do begin
+  for I := 0 to Component.Count - 1 do begin
+    MS := TMemoryStream.Create;
+    try
       // Compare uncompressed files to original files
       Component.ExtractToStream(Component.Items[I].FileName, MS);
       CheckFileMatchesStream(TestFileDir + ExtractFileName(Component.Items[I].FileName),
         MS, 'File ' + Component.Items[I].FileName + ' did not match original');
-      MS.Clear;
+    finally
+      MS.Free;
     end;
-  finally
-    MS.Free;
   end;
 end;
 
@@ -240,14 +228,13 @@ begin
   RegisterClass(TAbZipKit);
   CompStr := StreamComponent(Component);
   CompTest := (UnStreamComponent(CompStr) as TAbZipKit);
-  CompareComponentProps(Component,CompTest);
+  CompareComponentProps(Component, CompTest);
   UnRegisterClass(TAbZipKit);
 end;
 
 procedure TAbZipKitTests.TestTaggedFiles;
   // [ 806077 ] TestTaggedItems fails if called after modifying an archive
 begin
-  DeleteFile(TestTempDir + 'test.zip');
   Component.FileName := TestTempDir + 'test.zip';
   Component.AutoSave := True;
   Component.BaseDirectory := TestFileDir;
@@ -267,7 +254,6 @@ const
 var
   Zip: TAbZipKit;
 begin
-  DeleteFile(TestTempDir + 'comment.zip');
   Zip := TAbZipKit.Create(nil);
   try
     Zip.FileName := TestTempDir + 'comment.zip';

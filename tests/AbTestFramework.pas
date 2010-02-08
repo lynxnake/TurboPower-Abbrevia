@@ -56,6 +56,8 @@ type
 {$ENDIF}
 
   TAbTestCase = class(TTestCase)
+  private
+    FTempDirCreated: Boolean;
   protected
   {$IFDEF WINZIPTESTS}
     FSpawnComplete  : TSimpleEvent;
@@ -64,7 +66,6 @@ type
     procedure SpawnTimeOutEvent(Sender : TObject);
     procedure ExecuteAndWait(ExeName,Param : string; TimeOut : Integer = 0); // Exception if failure
   {$ENDIF}
-    function GetTestFileDir : string;
     function GetTestTempDir : string;
     function GetWindowsDir : string;
     procedure CheckFilesMatch(const AFileName1, aFileName2 : string;
@@ -77,14 +78,14 @@ type
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
     procedure SetUp; override;
     procedure TearDown; override;
-    function FilesInDirectory(const aDir : string) : TStringList;
+    class function FilesInDirectory(const aDir : string) : TStringList;
     procedure CheckDirMatch(aDir1, aDir2 : string; IgnoreMissingFiles : Boolean = True);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
 
   public
-    property TestFileDir : string
-      read GetTestFileDir;
+    class function TestFileDir: string;
+
     property TestTempDir : string
       read GetTestTempDir;
   end;
@@ -114,6 +115,8 @@ type
   end;
 
 implementation
+
+{$WARN SYMBOL_PLATFORM OFF}
 
 uses
 {$IFDEF WINZIPTESTS}
@@ -261,6 +264,10 @@ begin
         end
         else
           Files.Add(aDir + SR.Name);
+        {$IFDEF MSWINDOWS}
+        if (SR.Attr and faReadOnly) <> 0 then
+          FileSetAttr(aDir + SR.Name, SR.Attr and not faReadOnly);
+        {$ENDIF}
       until FindNext(SR) <> 0;
       // Close search to free locks on files/directories
       FindClose(SR);
@@ -313,11 +320,12 @@ begin
 end;
 {$ENDIF}
 
-function TAbTestCase.FilesInDirectory(const aDir : string) : TStringList;
+class function TAbTestCase.FilesInDirectory(const aDir : string) : TStringList;
 var
   SR : TSearchRec;
 begin
-  Check(DirectoryExists(aDir), 'Directory Requested does not exist : ' + aDir);
+  if not DirectoryExists(aDir) then
+    raise ETestFailure.Create('Directory Requested does not exist : ' + aDir);
   Result := TStringList.Create;
   Result.Sorted := True;
   if FindFirst(AbAddBackSlash(aDir) + '*', faAnyFile, SR) = 0 then begin
@@ -329,7 +337,7 @@ begin
   end;
 end;
 
-function TAbTestCase.GetTestFileDir: string;
+class function TAbTestCase.TestFileDir: string;
 begin
   // May want to place in ini file in the future but this will do for now
   Result := ExePath + 'testfiles' + PathDelim;
@@ -337,7 +345,11 @@ end;
 
 function TAbTestCase.GetTestTempDir: string;
 begin
-  Result := GetTestFileDir + 'temp' + PathDelim;
+  Result := TestFileDir + 'temp' + PathDelim;
+  if not FTempDirCreated then begin
+    CreateDir(Result);
+    FTempDirCreated := True;
+  end;
 end;
 
 function TAbTestCase.GetWindowsDir: string;
@@ -358,8 +370,6 @@ end;
 procedure TAbTestCase.SetUp;
 begin
   inherited;
-  if not DirectoryExists(TestTempDir) then
-    CreateDir(TestTempDir);
   {$IFDEF WINZIPTESTS}
     FSpawnComplete := TSimpleEvent.Create;
   {$ENDIF}
@@ -390,6 +400,10 @@ begin
   {$IFDEF WINZIPTESTS}
     FSpawnComplete.Free;
   {$ENDIF}
+  if FTempDirCreated then begin
+    DelTree(TestTempDir);
+    FTempDirCreated := False;
+  end;
 end;
 
 { TabCompTestCase }

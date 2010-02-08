@@ -156,8 +156,6 @@ begin
     Fail('Test Aborted');
 
   ExtractTo := TestTempDir + 'WZSpan\';
-  DelTree(ExtractTo);
-  Check(DirectoryExists(extractTo), 'DelTree() was just called it Directory should be deleted');
   CreateDir(ExtractTo);
   ExecuteAndWait(UnWinZip, 'A:\SPANTEST.ZIP ' + ExtractTo);
 
@@ -226,7 +224,7 @@ begin
   ShowMessage('Insert Blank Write Protected Disk in to Drive A');
   Zip := TAbZipper.Create(nil);
   try
-    Zip.BaseDirectory := GetTestFileDir;
+    Zip.BaseDirectory := TestFileDir;
     Zip.FileName := 'A:\SPANTEST.ZIP';
     Zip.AddFiles('MPL-1_1.txt',faAnyFile);
     Zip.Save;
@@ -252,7 +250,7 @@ begin
   ShowMessage('Insert Blank Formated Disk in to Drive A');
   Zip := TAbZipper.Create(nil);
   try
-    Zip.BaseDirectory := GetTestFileDir;
+    Zip.BaseDirectory := TestFileDir;
     Zip.OnArchiveItemProgress := HandleWriteFailure1ProgressEvent;
     Zip.FileName := 'A:\SPANTEST.ZIP';
     Zip.AddFiles('MPL-1_1.txt', faAnyFile);

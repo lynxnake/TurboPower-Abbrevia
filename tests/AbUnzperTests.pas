@@ -24,15 +24,9 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbUnzperTests;
+
 {$I AbDefine.inc}
-{ The following define is unit specific it will build the files used
-  in the tests here. Due to the potential problems of compress having
-  a problem and uncompress not, I did not want to confuse the tests by
-  having these created every time, but only when needed under a stable
-  code base... Otherwise it would more difficult to determine which
-  side the problem was on!  WATCH out for hardcoding of paths, if you
-  use this compiler define}
-{.$DEFINE BUILDTESTS}
+
 interface
 
 uses
@@ -77,96 +71,54 @@ type
     procedure TestLocale4;
     procedure TestEmptyFolders;
     procedure TestFindCentralDirTail;
-
-    {$IFDEF BUILDTESTS}
-    procedure CreateTestFiles;
-    {$ENDIF}
   end;
 
 implementation
 
 uses
-{$IFDEF BUILDTESTS}
-  AbZipper,
-{$ENDIF}
   AbArcTyp, AbUtils;
 
 { TAbUnZipperTests }
 
 procedure TAbUnZipperTests.CheckBadPWOverwrite;
+// [ 698162 ] Failed unzipping of password protected files clobbers original
 var
- Fs : TFileStream;
- TestFile : String;
- Buffer,Buffer1 : Array[0..20] of Char;
+  Fs : TFileStream;
+  TestFile : String;
+  Buffer, Buffer1 : array[0..20] of Char;
 begin
-// 698162 Failed unzipping of password protected files clobbers original
-   TestFile := TestTempDir + 'MPL-1_1.txt';
-   if FileExists(TestFile) then
-      DeleteFile(TestFile);
-   // Create Dummy file to test with.
-   FillChar(Buffer,SizeOf(Buffer),#0);
-   Buffer := 'THIS IS A TEST';
-   Fs := TFileStream.Create(TestFile,fmCreate);
-   FS.Write(Buffer,SizeOf(Buffer)); // Write something to file
-   FS.Free;
-   // Try to extract with wrong password
-   Component.FileName := TestFileDir + 'simplepw.zip';
-   Component.Password := 'wrong password';
-   Component.BaseDirectory := TestTempDir;
-   try
-   Component.ExtractFiles('*.*'); // MPL-1_1.TXT
-   except
+  TestFile := TestTempDir + 'MPL-1_1.txt';
+  // Create Dummy file to test with.
+  FillChar(Buffer, SizeOf(Buffer),#0);
+  Buffer := 'THIS IS A TEST';
+  Fs := TFileStream.Create(TestFile, fmCreate);
+  try
+    Fs.Write(Buffer, SizeOf(Buffer)); // Write something to file
+  finally
+    Fs.Free;
+  end;
+  // Try to extract with wrong password
+  Component.FileName := TestFileDir + 'simplepw.zip';
+  Component.Password := 'wrong password';
+  Component.BaseDirectory := TestTempDir;
+  try
+    Component.ExtractFiles('*.*'); // MPL-1_1.TXT
+  except
     on EAbInflatePasswordError do
       // nothing Expected
-   end;
+  end;
 
-   CheckFileExists(TestFile);
+  CheckFileExists(TestFile);
 
-   // Test to make sure file matches dummy original
-   Fs := TFileStream.Create(TestFile,fmOpenRead);
-   try
-     FS.Read(Buffer1,SizeOf(Buffer1));
-     CompareMem(@Buffer[0],@Buffer[1],SizeOf(Buffer));
-   finally
+  // Test to make sure file matches dummy original
+  Fs := TFileStream.Create(TestFile,fmOpenRead);
+  try
+    FS.Read(Buffer1,SizeOf(Buffer1));
+    CompareMem(@Buffer[0],@Buffer[1],SizeOf(Buffer));
+  finally
     Fs.free;
-    DeleteFile(TestFile); 
-   end;
-
+  end;
 end;
-
-{$IFDEF BUILDTESTS}
-procedure TAbUnZipperTests.CreateTestFiles;
-var
- Zip : TAbZipper;
-begin
- //Cheap and easy way to keep the code around that I use to build the tests
- //Hard Coded to Abbrevia path to keep things easy as this is one time only code
- Zip := TAbZipper.Create(nil);
- try
-    Zip.FileName := TestFileDir + 'MPL.ZIP';
-    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
-    Zip.Save;
- finally
-   Zip.Free;
- end;
- Zip := TAbZipper.Create(nil);
- try
-    Zip.FileName := TestFileDir + 'MPL.GZ';
-    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
-    Zip.Save;
- finally
-   Zip.Free;
- end;
- Zip := TAbZipper.Create(nil);
- try
-    Zip.FileName := TestFileDir + 'MPL.TGZ';
-    Zip.AddFiles('C:\TP\ABBREVIA\MPL-1_1.TXT',faAnyFile);
-    Zip.Save;
- finally
-   Zip.Free;
- end;
-end;
-{$ENDIF}
 
 procedure TAbUnZipperTests.DecompressSimplePW;
 var
@@ -223,60 +175,38 @@ end;
 procedure TAbUnZipperTests.TearDown;
 begin
   inherited;
-
 end;
 
 
 procedure TAbUnZipperTests.TestArchiveNotFound;
 begin
  ExpectedException := EAbFileNotFound;
- // Delete File if it exists
- if FileExists(TestTempDir + 'nonexist.zip') then
-    DeleteFile(TestTempDir + 'nonexist.zip');
  // Try to set the filename to the open byte file.
- Component.FileName := TestTempDir + 'nonexist.zip';
+ Component.FileName := TestFileDir + 'nonexist.zip';
 end;
 
 procedure TAbUnZipperTests.TestBasicUnGzip;
-var
- TestFileName : string;
 begin
-  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
-  if FileExists(TestFileName) then
-     DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
   Component.FileName := TestFileDir + 'MPL.GZ';
   Component.ExtractFiles('*.*');
-  Check(FileExists(TestFileName),'Unzip Test File not Found');
-  DeleteFile(TestFileName)
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestBasicUnGzipTar;
-var
- TestFileName : string;
 begin
-  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
-  if FileExists(TestFileName) then
-     DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
   Component.FileName := TestFileDir + 'MPL.TGZ';
   Component.ExtractFiles('*.*');
-  Check(FileExists(TestFileName),'Unzip Test File not Found');
-  DeleteFile(TestFileName)
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestBasicUnzip;
-var
- TestFileName : string;
 begin
-  TestFileName :=  TestTempDir + 'MPL-1_1.txt';
-  if FileExists(TestFileName) then
-     DeleteFile(TestFileName);
   Component.BaseDirectory := TestTempDir;
   Component.FileName := TestFileDir + 'MPL.ZIP';
   Component.ExtractFiles('*.*');
-  Check(FileExists(TestFileName),'Unzip Test File not Found');
-  DeleteFile(TestFileName);
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestComponentLinks;
@@ -287,8 +217,8 @@ end;
 
 procedure TAbUnZipperTests.TestDefaultStreaming;
 var
-CompStr : STring;
-CompTest : TAbUnZipper;
+  CompStr : string;
+  CompTest : TAbUnZipper;
 begin
   RegisterClass(TAbUnZipper);
   CompStr  := StreamComponent(Component);
@@ -298,30 +228,12 @@ begin
 end;
 
 procedure TAbUnZipperTests.TestGZipDecompress;
-var
- fs,fs2 : TFileStream;
 begin
- fs := TFileStream.Create(TestFileDir + 'dataland.txt',fmOpenRead);
- try
- // [ 822243 ] GZip decompress problem
- component.FileName := TestFileDir + 'download[1].datalandsoftware.com-Aug-2003.gz';
- Component.BaseDirectory:= TestTempDir;
- {$IFDEF UseLogging}
- Component.LogFile := TestTempDir + 'dataland.log';
- Component.Logging := True;
- {$ENDIF}
- Component.ExtractAt(0,TestTempDir + 'dataland.txt');
- fs2 := TFileStream.Create(TestTempDir + 'dataland.txt',fmOpenRead);
- try
- Check(fs2.Size > 0,'Extracted File is 0 bytes in size');
- CheckStreamMatch(fs,fs2,'Extracted File does not match original file');
- finally
-  fs2.free;
- end;
- finally
-  fs.free;
- end;
-
+  // [ 822243 ] GZip decompress problem
+  Component.FileName := TestFileDir + 'download[1].datalandsoftware.com-Aug-2003.gz';
+  Component.BaseDirectory:= TestTempDir;
+  Component.ExtractAt(0, TestTempDir + 'dataland.txt');
+  CheckFilesMatch(TestFileDir + 'dataland.txt', TestTempDir + 'dataland.txt');
 end;
 
 procedure TAbUnZipperTests.TestIncompleteZipFile;
@@ -332,8 +244,11 @@ begin
   // central directory tail structure, which should not be recognized.
   ExpectedException := EAbUnhandledType;
   FS := TFileStream.Create(TestTempDir + 'dummy.zip', fmCreate);
-  FS.Write(Ab_ZipLocalFileHeaderSignature, SizeOf(Ab_ZipLocalFileHeaderSignature));
-  FS.Free;
+  try
+    FS.Write(Ab_ZipLocalFileHeaderSignature, SizeOf(Ab_ZipLocalFileHeaderSignature));
+  finally
+    FS.Free;
+  end;
   // Try to set the filename to the open byte file.
   Component.FileName := TestTempDir + 'dummy.zip';
 end;
@@ -513,7 +428,6 @@ begin
 // Error of File Not Found appears if it fails.
   Component.FileName := TestFileDir + 'CpFromFloppy.zip';
   Component.BaseDirectory := TestTempDir;
-  ChDir(TestTempDir);
   Component.ExtractFiles('*.*');
 end;
 

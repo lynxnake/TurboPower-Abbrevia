@@ -35,7 +35,7 @@ uses
 type
   TAbCabArchiveTests = class(TAbTestCase)
   private
-    procedure TestCompressDir(const ADirName: string);
+    procedure TestCompressDir(const aSourceDir: string);
 
   protected
     procedure SetUp; override;
@@ -46,7 +46,9 @@ type
     procedure TestExtract;
     procedure TestExtractToStream;
     procedure TestCompressCanterbury;
+    {$IFDEF UNICODE}
     procedure TestCompressUnicode;
+    {$ENDIF}
   end;
 
 implementation
@@ -64,6 +66,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchiveTests.TearDown;
 begin
+  inherited;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchiveTests.TestVerifyCab;
@@ -76,7 +79,6 @@ procedure TAbCabArchiveTests.TestExtract;
 var
   Cab: TAbCabArchive;
 begin
-  DeleteFile(TestTempDir + 'MPL-1_1.TXT');
   Cab := TAbCabArchive.Create(TestFileDir + 'MPL.CAB', fmOpenRead);
   try
     Cab.Load;
@@ -107,44 +109,44 @@ begin
   end;
 end;
 {----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.TestCompressDir(const ADirName: string);
+procedure TAbCabArchiveTests.TestCompressDir(const aSourceDir: string);
 var
   Cab: TAbCabArchive;
   FileName: string;
 begin
-  FileName := TestTempDir + ADirName + '.cab';
-  DeleteFile(FileName);
+  FileName := TestTempDir + 'test.cab';
   Cab := TAbCabArchive.Create(FileName, fmCreate);
   try
-    Cab.BaseDirectory := TestFileDir + ADirName;
+    Cab.BaseDirectory := aSourceDir;
     Cab.Load; // TODO: This shouldn't be necessary
     Cab.AddFiles('*', faAnyFile);
     Cab.Save;
   finally
     Cab.Free;
   end;
-  DelTree(TestTempDir + ADirName);
   Cab := TAbCabArchive.Create(FileName, fmOpenRead);
   try
-    ForceDirectories(TestTempDir + ADirName);
-    Cab.BaseDirectory := TestTempDir + ADirName;
+    CreateDir(TestTempDir + 'test');
+    Cab.BaseDirectory := TestTempDir + 'test';
     Cab.Load;
     Cab.ExtractFiles('*');
   finally
     Cab.Free;
   end;
-  CheckDirMatch(TestFileDir + ADirName, TestTempDir + ADirName, False);
+  CheckDirMatch(aSourceDir, TestTempDir + 'test', False);
 end;
 {----------------------------------------------------------------------------}
 procedure TAbCabArchiveTests.TestCompressCanterbury;
 begin
-  TestCompressDir('Canterbury');
+  TestCompressDir(TestFileDir + 'Canterbury' + PathDelim + 'source');
 end;
 {----------------------------------------------------------------------------}
+{$IFDEF UNICODE}
 procedure TAbCabArchiveTests.TestCompressUnicode;
 begin
-  TestCompressDir('Unicode');
+  TestCompressDir(TestFileDir + 'Unicode' + PathDelim + 'source');
 end;
+{$ENDIF}
 {----------------------------------------------------------------------------}
 
 initialization

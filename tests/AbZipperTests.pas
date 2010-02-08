@@ -83,24 +83,22 @@ begin
   // it is not designed to test the data in the resulting zip file.
   TestFileName := TestTempDir + 'basic.tgz';
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   CheckFileExists(TestFileName);
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.BasicGZipTarFile2;
 var
   TestFileName : string;
 begin
-  TestFileName := TestTempDir + 'abasic.tar.gz';
+  TestFileName := TestTempDir + 'basic.tar.gz';
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   CheckFileExists(TestFileName);
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.BasicZipFile;
@@ -111,11 +109,10 @@ begin
   // it is not designed to test the data in the resulting zip file.
   TestFileName := TestTempDir + 'basic.zip';
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   CheckFileExists(TestFileName);
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.CreateAndTestBasicZipFile;
@@ -128,7 +125,7 @@ begin
   if FileExists(TestFileName) then
     DeleteFile(TestFileName);
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   Component.FileName := '';
@@ -165,7 +162,7 @@ begin
     DeleteFile(TestFileName);
   Component.AutoSave := True;
   Component.FileName := TestFileName;
-  Component.AddFiles(GetTestFileDir + '*.*',faAnyFile);
+  Component.AddFiles(TestFileDir + '*.*',faAnyFile);
   Component.FileName := '';
   CheckFileExists(TestFileName);
 
@@ -195,8 +192,6 @@ var
 begin
   // Test AutoSave setting Base Directory.
   TestFileName := TestTempDir + 'basic.zip';
-  if FileExists(TestFileName) then
-    DeleteFile(TestFileName);
   Component.AutoSave := True;
   Component.BaseDirectory := TestFileDir;
   Component.FileName := TestFileName;
@@ -220,7 +215,6 @@ begin
   finally
     AbUnZip.Free;
   end;
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.CreateAndTestBasicZipFile4;
@@ -230,12 +224,10 @@ var
 begin
   // Test AutoSave setting BaseDirectory and specifing full path to AddFiles
   TestFileName := TestTempDir + 'basic.zip';
-  if FileExists(TestFileName) then
-    DeleteFile(TestFileName);
   Component.AutoSave := True;
   Component.BaseDirectory := TestTempDir;
   Component.FileName := TestFileName;
-  Component.AddFiles(GetTestFileDir + '*.*',faAnyFile);
+  Component.AddFiles(TestFileDir + '*.*',faAnyFile);
   Component.FileName := '';
   CheckFileExists(TestFileName);
 
@@ -255,7 +247,6 @@ begin
   finally
     AbUnZip.Free;
   end;
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.SetUp;
@@ -266,8 +257,8 @@ end;
 
 procedure TAbZipperTests.TearDown;
 begin
-  inherited;
   Component.Free;
+  inherited;
 end;
 
 procedure TAbZipperTests.TestBasicForceTypeGZipTar;
@@ -278,11 +269,10 @@ begin
   Component.ArchiveType := atGzippedTar;
   Component.ForceType := True;
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   CheckFileExists(TestFileName);
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.TestBasicForceTypeZip;
@@ -293,11 +283,10 @@ begin
   Component.ArchiveType := atZip;
   Component.ForceType := True;
   Component.FileName := TestFileName;
-  Component.BaseDirectory := GetTestFileDir;
+  Component.BaseDirectory := TestFileDir;
   Component.AddFiles('*.*',faAnyFile);
   Component.Save;
   CheckFileExists(TestFileName);
-  DeleteFile(TestFileName);
 end;
 
 procedure TAbZipperTests.TestComponentLinks;
