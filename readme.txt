@@ -1,21 +1,21 @@
-TurboPower Abbrevia
+TurboPower Abbrevia 3.05
 
 Table of contents
 
 1.  Introduction
-2.  Current Plans and Priorities
-3.  Package names
-4.  Installation
-5.  Support 
-6.  Bug Reporting
-7.  Version history
-7.1  3.05 Beta #1
-7.2  3.05 Beta #2
-7.3  3.05 Beta #3
-7.4  3.05 Beta #4
-7.5  3.05 Beta #5
-7.6  3.05 Beta #6 (Everyone should read this section!)
-7.7  3.05 Release Candidate
+2.  Package names
+3.  Installation
+4.  Support 
+5.  Bug Reporting
+6.  Version history
+6.1  3.05 Beta #1
+6.2  3.05 Beta #2
+6.3  3.05 Beta #3
+6.4  3.05 Beta #4
+6.5  3.05 Beta #5
+6.6  3.05 Beta #6 (Everyone should read this section!)
+6.7  3.05 Release Candidate
+6.8  3.05 Final
 
 
 ==============================================
@@ -33,37 +33,7 @@ C++Builder support is untested in the current version.
 
 ==============================================
 
-2. Current Plans and Priorities
-
-This release adds Delphi 2009/2010 support, along with various other minor
-fixes and enhancements.  In Delphi 2009/2010 the filenames are all Unicode
-strings, but the archives themselves still only support ANSI paths.
-
-I'm holding off on significant new features and large code changes until after
-this release is finalized.  If no new issues are found this release candidate
-will become 3.05.  I won't consider a bug a blocker unless it was
-introduced after 3.05 beta 6.  If anyone disagrees they're welcome to submit
-patches.
-
-After 3.05 is released work can begin on major features.  I intend to work on
-them in roughly this order:
-  * Unicode filenames
-  * Spanned/split zip improvements
-  * Bzip2 archives using C .obj files
-  * GNU TAR long filename extensions
-  * FreePascal/Delphi 2011 compatibility
-  * 64-bit zip support
-  * Other archive formats (7-zip/RAR/etc) either in Delphi or using C DLLs
-
-I'm also planning on reworking things to remove the zip extraction conditional
-defines introduced in 3.05 beta 6.
-
-If you have questions/comments/suggestions, refer to the "Support" and "Bug
-Reporting" sections below.  I welcome any feedback you have.
-
-==============================================
-
-3. Package names
+2. Package names
 
 TurboPower Abbrevia package names have the following form:
 
@@ -81,7 +51,7 @@ the filename B305_D50.*.
 
 ==============================================
 
-4. Installation
+3. Installation
 
 To install TurboPower Abbrevia into your IDE, take the following steps:
 
@@ -105,7 +75,7 @@ To install TurboPower Abbrevia into your IDE, take the following steps:
 
 ==============================================
 
-5.  Support 
+4.  Support 
 
 Support for Abbrevia can be obtained through the "Help" forum on 
 the SourceForge site at
@@ -121,7 +91,7 @@ Access the support newsgroups with a browser:
 
 ==============================================
 
-6.  Bug Reporting
+5.  Bug Reporting
 
 All bugs and feature requests are handled via the SF.NET trackers.  If
 you have a found a bug please post it here so it does not get lost.
@@ -137,7 +107,7 @@ fixed.
 
 ==============================================
 
-7. Version history
+6. Version history
 
 Below you will find the history of the 3.05 Beta Releases.
 The number in brackets is the Bug and Enchancement Tracker IDs from SF.NET. 
@@ -145,7 +115,7 @@ The number in brackets is the Bug and Enchancement Tracker IDs from SF.NET.
 
 ================
 
-7.1   3.05 Beta #1
+6.1   3.05 Beta #1
 
   Bug Fixes
   ---------
@@ -168,7 +138,7 @@ The number in brackets is the Bug and Enchancement Tracker IDs from SF.NET.
 
 ================
 
-7.2   3.05 Beta #2
+6.2   3.05 Beta #2
 
 NOTE: Disk Spanning and Splitting does not work at all in this release.
   
@@ -192,7 +162,7 @@ NOTE: Disk Spanning and Splitting does not work at all in this release.
  
 ================
 
-7.3   3.05 Beta #3
+6.3   3.05 Beta #3
   
   [884897] Invalid CRC32 and Size Values for GZip Archive   
   [880505] setting Windows file attributes on an open file   
@@ -205,7 +175,7 @@ NOTE: Disk Spanning and Splitting does not work at all in this release.
 
 ================
 
-7.4   3.05 Beta #4
+6.4   3.05 Beta #4
  
   [885672] Current code in CVS fails to build   
   [887793] Current CVS code does not build on D5   
@@ -219,7 +189,7 @@ NOTE: Disk Spanning and Splitting does not work at all in this release.
 
 ================
 
-7.5   3.05 Beta #5
+6.5   3.05 Beta #5
 
   [785269] Access violation on free 
   [885670] Memory corruption on damaged Zip file   
@@ -231,7 +201,7 @@ NOTE: Disk Spanning and Splitting does not work at all in this release.
 
 ================
 
-7.6   3.05 Beta #6
+6.6   3.05 Beta #6
 
   [906875] IDE hangs when closing form with TAbVCLMeterLink  
   [892830] freshing file it doesn't set the correct Item.DiskFileName 
@@ -269,7 +239,7 @@ The TempFile method is the current default behavior.
 
 ================
 
-7.7   3.05 Release Candidate
+6.7   3.05 Release Candidate
 
   Bug Fixes
   ---------
@@ -303,3 +273,17 @@ The TempFile method is the current default behavior.
   Added support for a custom signature for compound files.
   Compound files now supports path strings wihtout '/'.
   Removed support for Windows 95 and Delphi 1-5.
+
+
+================
+
+6.8  3.05 Final
+
+  Bug Fixes
+  ---------
+  VerifyCab returns atUnknown instead of raising an exception for invalid cabs.
+  Fixed memory leak in TAbArchive.Add if the item isn't added.
+  [ 2947007 ] Fixed saving password protected zips, broken in 3.05 RC.
+  [ 2925578 ] Added AbTempFileStream to Delphi 6 and 7 runtime packages.
+  [ 1196468 ] Overflow error in Delphi 2005
+  [ 2896382 ] Fixed TAbMakeCab/TAbCabKit, broken in 3.05 RC.
