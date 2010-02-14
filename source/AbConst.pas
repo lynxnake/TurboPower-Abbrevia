@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* Abbrevia: Abconst.pas 3.05                            *}
+{* Abbrevia: AbConst.pas 3.05                            *}
 {*********************************************************}
 {* Abbrevia: Constants                                   *}
 {*********************************************************}
@@ -50,35 +50,25 @@ const
   AbUnsupportedCompressionMethod = 8;
   AbUserAbort                    = 9;
   AbArchiveBusy                  = 10;
-  AbDiskRequest                  = 11;
-  AbLastDiskRequest              = 12;
-  AbBadSpanStream                = 13;
-  AbDiskNumRequest               = 14;
-  AbNoOverwriteSpanStream        = 15;
-  AbNoSpannedSelfExtract         = 16;
-  AbBlankDisk                    = 17;
-  AbStreamFull                   = 18;
-  AbNoSuchDirectory              = 19;
-  AbInflateBlockError            = 20;
-  AbBadStreamType                = 21;
-  AbTruncateError                = 22;
-  AbZipBadCRC                    = 23;
-  AbZipBadStub                   = 24;
-  AbFileNotFound                 = 25;
-  AbInvalidLFH                   = 26;
-  AbNoArchive                    = 27;
-  AbErrZipInvalid                = 28;
-  AbReadError                    = 29;
-  AbInvalidIndex                 = 30;
-  AbInvalidThreshold             = 31;
-  AbNthImageRequest              = 32;
-  AbLastImageRequest             = 33;
-  AbImageRequest                 = 34;
-
-  AbUnhandledFileType            = 35;
-  AbSpanningNotSupported         = 36;
-  AbImageNumRequest              = 37;
-  AbLogCreateError               = 38;
+  AbBadSpanStream                = 11;
+  AbNoOverwriteSpanStream        = 12;
+  AbNoSpannedSelfExtract         = 13;
+  AbStreamFull                   = 14;
+  AbNoSuchDirectory              = 15;
+  AbInflateBlockError            = 16;
+  AbBadStreamType                = 17;
+  AbTruncateError                = 18;
+  AbZipBadCRC                    = 19;
+  AbZipBadStub                   = 20;
+  AbFileNotFound                 = 21;
+  AbInvalidLFH                   = 22;
+  AbNoArchive                    = 23;
+  AbErrZipInvalid                = 24;
+  AbReadError                    = 25;
+  AbInvalidIndex                 = 26;
+  AbInvalidThreshold             = 27;
+  AbUnhandledFileType            = 28;
+  AbSpanningNotSupported         = 29;
 
   AbBBSReadTooManyBytes          = 40;
   AbBBSSeekOutsideBuffer         = 41;
@@ -107,104 +97,111 @@ const
   AbSWSInvalidOrigin             = 83;
   AbSWSInvalidNewOrigin          = 84;
 
-  AbVersionFormat                = 100;
-  AbMethod                       = 101; {base for later ids, don't add to array!}
-  AbMethod0                      = 101;
-  AbMethod1                      = 102;
-  AbMethod2                      = 103;
-  AbMethod3                      = 104;
-  AbMethod4                      = 105;
-  AbMethod5                      = 106;
-  AbMethod6                      = 107;
-  AbMethod7                      = 108;
-  AbMethod8                      = 109;
-  AbMethod9                      = 110;
-  AbMethod10                      = 111;
-  AbMethod11                      = 112;
+  AbVMSReadTooManyBytes           = 100;
+  AbVMSInvalidOrigin              = 101;
+  AbVMSErrorOpenSwap              = 102;
+  AbVMSSeekFail                   = 103;
+  AbVMSReadFail                   = 104;
+  AbVMSWriteFail                  = 105;
+  AbVMSWriteTooManyBytes          = 106;
 
-  AbCompressedSizeFormat          = 113;
-  AbUncompressedSizeFormat        = 114;
-  AbCompressionMethodFormat       = 115;
-  AbCompressionRatioFormat        = 116;
-  AbCRCFormat                     = 117;
-  AbReadOnly                      = 118;
-  AbHidden                        = 119;
-  AbSystem                        = 120;
-  AbArchived                      = 121;
-  AbEFAFormat                     = 122;
-  AbIFAFormat                     = 123;
-  AbText                          = 124;
-  AbBinary                        = 125;
-  AbEncryptionFormat              = 126;
-  AbEncrypted                     = 127;
-  AbNotEncrypted                  = 128;
-  AbUnknown                       = 129;
-  AbTimeStampFormat               = 130;
-  AbMadeByFormat                  = 131;
-  AbNeededFormat                  = 132;
-  AbCommentFormat                 = 133;
+  AbGZipInvalid                   = 200;
+  AbGzipBadCRC                    = 201;
+  AbGzipBadFileSize               = 202;
 
-  AbDefaultExt                    = 134;
-  AbFilter                        = 135;
-  AbFileNameTitle                 = 136;
 
-  AbOK                            = 137;
-  AbCancel                        = 138;
-  AbSelectDirectory               = 139;
-
-  AbEnterPassword                 = 140;
-  AbPassword                      = 141;
-  AbVerify                        = 142;
-
-  AbCabExt                        = 150;
-  AbCabFilter                     = 151;
-  AbLogExt                        = 152;
-  AbLogFilter                     = 153;
-  AbExeExt                        = 154;
-  AbExeFilter                     = 155;
-
-  AbVMSReadTooManyBytes           = 200;
-  AbVMSInvalidOrigin              = 201;
-  AbVMSErrorOpenSwap              = 202;
-  AbVMSSeekFail                   = 203;
-  AbVMSReadFail                   = 204;
-  AbVMSWriteFail                  = 205;
-  AbVMSWriteTooManyBytes          = 206;
-
-  AbDefColHeadings                = 250;
-  AbItemNameHeading               = 250;
-  AbPackedHeading                 = 251;
-  AbMethodHeading                 = 252;
-  AbRatioHeading                  = 253;
-  AbCRCHeading                    = 254;
-  AbFileAttrHeading               = 255;
-  AbFileFormatHeading             = 256;
-  AbEncryptionHeading             = 257;
-  AbTimeStampHeading              = 258;
-  AbFileSizeHeading               = 259;
-  AbVersionMadeHeading            = 260;
-  AbVersionNeededHeading          = 261;
-  AbPathHeading                   = 262;
-  AbPartialHeading                = 263;
-  AbExecutableHeading             = 264;
-
-  AbCabMethod0                    = 290;
-  AbCabMethod1                    = 291;
-
-  AbLtAdd                         = 310;
-  AbLtDelete                      = 311;
-  AbLtExtract                     = 312;
-  AbLtFreshen                     = 313;
-  AbLtMove                        = 314;
-  AbLtReplace                     = 315;
-  AbLtStart                       = 316;
-
-  AbGZipInvalid                   = 400;
-  AbGzipBadCRC                    = 401;
-  AbGzipBadFileSize               = 402;
-
-  AbUnhandledEntity               = 513;
+function AbStrRes(Index : Integer) : string;
 
 implementation
+
+uses
+  AbResString;
+
+type
+  AbStrRec = record
+    ID: Integer;
+    Str: string;
+  end;
+
+const
+  AbStrArray : array [0..62] of AbStrRec = (
+    (ID: AbZipVersionNeeded; Str: AbZipVersionNeededS),
+    (ID: AbUnknownCompressionMethod; Str: AbUnknownCompressionMethodS),
+    (ID: AbNoExtractionMethod; Str: AbNoExtractionMethodS),
+    (ID: AbInvalidPassword; Str: AbInvalidPasswordS),
+    (ID: AbNoInsertionMethod; Str: AbNoInsertionMethodS),
+    (ID: AbInvalidFactor; Str: AbInvalidFactorS),
+    (ID: AbDuplicateName; Str: AbDuplicateNameS),
+    (ID: AbUnsupportedCompressionMethod; Str: AbUnsupportedCompressionMethodS),
+    (ID: AbUserAbort; Str: AbUserAbortS),
+    (ID: AbArchiveBusy; Str: AbArchiveBusyS),
+    (ID: AbBadSpanStream; Str: AbBadSpanStreamS),
+    (ID: AbNoOverwriteSpanStream; Str: AbNoOverwriteSpanStreamS),
+    (ID: AbNoSpannedSelfExtract; Str: AbNoSpannedSelfExtractS),
+    (ID: AbStreamFull; Str: AbStreamFullS),
+    (ID: AbNoSuchDirectory; Str: AbNoSuchDirectoryS),
+    (ID: AbInflateBlockError; Str: AbInflateBlockErrorS),
+    (ID: AbBadStreamType; Str: AbBadStreamTypeS),
+    (ID: AbTruncateError; Str: AbTruncateErrorS),
+    (ID: AbZipBadCRC; Str: AbZipBadCRCS),
+    (ID: AbZipBadStub; Str: AbZipBadStubS),
+    (ID: AbFileNotFound; Str: AbFileNotFoundS),
+    (ID: AbInvalidLFH; Str: AbInvalidLFHS),
+    (ID: AbNoArchive; Str: AbNoArchiveS),
+    (ID: AbErrZipInvalid; Str: AbErrZipInvalidS),
+    (ID: AbReadError; Str: AbReadErrorS),
+    (ID: AbInvalidIndex; Str: AbInvalidIndexS),
+    (ID: AbInvalidThreshold; Str: AbInvalidThresholdS),
+    (ID: AbUnhandledFileType; Str: AbUnhandledFileTypeS),
+    (ID: AbSpanningNotSupported; Str: AbSpanningNotSupportedS),
+
+    (ID: AbBBSReadTooManyBytes; Str: AbBBSReadTooManyBytesS),
+    (ID: AbBBSSeekOutsideBuffer; Str: AbBBSSeekOutsideBufferS),
+    (ID: AbBBSInvalidOrigin; Str: AbBBSInvalidOriginS),
+    (ID: AbBBSWriteTooManyBytes; Str: AbBBSWriteTooManyBytesS),
+
+    (ID: AbNoCabinetDllError; Str: AbNoCabinetDllErrorS),
+    (ID: AbFCIFileOpenError; Str: AbFCIFileOpenErrorS),
+    (ID: AbFCIFileReadError; Str: AbFCIFileReadErrorS),
+    (ID: AbFCIFileWriteError; Str: AbFCIFileWriteErrorS),
+    (ID: AbFCIFileCloseError; Str: AbFCIFileCloseErrorS),
+    (ID: AbFCIFileSeekError; Str: AbFCIFileSeekErrorS),
+    (ID: AbFCIFileDeleteError; Str: AbFCIFileDeleteErrorS),
+    (ID: AbFCIAddFileError; Str: AbFCIAddFileErrorS),
+    (ID: AbFCICreateError; Str: AbFCICreateErrorS),
+    (ID: AbFCIFlushCabinetError; Str: AbFCIFlushCabinetErrorS),
+    (ID: AbFCIFlushFolderError; Str: AbFCIFlushFolderErrorS),
+    (ID: AbFDICopyError; Str: AbFDICopyErrorS),
+    (ID: AbFDICreateError; Str: AbFDICreateErrorS),
+    (ID: AbInvalidCabTemplate; Str: AbInvalidCabTemplateS),
+    (ID: AbInvalidCabFile; Str: AbInvalidCabFileS),
+
+    (ID: AbSWSNotEndofStream; Str: AbSWSNotEndofStreamS),
+    (ID: AbSWSSeekFailed; Str: AbSWSSeekFailedS),
+    (ID: AbSWSWriteFailed; Str: AbSWSWriteFailedS),
+    (ID: AbSWSInvalidOrigin; Str: AbSWSInvalidOriginS),
+    (ID: AbSWSInvalidNewOrigin; Str: AbSWSInvalidNewOriginS),
+
+    (ID: AbVMSReadTooManyBytes; Str: AbVMSReadTooManyBytesS),
+    (ID: AbVMSInvalidOrigin; Str: AbVMSInvalidOriginS),
+    (ID: AbVMSErrorOpenSwap; Str: AbVMSErrorOpenSwapS),
+    (ID: AbVMSSeekFail; Str: AbVMSSeekFailS),
+    (ID: AbVMSReadFail; Str: AbVMSReadFailS),
+    (ID: AbVMSWriteFail; Str: AbVMSWriteFailS),
+    (ID: AbVMSWriteTooManyBytes; Str: AbVMSWriteTooManyBytesS),
+
+    (ID: AbGzipInvalid; Str: AbGzipInvalidS),
+    (ID: AbGzipBadCRC; Str: AbGzipBadCRCS),
+    (ID: AbGzipBadFileSize; Str: AbGzipBadFileSizeS)
+  );
+
+function AbStrRes(Index : Integer) : string;
+var
+  i : Integer;
+begin
+  for i := Low(AbStrArray) to High(AbStrArray) do
+    if AbStrArray[i].ID = Index then
+      Result := AbStrArray[i].Str;
+end;
 
 end.
