@@ -189,18 +189,8 @@ const
    $9B, $5B, $DB, $3B, $BB, $7B, $FB, $07, $87, $47, $C7, $27, $A7, $67,
    $E7, $17, $97, $57, $D7, $37, $B7, $77, $F7, $0F, $8F, $4F, $CF, $2F,
    $AF, $6F, $EF, $1F, $9F, $5F, $DF, $3F, $BF, $7F, $FF);
-asm
-  push eax                 // save EAX
-  mov  eax, [eax]          // read value into EAX
-  xor  ecx, ecx            // zero ECX
-  mov  cl, al              // prepare for table lookup
-  lea  edx, RevTable       // get address to table
-  mov  al, [edx+ecx]       // table lookup for low byte
-  mov  cl, ah              // prepare high byte for table lookup
-  mov  ah, al              // reverse bytes
-  mov  al, [edx+ecx]       // table lookup for high (now low) byte
-  pop  edx                 // restore address to W
-  mov  [edx], eax          // move value to W
+begin
+  W := RevTable[Byte(W shr 8)] or Word(RevTable[Byte(W)] shl 8);
 end;
 
 
