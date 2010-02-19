@@ -81,9 +81,6 @@ const
   AbThisDir       = '.';
   AbParentDir     = '..';
 
-var
-  AbCrc32TableOfs : Word;
-
 type
   TAbArchiveType = (atUnknown, atZip, atSpannedZip {!!.01}, atSelfExtZip,
                     atTar, atGzip, atGzippedTar, atCab);

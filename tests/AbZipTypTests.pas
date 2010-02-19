@@ -30,7 +30,7 @@
 interface
 
 uses
-  Windows, SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbZipTyp;
+  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbZipTyp;
 
 type
   TAbZipArchiveTests = class(TAbTestCase)
@@ -218,7 +218,7 @@ var
   Zip: TAbZipArchive;
   TargetDir: string;
 begin
-  Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmCreate );
+  Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmCreate);
   try
     Zip.CompressionMethodToUse := FMethod;
     Zip.InsertHelper := InsertHelper;

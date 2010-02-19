@@ -1699,6 +1699,7 @@ begin
   FItemInfo.FileComment := Value;
 end;
 { -------------------------------------------------------------------------- }
+{$IFDEF KYLIX}{$IFOPT O+}{$DEFINE OPTIMIZATIONS_ON}{$O-}{$ENDIF}{$ENDIF}
 procedure TAbZipItem.SetFileName(const Value : string );
 var
   {$IFDEF MSWINDOWS}
@@ -1760,6 +1761,7 @@ begin
     FItemInfo.ExtraField.Delete(Ab_InfoZipUnicodePathSubfieldID);
   FItemInfo.ExtraField.Delete(Ab_XceedUnicodePathSubfieldID);
 end;
+{$IFDEF OPTIMIZATIONS_ON}{$O+}{$ENDIF}
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetGeneralPurposeBitFlag( Value : Word );
 begin

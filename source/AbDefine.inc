@@ -143,6 +143,10 @@
   {$ENDIF}
 {$ENDIF}
 
+{$IF DEFINED(LINUX) AND NOT DEFINED(FPC)}
+  {$DEFINE KYLIX}
+{$IFEND}
+
 { determine whether CLX is used, should always be on Linux }
 {$IFDEF LINUX}
 {$DEFINE UsingCLX }

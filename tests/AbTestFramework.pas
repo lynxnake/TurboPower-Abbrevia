@@ -33,7 +33,7 @@ uses
   TestFramework,
   Variants,
 {$IFDEF LINUX}
-  QControls, QForms,
+  Libc, QControls, QForms,
 {$ELSE}
   Windows, Controls, Forms,
 {$ENDIF}
@@ -136,18 +136,20 @@ procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string;
   IgnoreMissingFiles: Boolean);
 var
   d1,d2 : TStringList;
-  I : Integer;
+  I, J : Integer;
 begin
   d1 := FilesInDirectory(aDir1);
   d2 := FilesInDirectory(aDir2);
   try
     Check(IgnoreMissingFiles or (d1.count = d2.count),
       'Number of files in directories do not match');
-    for I := 0 to d1.Count - 1 do
-      if d2.IndexOf(d1[I]) = - 1 then
+    for I := 0 to d1.Count - 1 do begin
+      J := d2.IndexOf(d1[I]); // Allow case insensitive matches on case-sensitive filesystems
+      if J = - 1 then
         Check(IgnoreMissingFiles, d1[I] + ' is missing in directory')
       else
-        CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i], AbAddBackSlash(aDir2) + d1[i], d1[i] + ' does not match');
+        CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i], AbAddBackSlash(aDir2) + d2[J], d1[i] + ' does not match');
+    end;
   finally
     d1.Free;
     d2.Free;
@@ -267,6 +269,10 @@ begin
         {$IFDEF MSWINDOWS}
         if (SR.Attr and faReadOnly) <> 0 then
           FileSetAttr(aDir + SR.Name, SR.Attr and not faReadOnly);
+        {$ENDIF}
+        {$IFDEF LINUX}
+        if S_ISDIR(SR.Mode) and (SR.Mode and (S_IWUSR or S_IXUSR) <> S_IWUSR or S_IXUSR) then
+          chmod(PChar(aDir + SR.Name), SR.Mode or S_IWUSR or S_IXUSR);
         {$ENDIF}
       until FindNext(SR) <> 0;
       // Close search to free locks on files/directories
