@@ -309,22 +309,20 @@ end;
 procedure TAbCustomZipper.InitArchive;
 begin
   inherited InitArchive;
-  if (ZipArchive <> nil) then begin
-    if (ZipArchive is TAbZipArchive) then begin
-      {properties}
-      ZipArchive.AutoSave                              := FAutoSave;
-      TAbZipArchive(ZipArchive).CompressionMethodToUse := FCompressionMethodToUse;
-      TAbZipArchive(ZipArchive).DeflationOption        := FDeflationOption;
-      FArchive.DOSMode                                 := FDOSMode;
-      ZipArchive.StoreOptions                          := FStoreOptions;
-      {events}
-      ZipArchive.OnArchiveSaveProgress                 := DoArchiveSaveProgress; {!!.04}
-      ZipArchive.OnConfirmSave                         := DoConfirmSave;
-      TAbZipArchive(ZipArchive).OnRequestBlankDisk     := OnRequestBlankDisk;
-      ZipArchive.OnSave                                := DoSave;
-      TAbZipArchive(ZipArchive).InsertHelper           := ZipProc;
-      TAbZipArchive(ZipArchive).InsertFromStreamHelper := ZipFromStreamProc;
-    end;
+  if (ZipArchive is TAbZipArchive) then begin
+    {properties}
+    ZipArchive.AutoSave                              := FAutoSave;
+    TAbZipArchive(ZipArchive).CompressionMethodToUse := FCompressionMethodToUse;
+    TAbZipArchive(ZipArchive).DeflationOption        := FDeflationOption;
+    FArchive.DOSMode                                 := FDOSMode;
+    ZipArchive.StoreOptions                          := FStoreOptions;
+    {events}
+    ZipArchive.OnArchiveSaveProgress                 := DoArchiveSaveProgress; {!!.04}
+    ZipArchive.OnConfirmSave                         := DoConfirmSave;
+    TAbZipArchive(ZipArchive).OnRequestBlankDisk     := OnRequestBlankDisk;
+    ZipArchive.OnSave                                := DoSave;
+    TAbZipArchive(ZipArchive).InsertHelper           := ZipProc;
+    TAbZipArchive(ZipArchive).InsertFromStreamHelper := ZipFromStreamProc;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -367,15 +365,15 @@ procedure TAbCustomZipper.SetCompressionMethodToUse(
   Value : TAbZipSupportedMethod);
 begin
   FCompressionMethodToUse := Value;
-  if (ZipArchive <> nil) then
-    (ZipArchive as TAbZipArchive).CompressionMethodToUse := Value;
+  if (ZipArchive is TAbZipArchive) then
+    TAbZipArchive(ZipArchive).CompressionMethodToUse := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetDeflationOption(Value : TAbZipDeflationOption);
 begin
   FDeflationOption := Value;
-  if (ZipArchive <> nil) then
-    (ZipArchive as TAbZipArchive).DeflationOption := Value;
+  if (ZipArchive is TAbZipArchive) then
+    TAbZipArchive(ZipArchive).DeflationOption := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetDOSMode(Value : Boolean);
@@ -485,8 +483,8 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetZipfileComment(const Value : AnsiString);
 begin
-  if (ZipArchive <> nil) then
-    (ZipArchive as TAbZipArchive).ZipfileComment := Value
+  if (ZipArchive is TAbZipArchive) then
+    TAbZipArchive(ZipArchive).ZipfileComment := Value
   else
     raise EAbNoArchive.Create;
 end;
