@@ -38,7 +38,8 @@ interface
 uses
   SysUtils, Classes,
   AbBrowse,
-  AbBase, AbExcept, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbSpanSt;
+  AbBase, AbExcept, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbBzip2Typ,
+  AbSpanSt;
 
 type
   TAbCustomZipBrowser = class(TAbBaseBrowser)
@@ -151,9 +152,10 @@ end;
 function TAbCustomZipBrowser.GetTarAutoHandle: Boolean;
 begin
   Result := False;
-  if FArchive is TAbGzipArchive then begin
-    Result := TAbGzipArchive(FArchive).TarAutoHandle;
-  end;
+  if FArchive is TAbGzipArchive then
+    Result := TAbGzipArchive(FArchive).TarAutoHandle
+  else if FArchive is TAbBzip2Archive then
+    Result := TAbBzip2Archive(FArchive).TarAutoHandle;
 end;
 { -------------------------------------------------------------------------- }
 function TAbCustomZipBrowser.GetZipArchive : TAbArchive;
@@ -233,6 +235,20 @@ begin
           inherited InitArchive;
         end;
 
+        atBzip2 : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmOpenRead or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := False;
+          inherited InitArchive;
+        end;
+
+        atBzippedTar : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmOpenRead or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := True;
+          inherited InitArchive;
+        end;
+
         else
           raise EAbUnhandledType.Create;
       end {case};
@@ -285,6 +301,14 @@ begin
   if FArchive is TAbGzipArchive then begin
     if TAbGzipArchive(FArchive).TarAutoHandle <> Value then begin
       TAbGzipArchive(FArchive).TarAutoHandle := Value;
+      InitArchive;
+      FArchive.Load;
+      DoChange;
+    end;
+  end;
+  if FArchive is TAbBzip2Archive then begin
+    if TAbBzip2Archive(FArchive).TarAutoHandle <> Value then begin
+      TAbBzip2Archive(FArchive).TarAutoHandle := Value;
       InitArchive;
       FArchive.Load;
       DoChange;

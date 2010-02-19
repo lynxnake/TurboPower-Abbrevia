@@ -38,7 +38,7 @@ interface
 uses
   SysUtils, Classes,
   AbBrowse, AbZBrows,
-  AbBase, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbSpanSt;
+  AbBase, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbBzip2Typ, AbSpanSt;
 
 type
   TAbCustomZipper = class(TAbCustomZipBrowser)
@@ -430,6 +430,20 @@ begin
           inherited InitArchive;
         end;
 
+        atBzip2 : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmOpenReadWrite or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := False;
+          inherited InitArchive;
+        end;
+
+        atBzippedTar : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmOpenReadWrite or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := True;
+          inherited InitArchive;
+        end;
+
         else
           raise EAbUnhandledType.Create;
       end {case};
@@ -462,6 +476,20 @@ begin
           FArchive := TAbGzipArchive.Create(FileName, fmCreate or fmShareDenyNone);
           TAbGzipArchive(FArchive).TarAutoHandle := FTarAutoHandle;
           TAbGzipArchive(FArchive).IsGzippedTar := True;
+          inherited InitArchive;
+        end;
+
+        atBzip2 : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmCreate or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := False;
+          inherited InitArchive;
+        end;
+
+        atBzippedTar : begin
+          FArchive := TAbBzip2Archive.Create(FileName, fmCreate or fmShareDenyNone);
+          TAbBzip2Archive(FArchive).TarAutoHandle := FTarAutoHandle;
+          TAbBzip2Archive(FArchive).IsBzippedTar := True;
           inherited InitArchive;
         end;
 

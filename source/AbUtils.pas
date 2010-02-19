@@ -83,7 +83,7 @@ const
 
 type
   TAbArchiveType = (atUnknown, atZip, atSpannedZip {!!.01}, atSelfExtZip,
-                    atTar, atGzip, atGzippedTar, atCab);
+                    atTar, atGzip, atGzippedTar, atCab, atBzip2, atBzippedTar);
 
 
 {$IFDEF LINUX}
