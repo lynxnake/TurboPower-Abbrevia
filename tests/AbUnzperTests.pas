@@ -56,7 +56,6 @@ type
     procedure TestBasicUnGzip;
     procedure TestBasicUnGzipTar;
     procedure TestUserAbort;
-    procedure TestWinZipOutput;
     procedure TestGZipDecompress;
     procedure TestZeroByteZipFile;
     procedure TestIncompleteZipFile;
@@ -394,17 +393,6 @@ procedure TAbUnZipperTests.TestUserAbortProgress(Sender: TObject;
   Progress: Byte; var Abort: Boolean);
 begin
  Abort := (Progress > 25);
-end;
-
-procedure TAbUnZipperTests.TestWinZipOutput;
-begin
-// This compares a known problem archive with the results that were extracted from
-// WinZip.
-  Component.BaseDirectory := TestTempDir;
-  Component.Filename := TestFileDir + '20030328.ZIP';
-  Component.ExtractFiles('*.*');
-  CheckDirMatch(TestFileDir + '20030328\',TestTempDir,true);
-
 end;
 
 procedure TAbUnZipperTests.TestZeroByteZipFile;
