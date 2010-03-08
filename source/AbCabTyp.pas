@@ -202,52 +202,52 @@ procedure FXI_FreeMem(lpBuffer : Pointer);
   cdecl;
   {free memory}
 begin
-  Dispose(lpBuffer);
+  FreeMem(lpBuffer);
 end;
 
 
 { == FCI Callback Functions - cdecl calling convention ===================== }
 function FCI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer;
-  PError: PInteger; Archive: TAbCabArchive) : HFILE;
+  PError: PInteger; Archive: TAbCabArchive) : PtrInt;
   cdecl;
   {open a file}
 begin
   Result := _lcreat(lpPathName, 0);
-  if (Result = HFILE_ERROR) then
+  if (Result = -1) then
     raise EAbFCIFileOpenError.Create;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileRead(hFile: HFILE; lpBuffer: Pointer;
-  uBytes: UINT; PError: PInteger; Archive: TAbCabArchive) : HFILE;
+function FCI_FileRead(hFile: PtrInt; lpBuffer: Pointer;
+  uBytes: UINT; PError: PInteger; Archive: TAbCabArchive) : UINT;
   cdecl;
   {read from a file}
 begin
   Result := _lread(hFile, lpBuffer, uBytes);
-  if (Result = HFILE_ERROR) then
+  if (Result = UINT(-1)) then
     raise EAbFCIFileReadError.Create;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileWrite(hFile: HFILE; lpBuffer: Pointer;
-  uBytes: UINT; PError: PInteger; Archive: TAbCabArchive) : HFILE;
+function FCI_FileWrite(hFile: PtrInt; lpBuffer: Pointer;
+  uBytes: UINT; PError: PInteger; Archive: TAbCabArchive) : UINT;
   cdecl;
   {write to a file}
 begin
   Result := _lwrite(hFile, lpBuffer, uBytes);
-  if (Result = HFILE_ERROR) then
+  if (Result = UINT(-1)) then
     raise EAbFCIFileWriteError.Create;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileClose(hFile: HFILE; PError: PInteger;
-  Archive: TAbCabArchive) : HFILE;
+function FCI_FileClose(hFile: PtrInt; PError: PInteger;
+  Archive: TAbCabArchive) : Integer;
   cdecl;
   {close a file}
 begin
   Result := _lclose(hFile);
-  if (Result = HFILE_ERROR) then
+  if (Result = -1) then
     raise EAbFCIFileCloseError.Create;
 end;
 { -------------------------------------------------------------------------- }
-function FCI_FileSeek(hFile: HFILE; Offset: Longint;
+function FCI_FileSeek(hFile: PtrInt; Offset: Longint;
   Origin: Integer; PError: PInteger; Archive: TAbCabArchive) : Longint;
   cdecl;
   {reposition file pointer}
@@ -295,7 +295,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function FCI_GetOpenInfo(lpPathname: Pointer; PDate, PTime, PAttribs : PWord;
-  PError: PInteger; Archive: TAbCabArchive) : Integer;
+  PError: PInteger; Archive: TAbCabArchive) : PtrInt;
   cdecl;
   {open a file and return date/attributes}
 var
@@ -338,7 +338,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function FCI_GetTempFile(lpTempName: PAnsiChar; TempNameSize: Integer;
-                         Archive: TAbCabArchive) : Integer; cdecl;
+                         Archive: TAbCabArchive) : PtrInt; cdecl;
   {obtain temporary filename}
 var
   TempPath : array[0..255] of AnsiChar;
@@ -353,41 +353,39 @@ begin
 end;
 
 { == FDI Callback Functions - cdecl calling convention ===================== }
-function FDI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer) : Integer;
+function FDI_FileOpen(lpPathName: PAnsiChar; Flag, Mode: Integer) : PtrInt;
   cdecl;
   {open a file}
-var
-  Handle : Integer;
 begin
-  Handle := FileOpen(string(lpPathName), fmOpenRead or fmShareDenyWrite);
-  if Handle <> -1 then
-    Result := Integer(TFileStream.Create(Handle))
-  else
+  try
+    Result := PtrInt(TFileStream.Create(string(lpPathName), fmOpenRead or fmShareDenyWrite));
+  except on EFOpenError do
     Result := -1;
+  end;
 end;
 { -------------------------------------------------------------------------- }
-function FDI_FileRead(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
+function FDI_FileRead(hFile: PtrInt; lpBuffer: Pointer; uBytes: UINT) : UINT;
   cdecl;
   {read from a file}
 begin
   Result := TStream(hFile).Read(lpBuffer^, uBytes);
 end;
 { -------------------------------------------------------------------------- }
-function FDI_FileWrite(hFile: HFILE; lpBuffer: Pointer; uBytes: UINT) : UINT;
+function FDI_FileWrite(hFile: PtrInt; lpBuffer: Pointer; uBytes: UINT) : UINT;
   cdecl;
   {write to a file}
 begin
   Result := TStream(hFile).Write(lpBuffer^, uBytes);
 end;
 { -------------------------------------------------------------------------- }
-procedure FDI_FileClose(hFile : HFILE);
+procedure FDI_FileClose(hFile : PtrInt);
   cdecl;
   {close a file}
 begin
   TStream(hFile).Free;
 end;
 { -------------------------------------------------------------------------- }
-function FDI_FileSeek(hFile : HFILE; Offset : Longint; Origin : Integer) : Longint;
+function FDI_FileSeek(hFile : PtrInt; Offset : Longint; Origin : Integer) : Longint;
   cdecl;
   {reposition file pointer}
 begin
@@ -395,7 +393,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function FDI_EnumerateFiles(fdint : FDINOTIFICATIONTYPE;
-  pfdin : PFDINotification) : Integer;
+  pfdin : PFDINotification) : PtrInt;
   cdecl;
   {Enumerate the files and build the archive file list}
 var
@@ -436,7 +434,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function FDI_ExtractFiles(fdint : FDINOTIFICATIONTYPE;
-  pfdin : PFDINotification) : Integer;
+  pfdin : PFDINotification) : PtrInt;
   cdecl;
   {extract file from cabinet}
 var
@@ -744,7 +742,7 @@ begin
     {verify that the archive can be opened and is a cabinet}
   Stream := TFileStream.Create(FArchiveName, fmOpenRead or fmShareDenyNone);
   try
-    if not FDIIsCabinet(FFDIContext, Integer(Stream), @FFDICabInfo) then begin
+    if not FDIIsCabinet(FFDIContext, PtrInt(Stream), @FFDICabInfo) then begin
       CloseCabFile;
       raise EAbInvalidCabFile.Create;
     end;

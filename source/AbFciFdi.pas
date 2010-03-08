@@ -31,12 +31,14 @@
 {* included in the Microsoft Cabinet SDK                 *}
 {*********************************************************}
 
+{$I AbDefine.inc}
+
 unit AbFciFdi;
 
 interface
 
 uses
-  Windows, SysUtils, Classes;
+  Windows, SysUtils, Classes, AbUtils;
 
 const
   CabinetDLL  = 'cabinet.dll';
@@ -116,7 +118,7 @@ type
     psz2     : PAnsiChar;
     psz3     : PAnsiChar;
     pv       : Pointer;
-    hf       : Integer;
+    hf       : PtrInt;
     date     : Word;
     time     : Word;
     attribs  : Word;
@@ -140,7 +142,7 @@ type
       cdecl;
 {----------------------------------------------------------------------------}
   TFDIIsCabinet =
-    function(hfdi : HFDI; hf : Integer; pfdici : PFDICabInfo) : Boolean;
+    function(hfdi : HFDI; hf : PtrInt; pfdici : PFDICabInfo) : Boolean;
       cdecl;
 {----------------------------------------------------------------------------}
   TFDICopy =
@@ -192,7 +194,7 @@ function FDICreate(pfnalloc, pfnfree, pfnopen, pfnread,
   {  cpuType  -  -1: unknown, 0: 80286, 1: 80386 }
   {  pError   -  pointer to error record }
 {----------------------------------------------------------------------------}
-function FDIIsCabinet(hfdi : HFDI; hf : Integer;
+function FDIIsCabinet(hfdi : HFDI; hf : PtrInt;
   pfdici : PFDICabInfo) : Boolean;
   {checks cabinet file for validity}
   {  hfdi   - FDI context }
@@ -202,7 +204,7 @@ function FDIIsCabinet(hfdi : HFDI; hf : Integer;
 function FDICopy(hfdi : HFDI; pszCabinet, pszCabPath : PAnsiChar;
   flags : Integer; pfnfdin, pfnfdid : FARPROC;
   Archive : Pointer) : Boolean;
-  {enumerates every file in the cabinet.  The callback function
+  {enumerates every file in the cabinet.  The callback function }
   {should indicate whether or not to extract a given file}
   {  hfdi       - FDI context }
   {  pszCabinet - cabinet file name }
@@ -321,7 +323,7 @@ begin
     Result := nil;
 end;
 {----------------------------------------------------------------------------}
-function FDIIsCabinet(hfdi : HFDI; hf : Integer;
+function FDIIsCabinet(hfdi : HFDI; hf : PtrInt;
   pfdici : PFDICabInfo) : Boolean;
 begin
   LoadCabinetDLL;

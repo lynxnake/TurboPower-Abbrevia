@@ -23,9 +23,9 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
- unit AbBzip2TypTests;
-
 {$I AbDefine.inc}
+
+unit AbBzip2TypTests;
 
 interface
 
@@ -73,7 +73,7 @@ begin
   finally
     FS.Free;
   end;
-  FS := TFileStream.Create(TestFileDir + 'Canterbury' + PathDelim + 'Canterbury.tbz', fmOpenRead or fmShareDenyNone);
+  FS := TFileStream.Create(CanterburyDir + 'Canterbury.tbz', fmOpenRead or fmShareDenyNone);
   try
     Check(VerifyBzip2(FS) = atBzippedTar, 'VerifyBzip2 failed on .TAR.BZ2');
   finally
@@ -109,11 +109,9 @@ end;
 {----------------------------------------------------------------------------}
 procedure TAbBzip2ArchiveTests.TestExtractCanterbury;
 var
-  SourceDir: string;
   Bz2: TAbBzip2Archive;
 begin
-  SourceDir := TestFileDir + 'Canterbury' + PathDelim;
-  Bz2 := TAbBzip2Archive.Create(SourceDir + 'Canterbury.tbz', fmOpenRead);
+  Bz2 := TAbBzip2Archive.Create(CanterburyDir + 'Canterbury.tbz', fmOpenRead);
   try
     Bz2.TarAutoHandle := True;
     Bz2.IsBzippedTar := True;
@@ -123,20 +121,18 @@ begin
   finally
     Bz2.Free;
   end;
-  CheckDirMatch(SourceDir + 'source', TestTempDir, False);
+  CheckDirMatch(CanterburySourceDir, TestTempDir, False);
 end;
 {----------------------------------------------------------------------------}
 procedure TAbBzip2ArchiveTests.TestCompressCanterbury;
 var
-  SourceDir: string;
   Bz2: TAbBzip2Archive;
 begin
-  SourceDir := TestFileDir + 'Canterbury' + PathDelim + 'source';
   Bz2 := TAbBzip2Archive.Create(TestTempDir + 'Test.tbz', fmCreate);
   try
     Bz2.TarAutoHandle := True;
     Bz2.IsBzippedTar := True;
-    Bz2.BaseDirectory := SourceDir;
+    Bz2.BaseDirectory := CanterburySourceDir;
     Bz2.AddFiles('*', faAnyFile - faDirectory);
     Bz2.Save;
   finally
@@ -153,7 +149,7 @@ begin
   finally
     Bz2.Free;
   end;
-  CheckDirMatch(SourceDir, TestTempDir + 'test', False);
+  CheckDirMatch(CanterburySourceDir, TestTempDir + 'test', False);
 end;
 {----------------------------------------------------------------------------}
 

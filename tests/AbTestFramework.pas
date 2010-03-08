@@ -85,6 +85,8 @@ type
 
   public
     class function TestFileDir: string;
+    class function CanterburyDir: string;
+    class function CanterburySourceDir: string;
 
     property TestTempDir : string
       read GetTestTempDir;
@@ -349,6 +351,16 @@ begin
   Result := ExePath + 'testfiles' + PathDelim;
 end;
 
+class function TAbTestCase.CanterburyDir: string;
+begin
+  Result := TestFileDir + 'Canterbury' + PathDelim;
+end;
+
+class function TAbTestCase.CanterburySourceDir: string;
+begin
+  Result := CanterburyDir + 'source' + PathDelim;
+end;
+
 function TAbTestCase.GetTestTempDir: string;
 begin
   Result := TestFileDir + 'temp' + PathDelim;
@@ -475,35 +487,41 @@ begin
   // Check all published properties to see if same.
   PListCnt1 := AbGetPropList(PTypeInfo(aComp1.ClassInfo),PList1);
   PListCnt2 := AbGetPropList(PTypeInfo(aComp2.ClassInfo),PList2);
-  // The following should not fail but it here just in case!
-  Check(PListCnt1 = PListCnt2,aComp1.ClassName + ' Streaming is really Screwed up!');
-  For I := 0 to PListCnt1 -1 do
-   begin
-     PName1 := string(PList1^[I]^.Name);
-     PName2 := string(PList2^[I]^.Name);
-     if IgnoreProp.IndexOf(PName1) = -1 then
+  try
+    // The following should not fail but it here just in case!
+    Check(PListCnt1 = PListCnt2,aComp1.ClassName + ' Streaming is really Screwed up!');
+    for I := 0 to PListCnt1 -1 do
+    begin
+      PName1 := string(PList1^[I]^.Name);
+      PName2 := string(PList2^[I]^.Name);
+      if IgnoreProp.IndexOf(PName1) = -1 then
       begin
-         if not(PList1^[I]^.PropType^.Kind = tkClass) then
-           Check(AbGetPropValue(aComp1, PName1) = AbGetPropValue(aComp2, PName2), 'Stream Problem with ' + aComp1.ClassName + '.' + PName1)
-         else
-           begin
-              PI1 := GetPropInfo(aComp1.ClassInfo, PName1);
-              if Assigned(PI1) then
-                SubComp1 := TObject(GetOrdProp(aComp1,PI1))
-              else
-                SubComp1 := nil;
-              PI2 := GetPropInfo(aComp2.ClassInfo,PName1);
-              if Assigned(PI2) then
-                   SubComp2 := TObject(GetOrdProp(aComp2,PI2))
-                else
-                   SubComp2 := nil;
-              Check((Assigned(SubComp1) and Assigned(SubComp2)) or ((not Assigned(SubComp1)) and (Not Assigned(SubComp1))),'Stream Problem with ' +aComp1.ClassName + '.' + PName2);
-              if Assigned(SubComp1) and (SubComp1 is TPersistent) and (SubComp1 is TPersistent) then
-              CompareComponentProps(SubComp1 as TPersistent, SubComp2 as TPersistent);
-           end;
+        if not(PList1^[I]^.PropType^.Kind = tkClass) then
+          Check(AbGetPropValue(aComp1, PName1) = AbGetPropValue(aComp2, PName2),
+            'Stream Problem with ' + aComp1.ClassName + '.' + PName1)
+        else
+        begin
+          PI1 := GetPropInfo(aComp1.ClassInfo, PName1);
+          if Assigned(PI1) then
+            SubComp1 := TObject(GetOrdProp(aComp1,PI1))
+          else
+            SubComp1 := nil;
+          PI2 := GetPropInfo(aComp2.ClassInfo,PName1);
+          if Assigned(PI2) then
+            SubComp2 := TObject(GetOrdProp(aComp2,PI2))
+          else
+            SubComp2 := nil;
+          Check(Assigned(SubComp1) = Assigned(SubComp2),
+            'Stream Problem with ' +aComp1.ClassName + '.' + PName2);
+          if Assigned(SubComp1) and (SubComp1 is TPersistent) and (SubComp1 is TPersistent) then
+            CompareComponentProps(SubComp1 as TPersistent, SubComp2 as TPersistent);
+        end;
       end;
-   end;
-
+    end;
+  finally
+    FreeMem(PList1);
+    FreeMem(PList2);
+  end;
 end;
 
 function TAbCompTestCase.UnStreamComponent(const aCompStr : string;
@@ -569,19 +587,25 @@ begin
 
   // get the prop info
   PropInfo := GetPropInfo(Instance.ClassInfo, PropName);
-  if PropInfo = nil then
+  if (PropInfo = nil) or (PropInfo^.PropType = nil) then
     Raise Exception.Create('Property "' + PropName + '" was not found.')
   else
   begin
     // return the right type
-    case PropInfo^.PropType^^.Kind of
+    case PropInfo^.PropType^.Kind of
       tkInteger, tkChar, tkWChar, tkClass:
         Result := GetOrdProp(Instance, PropInfo);
+      {$IFDEF FPC}
+      tkBool:
+        Result := Boolean(GetOrdProp(Instance, PropInfo));
+      {$ENDIF}
       tkEnumeration:
         if PreferStrings then
-          Result := GetEnumName(PropInfo^.PropType^, GetOrdProp(Instance, PropInfo))
+          Result := GetEnumName(PropInfo^.PropType{$IFNDEF FPC}^{$ENDIF}, GetOrdProp(Instance, PropInfo))
+        {$IFNDEF FPC}
         else if GetTypeData(PropInfo^.PropType^)^.BaseType^ = TypeInfo(Boolean) then
           Result := Boolean(GetOrdProp(Instance, PropInfo))
+        {$ENDIF}
         else
           Result := GetOrdProp(Instance, PropInfo);
       tkSet:
@@ -589,7 +613,7 @@ begin
           begin
             Result := '';
             Integer(S) := GetOrdProp(Instance, PropInfo);
-            TInfo := GetTypeData(PropInfo^.PropType^)^.CompType^;
+            TInfo := GetTypeData(PropInfo^.PropType{$IFNDEF FPC}^{$ENDIF})^.CompType{$IFNDEF FPC}^{$ENDIF};
             for I := 0 to SizeOf(Integer) * 8 - 1 do
             if I in S then
             begin
@@ -604,32 +628,24 @@ begin
         Result := GetFloatProp(Instance, PropInfo);
       tkMethod:
         Result := PropInfo^.PropType^.Name;
-      tkString, tkLString:
+      tkString, tkLString {$IFDEF FPC}, tkAString{$ENDIF}:
         Result := GetStrProp(Instance, PropInfo);
       tkWString:
-       {$IFDEF VERSION6}
         Result := GetWideStrProp(Instance, PropInfo);
-       {$ELSE}
-        Result := ''; //No simple way to get this in Prior Delphi versions... and we don't use WideStrings (yet)
-       {$ENDIF}
       tkVariant:
         Result := GetVariantProp(Instance, PropInfo);
       tkInt64:
-          {$IFDEF VERSION6}
-             Result := GetInt64Prop(Instance, PropInfo);
-          {$ELSE}
-             Result := '';
-          {$ENDIF}
-          tkDynArray:
-                DynArrayToVariant(Result, Pointer(GetOrdProp(Instance, PropInfo)), PropInfo^.PropType^);
-      {$IFDEF CONDITIONALEXPRESSIONS}
-        {$IF DECLARED(tkUString)}
-          tkUString:
-            Result := GetUnicodeStrProp(Instance, PropInfo);
-        {$IFEND}
-      {$ENDIF}
+        Result := GetInt64Prop(Instance, PropInfo);
+      tkDynArray:
+        DynArrayToVariant(Result, Pointer(GetOrdProp(Instance, PropInfo)), PropInfo^.PropType);
+      {$IF DECLARED(tkUString)}
+      tkUString:
+        Result := GetUnicodeStrProp(Instance, PropInfo);
+      {$IFEND}
+      // Unsupported FPC property types
+      // tkUnknown,tkArray,tkRecord,tkInterface,tkObject,tkQWord,tkInterfaceRaw
     else
-      raise Exception.Create('Invalid Property Type: ' + string(PropInfo.PropType^^.Name));
+      raise Exception.Create('Invalid Property Type: ' + string(PropInfo.PropType^.Name));
     end;
   end;
 end;

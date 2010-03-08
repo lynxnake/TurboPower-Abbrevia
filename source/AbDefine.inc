@@ -147,6 +147,10 @@
   {$DEFINE KYLIX}
 {$IFEND}
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 { determine whether CLX is used, should always be on Linux }
 {$IFDEF LINUX}
 {$DEFINE UsingCLX }

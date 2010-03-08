@@ -90,7 +90,10 @@ type
 type
   DWORD = LongWord;
 {$ENDIF LINUX}
-
+{$IF NOT DECLARED(PtrInt)}
+type
+  PtrInt = LongInt;
+{$IFEND}
 {$IFNDEF UNICODE}
 type
   RawByteString = AnsiString;
@@ -362,31 +365,6 @@ implementation
 uses
   AbConst,
   AbExcept;
-
-const
-  AB_MAXPATH = 255;
-
-type
-  XFCBrec = packed record
-    Flag : Byte;                      {should be $FF}
-    Reserved0 : array[1..5] of Byte;  {should be all zeroes}
-    AttrByte : Byte;                  {should be 8}
-    DriveCode : Byte;
-    FileSpec : array[1..11] of AnsiChar;
-    Reserved1 : array[1..25] of Byte;
-  end;
-
-  DTABuf = array[0..63] of AnsiChar;
-
-  PMediaIDType = ^MediaIDType;
-  MediaIDType = packed record
-  {This type describes the information that DOS 4.0 or higher writes
-   in the boot sector of a disk when it is formatted}
-    InfoLevel : Word;                        {Reserved for future use}
-    SerialNumber : LongInt;                  {Disk serial number}
-    VolumeLabel : array[0..10] of AnsiChar;  {Disk volume label}
-    FileSystemID : array[0..7] of AnsiChar;  {String for internal use by the OS}
-  end;
 
 {===platform independent routines for platform dependent stuff=======}
 function ExtractShortName(const SR : TSearchRec) : string;

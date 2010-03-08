@@ -138,7 +138,7 @@ end;
 {----------------------------------------------------------------------------}
 procedure TAbCabArchiveTests.TestCompressCanterbury;
 begin
-  TestCompressDir(TestFileDir + 'Canterbury' + PathDelim + 'source');
+  TestCompressDir(CanterburySourceDir);
 end;
 {----------------------------------------------------------------------------}
 {$IFDEF UNICODE}

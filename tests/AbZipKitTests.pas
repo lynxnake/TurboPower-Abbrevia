@@ -211,6 +211,7 @@ begin
       MS.Free;
     end;
   end;
+  Check(True); //TODO: Replace this with a proper test
 end;
 
 procedure TAbZipKitTests.TestComponentLinks;

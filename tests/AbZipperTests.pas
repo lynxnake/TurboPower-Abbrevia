@@ -435,6 +435,7 @@ begin
     Component.Save;
     Component.CloseArchive;
   end;
+  Check(True); //TODO: Replace this with a proper test
 end;
 
 procedure TAbZipperTests.TestLocale1;

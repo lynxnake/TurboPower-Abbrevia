@@ -86,12 +86,14 @@ uses
 class function TAbZipArchiveTests.DecompressSuite(const aDir: string): ITestSuite;
 var
   SR: TSearchRec;
+  Dir: string;
 begin
-  Result := TTestSuite.Create('Decompress ' + ExtractFileName(aDir));
+  Dir := ExcludeTrailingPathDelimiter(aDir);
+  Result := TTestSuite.Create('Decompress ' + ExtractFileName(Dir));
   if FindFirst(aDir + PathDelim + '*.zip', faAnyFile, SR) = 0 then
     try
       repeat
-        Result.AddTest(TAbZipDecompressTest.Create(aDir + PathDelim + SR.Name));
+        Result.AddTest(TAbZipDecompressTest.Create(Dir + PathDelim + SR.Name));
       until FindNext(SR) <> 0;
     finally
       FindClose(SR);
@@ -101,7 +103,6 @@ end;
 class function TAbZipArchiveTests.Suite: ITestSuite;
 var
   CompressSuite: ITestSuite;
-  CanterburyDir: string;
 begin
   Result := inherited Suite;
   {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
@@ -113,17 +114,16 @@ begin
   {$IFEND}
 
   // Test compression/decompression of Canterbury corpus
-  Result.AddSuite(DecompressSuite(TestFileDir + 'Canterbury'));
-  CanterburyDir := TestFileDir + 'Canterbury' + PathDelim + 'source';
+  Result.AddSuite(DecompressSuite(CanterburyDir));
   CompressSuite := TTestSuite.Create('Compress Canterbury');
   CompressSuite.AddTest(
-    TAbZipCompressTest.Create('Store', CanterburyDir, smStored, ''));
+    TAbZipCompressTest.Create('Store', CanterburySourceDir, smStored, ''));
   CompressSuite.AddTest(
-    TAbZipCompressTest.Create('Deflate', CanterburyDir, smDeflated, ''));
+    TAbZipCompressTest.Create('Deflate', CanterburySourceDir, smDeflated, ''));
   CompressSuite.AddTest(
-    TAbZipCompressTest.Create('StoreP', CanterburyDir, smStored, 'password'));
+    TAbZipCompressTest.Create('StoreP', CanterburySourceDir, smStored, 'password'));
   CompressSuite.AddTest(
-    TAbZipCompressTest.Create('DeflateP', CanterburyDir, smDeflated, 'password'));
+    TAbZipCompressTest.Create('DeflateP', CanterburySourceDir, smDeflated, 'password'));
   Result.AddSuite(CompressSuite);
 end;
 { -------------------------------------------------------------------------- }
