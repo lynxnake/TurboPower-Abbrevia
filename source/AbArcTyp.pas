@@ -1131,11 +1131,15 @@ function TAbArchive.ConfirmPath(Item : TAbArchiveItem; const NewName : string;
 var
   Path : string;
 begin
+  if Item.IsDirectory and not (ExtractOptions >= [eoRestorePath, eoCreateDirs]) then begin
+    Result := False;
+    Exit;
+  end;
   if (NewName = '') then begin
     UseName := Item.FileName;
+    AbUnfixName(UseName);
     if Item.IsDirectory then
       UseName := ExcludeTrailingPathDelimiter(UseName);
-    AbUnfixName(UseName);
     if (not (eoRestorePath in ExtractOptions)) then
       UseName := ExtractFileName(UseName);
   end
@@ -1144,16 +1148,20 @@ begin
   if (AbGetPathType(UseName) <> ptAbsolute) then
     UseName := AbAddBackSlash(BaseDirectory) + UseName;
 
-  Path := ExtractFileDir(UseName);
-  if (Path <> '') and not AbDirectoryExists(Path) then
-    if (eoCreateDirs in ExtractOptions) then
-      AbCreateDirectory(Path)
-    else
-      raise EAbNoSuchDirectory.Create;
-
   Result := True;
-  if FileExists(UseName) then
-    DoConfirmOverwrite(UseName, Result);
+  if Item.IsDirectory then
+    AbCreateDirectory(UseName)
+  else begin
+    Path := ExtractFileDir(UseName);
+    if (Path <> '') and not AbDirectoryExists(Path) then
+      if (eoCreateDirs in ExtractOptions) then
+        AbCreateDirectory(Path)
+      else
+        raise EAbNoSuchDirectory.Create;
+
+    if FileExists(UseName) then
+      DoConfirmOverwrite(UseName, Result);
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Delete(aItem : TAbArchiveItem);
