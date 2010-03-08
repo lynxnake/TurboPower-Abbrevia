@@ -41,6 +41,8 @@
  * http://edisonlife.homelinux.com/
  * ***** END LICENSE BLOCK ***** *)
 
+{$I AbDefine.inc}
+
 unit AbBzip2;
 
 interface
@@ -179,7 +181,17 @@ type
 
 implementation
 
-{$IFDEF MSWINDOWS}
+{$IFDEF Bzip2Runtime}
+{$IF DEFINED(FPC)}
+uses
+  dynlibs;
+{$ELSEIF DEFINED(MSWINDOWS)}
+uses
+  Windows;
+{$IFEND}
+{$ENDIF}
+
+{$IFDEF Bzip2Static}
 {$L bz2_blocksort.obj}
 {$L bz2_huffman.obj}
 {$L bz2_compress.obj}
@@ -224,6 +236,7 @@ const
 
   BZ_BLOCK_SIZE_100K = 9;
 
+{$IFDEF Bzip2Static}
   _BZ2_rNums: array[0..511] of Longint = (
     619, 720, 127, 481, 931, 816, 813, 233, 566, 247,
     985, 724, 205, 454, 863, 491, 741, 242, 949, 214,
@@ -360,40 +373,86 @@ procedure _free(block: Pointer); cdecl;
 begin
   FreeMem(block);
 end; { _free }
+{$ENDIF}
 
 const
-  libbz2 = 'libbz2.so.1';
+  libbz2 = {$IFDEF MSWINDOWS}'libbz2.dll'{$ELSE}'libbz2.so.1'{$ENDIF};
 
+{$IFDEF Bzip2Runtime}
+var
+  hBzip2: HMODULE;
+  // deflate compresses data
+  BZ2_bzCompressInit: function(var strm: TBZStreamRec; blockSize100k: Integer;
+    verbosity: Integer; workFactor: Integer): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzCompress: function(var strm: TBZStreamRec; action: Integer): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzCompressEnd: function (var strm: TBZStreamRec): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzBuffToBuffCompress: function(dest: Pointer; var destLen: Integer;
+    source: Pointer; sourceLen, blockSize100k, verbosity, workFactor: Integer): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  // inflate decompresses data
+  BZ2_bzDecompressInit: function(var strm: TBZStreamRec; verbosity: Integer;
+    small: Integer): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzDecompress: function(var strm: TBZStreamRec): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzDecompressEnd: function(var strm: TBZStreamRec): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  BZ2_bzBuffToBuffDecompress: function(dest: Pointer; var destLen: Integer;
+    source: Pointer; sourceLen, small, verbosity: Integer): Integer;
+    {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+{$ELSE}
 // deflate compresses data
 function BZ2_bzCompressInit(var strm: TBZStreamRec; blockSize100k: Integer;
   verbosity: Integer; workFactor: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzCompress(var strm: TBZStreamRec; action: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzCompressEnd(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzBuffToBuffCompress(dest: Pointer; var destLen: Integer; source: Pointer;
   sourceLen, blockSize100k, verbosity, workFactor: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 // inflate decompresses data
-
 function BZ2_bzDecompressInit(var strm: TBZStreamRec; verbosity: Integer;
   small: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzDecompress(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzDecompressEnd(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
 
 function BZ2_bzBuffToBuffDecompress(dest: Pointer; var destLen: Integer; source: Pointer;
   sourceLen, small, verbosity: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall; external;{$ELSE}cdecl; external libbz2;{$ENDIF}
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+{$ENDIF}
+
+procedure LoadBzip2DLL;
+begin
+  {$IFDEF Bzip2Runtime}
+  if hBzip2 <> 0 then
+    Exit;
+  hBzip2 := LoadLibrary(libbz2);
+  if hBzip2 <> 0 then
+    raise EBZip2Error.Create('Bzip2 shared library not found');
+  @BZ2_bzCompressInit := GetProcAddress(hBzip2, 'BZ2_bzCompressInit');
+  @BZ2_bzCompress := GetProcAddress(hBzip2, 'BZ2_bzCompress');
+  @BZ2_bzCompressEnd := GetProcAddress(hBzip2, 'BZ2_bzCompressEnd');
+  @BZ2_bzBuffToBuffCompress := GetProcAddress(hBzip2, 'BZ2_bzBuffToBuffCompress');
+  @BZ2_bzDecompressInit := GetProcAddress(hBzip2, 'BZ2_bzDecompressInit');
+  @BZ2_bzDecompress := GetProcAddress(hBzip2, 'BZ2_bzDecompress');
+  @BZ2_bzDecompressEnd := GetProcAddress(hBzip2, 'BZ2_bzDecompressEnd');
+  @BZ2_bzBuffToBuffDecompress := GetProcAddress(hBzip2, 'BZ2_bzBuffToBuffDecompress');
+  {$ENDIF}
+end;
 
 function bzip2AllocMem(AppData: Pointer; Items, Size: Integer): Pointer; cdecl;
 begin
@@ -425,6 +484,7 @@ var
   strm: TBZStreamRec;
   P: Pointer;
 begin
+  LoadBzip2DLL;
   FillChar(strm, sizeof(strm), 0);
   strm.bzalloc := bzip2AllocMem;
   strm.bzfree := bzip2FreeMem;
@@ -464,6 +524,7 @@ var
   P: Pointer;
   BufInc: Integer;
 begin
+  LoadBzip2DLL;
   FillChar(strm, sizeof(strm), 0);
   strm.bzalloc := bzip2AllocMem;
   strm.bzfree := bzip2FreeMem;
@@ -523,28 +584,31 @@ const
   BlockSizes: array[TBlockSize100k] of ShortInt = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 begin
   inherited Create(Dest);
-  FBZRec.next_out := @FBuffer;
+  LoadBzip2DLL;
+  FBZRec.next_out := @FBuffer[0];
   FBZRec.avail_out := sizeof(FBuffer);
   CCheck(BZ2_bzCompressInit(FBZRec, BlockSizes[BlockSize100k], 0, 0));
 end;
 
 destructor TBZCompressionStream.Destroy;
 begin
-  FBZRec.next_in := nil;
-  FBZRec.avail_in := 0;
-  try
-    if FStrm.Position <> FStrmPos then FStrm.Position := FStrmPos;
-    while (CCheck(BZ2_bzCompress(FBZRec, BZ_FINISH)) <> BZ_STREAM_END)
-      and (FBZRec.avail_out = 0) do
-    begin
-      FStrm.WriteBuffer(FBuffer, sizeof(FBuffer));
-      FBZRec.next_out := @FBuffer;
-      FBZRec.avail_out := sizeof(FBuffer);
+  if FBZRec.state <> nil then begin
+    FBZRec.next_in := nil;
+    FBZRec.avail_in := 0;
+    try
+      if FStrm.Position <> FStrmPos then FStrm.Position := FStrmPos;
+      while (CCheck(BZ2_bzCompress(FBZRec, BZ_FINISH)) <> BZ_STREAM_END)
+        and (FBZRec.avail_out = 0) do
+      begin
+        FStrm.WriteBuffer(FBuffer, sizeof(FBuffer));
+        FBZRec.next_out := @FBuffer[0];
+        FBZRec.avail_out := sizeof(FBuffer);
+      end;
+      if FBZRec.avail_out < sizeof(FBuffer) then
+        FStrm.WriteBuffer(FBuffer, sizeof(FBuffer) - FBZRec.avail_out);
+    finally
+      BZ2_bzCompressEnd(FBZRec);
     end;
-    if FBZRec.avail_out < sizeof(FBuffer) then
-      FStrm.WriteBuffer(FBuffer, sizeof(FBuffer) - FBZRec.avail_out);
-  finally
-    BZ2_bzCompressEnd(FBZRec);
   end;
   inherited Destroy;
 end;
@@ -565,7 +629,7 @@ begin
     if FBZRec.avail_out = 0 then
     begin
       FStrm.WriteBuffer(FBuffer, sizeof(FBuffer));
-      FBZRec.next_out := @FBuffer;
+      FBZRec.next_out := @FBuffer[0];
       FBZRec.avail_out := sizeof(FBuffer);
       FStrmPos := FStrm.Position;
     end;
@@ -608,14 +672,16 @@ end; { TBZCompressionStream }
 constructor TBZDecompressionStream.Create(Source: TStream);
 begin
   inherited Create(Source);
-  FBZRec.next_in := @FBuffer;
+  LoadBzip2DLL;
+  FBZRec.next_in := @FBuffer[0];
   FBZRec.avail_in := 0;
   DCheck(BZ2_bzDecompressInit(FBZRec, 0, 0));
 end;
 
 destructor TBZDecompressionStream.Destroy;
 begin
-  BZ2_bzDecompressEnd(FBZRec);
+  if FBZRec.state <> nil then
+    BZ2_bzDecompressEnd(FBZRec);
   inherited Destroy;
 end;
 
@@ -634,7 +700,7 @@ begin
         Result := Count - FBZRec.avail_out;
         Exit;
       end;
-      FBZRec.next_in := @FBuffer;
+      FBZRec.next_in := @FBuffer[0];
       FStrmPos := FStrm.Position;
     end;
     CCheck(BZ2_bzDecompress(FBZRec));
@@ -662,7 +728,7 @@ begin
   begin
     DCheck(BZ2_bzDecompressEnd(FBZRec));
     DCheck(BZ2_bzDecompressInit(FBZRec, 0, 0));
-    FBZRec.next_in := @FBuffer;
+    FBZRec.next_in := @FBuffer[0];
     FBZRec.avail_in := 0;
     FStrm.Position := 0;
     FStrmPos := 0;

@@ -161,6 +161,31 @@
  initialisation and so on when in reality the problem does not exist.}
 {$DEFINE DefeatWarnings} {!!.03 -- on by default }
 
+{====Bzip2 defines===================================================}
+
+{Activate this define to statically link bzip2 .obj files into the application.
+ Curerntly only supported by Delphi/Win32.}
+{.$DEFINE Bzip2Static}
+
+{Activate this define to dynamically link to a libbz2.dll/libbbz2.so.1}
+{.$DEFINE Bzip2Dynamic}
+
+{Activate this define to load libbz2.dll/libbz2.so.1 at runtime using LoadLibrary}
+{.$DEFINE Bzip2Runtime}
+
+{Pick an appropriate linking method if none of the above are activate}
+{$IF NOT DEFINED(Bzip2Static) AND NOT DEFINED(Bzip2Dynamic) AND NOT DEFINED(Bzip2Runtime)}
+  {$IFDEF MSWINDOWS}
+     {$IFDEF FPC}
+       {$DEFINE Bzip2Runtime}
+     {$ELSE}
+       {$DEFINE Bzip2Static}
+     {$ENDIF}
+  {$ELSE}
+    {$DEFINE Bzip2Dynamic}
+  {$ENDIF}
+{$IFEND}
+
 {====Zip defines=====================================================}
 
 {Activate the following define when you don't want Visual parts of
