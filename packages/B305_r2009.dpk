@@ -57,6 +57,8 @@ requires
 contains
   AbArcTyp in '..\source\AbArcTyp.pas',
   AbBitBkt in '..\source\AbBitBkt.pas',
+  AbBzip2 in '..\source\AbBzip2.pas',
+  AbBzip2Typ in '..\source\AbBzip2Typ.pas',
   AbCabTyp in '..\source\AbCabTyp.pas',
   AbConst in '..\source\AbConst.pas',
   AbResString in '..\source\AbResString.pas',
