@@ -81,7 +81,6 @@ type
     SpeedButton1: TSpeedButton;
     SpeedButton2: TSpeedButton;
     OpenDialog2: TOpenDialog;
-    AbCLXMeterLink1: TAbCLXMeterLink;
     procedure AddBtnClick(Sender: TObject);
     procedure OpenBtnClick(Sender: TObject);
     procedure DeleteBtnClick(Sender: TObject);

@@ -60,7 +60,7 @@ uses
   {$ENDIF}
   Classes, SysUtils,
   TestFrameWork,
-  AbArcTyp, AbMeter, AbZipTyp;
+  AbArcTyp, AbZipTyp;
 
 { TAbZipKitTests }
 
@@ -176,7 +176,7 @@ end;
 procedure TAbZipKitTests.SetUp;
 begin
   inherited;
-  Component := TAbZipKit.Create(TestForm);
+  Component := TAbZipKit.Create(nil);
 end;
 
 procedure TAbZipKitTests.TearDown;
@@ -216,21 +216,14 @@ end;
 
 procedure TAbZipKitTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbZipKitTests.TestDefaultStreaming;
-var
-  CompStr : string;
-  CompTest : TAbZipKit;
 begin
-  RegisterClass(TAbZipKit);
-  CompStr := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbZipKit);
-  CompareComponentProps(Component, CompTest);
-  UnRegisterClass(TAbZipKit);
+  inherited TestDefaultStreaming(Component);
 end;
 
 procedure TAbZipKitTests.TestTaggedFiles;

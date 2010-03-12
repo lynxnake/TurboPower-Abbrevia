@@ -36,16 +36,16 @@ unit AbBrowse;
 interface
 
 uses
-  SysUtils, Classes,
+  Classes,
   AbBase,
   AbUtils,
   AbArcTyp;
 
 type
-  TAbBaseMeterLink = class(TAbBaseComponent)
-  public
-    procedure DoProgress(Progress : Byte); virtual; abstract;
-    procedure Reset; virtual; abstract;
+  IAbProgressMeter = interface
+    ['{4B766704-FD20-40BF-BA40-2EC2DD77B178}']
+    procedure DoProgress(Progress : Byte);
+    procedure Reset;
   end;
 
   TAbBaseBrowser = class(TAbBaseComponent)
@@ -53,8 +53,8 @@ type
     FArchive : TAbArchive;
   protected {private}
     FSpanningThreshold : Longint;
-    FItemProgressMeter : TAbBaseMeterLink;
-    FArchiveProgressMeter : TAbBaseMeterLink;
+    FItemProgressMeter : IAbProgressMeter;
+    FArchiveProgressMeter : IAbProgressMeter;
     FBaseDirectory : string;
     FFileName : string;
     FLogFile : string;
@@ -77,8 +77,10 @@ type
     function  GetSpanned : Boolean;
     function  GetStatus : TAbArchiveStatus;
     procedure ResetMeters; virtual;                                    {!!.04}
+    procedure SetArchiveProgressMeter(const Value: IAbProgressMeter);
     procedure SetCompressionType(const Value: TAbArchiveType);
     procedure SetBaseDirectory(const Value : string);
+    procedure SetItemProgressMeter(const Value: IAbProgressMeter);
     procedure SetSpanningThreshold(Value : Longint);
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
@@ -117,9 +119,9 @@ type
   protected {properties}
     property Archive : TAbArchive
       read FArchive;
-    property ArchiveProgressMeter : TAbBaseMeterLink
+    property ArchiveProgressMeter : IAbProgressMeter
       read  FArchiveProgressMeter
-      write FArchiveProgressMeter;
+      write SetArchiveProgressMeter;
     property BaseDirectory : string
       read  FBaseDirectory
       write SetBaseDirectory;
@@ -130,9 +132,9 @@ type
       read  FSpanningThreshold
       write SetSpanningThreshold
       default 0;
-    property ItemProgressMeter : TAbBaseMeterLink
+    property ItemProgressMeter : IAbProgressMeter
       read  FItemProgressMeter
-      write FItemProgressMeter;
+      write SetItemProgressMeter;
     property LogFile : string
       read  FLogFile
       write SetLogFile;
@@ -212,6 +214,7 @@ function AbDetermineArcType(const FN : string; AssertType : TAbArchiveType) : TA
 implementation
 
 uses
+  SysUtils,
   AbExcept,
 {$IFDEF MSWINDOWS}
   AbCabTyp,
@@ -386,11 +389,12 @@ procedure TAbBaseBrowser.Notification(Component: TComponent;
                                       Operation: TOperation);
 begin
   inherited Notification(Component, Operation);
-  if (Operation = opRemove) then
-    if Component = FItemProgressMeter then
-      FItemProgressMeter := nil
-    else if Component = FArchiveProgressMeter then
-      FArchiveProgressMeter := nil
+  if (Operation = opRemove) then begin
+    if Assigned(ItemProgressMeter) and Component.IsImplementorOf(ItemProgressMeter) then
+      ItemProgressMeter := nil;
+    if Assigned(ArchiveProgressMeter) and Component.IsImplementorOf(ArchiveProgressMeter) then
+      ArchiveProgressMeter := nil;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseBrowser.OpenArchive(const aFileName : string);
@@ -480,6 +484,20 @@ begin
     FArchiveType := Value
   else
     raise EAbArchiveBusy.Create;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbBaseBrowser.SetArchiveProgressMeter(const Value: IAbProgressMeter);
+begin
+  ReferenceInterface(FArchiveProgressMeter, opRemove);
+  FArchiveProgressMeter := Value;
+  ReferenceInterface(FArchiveProgressMeter, opInsert);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbBaseBrowser.SetItemProgressMeter(const Value: IAbProgressMeter);
+begin
+  ReferenceInterface(FItemProgressMeter, opRemove);
+  FItemProgressMeter := Value;
+  ReferenceInterface(FItemProgressMeter, opInsert);
 end;
 { -------------------------------------------------------------------------- }
 function AbDetermineArcType(const FN : string; AssertType : TAbArchiveType) : TAbArchiveType;

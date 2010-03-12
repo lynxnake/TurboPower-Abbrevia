@@ -20,52 +20,43 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Craig Peterson
  *
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbTestFramework;
 
 {$I AbDefine.inc}
+{$IFDEF FPC}
+  {$DEFINE DUNIT2}
+{$ENDIF}
 
 interface
 
 uses
   TestFramework,
-  Variants,
 {$IFDEF LINUX}
-  Libc, QControls, QForms,
-{$ELSE}
-  Windows, Controls, Forms,
+  Libc,
 {$ENDIF}
-{$IFDEF WINZIPTESTS}
-  SyncObjs,
+{$IFDEF MSWINDOWS}
+  Windows,
 {$ENDIF}
-  Classes, TypInfo;
-
-{$IFDEF WINZIPTESTS}
-{ Hard Coded as I could not find install location in the Registry to extract and
-  make dynamic if this proves to be a problem, we will have to have test
-  configuration file that specifies the winzip command line utility path. }
-const
-  UnWinZip = 'C:\Program Files\WinZip\wzunzip.exe';
+{$IFDEF DUNIT2}
+  TestFrameworkIfaces,
 {$ENDIF}
+  Classes, TypInfo,
+  AbBrowse;
 
 type
-{$IFNDEF VERSION6}
-  TIntegerSet = set of 0..SizeOf(Integer) * 8 - 1;
+{$IFDEF DUNIT2}
+  // DUnit2 has different return value for TTestCase.Suite function
+  ITestSuite = ITestCase; 
 {$ENDIF}
 
   TAbTestCase = class(TTestCase)
   private
     FTempDirCreated: Boolean;
   protected
-  {$IFDEF WINZIPTESTS}
-    FSpawnComplete  : TSimpleEvent;
-    procedure SpawnErrorEvent(Sender : TObject; Error : Word);
-    procedure SpawnCompletedEvent(Sender : TObject);
-    procedure SpawnTimeOutEvent(Sender : TObject);
-    procedure ExecuteAndWait(ExeName,Param : string; TimeOut : Integer = 0); // Exception if failure
-  {$ENDIF}
     function GetTestTempDir : string;
     function GetWindowsDir : string;
     procedure CheckFilesMatch(const AFileName1, aFileName2 : string;
@@ -82,6 +73,9 @@ type
     procedure CheckDirMatch(aDir1, aDir2 : string; IgnoreMissingFiles : Boolean = True);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
+  {$IFDEF DUNIT2}
+    property FTestName: string read FDisplayedName write FDisplayedName;
+  {$ENDIF}
 
   public
     class function TestFileDir: string;
@@ -93,47 +87,39 @@ type
   end;
 
   TAbCompTestCase = class(TAbTestCase)
-  protected
-    FTestForm : TForm;
-    IgnoreProp : TStringList;
-    procedure SetUp; override;
-    procedure TearDown; override;
-
+  private
     // RTTI function so that they match from version to version of delphi.
     function AbGetPropList(TypeInfo : PTypeInfo; out PropList : PPropList) : Integer;
     function AbGetPropValue(Instance : TObject; const PropName : string; PreferStrings : Boolean = True) : Variant;
 
+  protected
     function StreamComponent(aComp : TComponent) : string;
     function UnStreamComponent(const aCompStr : string; Instance : TComponent = nil) : TComponent;
-
-    procedure CompareComponentProps(aComp1, aComp2 : TPersistent); virtual;
-
+    procedure CompareComponentProps(aComp1, aComp2 : TPersistent;
+      const aIgnoreProps: string = '');
     procedure TestComponentLink(AComponent: TComponent;
       const APropName: string; APropClass: TComponentClass);
-
-  public
-    procedure ShowForm; virtual;
-    property TestForm : TForm read FTestForm;
+    procedure TestDefaultStreaming(AComponent: TComponent);
   end;
+
+  TAbTestMeter = class(TComponent, IAbProgressMeter)
+    procedure DoProgress(Progress : Byte);
+    procedure Reset;
+  end;
+
 
 implementation
 
 {$WARN SYMBOL_PLATFORM OFF}
 
 uses
-{$IFDEF WINZIPTESTS}
-  // Systool Unit change abdefine.inc if you don't have systools or don't want
-  // to run winzip compatability tests
-  stSpawn,
-{$ENDIF}
-  Math, SysUtils,
+  Math, SysUtils, Variants,
   AbUtils;
 
 var
   ExePath : string;
 
-{ TAbTestCase }
-
+{ ===== TAbTestCase ======================================================== }
 procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string;
   IgnoreMissingFiles: Boolean);
 var
@@ -157,17 +143,17 @@ begin
     d2.Free;
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CheckFileExists(aFileName : string);
 begin
   Check(FileExists(aFileName), 'Unable to locate file: ' + aFileName);
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CheckDirExists(aFileName : string);
 begin
   Check(DirectoryExists(aFileName), 'Unable to locate directory: ' + aFileName);
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CheckFilesMatch(const aFileName1, aFileName2: string;
   const aMsg: string = '');
 var
@@ -185,7 +171,7 @@ begin
     Stream1.Free;
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CheckFileMatchesStream(const aFileName : string;
   aStream : TStream; const aMsg : string = '');
 var
@@ -198,8 +184,7 @@ begin
     FileStream.Free;
   end;
 end;
-
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CheckStreamMatch(aStream1, aStream2 : TStream;
   const aMsg: string = '');
 var
@@ -225,7 +210,7 @@ begin
           FailEquals(IntToHex(Buf1[i], 2), IntToHex(Buf2[i], 2), 'Bytes do not match: ' + aMsg);
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.CreateDummyFile(aFileName : string; aSize : Integer);
 var
   fs : TFileStream;
@@ -296,38 +281,6 @@ begin
   end; { If File Found with FindFirst }
 end;
 { -------------------------------------------------------------------------- }
-{$IFDEF WINZIPTESTS}
-procedure TAbTestCase.ExecuteAndWait(ExeName, Param: String;TimeOut : Integer);
-var
-  Spawn : TStSpawnApplication;
-  WR    : TWaitResult;
-begin
-   // Make sure Application trying to execute is found
-   CheckFileExists(ExeName);
-   Spawn := TStSpawnApplication.Create(nil);
-   try
-     Spawn.FileName := ExeName;
-     Spawn.RunParameters := Param;
-     Spawn.NotifyWhenDone := True;
-     Spawn.TimeOut := TimeOut;
-     Spawn.OnSpawnError := SpawnErrorEvent;
-     Spawn.OnCompleted := SpawnCompletedEvent;
-     Spawn.OnTimeOut := SpawnTimeOutEvent;
-     Spawn.Execute;
-     WR := FSpawnComplete.WaitFor(1000);
-     While WR <> wrSignaled do
-       begin
-          Application.ProcessMessages;
-          Check(NOT (WR = wrAbandoned), 'Event has been Abandoonded');
-          Check(NOT (WR = wrError),'Event has Errored out');
-          WR := FSpawnComplete.WaitFor(1000);
-       end;
-   finally
-      Spawn.Free;
-   end;
-end;
-{$ENDIF}
-
 class function TAbTestCase.FilesInDirectory(const aDir : string) : TStringList;
 var
   SR : TSearchRec;
@@ -344,23 +297,23 @@ begin
     FindClose(SR);
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 class function TAbTestCase.TestFileDir: string;
 begin
   // May want to place in ini file in the future but this will do for now
   Result := ExePath + 'testfiles' + PathDelim;
 end;
-
+{ -------------------------------------------------------------------------- }
 class function TAbTestCase.CanterburyDir: string;
 begin
   Result := TestFileDir + 'Canterbury' + PathDelim;
 end;
-
+{ -------------------------------------------------------------------------- }
 class function TAbTestCase.CanterburySourceDir: string;
 begin
   Result := CanterburyDir + 'source' + PathDelim;
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbTestCase.GetTestTempDir: string;
 begin
   Result := TestFileDir + 'temp' + PathDelim;
@@ -369,7 +322,7 @@ begin
     FTempDirCreated := True;
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbTestCase.GetWindowsDir: string;
 {$IFDEF MSWINDOWS}
 var
@@ -384,60 +337,22 @@ begin
    result := AbAddBackSlash(string(aDirBuf));
  {$ENDIF}
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.SetUp;
 begin
   inherited;
-  {$IFDEF WINZIPTESTS}
-    FSpawnComplete := TSimpleEvent.Create;
-  {$ENDIF}
 end;
-
-{$IFDEF WINZIPTESTS}
-procedure TAbTestCase.SpawnCompletedEvent(Sender: TObject);
-begin
-  FSpawnComplete.SetEvent;
-end;
-
-procedure TAbTestCase.SpawnErrorEvent(Sender: TObject; Error: Word);
-begin
- FSpawnComplete.SetEvent;
- Fail('Error: ' + IntToSTr(Error) + ' occured launching WinZip');
-end;
-
-procedure TAbTestCase.SpawnTimeOutEvent(Sender: TObject);
-begin
- FSpawnComplete.SetEvent;
- Fail('Timeout occured launching WinZip');
-end;
-{$ENDIF}
-
+{ -------------------------------------------------------------------------- }
 procedure TAbTestCase.TearDown;
 begin
   inherited;
-  {$IFDEF WINZIPTESTS}
-    FSpawnComplete.Free;
-  {$ENDIF}
   if FTempDirCreated then begin
     DelTree(TestTempDir);
     FTempDirCreated := False;
   end;
 end;
 
-{ TabCompTestCase }
-
-procedure TAbCompTestCase.SetUp;
-begin
-  inherited;
-  FTestForm := TForm.Create(nil);
-  IgnoreProp := TStringList.Create;
-end;
-
-procedure TAbCompTestCase.ShowForm;
-begin
-  FTestForm.ShowModal;
-end;
-
+{ ===== TAbCompTestCase ==================================================== }
 function TAbCompTestCase.StreamComponent(aComp : TComponent) : string;
 // The Following was cut and paste out of the Delphi Help File.
 var
@@ -460,70 +375,72 @@ begin
     BinStream.Free
   end;
 end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCompTestCase.CompareComponentProps(aComp1, aComp2 : TPersistent;
+  const aIgnoreProps: string = '');
 
-procedure TAbCompTestCase.TearDown;
-begin
-  IgnoreProp.free;
-  FTestForm.Release; // This allows Message Handling to finish
-  inherited;
-end;
+  function GetSubComp(aComp: TPersistent; const PName: string): TObject;
+  var
+    PropInfo: PPropInfo;
+    Intf: IInterface;
+    Ref: IInterfaceComponentReference;
+  begin
+    Result := nil;
+    PropInfo := GetPropInfo(aComp.ClassInfo, PName);
+    if Assigned(PropInfo) then
+      if PropInfo.PropType^.Kind = tkClass then
+        Result := TObject(GetOrdProp(aComp, PropInfo))
+      else begin
+        Intf := GetInterfaceProp(aComp, PropInfo);
+        if Supports(Intf, IInterfaceComponentReference, Ref) then
+          Result := Ref.GetComponent;
+      end;
+  end;
 
-
-procedure TAbCompTestCase.CompareComponentProps(aComp1,aComp2 : TPersistent);
 var
- PList1   : PPropList;
- PI1,PI2  : PPropInfo;
- PListCnt1 : Integer;
- PList2   : PPropList;
- PListCnt2 : Integer;
- I : Integer;
- SubComp1,SubComp2 : TObject;
- PName1, PName2 : string;
+  PList1, PList2 : PPropList;
+  PListCnt1, PListCnt2: Integer;
+  I: Integer;
+  SubComp1, SubComp2: TObject;
+  PName1, PName2: string;
+  IgnoreProps: TStringList;
 begin
-//NOTE: I wrote the following in Delphi 7.   I have had reports that this won't
-//      compile in Delphi 5 (Which I don't have access too)    Anyway this could
-//      be rewritten to work with Delphi 5 if someone wants to.
-
   // Check all published properties to see if same.
   PListCnt1 := AbGetPropList(PTypeInfo(aComp1.ClassInfo),PList1);
   PListCnt2 := AbGetPropList(PTypeInfo(aComp2.ClassInfo),PList2);
+  IgnoreProps := TStringList.Create;
   try
+    IgnoreProps.CommaText := aIgnoreProps;
     // The following should not fail but it here just in case!
-    Check(PListCnt1 = PListCnt2,aComp1.ClassName + ' Streaming is really Screwed up!');
+    Check(PListCnt1 = PListCnt2, aComp1.ClassName + ' streaming is really screwed up!');
     for I := 0 to PListCnt1 -1 do
     begin
       PName1 := string(PList1^[I]^.Name);
       PName2 := string(PList2^[I]^.Name);
-      if IgnoreProp.IndexOf(PName1) = -1 then
-      begin
-        if not(PList1^[I]^.PropType^.Kind = tkClass) then
+      if IgnoreProps.IndexOf(PName1) >= 0 then
+        Continue;
+      case PList1^[I]^.PropType^.Kind of
+        tkClass, tkInterface:
+          begin
+            SubComp1 := GetSubComp(aComp1, PName1);
+            SubComp2 := GetSubComp(aComp2, PName2);
+            Check(Assigned(SubComp1) = Assigned(SubComp2),
+              'Stream Problem with ' +aComp1.ClassName + '.' + PName2);
+            if Assigned(SubComp1) and (SubComp1 is TPersistent) and (SubComp2 is TPersistent) then
+              CompareComponentProps(SubComp1 as TPersistent, SubComp2 as TPersistent);
+          end;
+        else
           Check(AbGetPropValue(aComp1, PName1) = AbGetPropValue(aComp2, PName2),
             'Stream Problem with ' + aComp1.ClassName + '.' + PName1)
-        else
-        begin
-          PI1 := GetPropInfo(aComp1.ClassInfo, PName1);
-          if Assigned(PI1) then
-            SubComp1 := TObject(GetOrdProp(aComp1,PI1))
-          else
-            SubComp1 := nil;
-          PI2 := GetPropInfo(aComp2.ClassInfo,PName1);
-          if Assigned(PI2) then
-            SubComp2 := TObject(GetOrdProp(aComp2,PI2))
-          else
-            SubComp2 := nil;
-          Check(Assigned(SubComp1) = Assigned(SubComp2),
-            'Stream Problem with ' +aComp1.ClassName + '.' + PName2);
-          if Assigned(SubComp1) and (SubComp1 is TPersistent) and (SubComp1 is TPersistent) then
-            CompareComponentProps(SubComp1 as TPersistent, SubComp2 as TPersistent);
-        end;
       end;
     end;
   finally
+    IgnoreProps.Free;
     FreeMem(PList1);
     FreeMem(PList2);
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbCompTestCase.UnStreamComponent(const aCompStr : string;
                                            Instance : TComponent) : TComponent;
 // The Following was Cut and Paste from the Delphi Help file
@@ -531,7 +448,6 @@ var
   StrStream:TStringStream;
   BinStream: TMemoryStream;
   ErrStream  : TFileStream; 
-//  CReader : TReader;
 begin
   result := nil;
   StrStream := TStringStream.Create(aCompStr);
@@ -539,21 +455,20 @@ begin
     BinStream := TMemoryStream.Create;
     try
       try
-      ObjectTextToBinary(StrStream, BinStream);
+        ObjectTextToBinary(StrStream, BinStream);
       except
         on E : EParserError do
           begin
-             ErrStream := TFileStream.Create('parse.err',fmCreate);
-             StrStream.Seek(0,soFromBeginning);
-             ErrStream.CopyFrom(StrStream,StrStream.Size);
-             ErrStream.Free;
-             Fail('Check parse.err ' + E.Message,nil);
-             raise;
+            ErrStream := TFileStream.Create('parse.err', fmCreate);
+            StrStream.Seek(0, soFromBeginning);
+            ErrStream.CopyFrom(StrStream, StrStream.Size);
+            ErrStream.Free;
+            Fail('Check parse.err ' + E.Message,nil);
+            raise;
           end
-          else Raise;
       end;
       BinStream.Seek(0, soFromBeginning);
-      result := BinStream.ReadComponent(Instance);
+      Result := BinStream.ReadComponent(Instance);
     finally
       BinStream.Free;
     end;
@@ -561,8 +476,7 @@ begin
     StrStream.Free;
   end;
 end;
-
-
+{ -------------------------------------------------------------------------- }
 function TAbCompTestCase.AbGetPropList(TypeInfo: PTypeInfo;
   out PropList: PPropList): Integer;
 begin
@@ -573,7 +487,7 @@ begin
     GetPropInfos(TypeInfo, PropList);
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 function TAbCompTestCase.AbGetPropValue(Instance: TObject;
   const PropName: string; PreferStrings: Boolean): Variant;
 var
@@ -587,7 +501,7 @@ begin
 
   // get the prop info
   PropInfo := GetPropInfo(Instance.ClassInfo, PropName);
-  if (PropInfo = nil) or (PropInfo^.PropType = nil) then
+  if PropInfo = nil then
     Raise Exception.Create('Property "' + PropName + '" was not found.')
   else
   begin
@@ -649,22 +563,59 @@ begin
     end;
   end;
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure TAbCompTestCase.TestComponentLink(AComponent: TComponent;
   const APropName: string; APropClass: TComponentClass);
   {- Create a component of the given type, assign it to the property, then
      free the object and test that the property has been nilled. }
 var
+  PropIntf: IInterface;
   PropObject: TComponent;
 begin
-  PropObject := APropClass.Create(TestForm);
-  SetObjectProp(AComponent, APropName, PropObject);
-  Check(GetObjectProp(AComponent, APropName) = PropObject,
-    Format('SetObjectProp failed for %s.%s', [AComponent.ClassName, APropName]));
-  PropObject.Free;
-  CheckNull(GetObjectProp(AComponent, APropName),
-    Format('Notification does not work for %s.%s', [AComponent.ClassName, APropName]));
+  PropObject := APropClass.Create(AComponent.Owner);
+  if PropType(AComponent, APropName) = tkInterface then begin
+    SetInterfaceProp(AComponent, APropName, PropObject);
+    PropIntf := GetInterfaceProp(AComponent, APropName);
+    Check((PropIntf <> nil) and PropObject.IsImplementorOf(PropIntf),
+      Format('SetInterfaceProp failed for %s.%s', [AComponent.ClassName, APropName]));
+    PropIntf := nil;
+    PropObject.Free;
+    CheckNull(GetInterfaceProp(AComponent, APropName),
+      Format('Notification does not work for %s.%s', [AComponent.ClassName, APropName]));
+  end
+  else begin
+    SetObjectProp(AComponent, APropName, PropObject);
+    Check(GetObjectProp(AComponent, APropName) = PropObject,
+      Format('SetObjectProp failed for %s.%s', [AComponent.ClassName, APropName]));
+    PropObject.Free;
+    CheckNull(GetObjectProp(AComponent, APropName),
+      Format('Notification does not work for %s.%s', [AComponent.ClassName, APropName]));
+  end;
 end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCompTestCase.TestDefaultStreaming(AComponent: TComponent);
+var
+  CompStr: string;
+  CompTest: TComponent;
+begin
+  RegisterClass(TComponentClass(AComponent.ClassType));
+  CompStr := StreamComponent(AComponent);
+  CompTest := UnStreamComponent(CompStr);
+  CompareComponentProps(AComponent, CompTest);
+  UnRegisterClass(TComponentClass(AComponent.ClassType));
+end;
+
+{ ===== TAbCompTestCase ==================================================== }
+procedure TAbTestMeter.DoProgress(Progress : Byte);
+begin
+  // No-op
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbTestMeter.Reset;
+begin
+  // No-op
+end;
+
 
 initialization
   // Cache on startup;  on Linux ParamStr(0) may not be fully qualified, and

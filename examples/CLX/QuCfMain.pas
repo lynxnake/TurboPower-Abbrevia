@@ -36,7 +36,7 @@ unit QuCfMain;
 interface
 
 uses
-  SysUtils, Classes, QGraphics, QForms, AbHexVw, AbQCmpnd,
+  SysUtils, Classes, QGraphics, QForms, AbQHexVw, AbQCmpnd,
   QDialogs, QMenus, QTypes, QImgList, QExtCtrls, QControls, QComCtrls;
 
 type
@@ -65,7 +65,6 @@ type
     puViewCompoundFile: TMenuItem;
     puDelete: TMenuItem;
     Rename1: TMenuItem;
-    Defrag1: TMenuItem;
     SaveDialog1: TSaveDialog;
     OpenDialog2: TOpenDialog;
     pnlHexView: TPanel;
@@ -79,7 +78,6 @@ type
     procedure puViewFileClick(Sender: TObject);
     procedure puViewCompoundFileClick(Sender: TObject);
     procedure Rename1Click(Sender: TObject);
-    procedure Defrag1Click(Sender: TObject);
     procedure tvDirectoryClick(Sender: TObject);
   private
     { Private declarations }
@@ -225,18 +223,6 @@ begin
   end;
   frmCfGenDlg.Caption := 'Change Directory';
   frmCfGenDlg.Label1.Caption := 'New Directory';
-end;
-
-procedure TfmCfMain.Defrag1Click(Sender: TObject);
-var
-  i : Integer;
-begin
-  AbCompoundFile1.Defrag;
-  HexV.Stream := AbCompoundFile1.Stream;
-  AbCompoundFile1.PopulateTreeView(tvDirectory);
-
-  for i := 0 to tvDirectory.Items.Count - 1 do
-    tvDirectory.Items.Item[i].Expand(True);
 end;
 
 procedure TfmCfMain.tvDirectoryClick(Sender: TObject);

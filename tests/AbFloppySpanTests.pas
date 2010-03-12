@@ -40,14 +40,12 @@ uses
 // Note: The Floppy Span tests are designed to be platform specific
 
   Windows,
-  TestFrameWork,
   AbArcTyp, AbUtils,
   AbTestFramework;
 
 type
   TAbFloppySpanTests = class(TabTestCase)
   protected
-    WinDir : string;
     HandleWriteFailure1Test : Boolean;
     procedure SetUp; override;
     procedure TearDown; override;
@@ -65,25 +63,19 @@ type
     procedure CheckFreeForAV;
     procedure HandleWriteProtectedMedia;
     procedure HandleWriteFailure1;
-    {$IFDEF WINZIPTESTS}
-    procedure WinzipExtractTest;
-    {$ENDIF}
   end;
 
 implementation
 
 uses
   Classes, Controls, Dialogs, SysUtils,
+  TestFrameWork,
   AbUnzper, AbZipper;
 
 { -------------------------------------------------------------------------- }
 procedure TAbFloppySpanTests.SetUp;
 begin
   inherited;
-  // Get directory windows is installed to
-  SetLength(WinDir, MAX_PATH);
-  SetLength(WinDir, GetWindowsDirectory(PChar(WinDir), MAX_PATH));
-  WinDir := AbAddBackSlash(WinDir);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbFloppySpanTests.VerifyBasicSpan;
@@ -107,7 +99,7 @@ begin
     UnZip.FileName := 'A:\SPANTEST.ZIP';
     Check(Unzip.Count > 0, 'Archive A:\SPANTEST.ZIP is empty');
     for I := 0 to Unzip.Count -1 do begin
-      testFile := WinDir + ExtractFileName(UnZip.Items[I].FileName);
+      testFile := GetWindowsDir + ExtractFileName(UnZip.Items[I].FileName);
       // Make sure file exist to compare to.
       CheckFileExists(TestFile);
       // Extract File in Span to Memory
@@ -132,7 +124,7 @@ begin
     Fail('User Aborted Test');
   Zip := TAbZipper.create(nil);
   try
-    Zip.BaseDirectory := WinDir;
+    Zip.BaseDirectory := GetWindowsDir;
     Zip.FileName := 'A:\SPANTEST.ZIP';
     Zip.AddFiles('*.EXE', faAnyFile);
     Zip.Save;
@@ -140,37 +132,6 @@ begin
     Zip.Free;
   end;
 end;
-{ -------------------------------------------------------------------------- }
-{$IFDEF WINZIPTESTS}
-procedure TAbFloppySpanTests.WinzipExtractTest;
-var
-  ExtractTo : string;
-  FileList : TStringList;
-  I : integer;
-begin
-  // This test will use the Winzip command line utility to determine if the
-  // file created in CreateBasicSpan can be extracted.
-  // This is a good comptability routine.
-
-  if MessageDlg('This test requires the TESTSPAN.ZIP created in the '+#13+#10+'"CreateBasicSpan" test. '+ #13#10 + 'It also requires WinZIP Command Line Utility. '+#13#10#13#10 +'Please Insert LAST Disk of span set.'+#13+#10+''+#13+#10+'Pressing Cancel will terminate this test.', mtInformation, [mbOK,mbCancel], 0) = mrCancel then
-    Fail('Test Aborted');
-
-  ExtractTo := TestTempDir + 'WZSpan\';
-  CreateDir(ExtractTo);
-  ExecuteAndWait(UnWinZip, 'A:\SPANTEST.ZIP ' + ExtractTo);
-
-  // Files have now been extracted Time to test.
-  FileList := FilesInDirectory(ExtractTo);
-  try
-    // Make sure files where extracted
-    Check(Filelist.Count > 0, 'Unable to find any extract files');
-    for I := 0 to FileList.Count -1 do
-      CheckFilesMatch(WinDir + FileList[I], ExtractTo + FileList[I], FileList[I] + ' did not match master file');
-  finally
-    FileList.free;
-  end;
-end;
-{$ENDIF}
 { -------------------------------------------------------------------------- }
 procedure TAbFloppySpanTests.TearDown;
 begin

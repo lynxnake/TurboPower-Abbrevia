@@ -28,11 +28,11 @@ unit AbMeterTests;
 interface
 
 uses
-  SysUtils,classes,AbTestFrameWork,TestFrameWork,abMeter;
+  AbMeter, AbVisualTestBase;
 
 type
 
-  TAbMeterTests = class(TabCompTestCase)
+  TAbMeterTests = class(TAbVisualTestCase)
   private
     Component : TAbMeter;
   protected
@@ -42,84 +42,34 @@ type
     procedure TestDefaultStreaming;
   end;
 
-  TAbVCLMeterLinkTests = class(TabCompTestCase)
-  private
-    Component : TAbMeterLink;
-  protected
-    procedure SetUp; override;
-    procedure TearDown; override;
-  published
-    procedure TestDefaultStreaming;
-    procedure TestComponentLinks;
-  end;
-
 implementation
+
+uses
+  TestFrameWork, AbTestFrameWork;
 
 { TAbMeterTests }
 
 procedure TAbMeterTests.SetUp;
 begin
   inherited;
-  Component := TabMeter.create(TestForm);
+  Component := TAbMeter.create(TestForm);
 end;
 
 procedure TAbMeterTests.TearDown;
 begin
   inherited;
-
 end;
-
 
 procedure TAbMeterTests.TestDefaultStreaming;
-var
-  CompStr : String;
-  CompTest : TAbMeter;
 begin
-  RegisterClass(TAbMeter);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbMeter);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbMeter);
+  inherited TestDefaultStreaming(Component);
 end;
 
-{ TAbMeterLinkTests }
-
-
-{ TAbVCLMeterLinkTests }
-
-procedure TAbVCLMeterLinkTests.SetUp;
-begin
-  inherited;
-  Component :=  TAbMeterLink.Create(TestForm);
-end;
-
-procedure TAbVCLMeterLinkTests.TearDown;
-begin
-  inherited;
-
-end;
-
-procedure TAbVCLMeterLinkTests.TestComponentLinks;
-begin
-  TestComponentLink(Component, 'Meter', TAbMeter);
-end;
-
-procedure TAbVCLMeterLinkTests.TestDefaultStreaming;
-var
-  CompStr : String;
-  CompTest : TAbMeterLink;
-begin
-  RegisterClass(TAbMeterLink);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbMeterLink);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbMeterLink);
-end;
 
 initialization
 
   TestFramework.RegisterTests('Abbrevia.Component Level Test Suite',
-    [TAbMeterTests.Suite,TAbVCLMeterLinkTests.Suite]);
+    [TAbMeterTests.Suite]);
 
 end.
 

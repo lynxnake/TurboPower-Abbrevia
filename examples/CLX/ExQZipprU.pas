@@ -50,7 +50,6 @@ type
     edtDirectory1: TEdit;
     SpeedButton1: TSpeedButton;
     OpenDialog2: TOpenDialog;
-    AbCLXMeterLink1: TAbCLXMeterLink;
     procedure Button1Click(Sender: TObject);
     procedure DirectoryListBox1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);

@@ -24,40 +24,69 @@
 
 {$I AbDefine.inc}
 
-// Uncomment the following directive to create a console application
-// or leave commented to create a GUI application...
-// Currently Abbrevia's Floppy Span Tests don't work will with console testing.
 
-{.$APPTYPE CONSOLE}
+{$IFNDEF FPC}
+  {$IFDEF MSWINDOWS}
+    {$DEFINE UsingVCL}
+  {$ENDIF}
+  {$IFDEF LINUX}
+    {$DEFINE UsingCLX}
+  {$ENDIF}
+{$ENDIF}
+{$IFDEF UsingVCL}
+  {$DEFINE VCL_CLX}
+{$ENDIF}
+{$IFDEF UsingCLX}
+  {$DEFINE VCL_CLX}
+{$ENDIF}
+
+{$IFNDEF VCL_CLX}
+  // Currently Abbrevia's Floppy Span Tests don't work will with console testing.
+  {$APPTYPE CONSOLE}
+{$ENDIF}
 
 program AbbreviaUnitTests;
 
-
 uses
-  TestFramework {$IFDEF LINUX},
-  QForms,
-  QGUITestRunner {$ELSE},
+  TestFramework,
+{$IFDEF FPC}
+  Interfaces, // Needed for DUnit2
+{$ENDIF}
+  TextTestRunner,
+{$IFDEF UsingVCL}
   Forms,
-  GUITestRunner {$ENDIF},
-  TextTestRunner {$IFDEF MSWINDOWS},
+  GUITestRunner,
+{$ENDIF}
+{$IFDEF UsingCLX}
+  QForms,
+  QGUITestRunner,
+{$ENDIF}
+  AbTestFramework in 'AbTestFramework.pas',
+{$IFDEF UsingVCL}
   AbFloppySpanTests in 'AbFloppySpanTests.pas',
   AbCabViewTests in 'AbCabViewTests.pas',
   AbCBrowsTests in 'AbCBrowsTests.pas',
+{$ENDIF}
+{$IFDEF MSWINDOWS}
   AbCabExtTests in 'AbCabExtTests.pas',
   AbCabMakTests in 'AbCabMakTests.pas',
   AbCabKitTests in 'AbCabKitTests.pas',
-  AbCabTypTests in 'AbCabTypTests.pas' {$ENDIF},
+  AbCabTypTests in 'AbCabTypTests.pas',
+//  AbWinzipTests in 'AbWinzipTests.pas',
+{$ENDIF}
+{$IFDEF VCL_CLX}
+  AbVisualTestBase in 'AbVisualTestBase.pas',
+  AbZipViewTests in 'AbZipViewTests.pas',
+  AbZipOutTests in 'AbZipOutTests.pas',
+  AbMeterTests in 'AbMeterTests.pas',
+{$ENDIF}
   AbUnzPrcTests in 'AbUnzPrcTests.pas',
   AbZipPrcTests in 'AbZipPrcTests.pas',
-  AbTestFramework in 'AbTestFramework.pas',
   AbTestConsts in 'AbTestConsts.pas',
   AbUnzperTests in 'AbUnzperTests.pas',
   AbZipperTests in 'AbZipperTests.pas',
   AbZipKitTests in 'AbZipKitTests.pas',
-  AbZipViewTests in 'AbZipViewTests.pas',
-  AbZipOutTests in 'AbZipOutTests.pas',
   AbZBrowsTests in 'AbZBrowsTests.pas',
-  AbMeterTests in 'AbMeterTests.pas',
   AbSelfExTests in 'AbSelfExTests.pas',
   AbArcTypTests in 'AbArcTypTests.pas',
   AbGzTypTests in 'AbGzTypTests.pas',
@@ -68,16 +97,17 @@ uses
 {$R *.res}
 
 begin
+  {$IF DEFINED(UsingVCL)}
   Application.Initialize;
-
-{$IFDEF LINUX}
-  QGUITestRunner.RunRegisteredTests;
-{$ELSE}
   if System.IsConsole then
     TextTestRunner.RunRegisteredTests
   else
     GUITestRunner.RunRegisteredTests;
-{$ENDIF}
-
+  {$ELSEIF DEFINED(UsingCLX)}
+  Application.Initialize;
+  QGUITestRunner.RunRegisteredTests;
+  {$ELSE}
+  TextTestRunner.RunRegisteredTests;
+  {$IFEND}
 end.
 

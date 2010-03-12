@@ -30,12 +30,7 @@ unit AbUnzperTests;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
-  Windows,
-{$ENDIF}
-  TestFrameWork, abTestFrameWork, AbUnzper,
-  SysUtils, Classes, AbMeter, AbZipTyp,
-  AbDfBase, abExcept, AbUnzPrc;
+  AbTestFrameWork, AbUnzper;
 
 type
 
@@ -75,7 +70,11 @@ type
 implementation
 
 uses
-  AbArcTyp, AbUtils;
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  SysUtils, Classes, TestFrameWork,
+  AbArcTyp, AbDfBase, AbExcept, AbUtils, AbZipTyp;
 
 { TAbUnZipperTests }
 
@@ -168,7 +167,7 @@ end;
 procedure TAbUnZipperTests.SetUp;
 begin
   inherited;
-  Component := TAbUnzipper.Create(TestForm);
+  Component := TAbUnzipper.Create(nil);
 end;
 
 procedure TAbUnZipperTests.TearDown;
@@ -211,20 +210,13 @@ end;
 
 procedure TAbUnZipperTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbUnZipperTests.TestDefaultStreaming;
-var
-  CompStr : string;
-  CompTest : TAbUnZipper;
 begin
-  RegisterClass(TAbUnZipper);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbUnZipper);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbUnZipper);
+  inherited TestDefaultStreaming(Component);
 end;
 
 procedure TAbUnZipperTests.TestGZipDecompress;

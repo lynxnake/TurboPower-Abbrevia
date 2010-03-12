@@ -49,7 +49,6 @@ type
     Button2: TButton;
     AbMeter1: TAbMeter;
     AbCabExtractor1: TAbCabExtractor;
-    AbVCLMeterLink1: TAbVCLMeterLink;
     procedure Button1Click(Sender: TObject);
     procedure AbCabExtractor1ConfirmProcessItem(Sender: TObject;
       Item: TAbArchiveItem; ProcessType: TAbProcessType;

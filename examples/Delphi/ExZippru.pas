@@ -52,7 +52,6 @@ type
     AbZipper1: TAbZipper;
     Button3: TButton;
     AbMeter1: TAbMeter;
-    AbVCLMeterLink1: TAbVCLMeterLink;
     procedure Button1Click(Sender: TObject);
     procedure DirectoryListBox1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);

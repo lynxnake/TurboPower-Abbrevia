@@ -52,8 +52,6 @@ type
     AbMeter2: TAbMeter;
     Label1: TLabel;
     Label2: TLabel;
-    AbCLXMeterLink1: TAbCLXMeterLink;
-    AbCLXMeterLink2: TAbCLXMeterLink;
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }

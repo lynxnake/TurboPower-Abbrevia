@@ -24,15 +24,17 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbCabViewTests;
+
 {$I AbDefine.inc}
+
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbCView,AbCBrows,SysUtils,Classes,Menus,abMeter;
+  AbCView, AbVisualTestBase;
 
 type
 
-  TAbCabViewTests = class(TabCompTestCase)
+  TAbCabViewTests = class(TAbVisualTestCase)
   private
     Component : TAbCabView;
   protected
@@ -45,6 +47,9 @@ type
 
 implementation
 
+uses
+  Menus, TestFrameWork, AbCBrows, AbTestFrameWork;
+
 { TAbCabViewTests }
 
 procedure TAbCabViewTests.SetUp;
@@ -55,6 +60,7 @@ end;
 
 procedure TAbCabViewTests.TearDown;
 begin
+  Component.Free;
   inherited;
 end;
 
@@ -65,15 +71,8 @@ begin
 end;
 
 procedure TAbCabViewTests.TestDefaultStreaming;
-var
-  CompStr : string;
-  CompTest : TAbCabView;
 begin
-  RegisterClass(TAbCabView);
-  CompStr := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbCabView);
-  CompareComponentProps(Component, CompTest);
-  UnRegisterClass(TAbCabView);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

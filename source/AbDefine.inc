@@ -149,12 +149,13 @@
 
 {$IFDEF FPC}
   {$MODE DELPHI}
+  {$DEFINE UsingLCL}
 {$ENDIF}
 
 { determine whether CLX is used, should always be on Linux }
-{$IFDEF LINUX}
-{$DEFINE UsingCLX }
-{$ENDIF LINUX}
+{$IFDEF KYLIX}
+  {$DEFINE UsingCLX }
+{$ENDIF KYLIX}
 
 {====General defines=================================================}
 

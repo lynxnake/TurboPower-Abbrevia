@@ -24,16 +24,17 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbZipViewTests;
+
 {$I AbDefine.inc}
+
 interface
 
 uses
-  {$IFDEF LINUX}QMenus{$ELSE}Menus{$ENDIF},
-  TestFrameWork,AbTestFramework,AbZView,AbZBrows,SysUtils,Classes,AbMeter;
+  AbZView, AbVisualTestBase;
 
 type
 
-  TAbZipViewTests = class(TabCompTestCase)
+  TAbZipViewTests = class(TAbVisualTestCase)
   private
     Component : TAbZipView;
   protected
@@ -46,6 +47,10 @@ type
 
 implementation
 
+uses
+  {$IFDEF LINUX}QMenus{$ELSE}Menus{$ENDIF},
+  TestFrameWork, AbTestFramework, AbZBrows;
+
 { TAbZipViewTests }
 
 procedure TAbZipViewTests.SetUp;
@@ -56,8 +61,8 @@ end;
 
 procedure TAbZipViewTests.TearDown;
 begin
+  Component.Free;
   inherited;
-
 end;
 
 procedure TAbZipViewTests.TestComponentLinks;
@@ -67,15 +72,8 @@ begin
 end;
 
 procedure TAbZipViewTests.TestDefaultStreaming;
-var
-CompStr : STring;
-CompTest : TAbZipView;
 begin
-  RegisterClass(TAbZipView);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbZipView);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbZipView);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

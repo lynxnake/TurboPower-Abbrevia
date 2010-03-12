@@ -36,9 +36,8 @@ unit AbZipper;
 interface
 
 uses
-  SysUtils, Classes,
-  AbBrowse, AbZBrows,
-  AbBase, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbBzip2Typ, AbSpanSt;
+  Classes,
+  AbBrowse, AbZBrows, AbArcTyp, AbZipTyp;
 
 type
   TAbCustomZipper = class(TAbCustomZipBrowser)
@@ -50,7 +49,7 @@ type
     FOnConfirmSave          : TAbArchiveConfirmEvent;
     FOnSave                 : TAbArchiveEvent;
     FOnArchiveSaveProgress  : TAbArchiveProgressEvent;                 {!!.04}
-    FArchiveSaveProgressMeter : TAbBaseMeterLink;                          {!!.04}
+    FArchiveSaveProgressMeter : IAbProgressMeter;
 
     FStoreOptions           : TAbStoreOptions;
 
@@ -71,6 +70,7 @@ type
     procedure SetFileName(const aFileName : string);
       override;
     procedure SetStoreOptions( Value : TAbStoreOptions );
+    procedure SetArchiveSaveProgressMeter(const Value: IAbProgressMeter);
     procedure SetZipfileComment(const Value : AnsiString);
       override;
     procedure ZipProc(Sender : TObject; Item : TAbArchiveItem;
@@ -100,9 +100,9 @@ type
       read  FStoreOptions
       write SetStoreOptions
       default AbDefStoreOptions;
-    property ArchiveSaveProgressMeter : TAbBaseMeterLink                   {!!.04}
+    property ArchiveSaveProgressMeter : IAbProgressMeter               {!!.04}
       read  FArchiveSaveProgressMeter                                  {!!.04}
-      write FArchiveSaveProgressMeter;                                 {!!.04}
+      write SetArchiveSaveProgressMeter;                               {!!.04}
 
 
   protected {events}
@@ -173,8 +173,7 @@ type
 implementation
 
 uses
-  AbExcept,
-  AbZipPrc;
+  SysUtils, AbUtils, AbTarTyp, AbGzTyp, AbBzip2Typ, AbExcept, AbZipPrc;
 
 { -------------------------------------------------------------------------- }
 constructor TAbCustomZipper.Create( AOwner : TComponent );
@@ -509,6 +508,13 @@ begin
     ZipArchive.StoreOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
+procedure TAbCustomZipper.SetArchiveSaveProgressMeter(const Value: IAbProgressMeter);
+begin
+  ReferenceInterface(FArchiveSaveProgressMeter, opRemove);
+  FArchiveSaveProgressMeter := Value;
+  ReferenceInterface(FArchiveSaveProgressMeter, opInsert);
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetZipfileComment(const Value : AnsiString);
 begin
   if (ZipArchive is TAbZipArchive) then
@@ -550,8 +556,8 @@ procedure TAbCustomZipper.Notification(Component: TComponent;
 begin
   inherited Notification(Component, Operation);
   if (Operation = opRemove) then
-    if Component = FArchiveSaveProgressMeter then
-      FArchiveSaveProgressMeter := nil
+    if Assigned(ArchiveSaveProgressMeter) and Component.IsImplementorOf(ArchiveSaveProgressMeter) then
+      ArchiveSaveProgressMeter := nil
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.ResetMeters;

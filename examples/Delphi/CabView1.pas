@@ -113,8 +113,6 @@ type
     RestorePath1: TMenuItem;
     AbCabKit1: TAbCabKit;
     Additems1: TMenuItem;
-    AbVCLMeterLink1: TAbVCLMeterLink;
-    AbVCLMeterLink2: TAbVCLMeterLink;
     procedure AbCabView1Click(Sender: TObject);
     procedure AttributeClick(Sender: TObject);
     procedure DisplayOptionClick(Sender: TObject);

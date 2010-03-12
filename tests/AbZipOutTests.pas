@@ -24,15 +24,16 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbZipOutTests;
+
 {$I AbDefine.inc}
+
 interface
 
 uses
-  TestFrameWork, AbTestFrameWork, AbZipOut;
+  AbZipOut, AbVisualTestBase;
 
 type
-
-  TAbZipOutlineTests = class(TAbCompTestCase)
+  TAbZipOutlineTests = class(TAbVisualTestCase)
   private
     Component : TAbZipOutline;
   protected
@@ -47,8 +48,8 @@ implementation
 
 uses
   {$IFDEF LINUX}QMenus{$ELSE}Menus{$ENDIF},
-  Classes, SysUtils,
-  AbMeter, AbZBrows;
+  Classes,
+  TestFrameWork, AbTestFrameWork;
 
 { TAbZipOutlineTests }
 
@@ -62,20 +63,19 @@ end;
 procedure TAbZipOutlineTests.TearDown;
 begin
   inherited;
-
 end;
 
 procedure TAbZipOutlineTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeter);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbMeter);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
   TestComponentLink(Component, 'PopupMenu', TPopupMenu);
 end;
 
 procedure TAbZipOutlineTests.TestDefaultStreaming;
 var
-CompStr : STring;
-CompTest : TAbZipOutline;
+  CompStr : string;
+  CompTest : TAbZipOutline;
 begin
 // Zip Outline needs a parent to stream correctly...  So I parent both to the same
 // Form but because of that we need to ignore Name, and TabOrder Comparision
@@ -84,10 +84,8 @@ begin
   CompStr  := StreamComponent(Component);
   CompTest := TAbZipOutline.Create(TestForm);
   CompTest.Parent := TestForm;
-  CompTest := (UnStreamComponent(CompStr,CompTest) as TAbZipOutline);
-  IgnoreProp.Add('Name');
-  IgnoreProp.Add('TabOrder');  
-  CompareComponentProps(Component,CompTest);
+  CompTest := (UnStreamComponent(CompStr, CompTest) as TAbZipOutline);
+  CompareComponentProps(Component, CompTest, 'Name,TabOrder');
   UnRegisterClass(TAbZipOutline);
   UnRegisterClass(TAbZipDisplayOutline);  
 end;

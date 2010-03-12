@@ -54,7 +54,6 @@ type
     NewCabBtn: TButton;
     AbMeter1: TAbMeter;
     AbMakeCab1: TAbMakeCab;
-    AbVCLMeterLink1: TAbVCLMeterLink;
     procedure AddBtnClick(Sender: TObject);
     procedure CreateBtnClick(Sender: TObject);
     procedure CloseBtnClick(Sender: TObject);

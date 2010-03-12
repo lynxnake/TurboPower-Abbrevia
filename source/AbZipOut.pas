@@ -39,7 +39,6 @@ unit AbZipOut;
 interface
 
 uses
-  SysUtils,
   Classes,
 {$IFDEF MSWINDOWS}
   Windows,
@@ -54,26 +53,16 @@ uses
   QImglist,
   QControls,
   QForms,
-  AbQMeter,
-
 {$ELSE}
   Graphics,
   Controls,
   Forms,
-  StdCtrls,
-  Grids,
   ComCtrls,
-  {$IFDEF VERSION4}
   Imglist,
-  {$ENDIF VERSION4}
-  AbMeter,
 {$ENDIF}
   AbArcTyp,
-  AbBase,
-  AbExcept,
-  AbUnzPrc,
+  AbBrowse,
   AbUtils,
-  AbZipPrc,
   AbZipTyp;
 
 
@@ -228,8 +217,8 @@ type
 {$ENDIF}
   protected {private}
     FArchive                : TAbZipArchive;
-    FItemProgressMeter      : TAbMeter;
-    FArchiveProgressMeter   : TAbMeter;
+    FItemProgressMeter      : IAbProgressMeter;
+    FArchiveProgressMeter   : IAbProgressMeter;
     FAttributes             : TAbZipAttributes;
     FAutoSave               : Boolean;
     FBaseDirectory          : string;
@@ -363,6 +352,7 @@ type
     procedure Notification(Component: TComponent; Operation: TOperation);
                            override;
     procedure PutItem(Index : Integer; Value : TAbZipItem);
+    procedure SetArchiveProgressMeter(const Value: IAbProgressMeter);
     procedure SetAttributes(Value : TAbZipAttributes);
     procedure SetAutoSave(Value : Boolean);
     procedure SetBaseDirectory(Value : string);
@@ -382,6 +372,7 @@ type
     procedure SetExtractOptions(Value : TAbExtractOptions);
     procedure SetFileName(const aFileName : string); virtual;
     procedure SetHierarchy(Value : Boolean);
+    procedure SetItemProgressMeter(const Value: IAbProgressMeter);
     procedure SetLogFile(Value : string);
     procedure SetLogging(Value : Boolean);
     procedure SetOnRequestImage(Value : TAbRequestImageEvent);
@@ -417,9 +408,9 @@ type
                                 OutStream, InStream : TStream);
 
   protected {properties}
-    property ArchiveProgressMeter : TAbMeter
+    property ArchiveProgressMeter : IAbProgressMeter
              read  FArchiveProgressMeter
-             write FArchiveProgressMeter;
+             write SetArchiveProgressMeter;
     property Attributes : TAbZipAttributes
              read  FAttributes
              write SetAttributes
@@ -473,9 +464,9 @@ type
              read  FSpanningThreshold
              write SetSpanningThreshold
              default 0;
-    property ItemProgressMeter : TAbMeter
+    property ItemProgressMeter : IAbProgressMeter
              read  FItemProgressMeter
-             write FItemProgressMeter;
+             write SetItemProgressMeter;
     property LogFile : string
              read  FLogFile
              write SetLogFile;
@@ -805,11 +796,13 @@ type
 implementation
 
 uses
-{$IFDEF WIN32}
   ShellApi,
-{$ENDIF}
+  SysUtils,
   AbConst,
-  AbResString;
+  AbExcept,
+  AbResString,
+  AbUnzPrc,
+  AbZipPrc;
 
 {$R AbZipOut.res}
 
@@ -1969,18 +1962,12 @@ procedure TAbCustomZipOutline.Notification(Component: TComponent;
   Operation: TOperation);
 begin
   inherited Notification(Component, Operation);
-  if (Component is TControl) and (Operation = opRemove) then
-{$IFDEF UsingCLX}
-    if Component = FItemProgressMeter then
-      FItemProgressMeter := nil
-    else if Component = FArchiveProgressMeter then
-      FArchiveProgressMeter := nil
-{$ELSE}
-    if (Component as TControl) = FItemProgressMeter then
-      FItemProgressMeter := nil
-    else if (Component as TControl) = FArchiveProgressMeter then
-      FArchiveProgressMeter := nil
-{$ENDIF UsingCLX}
+  if (Operation = opRemove) then begin
+    if Assigned(ItemProgressMeter) and Component.IsImplementorOf(ItemProgressMeter) then
+      ItemProgressMeter := nil;
+    if Assigned(ArchiveProgressMeter) and Component.IsImplementorOf(ArchiveProgressMeter) then
+      ArchiveProgressMeter := nil;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.PutItem(Index : Integer; Value : TAbZipItem);
@@ -2006,6 +1993,13 @@ begin
   if Assigned(FArchive) then begin
     FArchive.Save;
   end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomZipOutline.SetArchiveProgressMeter(const Value: IAbProgressMeter);
+begin
+  ReferenceInterface(FArchiveProgressMeter, opRemove);
+  FArchiveProgressMeter := Value;
+  ReferenceInterface(FArchiveProgressMeter, opInsert);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.SetAttributes(Value : TAbZipAttributes);
@@ -2138,6 +2132,13 @@ procedure TAbCustomZipOutline.SetHierarchy(Value : Boolean);
 begin
   FHierarchy := Value;
   UpdateOutline;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomZipOutline.SetItemProgressMeter(const Value: IAbProgressMeter);
+begin
+  ReferenceInterface(FItemProgressMeter, opRemove);
+  FItemProgressMeter := Value;
+  ReferenceInterface(FItemProgressMeter, opInsert);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.SetLogFile(Value : string);

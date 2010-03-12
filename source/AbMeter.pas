@@ -44,41 +44,19 @@ uses
   Windows,
   {$ENDIF}
   {$IFDEF LINUX}
-  Libc, Types,
+  Libc,
   {$ENDIF}
-
   {$IFDEF UsingCLX }
   QControls, QGraphics, QForms, QExtCtrls,
   {$ELSE}
   Controls, Graphics, Forms, ExtCtrls,
   {$ENDIF}
-  SysUtils,
   AbBrowse;
 
 type
   TAbMeterOrientation = (moHorizontal, moVertical);
 
-  TAbCustomMeter = class; // forward declaration
-
-  TAbMeterLink = class(TAbBaseMeterLink)
-  private
-    FMeter : TAbCustomMeter;
-  protected
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
-  public
-    procedure DoProgress(Progress : Byte); override;
-    procedure Reset; override;
-  published
-    property Meter : TAbCustomMeter read FMeter write FMeter;
-  end;
-
-  {$IFDEF UsingCLX }
-  TAbCLXMeterLink = class(TAbMeterLink);
-  {$ELSE}
-  TAbVCLMeterLink = class(TAbMeterLink);
-  {$ENDIF}
-
-  TAbCustomMeter = class(TGraphicControl)
+  TAbCustomMeter = class(TGraphicControl, IAbProgressMeter)
   {.Z+}
   protected {private}
     {property variables}
@@ -157,32 +135,7 @@ type
 implementation
 
 uses
-  AbConst;
-
-{====================================================================}
-procedure TAbMeterLink.Notification(AComponent: TComponent; Operation: TOperation);
-begin
-  inherited Notification(AComponent, Operation);
-  if (Operation = opInsert) and (AComponent is TAbCustomMeter) and (FMeter = nil) then
-    FMeter := TAbCustomMeter(AComponent);
-  if (Operation = opRemove) and (AComponent = FMeter) then
-    FMeter := nil;
-end;
-{--------}
-
-procedure TAbMeterLink.DoProgress(Progress : Byte);
-begin
-  if Assigned(FMeter) then
-    FMeter.DoProgress(Progress);
-end;
-{--------}
-procedure TAbMeterLink.Reset;
-begin
-  if Assigned(FMeter) then
-    FMeter.Reset;
-end;
-{====================================================================}
-
+  Types, AbConst;
 
 { == TAbCustomMeter ======================================================== }
 constructor TAbCustomMeter.Create(AOwner : TComponent);
@@ -278,13 +231,14 @@ begin
       end;
     end;
   end;
+  {$IFNDEF UsingLCL}
   if (BorderStyle <> bsNone) then begin
     if Ctl3D then
       Frame3D(Canvas, ClRect, clBtnShadow, clBtnHighlight, 1)
     else
       Frame3D(Canvas, ClRect, clBlack, clBlack, 1);
   end;
-
+  {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomMeter.Reset;

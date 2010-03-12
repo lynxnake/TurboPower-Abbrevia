@@ -71,7 +71,7 @@ uses
   {$ENDIF}
   Classes, SysUtils,
   TestFrameWork,
-  AbArcTyp, AbMeter, AbUtils, AbUnZper, AbZipTyp;
+  AbArcTyp, AbUtils, AbUnZper, AbZipTyp;
 
 { TAbZipperTests }
 
@@ -252,7 +252,7 @@ end;
 procedure TAbZipperTests.SetUp;
 begin
   inherited;
-  Component := TAbZipper.Create(TestForm);
+  Component := TAbZipper.Create(nil);
 end;
 
 procedure TAbZipperTests.TearDown;
@@ -291,21 +291,14 @@ end;
 
 procedure TAbZipperTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ArchiveSaveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbZipperTests.TestDefaultStreaming;
-var
-  CompStr : string;
-  CompTest : TAbZipper;
 begin
-  RegisterClass(TAbZipper);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbZipper);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbZipper);
+  inherited TestDefaultStreaming(Component);
 end;
 
 procedure TAbZipperTests.CreatePasswordProtectedAddedByStream;

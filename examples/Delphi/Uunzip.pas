@@ -50,8 +50,6 @@ type
     AbMeter2: TAbMeter;
     Label1: TLabel;
     Label2: TLabel;
-    AbVCLMeterLink1: TAbVCLMeterLink;
-    AbVCLMeterLink2: TAbVCLMeterLink;
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }

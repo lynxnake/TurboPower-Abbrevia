@@ -28,11 +28,10 @@ unit AbCabExtTests;
 interface
 
 uses
-  SysUtils,Classes,AbTestFramework,TestFrameWork,abCabExt,abMeter;
+  AbTestFramework, AbCabExt;
 
 type
-
-  TAbCabExtTests = class(TabCompTestCase)
+  TAbCabExtTests = class(TAbCompTestCase)
   private
     Component : TAbCabExtractor;
   protected
@@ -41,41 +40,36 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
-
   end;
 
 implementation
+
+uses
+  TestFrameWork;
 
 { TAbCabExtTests }
 
 procedure TAbCabExtTests.SetUp;
 begin
   inherited;
-  Component := TAbCabExtractor.Create(TestForm);
+  Component := TAbCabExtractor.Create(nil);
 end;
 
 procedure TAbCabExtTests.TearDown;
 begin
+  Component.Free;
   inherited;
-
 end;
 
 procedure TAbCabExtTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbCabExtTests.TestDefaultStreaming;
-var
-CompStr : STring;
-CompTest : TAbCabExtractor;
 begin
-  RegisterClass(TAbCabExtractor);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbCabExtractor);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbCabExtractor);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

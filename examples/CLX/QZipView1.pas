@@ -134,8 +134,6 @@ type
     Logging1: TMenuItem;
     DeletedColor1: TMenuItem;
     DeletedTextColor1: TMenuItem;
-    AbCLXMeterLink1: TAbCLXMeterLink;
-    AbCLXMeterLink2: TAbCLXMeterLink;
     AutomaticTar: TMenuItem;
     ViewasTar1: TMenuItem;
     procedure AbZipView1Click(Sender: TObject);

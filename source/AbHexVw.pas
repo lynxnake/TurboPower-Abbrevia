@@ -29,7 +29,9 @@
 {* Abbrevia: Hex View utility                            *}
 {*********************************************************}
 
+{$IFNDEF UsingCLX}
 unit AbHexVw;
+{$ENDIF}
 
 interface
 

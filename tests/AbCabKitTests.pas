@@ -28,7 +28,7 @@ unit AbCabKitTests;
 interface
 
 uses
-  SysUtils, Classes, abTestFrameWork, TestFrameWork,AbCabKit,abMeter;
+  AbTestFrameWork, AbCabKit;
 
 type
 
@@ -41,41 +41,36 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
-
   end;
 
 implementation
+
+uses
+  TestFrameWork;
 
 { TAbCabKitTests }
 
 procedure TAbCabKitTests.SetUp;
 begin
   inherited;
-  Component := TAbCabKit.Create(TestForm);
+  Component := TAbCabKit.Create(nil);
 end;
 
 procedure TAbCabKitTests.TearDown;
 begin
+  Component.Free;
   inherited;
-
 end;
 
 procedure TAbCabKitTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbCabKitTests.TestDefaultStreaming;
-var
-  CompStr : String;
-  CompTest : TAbCabKit;
 begin
-  RegisterClass(TAbCabKit);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbCabKit);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbCabKit);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

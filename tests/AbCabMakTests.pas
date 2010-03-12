@@ -28,10 +28,9 @@ unit AbCabMakTests;
 interface
 
 uses
-  SysUtils, Classes, abTestFrameWork, TestFrameWork,AbCabMak,abMeter;
+  AbTestFrameWork, AbCabMak;
 
 type
-
   TAbCabMakTests = class(TabCompTestCase)
   private
     Component : TAbMakeCab;
@@ -41,41 +40,36 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
-
   end;
 
 implementation
+
+uses
+  TestFrameWork;
 
 { TAbCabMakTests }
 
 procedure TAbCabMakTests.SetUp;
 begin
   inherited;
-  Component := TAbMakeCab.Create(TestForm);
+  Component := TAbMakeCab.Create(nil);
 end;
 
 procedure TAbCabMakTests.TearDown;
 begin
+  Component.Free;
   inherited;
-
 end;
 
 procedure TAbCabMakTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbCabMakTests.TestDefaultStreaming;
-var
-  CompStr : String;
-  CompTest : TAbMakeCab;
 begin
-  RegisterClass(TAbMakeCab);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbMakeCab);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbMakeCab);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

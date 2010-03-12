@@ -28,7 +28,7 @@ unit AbZBrowsTests;
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbZBrows,SysUtils,Classes,abMeter;
+  AbTestFrameWork, AbZBrows;
 
 type
 
@@ -46,39 +46,32 @@ type
 
 implementation
 
-{ TAbZBrowsTests }
-
+uses
+  TestFrameWork;
 
 { TAbZipBrowserTests }
 
 procedure TAbZipBrowserTests.SetUp;
 begin
   inherited;
-  Component := TAbZipBrowser.Create(TestForm);
+  Component := TAbZipBrowser.Create(nil);
 end;
 
 procedure TAbZipBrowserTests.TearDown;
 begin
-//  Component.Free; Owned by form.
+  Component.Free;
   inherited;
 end;
 
 procedure TAbZipBrowserTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbZipBrowserTests.TestDefaultStreaming;
-var
-CompStr : STring;
-CompTest : TAbZipBrowser;
 begin
-  RegisterClass(TAbZipBrowser);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TabZipBrowser);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbZipBrowser);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

@@ -24,15 +24,16 @@
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbCBrowsTests;
+
 {$I AbDefine.inc}
+
 interface
 
 uses
-  TestFrameWork,abTestFrameWork,AbCBrows,SysUtils,Classes,abMeter;
+  AbTestFrameWork, AbCBrows;
 
 type
-
-  TAbCabBrowserTests = class(TabCompTestCase)
+  TAbCabBrowserTests = class(TAbCompTestCase)
   private
     Component : TAbCabBrowser;
   protected
@@ -41,41 +42,36 @@ type
   published
     procedure TestDefaultStreaming;
     procedure TestComponentLinks;
-
   end;
 
 implementation
+
+uses
+  TestFrameWork;
 
 { TAbCabBrowserTests }
 
 procedure TAbCabBrowserTests.SetUp;
 begin
   inherited;
-  Component := TAbCabBrowser.Create(TestForm);
+  Component := TAbCabBrowser.Create(nil);
 end;
 
 procedure TAbCabBrowserTests.TearDown;
 begin
-//  Component.Free; Owned by form.
+  Component.Free;
   inherited;
 end;
 
 procedure TAbCabBrowserTests.TestComponentLinks;
 begin
-  TestComponentLink(Component, 'ArchiveProgressMeter', TAbVCLMeterLink);
-  TestComponentLink(Component, 'ItemProgressMeter', TAbVCLMeterLink);
+  TestComponentLink(Component, 'ArchiveProgressMeter', TAbTestMeter);
+  TestComponentLink(Component, 'ItemProgressMeter', TAbTestMeter);
 end;
 
 procedure TAbCabBrowserTests.TestDefaultStreaming;
-var
-  CompStr : string;
-  CompTest : TAbCabBrowser;
 begin
-  RegisterClass(TAbCabBrowser);
-  CompStr := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbCabBrowser);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbCabBrowser);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

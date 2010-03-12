@@ -28,7 +28,7 @@ unit AbSelfExTests;
 interface
 
 uses
-  SysUtils,classes,AbTestFrameWork,TestFrameWork,AbSelfEx;
+  AbSelfEx, AbTestFrameWork;
 
 type
 
@@ -44,32 +44,26 @@ type
 
 implementation
 
+uses
+  Classes, TestFrameWork;
+
 { TAbSelfExTests }
 
 procedure TAbSelfExTests.SetUp;
 begin
   inherited;
-  Component := TAbMakeSelfExe.Create(TestForm);
+  Component := TAbMakeSelfExe.Create(nil);
 end;
 
 procedure TAbSelfExTests.TearDown;
 begin
+  Component.Free;
   inherited;
-
 end;
 
-
-
 procedure TAbSelfExTests.TestDefaultStreaming;
-var
-  CompStr : String;
-  CompTest : TAbMakeSelfExe;
 begin
-  RegisterClass(TAbMakeSelfExe);
-  CompStr  := StreamComponent(Component);
-  CompTest := (UnStreamComponent(CompStr) as TAbMakeSelfExe);
-  CompareComponentProps(Component,CompTest);
-  UnRegisterClass(TAbMakeSelfExe);
+  inherited TestDefaultStreaming(Component);
 end;
 
 initialization

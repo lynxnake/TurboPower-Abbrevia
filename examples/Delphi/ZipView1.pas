@@ -140,8 +140,6 @@ type
     Logging1: TMenuItem;
     DeletedColor1: TMenuItem;
     DeletedTextColor1: TMenuItem;
-    AbVCLMeterLink1: TAbVCLMeterLink;
-    AbVCLMeterLink2: TAbVCLMeterLink;
     procedure AbZipView1Click(Sender: TObject);
     procedure AttributeClick(Sender: TObject);
     procedure DisplayOptionClick(Sender: TObject);
