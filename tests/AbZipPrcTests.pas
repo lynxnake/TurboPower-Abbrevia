@@ -53,7 +53,7 @@ type
 implementation
 
 uses
-  Math, SysUtils,
+  SysUtils,
   TestFrameWork,
   AbTestConsts, AbUnzPrc, AbZipPrc;
 

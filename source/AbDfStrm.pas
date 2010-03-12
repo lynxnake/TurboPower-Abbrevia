@@ -36,7 +36,6 @@ unit AbDfStrm;
 interface
 
 uses
-  SysUtils,
   Classes,
   AbDfBase,
   AbDfInW,
@@ -203,6 +202,7 @@ type
 implementation
 
 uses
+  SysUtils,
   AbDfXlat;
 
 type

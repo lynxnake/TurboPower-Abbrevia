@@ -36,7 +36,6 @@ unit AbDfPkMg;
 interface
 
 uses
-  SysUtils,
   AbDfBase;
 
 procedure GenerateCodeLengths(aMaxCodeLen  : integer;

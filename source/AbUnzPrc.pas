@@ -36,19 +36,10 @@ unit AbUnzPrc;
 interface
 
 uses
-  {$IFDEF MSWINDOWS}
-  Windows,
-  {$ENDIF}
+  Classes,
   AbArcTyp,
   AbZipTyp,
-  AbUtils,
-  AbDfBase,
-  AbDfDec,
-  AbDfCryS,
-  AbZipCry,
-  AbSWStm,
-  AbSpanSt,
-  Classes;
+  AbZipCry;
 
 type
   TAbUnzipHelper = class( TObject )
@@ -152,18 +143,27 @@ type
 implementation
 
 uses
-  AbConst,
-  AbResString,
-  AbExcept,
-  AbTempFileStream,  
-  AbBitBkt,
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
   {$IFNDEF NoQt}
   {$IFDEF LINUX}
   QControls,
   QDialogs,
   {$ENDIF}
   {$ENDIF}
-  SysUtils;
+  SysUtils,
+  AbBitBkt,
+  AbConst,
+  AbDfBase,
+  AbDfCryS,
+  AbDfDec,
+  AbExcept,
+  AbResString,
+  AbSpanSt,
+  AbSWStm,
+  AbTempFileStream,
+  AbUtils;
 
 { -------------------------------------------------------------------------- }
 procedure AbReverseBits(var W : Word);

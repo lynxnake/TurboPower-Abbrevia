@@ -44,14 +44,14 @@ uses
   Windows,
 {$ENDIF}
 {$IFDEF UsingCLX }
-  QControls, QForms, QGrids, QGraphics, QMenus,
+  QControls,
   AbQView,
 {$ELSE}
-  Controls, Forms, Grids, Graphics, Menus,
+  Controls,
   AbView,
 {$ENDIF}
   AbZBrows,
-  AbBase, AbZipTyp, AbArcTyp;
+  AbZipTyp;
 
 type
   TAbIncludeItemEvent = procedure (Sender:  TObject;
@@ -125,6 +125,9 @@ type
 end;
 
 implementation
+
+uses
+  AbArcTyp;
 
 { ===== TAbZipView ========================================================= }
 function TAbZipView.GetItem(RowNum : Longint) : TAbZipItem;

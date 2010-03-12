@@ -30,7 +30,7 @@
 interface
 
 uses
-  Windows, SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbCabTyp;
+  AbTestFrameWork;
 
 type
   TAbCabArchiveTests = class(TAbTestCase)
@@ -54,7 +54,7 @@ type
 implementation
 
 uses
-  AbUtils;
+  SysUtils, Classes, TestFrameWork, AbCabTyp, AbUtils;
 
 {----------------------------------------------------------------------------}
 { TAbCabArchiveTests }

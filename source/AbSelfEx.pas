@@ -36,11 +36,8 @@ unit AbSelfEx;
 interface
 
 uses
-  SysUtils, Classes,
-{$IFDEF LINUX}
-  Libc, 
-{$ENDIF}
-  AbArcTyp, AbBase, AbExcept, AbUtils, AbZipTyp;
+  Classes,
+  AbBase;
 
 type
   TAbGetFileEvent = procedure(Sender : TObject; var aFilename : string;
@@ -87,7 +84,11 @@ type
 implementation
 
 uses
-  AbConst;
+  SysUtils,
+{$IFDEF LINUX}
+  Libc,
+{$ENDIF}
+  AbExcept, AbZipTyp;
 
 { -------------------------------------------------------------------------- }
 function TAbMakeSelfExe.Execute : Boolean;

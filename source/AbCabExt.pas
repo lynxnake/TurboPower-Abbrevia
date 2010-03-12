@@ -36,7 +36,7 @@ unit AbCabExt;
 interface
 
 uses
-  SysUtils, Classes,
+  Classes,
   AbCBrows, 
   AbArcTyp;
 

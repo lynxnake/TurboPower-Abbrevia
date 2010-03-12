@@ -111,10 +111,8 @@ uses
   Libc,
   {$ENDIF}
   SysUtils,
-  AbConst,
-  AbExcept,                                                            
-  AbUtils,
-  AbArcTyp;
+  AbExcept,
+  AbUtils;
 
 const
   LastLRUValue = $7FFFFFFF;

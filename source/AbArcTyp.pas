@@ -41,8 +41,7 @@ uses
   {$ENDIF Linux}
   Classes,
   Types,
-  AbUtils,
-  SysUtils;
+  AbUtils;
 
 { ===== TAbArchiveItem ====================================================== }
 type
@@ -541,8 +540,8 @@ implementation
 
 uses
   RTLConsts,
+  SysUtils,
   AbExcept,
-  AbSpanSt,
   AbDfBase,
   AbConst,
   AbResString;

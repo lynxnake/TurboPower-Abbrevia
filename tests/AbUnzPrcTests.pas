@@ -28,7 +28,7 @@ unit AbUnzPrcTests;
 interface
 
 uses
-  TestFrameWork,AbUnzPrc,AbTestFramework,AbTestConsts,SysUtils,Classes;
+  Classes, AbTestFramework;
 
 type
 
@@ -49,6 +49,9 @@ type
   end;
 
 implementation
+
+uses
+  SysUtils, TestFrameWork, AbUnzPrc, AbTestConsts;
 
 { TAbUnzPrcTests }
 

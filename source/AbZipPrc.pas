@@ -37,11 +37,7 @@ interface
 
 uses
   Classes,
-  AbArcTyp,
-  AbZipTyp,
-  AbDfBase,
-  AbDfEnc,
-  AbSpanSt;
+  AbZipTyp;
 
   procedure AbZip( Sender : TAbZipArchive; Item : TAbZipItem;
     OutStream : TStream );
@@ -63,13 +59,15 @@ uses
 {$IFDEF LINUX}
   Libc,
 {$ENDIF}
-  AbConst,
+  SysUtils,
+  AbArcTyp,
   AbExcept,
   AbUtils,
   AbDfCryS,
-  AbZipCry,                                                              {!!.01}
   AbVMStrm,                                                              {!!.01}
-  SysUtils;
+  AbDfBase,
+  AbDfEnc,
+  AbSpanSt;
 
 
 { ========================================================================== }

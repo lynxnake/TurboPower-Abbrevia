@@ -42,8 +42,6 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  AbArcTyp,
-  AbUtils,
   AbZipTyp;
 
 type
@@ -101,8 +99,8 @@ type
 implementation
 
 uses
-  AbConst,
-  AbExcept;
+  AbExcept,
+  AbUtils;
 
 const
   AbZipKeyInit1 = 305419896;

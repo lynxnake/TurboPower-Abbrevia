@@ -39,11 +39,8 @@ unit AbTarTyp;
 interface
 
 uses
-{$IFDEF MSWINDOWS }
-  Windows,
-{$ENDIF MSWINDOWS }
-  SysUtils, Classes,
-  AbUtils, AbVMStrm, AbSpanSt, AbExcept, AbArcTyp;
+  Classes,
+  AbUtils, AbArcTyp;
 
 const
   AB_TAR_RECORDSIZE  = 512;
@@ -233,6 +230,12 @@ type
 function VerifyTar(Strm : TStream) : TAbArchiveType;
 
 implementation
+
+uses
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF MSWINDOWS}
+  SysUtils, AbVMStrm, AbExcept;
 
 function OctalToInt(const Oct : PAnsiChar; aLen : integer): Int64;
 var

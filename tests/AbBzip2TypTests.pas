@@ -30,7 +30,7 @@ unit AbBzip2TypTests;
 interface
 
 uses
-  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbBzip2Typ;
+  AbTestFrameWork;
 
 type
   TAbBzip2ArchiveTests = class(TAbTestCase)
@@ -48,7 +48,7 @@ type
 implementation
 
 uses
-  AbUtils;
+  SysUtils, Classes, TestFrameWork, AbBzip2Typ, AbUtils;
 
 {----------------------------------------------------------------------------}
 { TAbBzip2ArchiveTests }

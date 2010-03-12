@@ -44,13 +44,7 @@ unit AbGzTyp;
 interface
 
 uses
-  {$IFDEF MSWINDOWS}
-  Windows,
-  {$ENDIF}
-  SysUtils, Classes, Types,
-
-  AbConst, AbExcept, AbUtils, AbArcTyp, AbTarTyp,
-  AbDfBase, AbDfDec, AbDfEnc, AbVMStrm, AbBitBkt;
+  Classes, AbUtils, AbArcTyp, AbTarTyp;
 
 type
   { pre-defined "operating system" (really more FILE system)
@@ -287,7 +281,11 @@ function GZOsToStr(OS: Byte) : string;
 implementation
 
 uses
-  RTLConsts, AbResString;
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  SysUtils,
+  AbBitBkt, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString, AbVMStrm;
 
 const
   { Header Signature Values}

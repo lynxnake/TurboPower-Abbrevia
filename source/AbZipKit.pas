@@ -36,9 +36,7 @@ unit AbZipKit;
 interface
 
 uses
-  Classes,
-  AbBrowse, AbZBrows, AbZipper,
-  AbArcTyp, AbBase, AbUtils, AbZipTyp;
+  Classes, AbZipper, AbArcTyp, AbZipTyp;
 
 type
   TAbCustomZipKit = class(TAbCustomZipper)
@@ -146,7 +144,8 @@ implementation
 
 uses
   AbExcept,
-  AbUnzPrc;
+  AbUnzPrc,
+  AbZBrows;
 
 { -------------------------------------------------------------------------- }
 constructor TAbCustomZipKit.Create( AOwner : TComponent );

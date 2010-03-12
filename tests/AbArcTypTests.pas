@@ -30,7 +30,7 @@
 interface
 
 uses
-  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbArcTyp;
+  AbTestFrameWork;
 
 type
   TAbArchiveTests = class(TAbTestCase)
@@ -39,6 +39,9 @@ type
   end;
 
 implementation
+
+uses
+  TestFrameWork, AbArcTyp;
 
 {----------------------------------------------------------------------------}
 { TAbArchiveTests }

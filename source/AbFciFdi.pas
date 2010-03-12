@@ -38,7 +38,7 @@ unit AbFciFdi;
 interface
 
 uses
-  Windows, SysUtils, Classes, AbUtils;
+  Windows, AbUtils;
 
 const
   CabinetDLL  = 'cabinet.dll';
@@ -273,8 +273,7 @@ function FCIDestroy(hfci : HFCI) : Boolean;
 implementation
 
 uses
-  AbExcept,
-  AbConst;
+  AbExcept;
 
 
 var

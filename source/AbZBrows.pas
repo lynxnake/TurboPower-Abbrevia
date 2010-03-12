@@ -36,10 +36,8 @@ unit AbZBrows;
 interface
 
 uses
-  SysUtils, Classes,
-  AbBrowse,
-  AbBase, AbExcept, AbUtils, AbArcTyp, AbZipTyp, AbTarTyp, AbGzTyp, AbBzip2Typ,
-  AbSpanSt;
+  Classes,
+  AbArcTyp, AbBrowse, AbSpanSt, AbZipTyp;
 
 type
   TAbCustomZipBrowser = class(TAbBaseBrowser)
@@ -129,7 +127,7 @@ type
 implementation
 
 uses
-  AbConst;
+  SysUtils, AbBzip2Typ, AbExcept, AbGzTyp, AbTarTyp, AbUtils;
 
 { TAbCustomZipBrowser implementation ======================================= }
 

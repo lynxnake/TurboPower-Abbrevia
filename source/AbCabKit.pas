@@ -36,7 +36,7 @@ unit AbCabKit;
 interface
 
 uses
-  SysUtils, Classes, AbArcTyp,
+  Classes, AbArcTyp,
   AbCabMak;
 
 type
@@ -106,6 +106,7 @@ type
 implementation
 
 uses
+  SysUtils,
   AbExcept,
   AbCabTyp,
   AbCBrows;

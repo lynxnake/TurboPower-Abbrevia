@@ -36,8 +36,7 @@ unit AbDfXlat;
 interface
 
 uses
-  SysUtils,
-  Classes;
+  SysUtils;
 
 type
   TAbDfTranslator = class

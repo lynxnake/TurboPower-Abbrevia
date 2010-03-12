@@ -82,8 +82,6 @@ number of extra bits that must be extracted from the input bit stream.
 interface
 
 uses
-  SysUtils,
-  Classes,
   AbDfBase;
 
 type
@@ -132,6 +130,9 @@ var
   AbStaticDistanceTree : TAbDfDecodeHuffmanTree;
 
 implementation
+
+uses
+  SysUtils;
 
 const
   PowerOfTwo : array [0..dfc_MaxCodeLength] of integer =

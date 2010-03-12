@@ -36,7 +36,6 @@ unit AbDfDec;
 interface
 
 uses
-  SysUtils,
   Classes,
   AbDfBase;
 
@@ -46,6 +45,7 @@ function Inflate(aSource : TStream; aDest : TStream;
 implementation
 
 uses
+  SysUtils,
   AbDfStrm,
   AbDfHufD,
   AbDfOutW,

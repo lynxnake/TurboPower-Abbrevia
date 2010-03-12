@@ -36,9 +36,8 @@ unit AbUnzper;
 interface
 
 uses
-  SysUtils, Classes,
-  AbBrowse, AbZBrows,
-  AbArcTyp, AbBase, AbUtils, AbZipTyp;
+  Classes,
+  AbZBrows, AbArcTyp, AbZipTyp;
 
 type
   TAbCustomUnZipper = class(TAbCustomZipBrowser)
@@ -126,6 +125,8 @@ type
 implementation
 
 uses
+  SysUtils,
+  AbUtils,
   AbExcept,
   AbUnzPrc;
 

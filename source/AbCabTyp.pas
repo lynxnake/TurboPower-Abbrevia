@@ -39,8 +39,7 @@ unit AbCabTyp;
 interface
 
 uses
-  Windows, SysUtils, Classes, AbFciFdi, AbArcTyp,
-  AbUtils;
+  Windows, Classes, AbFciFdi, AbArcTyp, AbUtils;
 
 type
   TAbCabItem = class(TAbArchiveItem)
@@ -179,7 +178,7 @@ function VerifyCab(Strm : TStream) : TAbArchiveType; overload;
 implementation
 
 uses
-  AbConst, AbExcept;
+  SysUtils, AbConst, AbExcept;
 
 {$WARN UNIT_PLATFORM OFF}
 {$WARN SYMBOL_PLATFORM OFF}

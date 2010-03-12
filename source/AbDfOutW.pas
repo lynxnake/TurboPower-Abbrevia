@@ -36,7 +36,6 @@ unit AbDfOutW;
 interface
 
 uses
-  SysUtils,
   Classes,
   AbDfBase;
 
@@ -96,6 +95,9 @@ type
   end;
 
 implementation
+
+uses
+  SysUtils;
 
 {Notes:
         Meaning of the internal pointers:

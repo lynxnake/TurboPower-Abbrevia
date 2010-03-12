@@ -36,7 +36,6 @@ unit AbDfEnc;
 interface
 
 uses
-  SysUtils,
   Classes,
   AbDfBase;
 

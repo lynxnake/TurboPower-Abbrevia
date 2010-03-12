@@ -36,7 +36,6 @@ unit AbDfCryS;
 interface
 
 uses
-  SysUtils,
   Classes;
 
 type

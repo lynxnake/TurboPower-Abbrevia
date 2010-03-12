@@ -39,10 +39,7 @@ interface
 
 uses
   Classes,
-  {$IFDEF MSWINDOWS}
-  Windows,
-  {$ENDIF}
-  SysUtils, AbArcTyp, AbUtils, AbExcept;
+  AbArcTyp;
 
 type
   TAbSpanMode = (smReading, smWriting);
@@ -116,6 +113,12 @@ type
   end;
 
 implementation
+
+uses
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  SysUtils, AbUtils, AbExcept;
 
 {!!.01 -- added}
 function TAbSpanStream.FixSpanNumber(ImageNumber: Integer): Integer;

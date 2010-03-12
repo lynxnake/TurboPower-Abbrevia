@@ -36,7 +36,6 @@ unit AbDfInW;
 interface
 
 uses
-  SysUtils,
   Classes,
   AbDfBase;
 

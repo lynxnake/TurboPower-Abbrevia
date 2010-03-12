@@ -30,7 +30,7 @@
 interface
 
 uses
-  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbZipTyp;
+  Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbZipTyp;
 
 type
   TAbZipArchiveTests = class(TAbTestCase)
@@ -78,7 +78,7 @@ type
 implementation
 
 uses
-  AbUtils, AbUnzPrc, AbZipPrc;
+  SysUtils, AbUtils, AbUnzPrc, AbZipPrc;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchiveTests }

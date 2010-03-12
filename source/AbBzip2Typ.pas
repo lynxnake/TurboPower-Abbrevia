@@ -41,7 +41,7 @@ interface
 
 uses
   Classes,
-  AbArcTyp, AbExcept, AbTarTyp, AbUtils, AbVMStrm, AbBitBkt;
+  AbArcTyp, AbTarTyp, AbUtils;
 
 const
   { Default Stream Header for Bzip2s is 'BZhX', where X is the block size setting 1-9 in ASCII }
@@ -117,7 +117,7 @@ uses
   Windows, // Fix inline warnings
 {$ENDIF}
   StrUtils, SysUtils,
-  AbBzip2;
+  AbBzip2, AbExcept, AbVMStrm, AbBitBkt;
 
 { ****************** Helper functions Not from Classes Above ***************** }
 function VerifyHeader(const Header : TAbBzip2Header) : Boolean;

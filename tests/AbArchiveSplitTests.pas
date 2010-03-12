@@ -30,13 +30,13 @@ unit AbArchiveSplitTests;
 interface
 
 uses
-  TestFrameWork, AbTestFramework, SysUtils, Classes, AbZipper, AbExcept, AbUnzper;
+  AbTestFramework;
 
 type
 
   { TAbArchiveSplitTests }
 
-  TAbArchiveSplitTests = class(TabTestCase)
+  TAbArchiveSplitTests = class(TAbTestCase)
   private
     procedure AbortOnImageRequestEVENT (Sender : TObject; ImageNumber : Integer;
                                   var ImageName : string; var Abort : Boolean);
@@ -47,14 +47,13 @@ type
   published
     procedure DecompressSplitArchive;
     procedure CreateSplitArchive;
-//    procedure TestCreatedWithWinZip;
     procedure AbortOnImageRequest;
   end;
 
 implementation
 
 uses
-  AbZipTyp;
+  SysUtils, TestFrameWork, AbExcept, AbUnzper, AbZipTyp, AbZipper;
 
 { TAbArchiveSplitTests }
 

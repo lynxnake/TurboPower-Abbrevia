@@ -30,7 +30,7 @@ unit AbGzTypTests;
 interface
 
 uses
-  SysUtils, Classes, TestFrameWork, AbTestFrameWork, AbGzTyp;
+  AbTestFrameWork, AbGzTyp;
 
 type
   TAbGzipExtraFieldTests = class(TAbTestCase)
@@ -63,6 +63,9 @@ type
   end;
 
 implementation
+
+uses
+  SysUtils, Classes, TestFrameWork;
 
 {----------------------------------------------------------------------------}
 { TAbGzipExtraFieldTests }

@@ -39,12 +39,10 @@ unit AbView;
 interface
 
 uses
-  SysUtils,
   Classes,
 {$IFDEF MSWINDOWS}
   Windows,
   Messages,
-  ShellApi,
 {$ENDIF}
 {$IFDEF LINUX}
   Libc,
@@ -54,20 +52,13 @@ uses
   Qt,
   QControls,
   QGraphics,
-  QForms,
   QGrids,
 {$ELSE}
   Controls,
   Graphics,
-  Forms,
   Grids,
 {$ENDIF}
-  AbExcept,
-  AbUtils,
-  AbConst,
-  AbResString,
-  AbArcTyp,
-  AbZipTyp;
+  AbArcTyp;
 
 type
   TAbViewAttribute =
@@ -385,6 +376,16 @@ type
 
 
 implementation
+
+uses
+{$IFDEF MSWINDOWS}
+  ShellApi,
+{$ENDIF}
+  SysUtils,
+  AbUtils,
+  AbConst,
+  AbResString,
+  AbZipTyp;
 
 { ===== TAbColors ========================================================== }
 procedure TAbColors.BeginUpdate;
