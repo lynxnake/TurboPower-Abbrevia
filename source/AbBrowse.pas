@@ -209,7 +209,8 @@ type
       write FOnLoad;
   end;
 
-function AbDetermineArcType(const FN : string; AssertType : TAbArchiveType) : TAbArchiveType;
+function AbDetermineArcType(const FN : string; AssertType : TAbArchiveType) : TAbArchiveType; overload;
+function AbDetermineArcType(aStream: TStream) : TAbArchiveType; overload;
 
 implementation
 
@@ -559,6 +560,23 @@ begin
       FS.Free;
     end;
   end;
+end;
+{ -------------------------------------------------------------------------- }
+function AbDetermineArcType(aStream: TStream): TAbArchiveType;
+begin
+Result := VerifyZip(aStream);
+if Result <> atUnknown then Exit;
+Result := VerifySelfExtracting(aStream);
+if Result <> atUnknown then Exit;
+Result := VerifyTar(aStream);
+if Result <> atUnknown then Exit;
+Result := VerifyGzip(aStream);
+if Result <> atUnknown then Exit;
+Result := VerifyBzip2(aStream);
+if Result <> atUnknown then Exit;
+{$IFDEF MSWINDOWS}
+Result := VerifyCab(aStream);
+{$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 

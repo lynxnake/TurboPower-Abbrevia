@@ -195,6 +195,7 @@ end;
 procedure TAbUnZipperTests.TestBasicUnGzipTar;
 begin
   Component.BaseDirectory := TestTempDir;
+  Component.TarAutoHandle := True;
   Component.FileName := TestFileDir + 'MPL.TGZ';
   Component.ExtractFiles('*.*');
   CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
