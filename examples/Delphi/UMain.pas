@@ -201,7 +201,7 @@ type
     procedure AbZipOutline1ArchiveItemProgress(Sender: TObject;
       Item: TAbArchiveItem; Progress: Byte; var Abort: Boolean);
     procedure AbZipOutline1NeedPassword(Sender: TObject;
-      var NewPassword: string);
+      var NewPassword: AnsiString);
     procedure DeleteFiles1Click(Sender: TObject);
     procedure ExtractFiles1Click(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -846,10 +846,10 @@ var
 begin
   Dlg := TPassWordDlg.Create( Application );
   try
-    Dlg.Edit1.Text := AbZipOutline1.Password;
+    Dlg.Edit1.Text := string(AbZipOutline1.Password);
     Dlg.ShowModal;
     if Dlg.ModalResult = mrOK then
-      AbZipOutline1.Password := Dlg.Edit1.Text;
+      AbZipOutline1.Password := AnsiString(Dlg.Edit1.Text);
   finally
     Dlg.Free;
   end;
@@ -967,7 +967,7 @@ begin
 end;
 
 procedure TForm1.AbZipOutline1NeedPassword(Sender: TObject;
-  var NewPassword: string);
+  var NewPassword: AnsiString);
 var
   Dlg : TPassWordDlg;
 begin
@@ -975,7 +975,7 @@ begin
   try
     Dlg.ShowModal;
     if Dlg.ModalResult = mrOK then
-      NewPassword := Dlg.Edit1.Text;
+      NewPassword := AnsiString(Dlg.Edit1.Text);
   finally
     Dlg.Free;
   end;
@@ -1015,7 +1015,7 @@ begin
       CheckBox2.Checked := eoCreateDirs in ExtractOptions;
       ShowModal;
       if ModalResult = mrOK then begin
-        BaseDirectory := DirLabel.Caption;
+        BaseDirectory := BaseDirDlg.DLB.Directory;
         if CheckBox1.Checked then
           ExtractOptions := ExtractOptions + [eoRestorePath]
         else
@@ -1089,7 +1089,7 @@ begin
 
         AbZipOutline1.Hierarchy := ReadBool( 'View', 'Hierarchy', True );
 
-        Value := ReadInteger( 'View', 'OutlineStyle', -1 );
+//        Value := ReadInteger( 'View', 'OutlineStyle', -1 );
 //        if Value <> -1 then
 //          AbZipOutline1.OutlineStyle := TOutlineStyle( Value );
         {preferences menu}
@@ -1272,12 +1272,14 @@ end;
 procedure TForm1.FileListBox1DblClick(Sender: TObject);
 var
   Browser : TAbZipBrowser;
+  Filename : string;
   OK : Boolean;
 begin
+  Filename := IncludeTrailingPathDelimiter(DirectoryListBox1.Directory) +
+    FileListBox1.Items[FileListBox1.ItemIndex];
   if AbZipOutline1.FileName = '' then
     try
-      AbZipOutline1.FileName :=
-                    FileListBox1.Items[FileListBox1.ItemIndex];
+      AbZipOutline1.FileName := Filename;
     except
       AbZipOutline1.FileName := '';
     end
@@ -1286,7 +1288,7 @@ begin
     OK := True;
     try
       try
-        Browser.FileName := FileListBox1.Items[FileListBox1.ItemIndex];
+        Browser.FileName := Filename;
       except
         OK := False;
       end;
@@ -1294,7 +1296,7 @@ begin
       Browser.Free;
     end;
     if OK then
-      AbZipOutline1.FileName := FileListBox1.Items[FileListBox1.ItemIndex];
+      AbZipOutline1.FileName := Filename;
   end;
 end;
 
