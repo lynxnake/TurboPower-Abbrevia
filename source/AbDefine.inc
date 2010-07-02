@@ -166,6 +166,12 @@
  initialisation and so on when in reality the problem does not exist.}
 {$DEFINE DefeatWarnings} {!!.03 -- on by default }
 
+{ Disable warnings for explicit string casts }
+{$IFDEF UNICODE}
+  {$WARN EXPLICIT_STRING_CAST OFF}
+  {$WARN EXPLICIT_STRING_CAST_LOSS OFF}
+{$ENDIF}
+
 {====Bzip2 defines===================================================}
 
 {Activate this define to statically link bzip2 .obj files into the application.
