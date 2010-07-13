@@ -512,6 +512,8 @@ begin
     Ext := UpperCase(ExtractFileExt(FN));
     if (Ext = '.ZIP') or (Ext = '.JAR') then
       Result := atZip;
+    if (Ext = '.EXE') then
+      Result := atSelfExtZip;
     if (Ext = '.TAR') then
       Result := atTar;
     if (Ext = '.GZ') then
@@ -564,19 +566,20 @@ end;
 { -------------------------------------------------------------------------- }
 function AbDetermineArcType(aStream: TStream): TAbArchiveType;
 begin
-Result := VerifyZip(aStream);
-if Result <> atUnknown then Exit;
-Result := VerifySelfExtracting(aStream);
-if Result <> atUnknown then Exit;
-Result := VerifyTar(aStream);
-if Result <> atUnknown then Exit;
-Result := VerifyGzip(aStream);
-if Result <> atUnknown then Exit;
-Result := VerifyBzip2(aStream);
-if Result <> atUnknown then Exit;
-{$IFDEF MSWINDOWS}
-Result := VerifyCab(aStream);
-{$ENDIF}
+  { VerifyZip returns true for self-extracting zips too, so test those first }
+  Result := VerifySelfExtracting(aStream);
+  if Result = atUnknown then
+    Result := VerifyZip(aStream);
+  if Result = atUnknown then
+    Result := VerifyTar(aStream);
+  if Result = atUnknown then
+    Result := VerifyGzip(aStream);
+  if Result = atUnknown then
+    Result := VerifyBzip2(aStream);
+  {$IFDEF MSWINDOWS}
+  if Result = atUnknown then
+    Result := VerifyCab(aStream);
+  {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 

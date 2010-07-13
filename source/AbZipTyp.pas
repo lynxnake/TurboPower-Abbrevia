@@ -619,7 +619,10 @@ begin
       try
         Footer.LoadFromStream(Strm);
         if Footer.FSignature = AB_ZipCentralDirectoryTailSignature then
-          Result := atZip;
+          if Footer.DiskNumber = 0 then
+            Result := atZip
+          else
+            Result := atSpannedZip;
       finally
         Footer.Free;
       end;

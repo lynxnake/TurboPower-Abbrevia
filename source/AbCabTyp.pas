@@ -491,6 +491,7 @@ var
   Context : HFDI;
   Info : FDICabInfo;
   Errors : CabErrorRecord;
+  StartPos : int64;
 begin
   Result := atUnknown;
   Context := FDICreate(@FXI_GetMem, @FXI_FreeMem, @FDI_FileOpen,
@@ -499,8 +500,10 @@ begin
   if Context = nil then
     Exit;
   try
+    StartPos := Strm.Position;
     if FDIIsCabinet(Context, Integer(Strm), @Info) then
       Result := atCab;
+    Strm.Position := StartPos;
   finally
     FDIDestroy(Context);
   end;

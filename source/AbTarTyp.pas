@@ -303,7 +303,9 @@ var
   TarItem : TAbTarItem;
   TarChkSum : LongInt;
   TarHead : TAbTarHeaderRec;
+  StartPos : Int64;
 begin
+  StartPos := Strm.Position;
   { really only verifies that the data read from current stream position
     appears to be tarred data }
   TarHlp := TAbTarStreamHelper.Create(Strm);
@@ -327,6 +329,7 @@ begin
     TarItem.Free;
     TarHlp.Free;
   end;
+  Strm.Position := StartPos;
 end;
 
 function PadString(const S : AnsiString; Places : Integer) : AnsiString;
