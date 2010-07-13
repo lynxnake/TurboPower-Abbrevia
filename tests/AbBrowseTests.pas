@@ -14,7 +14,7 @@
  * The Original Code is TurboPower Abbrevia
  *
  * The Initial Developer of the Original Code is
- * Robert Love
+ * Craig Peterson
  *
  * Portions created by the Initial Developer are Copyright (C) 1997-2002
  * the Initial Developer. All Rights Reserved.
@@ -61,7 +61,7 @@ begin
 end;
 
 { TAbBaseBrowserTests }
-
+
 class function TAbBaseBrowserTests.Suite: ITestSuite;
 const
   Files: array[TAbArchiveType] of string = (
