@@ -185,7 +185,7 @@ begin
   ShowMessage('Insert Blank Write Protected Disk in to Drive A');
   Zip := TAbZipper.Create(nil);
   try
-    Zip.BaseDirectory := TestFileDir;
+    Zip.BaseDirectory := MPLDir;
     Zip.FileName := 'A:\SPANTEST.ZIP';
     Zip.AddFiles('MPL-1_1.txt',faAnyFile);
     Zip.Save;

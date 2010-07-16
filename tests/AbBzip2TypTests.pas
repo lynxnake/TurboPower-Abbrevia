@@ -30,44 +30,50 @@ unit AbBzip2TypTests;
 interface
 
 uses
-  AbTestFrameWork;
+  Classes, AbArcTypTests, AbArcTyp;
 
 type
-  TAbBzip2ArchiveTests = class(TAbTestCase)
+  TAbBzip2ArchiveTests = class(TAbArchiveTests)
   protected
-    procedure SetUp; override;
-    procedure TearDown; override;
-
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
   published
     procedure TestVerifyBzip2;
-    procedure TestExtractToStream;
-    procedure TestExtractCanterbury;
-    procedure TestCompressCanterbury;
+  end;
+
+  TAbBzippedTarArchiveTests = class(TAbArchiveMultiFileTests)
+  protected
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
+    function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
+      override;
+    function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
+      override;
   end;
 
 implementation
 
 uses
-  SysUtils, Classes, TestFrameWork, AbBzip2Typ, AbUtils;
+  SysUtils, TestFrameWork, AbBzip2Typ, AbUtils;
 
 {----------------------------------------------------------------------------}
 { TAbBzip2ArchiveTests }
 {----------------------------------------------------------------------------}
-procedure TAbBzip2ArchiveTests.SetUp;
+class function TAbBzip2ArchiveTests.ArchiveClass: TAbArchiveClass;
 begin
-  inherited;
+  Result := TAbBzip2Archive;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbBzip2ArchiveTests.TearDown;
+class function TAbBzip2ArchiveTests.ArchiveExt: string;
 begin
-  inherited;
+  Result := '.bz2';
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBzip2ArchiveTests.TestVerifyBzip2;
 var
   FS: TFileStream;
 begin
-  FS := TFileStream.Create(TestFileDir + 'MPL.BZ2', fmOpenRead or fmShareDenyNone);
+  FS := TFileStream.Create(MPLDir + 'MPL.bz2', fmOpenRead or fmShareDenyNone);
   try
     Check(VerifyBzip2(FS) = atBzip2, 'VerifyBzip2 failed on valid BZ2');
   finally
@@ -79,77 +85,41 @@ begin
   finally
     FS.Free;
   end;
-  FS := TFileStream.Create(TestFileDir + 'MPL.CAB', fmOpenRead or fmShareDenyNone);
+  FS := TFileStream.Create(MPLDir + 'MPL.cab', fmOpenRead or fmShareDenyNone);
   try
     Check(VerifyBzip2(FS) = atUnknown, 'VerifyBzip2 succeeded on CAB');
   finally
     FS.Free;
   end;
 end;
+
 {----------------------------------------------------------------------------}
-procedure TAbBzip2ArchiveTests.TestExtractToStream;
-var
-  Bz2: TAbBzip2Archive;
-  Stream: TMemoryStream;
+{ TAbBzippedTarArchiveTests }
+{----------------------------------------------------------------------------}
+class function TAbBzippedTarArchiveTests.ArchiveClass: TAbArchiveClass;
 begin
-  Bz2 := TAbBzip2Archive.Create(TestFileDir + 'MPL.BZ2', fmOpenRead);
-  try
-    Bz2.Load;
-    Stream := TMemoryStream.Create;
-    try
-      Bz2.ExtractToStream(Bz2[0].FileName, Stream);
-      CheckFileMatchesStream(TestFileDir + 'MPL-1_1.txt', Stream);
-    finally
-      Stream.Free;
-    end;
-  finally
-    Bz2.Free;
-  end;
+  Result := TAbBzip2Archive;
 end;
 {----------------------------------------------------------------------------}
-procedure TAbBzip2ArchiveTests.TestExtractCanterbury;
-var
-  Bz2: TAbBzip2Archive;
+class function TAbBzippedTarArchiveTests.ArchiveExt: string;
 begin
-  Bz2 := TAbBzip2Archive.Create(CanterburyDir + 'Canterbury.tbz', fmOpenRead);
-  try
-    Bz2.TarAutoHandle := True;
-    Bz2.IsBzippedTar := True;
-    Bz2.BaseDirectory := TestTempDir;
-    Bz2.Load;
-    Bz2.ExtractFiles('*');
-  finally
-    Bz2.Free;
-  end;
-  CheckDirMatch(CanterburySourceDir, TestTempDir, False);
+  Result := '.tbz';
 end;
 {----------------------------------------------------------------------------}
-procedure TAbBzip2ArchiveTests.TestCompressCanterbury;
-var
-  Bz2: TAbBzip2Archive;
+function TAbBzippedTarArchiveTests.CreateArchive(const aFileName : string;
+  aMode : Word): TAbArchive;
 begin
-  Bz2 := TAbBzip2Archive.Create(TestTempDir + 'Test.tbz', fmCreate);
-  try
-    Bz2.TarAutoHandle := True;
-    Bz2.IsBzippedTar := True;
-    Bz2.BaseDirectory := CanterburySourceDir;
-    Bz2.AddFiles('*', faAnyFile - faDirectory);
-    Bz2.Save;
-  finally
-    Bz2.Free;
-  end;
-  Bz2 := TAbBzip2Archive.Create(TestTempDir + 'Test.tbz', fmOpenRead);
-  try
-    Bz2.TarAutoHandle := True;
-    Bz2.IsBzippedTar := True;
-    CreateDir(TestTempDir + 'test');
-    Bz2.BaseDirectory := TestTempDir + 'test';
-    Bz2.Load;
-    Bz2.ExtractFiles('*');
-  finally
-    Bz2.Free;
-  end;
-  CheckDirMatch(CanterburySourceDir, TestTempDir + 'test', False);
+  Result := inherited CreateArchive(aFileName, aMode);
+  TAbBzip2Archive(Result).TarAutoHandle := True;
+  TAbBzip2Archive(Result).IsBzippedTar := True;
+end;
+{----------------------------------------------------------------------------}
+function TAbBzippedTarArchiveTests.CreateArchive(aStream : TStream;
+  const aArchiveName : string): TAbArchive;
+begin
+  Result := inherited CreateArchive(aStream, aArchiveName);
+  TAbBzip2Archive(Result).TarAutoHandle := True;
+  TAbBzip2Archive(Result).IsBzippedTar := True;
 end;
 {----------------------------------------------------------------------------}
 

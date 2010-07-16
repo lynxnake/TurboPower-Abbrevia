@@ -30,123 +30,40 @@
 interface
 
 uses
-  AbTestFrameWork;
+  Classes, AbArcTyp, AbArcTypTests, AbTestFrameWork;
 
 type
-  TAbCabArchiveTests = class(TAbTestCase)
-  private
-    procedure TestCompressDir(const aSourceDir: string);
-
+  TAbCabArchiveTests = class(TAbArchiveMultiFileTests)
   protected
-    procedure SetUp; override;
-    procedure TearDown; override;
-
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
   published
     procedure TestVerifyCab;
-    procedure TestExtract;
-    procedure TestExtractToStream;
-    procedure TestCompressCanterbury;
-    {$IFDEF UNICODE}
-    procedure TestCompressUnicode;
-    {$ENDIF}
   end;
 
 implementation
 
 uses
-  SysUtils, Classes, TestFrameWork, AbCabTyp, AbUtils;
+  SysUtils, TestFrameWork, AbCabTyp, AbUtils;
 
 {----------------------------------------------------------------------------}
 { TAbCabArchiveTests }
 {----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.SetUp;
+class function TAbCabArchiveTests.ArchiveClass: TAbArchiveClass;
 begin
-  inherited;
+  Result := TAbCabArchive;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCabArchiveTests.TearDown;
+class function TAbCabArchiveTests.ArchiveExt: string;
 begin
-  inherited;
+  Result := '.cab';
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchiveTests.TestVerifyCab;
 begin
-  Check(VerifyCab(TestFileDir + 'MPL.CAB') = atCab, 'VerifyCab failed on valid CAB');
-  Check(VerifyCab(TestFileDir + 'MPL.ZIP') = atUnknown, 'VerifyCab succeeded on ZIP');
+  Check(VerifyCab(MPLDir + 'MPL.cab') = atCab, 'VerifyCab failed on valid CAB');
+  Check(VerifyCab(MPLDir + 'MPL.zip') = atUnknown, 'VerifyCab succeeded on ZIP');
 end;
-{----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.TestExtract;
-var
-  Cab: TAbCabArchive;
-begin
-  Cab := TAbCabArchive.Create(TestFileDir + 'MPL.CAB', fmOpenRead);
-  try
-    Cab.Load;
-    Cab.ExtractAt(0, TestTempDir + 'MPL-1_1.TXT');
-    CheckFilesMatch(TestFileDir + 'MPL-1_1.TXT', TestTempDir + 'MPL-1_1.TXT', '');
-  finally
-    Cab.Free;
-  end;
-end;
-{----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.TestExtractToStream;
-var
-  Cab: TAbCabArchive;
-  Stream: TMemoryStream;
-begin
-  Cab := TAbCabArchive.Create(TestFileDir + 'MPL.CAB', fmOpenRead);
-  try
-    Cab.Load;
-    Stream := TMemoryStream.Create;
-    try
-      Cab.ExtractToStream('MPL-1_1.TXT', Stream);
-      CheckFileMatchesStream(TestFileDir + 'MPL-1_1.TXT', Stream);
-    finally
-      Stream.Free;
-    end;
-  finally
-    Cab.Free;
-  end;
-end;
-{----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.TestCompressDir(const aSourceDir: string);
-var
-  Cab: TAbCabArchive;
-  FileName: string;
-begin
-  FileName := TestTempDir + 'test.cab';
-  Cab := TAbCabArchive.Create(FileName, fmCreate);
-  try
-    Cab.BaseDirectory := aSourceDir;
-    Cab.Load; // TODO: This shouldn't be necessary
-    Cab.AddFiles('*', faAnyFile);
-    Cab.Save;
-  finally
-    Cab.Free;
-  end;
-  Cab := TAbCabArchive.Create(FileName, fmOpenRead);
-  try
-    CreateDir(TestTempDir + 'test');
-    Cab.BaseDirectory := TestTempDir + 'test';
-    Cab.Load;
-    Cab.ExtractFiles('*');
-  finally
-    Cab.Free;
-  end;
-  CheckDirMatch(aSourceDir, TestTempDir + 'test', False);
-end;
-{----------------------------------------------------------------------------}
-procedure TAbCabArchiveTests.TestCompressCanterbury;
-begin
-  TestCompressDir(CanterburySourceDir);
-end;
-{----------------------------------------------------------------------------}
-{$IFDEF UNICODE}
-procedure TAbCabArchiveTests.TestCompressUnicode;
-begin
-  TestCompressDir(TestFileDir + 'Unicode' + PathDelim + 'source');
-end;
-{$ENDIF}
 {----------------------------------------------------------------------------}
 
 initialization

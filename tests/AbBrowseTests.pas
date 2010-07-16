@@ -65,8 +65,8 @@ end;
 class function TAbBaseBrowserTests.Suite: ITestSuite;
 const
   Files: array[TAbArchiveType] of string = (
-    'MPL-1_1.txt', 'MPL.ZIP', '', 'MPL.EXE', 'MPL.TAR', 'MPL.GZ', 'MPL.TGZ',
-    'MPL.CAB', 'MPL.BZ2', 'MPL.TBZ');
+    'MPL-1_1.txt', 'MPL.zip', '', 'MPL.exe', 'MPL.tar', 'MPL.gz', 'MPL.tgz',
+    'MPL.cab', 'MPL.bz2', 'MPL.tbz');
 var
   arcType: TAbArchiveType;
 begin
@@ -74,7 +74,7 @@ begin
   for arcType := Low(arcType) to High(arcType) do
     if Files[arcType] <> '' then
       Suite.AddTest(TAbDetermineArcTypeTest.Create(
-        TestFileDir + Files[arcType], arcType));
+        MPLDir + Files[arcType], arcType));
   Suite.AddTest(TAbDetermineArcTypeTest.Create(
     CanterburyDir + 'Split' + PathDelim + 'Split.zip', atSpannedZip));
   Suite.AddTest(TAbDetermineArcTypeTest.Create(

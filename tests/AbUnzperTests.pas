@@ -122,13 +122,13 @@ procedure TAbUnZipperTests.DecompressSimplePW;
 var
   MS : TMemoryStream;
 begin
-  MS := TMemoryStream.create;
+  MS := TMemoryStream.Create;
   try
     Component.FileName := TestFileDir + 'simplepw.zip';
     Component.Password := 'simple';
     Component.ExtractOptions := [];
     Component.ExtractToStream(Component.Items[0].FileName, MS);
-    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.txt', MS,
+    CheckFileMatchesStream(MPLDir + 'MPL-1_1.txt', MS,
       'simplepw.zip MPL-1_1.txt does not match original');
   finally
     MS.free;
@@ -158,7 +158,7 @@ begin
     Component.OnNeedPassword := NeedPassword3Tries;
     Component.ExtractToStream(Component.Items[0].FileName, MS);
     CheckEquals(FPasswordTry, 3, 'NeedPassword not called enough times');
-    CheckFileMatchesStream(TestFileDir + 'MPL-1_1.txt', MS, '');
+    CheckFileMatchesStream(MPLDir + 'MPL-1_1.txt', MS, '');
   finally
     MS.Free;
   end;
@@ -187,26 +187,26 @@ end;
 procedure TAbUnZipperTests.TestBasicUnGzip;
 begin
   Component.BaseDirectory := TestTempDir;
-  Component.FileName := TestFileDir + 'MPL.GZ';
+  Component.FileName := MPLDir + 'MPL.gz';
   Component.ExtractFiles('*.*');
-  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', MPLDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestBasicUnGzipTar;
 begin
   Component.BaseDirectory := TestTempDir;
   Component.TarAutoHandle := True;
-  Component.FileName := TestFileDir + 'MPL.TGZ';
+  Component.FileName := MPLDir + 'MPL.tgz';
   Component.ExtractFiles('*.*');
-  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', MPLDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestBasicUnzip;
 begin
   Component.BaseDirectory := TestTempDir;
-  Component.FileName := TestFileDir + 'MPL.ZIP';
+  Component.FileName := MPLDir + 'MPL.zip';
   Component.ExtractFiles('*.*');
-  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', TestFileDir + 'MPL-1_1.txt');
+  CheckFilesMatch(TestTempDir + 'MPL-1_1.txt', MPLDir + 'MPL-1_1.txt');
 end;
 
 procedure TAbUnZipperTests.TestComponentLinks;
@@ -267,7 +267,7 @@ begin
   ltestFile := lTestdir + 'locale1.zip';
   if FileExists(lTestFile) then
      DeleteFile(lTestFile);
-  ltestzip := TestFileDir + 'MPL.ZIP';
+  ltestzip := MPLDir + 'MPL.zip';
   AbCopyFile(ltestzip,ltestFile,false);
 
 
@@ -297,7 +297,7 @@ begin
   ltestdir := TestTempDir  + chr(236) + 'ãëíõú' + PathDelim;
   ForceDirectories(ltestDir);
 
-  ltestFile := TestFileDir + 'MPL.ZIP';
+  ltestFile := MPLDir + 'MPL.zip';
 
   Component.FileName := lTestFile;
   Component.BaseDirectory := lTestDir;
@@ -322,7 +322,7 @@ begin
   ltestFile := TestTempDir + 'localeãëíõú3.zip';
   if FileExists(lTestFile) then
      DeleteFile(lTestFile);
-  ltestzip := TestFileDir + 'MPL.ZIP';
+  ltestzip := MPLDir + 'MPL.zip';
   AbCopyFile(ltestzip,ltestFile,false);
 
 
@@ -330,7 +330,7 @@ begin
   Component.BaseDirectory := TestTempDir;
   // Delete File to be extract if it exists
   if FileExists(TestTempDir + 'MPL-1_1.txt') then
-     DeleteFile(TestTempDir + 'MPL-1_1.txt');
+    DeleteFile(TestTempDir + 'MPL-1_1.txt');
   Component.ExtractFiles('*.*');
   Component.CloseArchive;
 
@@ -365,51 +365,50 @@ end;
 
 procedure TAbUnZipperTests.TestUserAbort;
 var
- FUnZipper : TAbUnZipper;
+  UnZipper : TAbUnZipper;
 begin
-// This test needs to create and free the component as the problem is in the FREE
-// Inspired by, but not testing for the same thing as SF.Net Tracker ID [ 785269 ]
+  // This test needs to create and free the component as the problem is in the FREE.
+  // Inspired by, but not testing for the same thing as SF.Net Tracker ID [785269]
 
-// Expecting this exception don't fail if it occurs.
-ExpectedException := EAbUserAbort;
+  // Expecting this exception don't fail if it occurs.
+  ExpectedException := EAbUserAbort;
 
-FUnZipper := TAbUnZipper.Create(Nil);
-TRY
-FUnZipper.BaseDirectory := TestTempDir;
-FUnZipper.OnArchiveProgress:=TestUserAbortProgress;
-FUnZipper.FileName:=TestFileDir + 'MPL.ZIP';
-FUnZipper.ExtractFiles('*.*');
-Finally
-FUnZipper.Free;
-end;
-
+  UnZipper := TAbUnZipper.Create(Nil);
+  try
+    UnZipper.BaseDirectory := TestTempDir;
+    UnZipper.OnArchiveProgress:= TestUserAbortProgress;
+    UnZipper.FileName:= MPLDir + 'MPL.zip';
+    UnZipper.ExtractFiles('*.*');
+  finally
+    UnZipper.Free;
+  end;
 end;
 
 procedure TAbUnZipperTests.TestUserAbortProgress(Sender: TObject;
   Progress: Byte; var Abort: Boolean);
 begin
- Abort := (Progress > 25);
+  Abort := (Progress > 25);
 end;
 
 procedure TAbUnZipperTests.TestZeroByteZipFile;
 var
- FS : TFileStream;
+  FS : TFileStream;
 begin
- ExpectedException := EAbBadStream;
- // Delete File if it exists
- if FileExists(TestTempDir + 'zerobyte.zip') then
+  ExpectedException := EAbBadStream;
+  // Delete File if it exists
+  if FileExists(TestTempDir + 'zerobyte.zip') then
     DeleteFile(TestTempDir + 'zerobyte.zip');
- // Create Zero Byte File
- FS := TFileStream.Create(TestTempDir + 'zerobyte.zip',fmCreate);
- FS.Free;
- // Try to set the filename to the open byte file.
- Component.FileName := TestTempDir + 'zerobyte.zip';
+  // Create Zero Byte File
+  FS := TFileStream.Create(TestTempDir + 'zerobyte.zip',fmCreate);
+  FS.Free;
+  // Try to set the filename to the open byte file.
+  Component.FileName := TestTempDir + 'zerobyte.zip';
 end;
 
 procedure TAbUnZipperTests.TestZipCopiedFromFloppy;
 begin
-//[ 858945 ] copy of File saved to floppy cannot be opened
-// Error of File Not Found appears if it fails.
+  //[ 858945 ] copy of File saved to floppy cannot be opened
+  // Error of File Not Found appears if it fails.
   Component.FileName := TestFileDir + 'CpFromFloppy.zip';
   Component.BaseDirectory := TestTempDir;
   Component.ExtractFiles('*.*');

@@ -252,7 +252,7 @@ begin
   try
     Zip.FileName := TestTempDir + 'comment.zip';
     Zip.ZipFileComment := SComment;
-    Zip.BaseDirectory := TestFileDir;
+    Zip.BaseDirectory := MPLDir;
     Zip.AddFiles('MPL-1_1.txt', 0);
     Zip.Save;
   finally
@@ -274,7 +274,7 @@ var
 begin
   Zip := TAbZipKit.Create(nil);
   try
-    Zip.FileName := TestFileDir + 'MPL.ZIP';
+    Zip.FileName := CanterburyDir + 'Deflate.zip';
     FN := UpperCase(Zip[0].FileName);
     CheckNotEquals(Zip[0].FileName, FN, 'Initial filenames match');
     Zip.Move(Zip[0], FN);

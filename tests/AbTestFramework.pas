@@ -81,6 +81,7 @@ type
     class function TestFileDir: string;
     class function CanterburyDir: string;
     class function CanterburySourceDir: string;
+    class function MPLDir: string;
 
     property TestTempDir : string
       read GetTestTempDir;
@@ -312,6 +313,11 @@ end;
 class function TAbTestCase.CanterburySourceDir: string;
 begin
   Result := CanterburyDir + 'source' + PathDelim;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbTestCase.MPLDir: string;
+begin
+  Result := TestFileDir + 'MPL' + PathDelim
 end;
 { -------------------------------------------------------------------------- }
 function TAbTestCase.GetTestTempDir: string;

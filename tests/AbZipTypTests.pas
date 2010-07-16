@@ -30,7 +30,7 @@
 interface
 
 uses
-  Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbZipTyp;
+  Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbUtils, AbZipTyp;
 
 type
   TAbZipArchiveTests = class(TAbTestCase)
@@ -78,7 +78,7 @@ type
 implementation
 
 uses
-  SysUtils, AbUtils, AbUnzPrc, AbZipPrc;
+  SysUtils, AbUnzPrc, AbZipPrc;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchiveTests }
@@ -141,13 +141,13 @@ procedure TAbZipArchiveTests.TestVerifyZip;
 var
   FS: TFileStream;
 begin
-  FS := TFileStream.Create(TestFileDir + 'MPL.ZIP', fmOpenRead or fmShareDenyNone);
+  FS := TFileStream.Create(MPLDir + 'MPL.zip', fmOpenRead or fmShareDenyNone);
   try
     Check(VerifyZip(FS) = atZip, 'VerifyZip failed on valid ZIP');
   finally
     FS.Free;
   end;
-  FS := TFileStream.Create(TestFileDir + 'MPL.CAB', fmOpenRead or fmShareDenyNone);
+  FS := TFileStream.Create(MPLDir + 'MPL.cab', fmOpenRead or fmShareDenyNone);
   try
     Check(VerifyZip(FS) = atUnknown, 'VerifyZip succeeded on CAB');
   finally

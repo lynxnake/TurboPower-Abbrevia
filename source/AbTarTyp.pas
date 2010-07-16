@@ -1139,6 +1139,7 @@ begin
             try
               if (CurItem.Action = aaStreamAdd) then begin
               { adding from a stream }
+                CurItem.UncompressedSize := InStream.Size;
                 CurItem.SaveTarHeaderToStream(NewStream);
                 OutTarHelp.WriteArchiveItem(InStream);
               end

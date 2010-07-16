@@ -324,7 +324,7 @@ begin
   // Password protect the source file
   //  Component.Password := 'password';
 
-  oFileStream := TFileStream.Create(TestFileDir + 'MPL-1_1.txt', fmOpenRead or fmShareDenyNone);
+  oFileStream := TFileStream.Create(MPLDir + 'MPL-1_1.txt', fmOpenRead or fmShareDenyNone);
   try
     // Add file to the zip file
    Component.AddFromStream('file.ext', oFileStream);
@@ -342,7 +342,7 @@ var
   extractFilename, filename : string;
   unzip : TAbUnZipper;
 begin
-  fs := TFileStream.Create(TestFileDir + 'MPL-1_1.txt',fmOpenRead);
+  fs := TFileStream.Create(MPLDir + 'MPL-1_1.txt',fmOpenRead);
   try
     filename := TestTempDir + 'clearinputstr.gz';
     if FileExists(filename) then
@@ -396,7 +396,7 @@ begin
     DeleteFile(TestFile);
   Component.Password := 'simple';
   Component.StoreOptions := [];
-  Component.BaseDirectory := TestFileDir;
+  Component.BaseDirectory := MPLDir;
   Component.FileName := TestFile;
   Component.AddFiles('MPL-1_1.txt',0);
   Component.Save;
@@ -449,7 +449,7 @@ begin
     DeleteFile(lTestFile);
 
   Component.FileName := lTestFile;
-  Component.BaseDirectory := TestFileDir;
+  Component.BaseDirectory := MPLDir;
   Component.AddFiles('MPL-1_1.txt',0);
   Component.Save;
 
@@ -473,7 +473,7 @@ begin
     DeleteFile(lTestFile);
 
   Component.FileName := lTestFile;
-  Component.BaseDirectory := TestFileDir;
+  Component.BaseDirectory := MPLDir;
   Component.AddFiles('MPL-1_1.txt',0);
   Component.Save;
 
