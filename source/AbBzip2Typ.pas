@@ -146,10 +146,14 @@ begin
     try
       TarStream := TMemoryStream.Create;
       try
-        TarStream.CopyFrom(DecompStream, 512 * 2);
-        TarStream.Seek(0, soFromBeginning);
-        if VerifyTar(TarStream) = atTar then
-          Result := atBzippedTar;
+        try
+          TarStream.CopyFrom(DecompStream, 512 * 2);
+          TarStream.Seek(0, soFromBeginning);
+          if VerifyTar(TarStream) = atTar then
+            Result := atBzippedTar;
+        except on EReadError do
+          { Not a valid TAR }
+        end;
       finally
         TarStream.Free;
       end;

@@ -719,6 +719,8 @@ var
   AnsiName : AnsiString;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
+  if not VerifyHeader(FGzHeader) then
+    Exit;
 
   { Skip part number, if any  }
   if (FGzHeader.Flags and AB_GZ_FLAG_FCONTINUATION) = AB_GZ_FLAG_FCONTINUATION then
@@ -739,7 +741,8 @@ begin
     Len := AStream.Position - StartPos - 1;
     AStream.Seek(StartPos, soFromBeginning);
     SetLength(AnsiName, Len);
-    AStream.Read(AnsiName[1], Len + 1);
+    if Len <> 0 then
+      AStream.Read(AnsiName[1], Len + 1);
     FFileName := string(AnsiName);
   end
   else
@@ -752,7 +755,8 @@ begin
     Len := AStream.Position - StartPos - 1;
     AStream.Position := StartPos;
     SetLength(FFileComment, Len);
-    AStream.Read(FFileComment[1], Len + 1);
+    if Len <> 0 then
+      AStream.Read(FFileComment[1], Len + 1);
   end
   else
     FFileComment := '';
