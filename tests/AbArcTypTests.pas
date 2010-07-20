@@ -147,7 +147,8 @@ begin
     Arc.Load;
     Stream := TMemoryStream.Create;
     try
-      Arc.ExtractToStream('MPL-1_1.txt', Stream);
+      // Bzip2 doesn't store the original filename, so don't hardcode a path
+      Arc.ExtractToStream(Arc.ItemList[0].FileName, Stream);
       CheckFileMatchesStream(MPLDir + 'MPL-1_1.txt', Stream);
     finally
       Stream.Free;
