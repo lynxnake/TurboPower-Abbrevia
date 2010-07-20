@@ -26,6 +26,9 @@
  unit AbArcTypTests;
 
 {$I AbDefine.inc}
+{$IF CompilerVersion >= 17.0}
+  {$DEFINE HasEnumerators}    { Test for..in support in D2005+ }
+{$IFEND}
 
 interface
 
@@ -35,6 +38,9 @@ uses
 type
   TAbArchiveListTests = class(TAbTestCase)
   published
+    {$IFDEF HasEnumerators}
+    procedure TestEnumerator;
+    {$ENDIF}
     procedure TestGenerateHash;
   end;
 
@@ -79,6 +85,32 @@ uses
 
 {----------------------------------------------------------------------------}
 { TAbArchiveListTests }
+{----------------------------------------------------------------------------}
+{$IFDEF HasEnumerators}
+procedure TAbArchiveListTests.TestEnumerator;
+var
+  ItemList: TAbArchiveList;
+  Item: TAbArchiveItem;
+  i: Integer;
+begin
+  ItemList := TAbArchiveList.Create(True);
+  try
+    for i := 0 to 9 do begin
+      Item := TAbArchiveItem.Create;
+      Item.FileName := IntToStr(i);
+      ItemList.Add(Item);
+    end;
+    i := 0;
+    for Item in ItemList do begin
+      CheckEquals(IntToStr(i), Item.FileName);
+      Inc(i);
+    end;
+    CheckEquals(10, i);
+  finally
+    ItemList.Free;
+  end;
+end;
+{$ENDIF}
 {----------------------------------------------------------------------------}
 procedure TAbArchiveListTests.TestGenerateHash;
   {- Test issue 1196468, range check error in TAbArchiveList.GenerateHash }

@@ -142,8 +142,23 @@ type
   end;
 
 
-{ ===== TAbArchiveList ====================================================== }
+{ ===== TAbArchiveListEnumerator ============================================ }
 type
+  TAbArchiveList = class;
+  TAbArchiveListEnumerator = class
+  private
+    FIndex: Integer;
+    FList: TAbArchiveList;
+  public
+    constructor Create(aList: TAbArchiveList);
+    function GetCurrent: TAbArchiveItem;
+    function MoveNext: Boolean;
+    property Current: TAbArchiveItem read GetCurrent;
+  end;
+
+
+{ ===== TAbArchiveList ====================================================== }
+
   TAbArchiveList = class
   protected {private}
     FList     : TList;
@@ -161,6 +176,7 @@ type
     procedure Clear;
     procedure Delete(Index : Integer);
     function Find(const FN : string) : Integer;
+    function GetEnumerator: TAbArchiveListEnumerator;
     function IsActiveDupe(const FN : string) : Boolean;
   public {properties}
     property Count : Integer
@@ -729,6 +745,28 @@ end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- End Added }
 
+{ TAbArchiveEnumeratorList implementation ================================== }
+{ TAbArchiveEnumeratorList }
+constructor TAbArchiveListEnumerator.Create(aList: TAbArchiveList);
+begin
+  inherited Create;
+  FIndex := -1;
+  FList := aList;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbArchiveListEnumerator.GetCurrent: TAbArchiveItem;
+begin
+  Result := FList[FIndex];
+end;
+{ -------------------------------------------------------------------------- }
+function TAbArchiveListEnumerator.MoveNext: Boolean;
+begin
+  Result := FIndex < FList.Count - 1;
+  if Result then
+    Inc(FIndex);
+end;
+{ -------------------------------------------------------------------------- }
+
 { TAbArchiveList implementation ============================================ }
 
 { TAbArchiveList }
@@ -845,6 +883,11 @@ end;
 function TAbArchiveList.GetCount : Integer;
 begin
   Result := FList.Count;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbArchiveList.GetEnumerator: TAbArchiveListEnumerator;
+begin
+  Result := TAbArchiveListEnumerator.Create(Self);
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveList.IsActiveDupe(const FN : string) : Boolean;
