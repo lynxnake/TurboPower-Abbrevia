@@ -30,31 +30,33 @@ unit AbBzip2TypTests;
 interface
 
 uses
-  Classes, AbArcTypTests, AbArcTyp;
+  Classes, AbArcTypTests, AbArcTyp, AbUtils;
 
 type
   TAbBzip2ArchiveTests = class(TAbArchiveTests)
   protected
     class function ArchiveClass: TAbArchiveClass; override;
     class function ArchiveExt: string; override;
-  published
-    procedure TestVerifyBzip2;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
   end;
 
   TAbBzippedTarArchiveTests = class(TAbArchiveMultiFileTests)
   protected
-    class function ArchiveClass: TAbArchiveClass; override;
-    class function ArchiveExt: string; override;
     function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
       override;
     function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
       override;
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
   end;
 
 implementation
 
 uses
-  SysUtils, TestFrameWork, AbBzip2Typ, AbUtils;
+  SysUtils, TestFrameWork, AbBzip2Typ;
 
 {----------------------------------------------------------------------------}
 { TAbBzip2ArchiveTests }
@@ -69,42 +71,18 @@ begin
   Result := '.bz2';
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbBzip2ArchiveTests.TestVerifyBzip2;
-var
-  FS: TFileStream;
+class function TAbBzip2ArchiveTests.ArchiveType: TAbArchiveType;
 begin
-  FS := TFileStream.Create(MPLDir + 'MPL.bz2', fmOpenRead or fmShareDenyNone);
-  try
-    Check(VerifyBzip2(FS) = atBzip2, 'VerifyBzip2 failed on valid BZ2');
-  finally
-    FS.Free;
-  end;
-  FS := TFileStream.Create(CanterburyDir + 'Canterbury.tbz', fmOpenRead or fmShareDenyNone);
-  try
-    Check(VerifyBzip2(FS) = atBzippedTar, 'VerifyBzip2 failed on .TAR.BZ2');
-  finally
-    FS.Free;
-  end;
-  FS := TFileStream.Create(MPLDir + 'MPL.cab', fmOpenRead or fmShareDenyNone);
-  try
-    Check(VerifyBzip2(FS) = atUnknown, 'VerifyBzip2 succeeded on CAB');
-  finally
-    FS.Free;
-  end;
+  Result := atBzip2;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbBzip2ArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyBzip2(aStream);
 end;
 
 {----------------------------------------------------------------------------}
 { TAbBzippedTarArchiveTests }
-{----------------------------------------------------------------------------}
-class function TAbBzippedTarArchiveTests.ArchiveClass: TAbArchiveClass;
-begin
-  Result := TAbBzip2Archive;
-end;
-{----------------------------------------------------------------------------}
-class function TAbBzippedTarArchiveTests.ArchiveExt: string;
-begin
-  Result := '.tbz';
-end;
 {----------------------------------------------------------------------------}
 function TAbBzippedTarArchiveTests.CreateArchive(const aFileName : string;
   aMode : Word): TAbArchive;
@@ -122,10 +100,32 @@ begin
   TAbBzip2Archive(Result).IsBzippedTar := True;
 end;
 {----------------------------------------------------------------------------}
+class function TAbBzippedTarArchiveTests.ArchiveClass: TAbArchiveClass;
+begin
+  Result := TAbBzip2Archive;
+end;
+{----------------------------------------------------------------------------}
+class function TAbBzippedTarArchiveTests.ArchiveExt: string;
+begin
+  Result := '.tbz';
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbBzippedTarArchiveTests.ArchiveType: TAbArchiveType;
+begin
+  Result := atBzippedTar;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbBzippedTarArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyBzip2(aStream);
+end;
+{----------------------------------------------------------------------------}
 
 initialization
 
   TestFramework.RegisterTest('Abbrevia.Low-Level Compression Test Suite',
     TAbBzip2ArchiveTests.Suite);
+  TestFramework.RegisterTest('Abbrevia.Low-Level Compression Test Suite',
+    TAbBzippedTarArchiveTests.Suite);
 
 end.

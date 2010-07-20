@@ -30,7 +30,7 @@ unit AbGzTypTests;
 interface
 
 uses
-  AbTestFrameWork, AbGzTyp;
+  Classes, AbArcTypTests, AbTestFrameWork, AbArcTyp, AbGzTyp, AbUtils;
 
 type
   TAbGzipExtraFieldTests = class(TAbTestCase)
@@ -62,10 +62,30 @@ type
     procedure TestReplaceDiffSize;
   end;
 
+  TAbGzipArchiveTests = class(TAbArchiveTests)
+  protected
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
+  end;
+
+  TAbGzippedTarArchiveTests = class(TAbArchiveMultiFileTests)
+  protected
+    function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
+      override;
+    function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
+      override;
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
+  end;
+
 implementation
 
 uses
-  SysUtils, Classes, TestFrameWork;
+  SysUtils, TestFrameWork;
 
 {----------------------------------------------------------------------------}
 { TAbGzipExtraFieldTests }
@@ -290,11 +310,77 @@ begin
   CheckSubfieldEquals('A2', BigData2, SizeOf(BigData2));
   CheckSubfieldEquals('A3', Data3, SizeOf(Data3));
 end;
+
+{----------------------------------------------------------------------------}
+{ TAbGzipArchiveTests }
+{----------------------------------------------------------------------------}
+class function TAbGzipArchiveTests.ArchiveClass: TAbArchiveClass;
+begin
+  Result := TAbGzipArchive;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbGzipArchiveTests.ArchiveExt: string;
+begin
+  Result := '.gz';
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbGzipArchiveTests.ArchiveType: TAbArchiveType;
+begin
+  Result := atGzip;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbGzipArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyGzip(aStream);
+end;
+
+{----------------------------------------------------------------------------}
+{ TAbGzippedTarArchiveTests }
+{----------------------------------------------------------------------------}
+function TAbGzippedTarArchiveTests.CreateArchive(const aFileName : string;
+  aMode : Word): TAbArchive;
+begin
+  Result := inherited CreateArchive(aFileName, aMode);
+  TAbGzipArchive(Result).TarAutoHandle := True;
+  TAbGzipArchive(Result).IsGzippedTar := True;
+end;
+{----------------------------------------------------------------------------}
+function TAbGzippedTarArchiveTests.CreateArchive(aStream : TStream;
+  const aArchiveName : string): TAbArchive;
+begin
+  Result := inherited CreateArchive(aStream, aArchiveName);
+  TAbGzipArchive(Result).TarAutoHandle := True;
+  TAbGzipArchive(Result).IsGzippedTar := True;
+end;
+{----------------------------------------------------------------------------}
+class function TAbGzippedTarArchiveTests.ArchiveClass: TAbArchiveClass;
+begin
+  Result := TAbGzipArchive;
+end;
+{----------------------------------------------------------------------------}
+class function TAbGzippedTarArchiveTests.ArchiveExt: string;
+begin
+  Result := '.tgz';
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbGzippedTarArchiveTests.ArchiveType: TAbArchiveType;
+begin
+  Result := atGzippedTar;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbGzippedTarArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyGzip(aStream);
+end;
 {----------------------------------------------------------------------------}
 
 initialization
 
   TestFramework.RegisterTest('Abbrevia.Low-Level Compression Test Suite',
     TAbGzipExtraFieldTests.Suite);
+  TestFramework.RegisterTest('Abbrevia.Low-Level Compression Test Suite',
+    TAbGzipArchiveTests.Suite);
+  TestFramework.RegisterTest('Abbrevia.Low-Level Compression Test Suite',
+    TAbGzippedTarArchiveTests.Suite);
 
 end.

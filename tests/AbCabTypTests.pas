@@ -30,21 +30,21 @@
 interface
 
 uses
-  Classes, AbArcTyp, AbArcTypTests, AbTestFrameWork;
+  Classes, AbArcTyp, AbUtils, AbArcTypTests, AbTestFrameWork;
 
 type
   TAbCabArchiveTests = class(TAbArchiveMultiFileTests)
   protected
     class function ArchiveClass: TAbArchiveClass; override;
     class function ArchiveExt: string; override;
-  published
-    procedure TestVerifyCab;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
   end;
 
 implementation
 
 uses
-  SysUtils, TestFrameWork, AbCabTyp, AbUtils;
+  SysUtils, TestFrameWork, AbCabTyp;
 
 {----------------------------------------------------------------------------}
 { TAbCabArchiveTests }
@@ -59,10 +59,14 @@ begin
   Result := '.cab';
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCabArchiveTests.TestVerifyCab;
+class function TAbCabArchiveTests.ArchiveType: TAbArchiveType;
 begin
-  Check(VerifyCab(MPLDir + 'MPL.cab') = atCab, 'VerifyCab failed on valid CAB');
-  Check(VerifyCab(MPLDir + 'MPL.zip') = atUnknown, 'VerifyCab succeeded on ZIP');
+  Result := atCab;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbCabArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyCab(aStream);
 end;
 {----------------------------------------------------------------------------}
 

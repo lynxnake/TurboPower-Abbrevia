@@ -30,7 +30,7 @@
 interface
 
 uses
-  Classes, AbTestFrameWork, AbArcTyp;
+  Classes, AbTestFrameWork, AbArcTyp, AbUtils;
 
 type
   TAbArchiveListTests = class(TAbTestCase)
@@ -52,11 +52,14 @@ type
       overload; virtual;
     class function ArchiveClass: TAbArchiveClass; virtual; abstract;
     class function ArchiveExt: string; virtual; abstract;
+    class function ArchiveType: TAbArchiveType; virtual; abstract;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; virtual; abstract;
   published
     procedure TestExtract;
     procedure TestExtractToStream;
     procedure TestAdd;
     procedure TestAddFromStream;
+    procedure TestVerify;
   end;
 
   TAbArchiveMultiFileTests = class(TAbArchiveTests)
@@ -72,7 +75,7 @@ type
 implementation
 
 uses
-  SysUtils, TestFrameWork, AbUtils;
+  SysUtils, TestFrameWork;
 
 {----------------------------------------------------------------------------}
 { TAbArchiveListTests }
@@ -198,6 +201,25 @@ begin
   end;
   TestExtractFile(TestTempDir + 'test' + ArchiveExt, MPLDir + 'MPL-1_1.txt');
 end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveTests.TestVerify;
+var
+  FS: TFileStream;
+begin
+  FS := TFileStream.Create(MPLDir + 'MPL' + ArchiveExt, fmOpenRead or fmShareDenyNone);
+  try
+    Check(VerifyArchive(FS) = ArchiveType, 'Verify failed on valid archive');
+  finally
+    FS.Free;
+  end;
+  FS := TFileStream.Create(MPLDir + 'MPL-1_1.txt', fmOpenRead or fmShareDenyNone);
+  try
+    Check(VerifyArchive(FS) = atUnknown, 'Verify succeeded on invalid archive');
+  finally
+    FS.Free;
+  end;
+end;
+
 
 {----------------------------------------------------------------------------}
 { TAbArchiveMultiFileTests }
