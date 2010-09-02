@@ -1,0 +1,60 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{3FC8294C-9FE8-49B9-9FF0-C33C59C18002}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="B305_rXE.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="B305vrXE.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="B305vdXE.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="B305_rXE">
+			<MSBuild Projects="B305_rXE.dproj"/>
+		</Target>
+		<Target Name="B305_rXE:Clean">
+			<MSBuild Projects="B305_rXE.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="B305_rXE:Make">
+			<MSBuild Projects="B305_rXE.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="B305vrXE">
+			<MSBuild Projects="B305vrXE.dproj"/>
+		</Target>
+		<Target Name="B305vrXE:Clean">
+			<MSBuild Projects="B305vrXE.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="B305vrXE:Make">
+			<MSBuild Projects="B305vrXE.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="B305vdXE">
+			<MSBuild Projects="B305vdXE.dproj"/>
+		</Target>
+		<Target Name="B305vdXE:Clean">
+			<MSBuild Projects="B305vdXE.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="B305vdXE:Make">
+			<MSBuild Projects="B305vdXE.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="B305_rXE;B305vrXE;B305vdXE"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="B305_rXE:Clean;B305vrXE:Clean;B305vdXE:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="B305_rXE:Make;B305vrXE:Make;B305vdXE:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>
