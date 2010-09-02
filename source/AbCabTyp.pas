@@ -516,7 +516,8 @@ begin
   {Mode is used to identify which interface to use: }
   {  fmOpenWrite - FCI, fmOpenRead - FDI}
   inherited CreateInit;
-  FMode := Mode and fmOpenWrite;
+  if (Mode and fmCreate) = fmCreate then FMode := fmOpenWrite
+  else FMode := Mode and fmOpenWrite;
   FArchiveName := FileName;
   FCabName := AnsiString(ExtractFileName(FileName));
   FCabPath := AnsiString(ExtractFilePath(FileName));
