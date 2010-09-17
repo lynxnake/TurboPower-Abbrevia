@@ -231,7 +231,7 @@ type
     function AttrToStr(Attr : TAbViewAttribute; aItem : TAbArchiveItem) : string;
     function ColMap(ColNum : Integer) : Integer;
     procedure ColorsChange(Sender : TObject);
-    procedure DrawHeaderButton(ACol : Integer; Text : PChar);
+    procedure DrawHeaderButton(ACol : Integer; const AText : string);
     procedure DrawSortArrow;
     function DrawTextFormat(Attr : TAbViewAttribute; var Rect : TRect) : Word;
     function GetCount : Longint;
@@ -291,6 +291,10 @@ type
       override;
     procedure ColumnMoved(FromIndex, ToIndex: Longint);
       override;
+{$IFDEF HasGridDrawingStyle}
+    procedure Paint;
+      override;
+{$ENDIF}
     procedure DrawCell(ACol, ARow: Longint; ARect: TRect; AState: TGridDrawState);
       override;
     procedure TopLeftChanged;
@@ -1001,12 +1005,18 @@ begin
     FOnSorted(Self, Attr);
 end;
 { -------------------------------------------------------------------------- }
+{$IFDEF HasGridDrawingStyle}
+procedure TAbBaseViewer.Paint;
+begin
+  DefaultDrawing := FInternalDrawingStyle <> gdsClassic;
+  inherited;
+end;
+{$ENDIF}
+{ -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.DrawCell(ACol, ARow: Longint; ARect: TRect;
   AState: TGridDrawState);
-const
-  cStrSize = 255;
 var
-  s : array[0..cStrSize] of Char;
+  s : string;
   aItem : TAbArchiveItem;
   TxtRect : TRect;
   Attr : TAbViewAttribute;
@@ -1021,11 +1031,9 @@ begin
     DefaultDrawing := true;
 {$ENDIF}
 
-  fillchar( s, succ( cStrSize ), $00 );
   Canvas.Font := Font;
   if (ARow = AbHeaderRow) then begin
-    StrPCopy(s, FHeadings[ColMap(ACol)]);
-    DrawHeaderButton(ACol, s)
+    DrawHeaderButton(ACol, FHeadings[ColMap(ACol)])
   end else if not FAllowInvalidate then  {waiting for EndUpdate}
     Exit
   else with Canvas do begin
@@ -1033,17 +1041,18 @@ begin
       ARect.Right := ARect.Right + 1;
     Brush.Color := clWindow;
     if (not Assigned(FItemList)) or (FItemList.Count = 0) then begin
-      Canvas.FillRect(ARect);
+      if not DefaultDrawing then Canvas.FillRect(ARect);
       Exit;
     end;
 
     aItem := FItemList.Items[FRowMap[ARow-1]];
     Attr := TAbViewAttribute(ColMap(ACol));
-
-    StrPCopy(s, AttrToStr(Attr, aItem));
+    S := AttrToStr(Attr, aItem);
     if FSelList.IsSelected(FRowMap[ARow-1]) then begin
-      Brush.Color := FColors.Selected;
-      Font.Color  := FColors.SelectedText;
+      if not DefaultDrawing then begin
+        Brush.Color := FColors.Selected;
+        Font.Color  := FColors.SelectedText;
+      end;
     end else if aItem.Action = aaDelete then begin
       Brush.Color := FColors.Deleted;
       Font.Color  := FColors.DeletedText;
@@ -1052,6 +1061,9 @@ begin
       Brush.Color := FColors.Alternate;
       Font.Color  := FColors.AlternateText;
     end;
+    if not DefaultDrawing then
+      Canvas.FillRect(ARect);
+    Canvas.Brush.Style := bsClear;
     TxtRect := ARect;
 {$IFNDEF UsingCLX}
     Icon := 0;
@@ -1059,45 +1071,38 @@ begin
       Icon := GetIcon(aItem.Filename);
     if (Icon <> 0) then begin
       H := ARect.Bottom - ARect.Top;
-      Canvas.FillRect(ARect);
-      Canvas.Brush.Style := bsClear;
       DrawIconEx(Canvas.Handle, ARect.Left+1, ARect.Top+1, Icon,
         H - 2, H - 2, 0, 0, DI_NORMAL);
       TxtRect.Left := TxtRect.Left + H;
-    end else begin
-      Canvas.FillRect(ARect);
-      Canvas.Brush.Style := bsClear;
     end;
-{$ELSE}
-    Canvas.FillRect( CellRect( ACol, ARow ));
 {$ENDIF}
 
     DTFormat := DrawTextFormat(Attr, TxtRect);
 {$IFNDEF UsingCLX}
-    DrawText(Canvas.Handle, s, -1, TxtRect, DTFormat);
+    DrawText(Canvas.Handle, PChar(s), -1, TxtRect, DTFormat);
 {$ELSE}
     Canvas.TextRect(TxtRect, TxtRect.Left, TxtRect.Top, s, DTFormat);
 {$ENDIF}
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbBaseViewer.DrawHeaderButton(ACol : Integer; Text : PChar);
+procedure TAbBaseViewer.DrawHeaderButton(ACol : Integer; const AText : string);
 var
   ARect : TRect;
   DTFormat : Word;
 begin
   ARect := CellRect(ACol, 0);
-  with Canvas do begin
+  if not DefaultDrawing then with Canvas do begin
     Brush.Style := bsSolid;
     Brush.Color := clBtnface;
     FillRect(ARect);
     if FButtonDown then
-      Pen.Color := clHighlight
+      Pen.Color := clBtnHighlight
     else
       Pen.Color := clBtnShadow;
-      MoveTo(ARect.Left, ARect.Bottom - 1);
-      LineTo(ARect.Right - 1, ARect.Bottom - 1);
-      LineTo(ARect.Right - 1, ARect.Top -1);
+    MoveTo(ARect.Left, ARect.Bottom - 1);
+    LineTo(ARect.Right - 1, ARect.Bottom - 1);
+    LineTo(ARect.Right - 1, ARect.Top -1);
     if FButtonDown then
       Pen.Color := clBtnShadow
     else
@@ -1121,9 +1126,9 @@ begin
   if FButtonDown then
     ARect := Rect(ARect.Left+1, ARect.Top+1, ARect.Right, ARect.Bottom);
 {$IFDEF UsingCLX}
-  Canvas.TextRect(ARect, ARect.Left, ARect.Top, Text, DTFormat);
+  Canvas.TextRect(ARect, ARect.Left, ARect.Top, AText, DTFormat);
 {$ELSE}
-  DrawText(Canvas.Handle, Text, -1, ARect, DTFormat);
+  DrawText(Canvas.Handle, PChar(AText), -1, ARect, DTFormat);
 {$ENDIF}
   if FSortCol = ACol then
     DrawSortArrow;
@@ -1553,6 +1558,9 @@ procedure TAbBaseViewer.SetDisplayOptions(Value : TAbDisplayOptions);
 begin
   FDisplayOptions := Value;
   Options := [goFixedVertLine, goFixedHorzLine, goRowSelect];
+{$IFDEF HasGridDrawingStyle}
+  Options := Options + [goFixedRowClick]; // Highlight pressed header when themed
+{$ENDIF}
 
   if (doColLines in Value) then
     Options := Options + [goVertLine];

@@ -157,6 +157,20 @@
   {$DEFINE UsingCLX }
 {$ENDIF KYLIX}
 
+{ VCL version specific defines }
+{$IFNDEF FPC}
+  {$IF RTLVersion >= 17} // Delphi 2005
+    {$DEFINE HasOnMouseActivate}
+  {$IFEND}
+  {$IF RTLVersion >= 18} // Delphi 2006
+    {$DEFINE HasOnMouseEnter}
+  {$IFEND}
+  {$IF RTLVersion >= 21} // Delphi 2010
+    {$DEFINE HasGridDrawingStyle}
+    {$DEFINE HasTouch}
+  {$IFEND}
+{$ENDIF}
+
 {====General defines=================================================}
 
 {Activate the following define to include extra code to get rid of all
