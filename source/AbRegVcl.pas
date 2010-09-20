@@ -41,11 +41,8 @@ interface
 uses
   Classes,
   AbCBrows, AbCabExt, AbCabMak, AbCabKit, AbCView,
-  {$IFDEF Version4}
-  AbCompnd,
-  {$ENDIF}
-  AbHexVw,  AbZBrows, AbUnzper, AbZipper, AbZipKit, AbZipOut, AbView, AbZView,
-  AbMeter, AbSelfEx, AbZipExt;
+  AbCompnd, AbHexVw,  AbZBrows, AbUnzper, AbZipper, AbZipKit, AbZipOut, 
+  AbView, AbZView, AbMeter, AbSelfEx, AbZipExt;
 
 procedure Register;
 
@@ -58,17 +55,8 @@ uses
   AbPePass,
   AbPeVer,
   AbPeCol,
-{$IFDEF LINUX}
   DesignIntf,
   DesignEditors,
-{$ELSE}
-{$IFDEF VERSION6}
-  DesignIntf,
-  DesignEditors,
-{$ELSE}
-  DsgnIntf,
-{$ENDIF VERSION6}
-{$ENDIF LINUX}
   SysUtils;
 
 procedure Register;

@@ -55,12 +55,8 @@ uses
   AbPePass,
   AbPeVer,
   AbPeCol,
-{$IFDEF VERSION6}
   DesignIntf,
   DesignEditors,
-{$ELSE}
-  DsgnIntf,
-{$ENDIF}
   SysUtils;
 
 procedure Register;

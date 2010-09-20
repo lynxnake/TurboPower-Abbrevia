@@ -830,8 +830,8 @@ begin
       Result := IntToStr(UncompressedSize);
     vaFileAttributes :
       begin
-{$IFNDEF LINUX}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+{$IFDEF MSWINDOWS}
+{$WARN SYMBOL_PLATFORM OFF}
         if (faReadOnly and ExternalFileAttributes) = faReadOnly then
           Result := Result + AbReadOnlyS;
         if (faHidden and ExternalFileAttributes) = faHidden then
@@ -840,8 +840,8 @@ begin
           Result := Result + AbSystemS;
         if (faArchive and ExternalFileAttributes) = faArchive then
           Result := Result + AbArchivedS;
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-{$ENDIF LINUX}
+{$WARN SYMBOL_PLATFORM OFF}
+{$ENDIF MSWINDOWS}
       end;
     vaEncryption :
       if IsEncrypted then

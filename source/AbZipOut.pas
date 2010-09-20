@@ -66,11 +66,6 @@ uses
   AbZipTyp;
 
 
-{$IFDEF NeedMouseWheel}
-const
-  Wm_MouseWheel = $020A;
-{$ENDIF}
-
 const
   cBitmapHeight = 16;
   cBitmapWidth  = 16;
@@ -102,11 +97,6 @@ type
 type
   TWindowsDropEvent =
     procedure(Sender : TObject; FileName : string) of object;
-{$IFDEF NeedMouseWheel}
-  TMouseWheelEvent =
-    procedure(Sender : TObject; Shift : TShiftState;
-              Delta, XPos, YPos : Word) of object;
-{$ENDIF}
 {TAbZipDisplayOutline does not support Owner-Draw}
 type
   TAbZipDisplayOutline = class(TTreeView)
@@ -127,18 +117,11 @@ type
       FBitMapWidth        : integer;
       FAttrSelectedIndex  : integer;
 
-{$IFDEF NeedMouseWheel}
-      FOnMouseWheel    : TMouseWheelEvent;
-{$ENDIF}
       FOnWindowsDrop   : TWindowsDropEvent;
 
 {$IFNDEF UsingCLX}
       procedure WMDropFiles(var Msg : TWMDropFiles);
         message WM_DROPFILES;
-{$ENDIF}
-{$IFDEF NeedMouseWheel}
-      procedure WMMouseWheel(var Msg : TMessage);
-        message WM_MOUSEWHEEL;
 {$ENDIF}
 
       procedure IndexBitmaps;
@@ -155,19 +138,14 @@ type
     protected
       procedure DoOnWindowsDrop(FileName : string); virtual;
 
-{$IFDEF NeedMouseWheel}
-      procedure DoOnMouseWheel(Shift : TShiftState; Delta, XPos, YPos : SmallInt);
-        virtual;
-{$ELSE}
-  {$IFDEF UsingCLX}
+{$IFDEF UsingCLX}
       function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
         const MousePos: TPoint): Boolean;
         override;
-  {$ELSE}
-          function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
-            MousePos: TPoint): Boolean;
-            override;
-  {$ENDIF}
+{$ELSE}
+      function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
+        MousePos: TPoint): Boolean;
+        override;
 {$ENDIF}
       procedure Loaded; override;
       procedure SetOnWindowsDrop(Value : TWindowsDropEvent);
@@ -199,11 +177,6 @@ type
       property BitMapWidth : Integer
         read FBitMapWidth
         write SetBitMapWidth;
-{$IFDEF NeedMouseWheel}
-      property OnMouseWheel : TMouseWheelEvent
-        read FOnMouseWheel
-        write FOnMouseWheel;
-{$ENDIF}
       property OnWindowsDrop : TWindowsDropEvent
         read FOnWindowsDrop
         write SetOnWindowsDrop;
@@ -224,7 +197,7 @@ type
     FBaseDirectory          : string;
     FCompressionMethodToUse : TAbZipSupportedMethod;
     FDeflationOption        : TAbZipDeflationOption;
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     FDOSMode                : Boolean;
 {$ENDIF}
     FFileName               : string;
@@ -262,18 +235,15 @@ type
     FOnMouseDown            : TMouseEvent;
     FOnMouseMove            : TMouseMoveEvent;
     FOnMouseUp              : TMouseEvent;
-{$IFDEF NeedMouseWheel}
-    FOnMouseWheel           : TMouseWheelEvent;
-{$ENDIF}
     FOnNeedPassword         : TAbNeedPasswordEvent;
     FOnRequestImage         : TAbRequestImageEvent;
     FOnRequestLastDisk      : TAbRequestDiskEvent;
     FOnRequestNthDisk       : TAbRequestNthDiskEvent;
     FOnRequestBlankDisk     : TAbRequestDiskEvent;
     FOnSave                 : TAbArchiveEvent;
-{$IFDEF Win32}
+{$IFDEF MSWINDOWS}
     FOnStartDrag            : TStartDragEvent;
-{$ENDIF Win32}
+{$ENDIF MSWINDOWS}
     FOnWindowsDrop          : TWindowsDropEvent;
 
   protected {methods}
@@ -314,14 +284,10 @@ type
                           virtual;
     procedure DoMouseUp(Sender : TObject; Button: TMouseButton;
                         Shift: TShiftState; X, Y: Integer); virtual;
-{$IFDEF NeedMouseWheel}
-    procedure DoMouseWheel(Sender : TObject; Shift : TShiftState;
-                           Delta, XPos, YPos : Word); virtual;
-{$ENDIF}
     procedure DoNeedPassword(Sender : TObject; var NewPassword : AnsiString);
                              virtual;
     procedure DoSave(Sender : TObject); virtual;
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     procedure DoOnStartDrag(Sender: TObject; var DragObject: TDragObject);
                             virtual;
 {$ENDIF}
@@ -359,7 +325,7 @@ type
     procedure SetBorderStyle(Value : TBorderStyle);
     procedure SetCompressionMethodToUse(Value : TAbZipSupportedMethod);
     procedure SetDeflationOption(Value : TAbZipDeflationOption);
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     procedure SetDOSMode(Value : Boolean);
 {$ENDIF}
     procedure SetCursor(Value : TCursor);
@@ -436,7 +402,7 @@ type
              read  FDeflationOption
              write SetDeflationOption
              default AbDefDeflationOption;
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     property DOSMode : Boolean
              read FDOSMode
              write SetDOSMode;
@@ -586,11 +552,6 @@ type
     property OnMouseUp : TMouseEvent
              read  FOnMouseUp
              write FOnMouseUp;
-{$IFDEF NeedMouseWheel}
-    property OnMouseWheel : TMouseWheelEvent
-             read  FOnMouseWheel
-             write FOnMouseWheel;
-{$ENDIF}
     property OnNeedPassword : TAbNeedPasswordEvent
              read  FOnNeedPassword
              write FOnNeedPassword;
@@ -609,11 +570,11 @@ type
     property OnSave : TAbArchiveEvent
              read  FOnSave
              write FOnSave;
-{$IFDEF Win32}
+{$IFDEF MSWINDOWS}
     property OnStartDrag : TStartDragEvent
              read  FOnStartDrag
              write FOnStartDrag;
-{$ENDIF Win32}
+{$ENDIF MSWINDOWS}
 
   public {methods}
     constructor Create(AOwner : TComponent); override;
@@ -713,7 +674,7 @@ type
 {$ENDIF}
     property Cursor;
     property DeflationOption;
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     property DOSMode;
 {$ENDIF}
 {$IFNDEF UsingCLX}
@@ -749,12 +710,10 @@ type
     property OnMouseDown;
     property OnMouseMove;
     property OnMouseUp;
-{$IFNDEF NeedMouseWheel}
-  {$IFNDEF UsingCLX}
+{$IFNDEF UsingCLX}
     property OnMouseWheel;
     property OnMouseWheelDown;
     property OnMouseWheelUp;
-  {$ENDIF}
 {$ENDIF}
     property OnNeedPassword;
     property OnRequestImage;
@@ -762,9 +721,9 @@ type
     property OnRequestNthDisk;
     property OnRequestBlankDisk;
     property OnSave;
-{$IFDEF Win32}
+{$IFDEF MSWINDOWS}
     property OnStartDrag;
-{$ENDIF Win32}
+{$ENDIF MSWINDOWS}
     property OnWindowsDrop;
     property ParentColor
              default AbDefParentColor;
@@ -944,18 +903,6 @@ begin
   if FBitMapWidth <> Value then
     FBitMapWidth := Value;
 end;
-{ -------------------------------------------------------------------------- }
-{$IFDEF NeedMouseWheel}
-procedure TAbZipDisplayOutline.WMMouseWheel(var Msg : TMessage);
-begin
-  inherited;
-
-  with Msg do
-    DoOnMouseWheel(KeysToShiftState(LOWORD(wParam)) {fwKeys},
-                   HIWORD(wParam) {zDelta},
-                   LOWORD(lParam) {xPos},   HIWORD(lParam) {yPos});
-end;
-{$ENDIF}
 {$IFNDEF UsingCLX}
 { -------------------------------------------------------------------------- }
 procedure TAbZipDisplayOutline.WMDropFiles(var Msg : TWMDropFiles);
@@ -991,143 +938,54 @@ begin
   if Assigned(FOnWindowsDrop) then
     FOnWindowsDrop(Self, FileName);
 end;
-
-{$IFDEF NeedMouseWheel}
-procedure TAbZipDisplayOutline.DoOnMouseWheel(Shift : TShiftState;
-                                               Delta, XPos, YPos : SmallInt);
-const
-  WHEEL_DELTA = 120;
-var
-//  Next : LongInt;
+{ -------------------------------------------------------------------------- }
+{$IFDEF UsingCLX}
+function TAbZipDisplayOutline.DoMouseWheel(Shift: TShiftState;
+  WheelDelta: Integer; const MousePos: TPoint): Boolean;
+{$ELSE}
+function TAbZipDisplayOutline.DoMouseWheel(Shift: TShiftState;
+  WheelDelta: Integer; MousePos: TPoint): Boolean;
+{$ENDIF}
+ const
+   WHEEL_DELTA = 120;
+ var
   oHold : TTreeNode;
   oNode : TTreeNode;
 begin
-  if Assigned(FOnMouseWheel) then
-    FOnMouseWheel(Self, Shift, Delta, XPos, YPos);
+  { We always return true - if there's an event handler that returns }
+  { false, we'll do the work; if it returns true, the work has been  }
+  { done, ergo this routine should return true.                      }
+  Result := True;
+  if not inherited DoMouseWheel(Shift, WheelDelta, MousePos) then begin
+    if Items.Count = 0 then
+      Exit;
 
-  if Items.Count = 0 then
-    Exit;
+      if Selected = nil then
+        exit;
+      if Selected.HasChildren then
+        Selected.Expand( false );
 
-  if Selected = nil then
-    exit;
-
-  if Selected.HasChildren then
-    Selected.Expand( false );
-
-  oNode := nil;
-  oHold := Selected;
-  if Delta < 0 then begin
-    if oHold.HasChildren then
-      oNode := oHold.getFirstChild;
-    if oNode = nil then
-      oNode := oHold.GetNextChild( oHold );
-    if oNode = nil then
-      oNode := oHold.GetNext;
-  end else begin
-    oNode := oHold.GetPrevChild( oHold );
-    if oNode <> nil then begin
-      if oNode.HasChildren then
-        oNode := oNode.GetLastChild;
-    end else
-      oNode := oHold.GetPrev;
+      oNode := nil;
+      oHold := Selected;
+      if WheelDelta < 0 then begin
+        if oHold.HasChildren then
+          oNode := oHold.getFirstChild;
+        if oNode = nil then
+          oNode := oHold.GetNextChild( oHold );
+        if oNode = nil then
+          oNode := oHold.GetNext;
+      end else begin
+        oNode := oHold.GetPrevChild( oHold );
+        if oNode <> nil then begin
+          if oNode.HasChildren then
+            oNode := oNode.GetLastChild;
+        end else
+          oNode := oHold.GetPrev;
+      end;
+      if oNode <> nil then
+        Selected := oNode;
   end;
-  if oNode <> nil then
-    Selected := oNode;
 end;
-{$ELSE}
-  {$IFDEF LINUX}
-    function TAbZipDisplayOutline.DoMouseWheel(Shift: TShiftState;
-       WheelDelta: Integer; const MousePos: TPoint): Boolean;
-     const
-       WHEEL_DELTA = 120;
-     var
-      oHold : TTreeNode;
-      oNode : TTreeNode;
-    begin
-      { We always return true - if there's an event handler that returns }
-      { false, we'll do the work; if it returns true, the work has been  }
-      { done, ergo this routine should return true.                      }
-      Result := True;
-      if not inherited DoMouseWheel(Shift, WheelDelta, MousePos) then begin
-        if Items.Count = 0 then
-          Exit;
-
-          if Selected = nil then
-            exit;
-          if Selected.HasChildren then
-            Selected.Expand( false );
-
-          oNode := nil;
-          oHold := Selected;
-          if WheelDelta < 0 then begin
-            if oHold.HasChildren then
-              oNode := oHold.getFirstChild;
-            if oNode = nil then
-              oNode := oHold.GetNextChild( oHold );
-            if oNode = nil then
-              oNode := oHold.GetNext;
-          end else begin
-            oNode := oHold.GetPrevChild( oHold );
-            if oNode <> nil then begin
-              if oNode.HasChildren then
-                oNode := oNode.GetLastChild;
-            end else
-              oNode := oHold.GetPrev;
-          end;
-          if oNode <> nil then
-            Selected := oNode;
-      end;
-    end;
-  {$ELSE}
-    {$IFDEF UsingCLX}
-    function TAbZipDisplayOutline.DoMouseWheel(Shift: TShiftState;
-      WheelDelta: Integer; const MousePos: TPoint): Boolean;
-    {$ELSE}
-    function TAbZipDisplayOutline.DoMouseWheel(Shift: TShiftState;
-      WheelDelta: Integer; MousePos: TPoint): Boolean;
-    {$ENDIF}
-     const
-       WHEEL_DELTA = 120;
-     var
-      oHold : TTreeNode;
-      oNode : TTreeNode;
-    begin
-      { We always return true - if there's an event handler that returns }
-      { false, we'll do the work; if it returns true, the work has been  }
-      { done, ergo this routine should return true.                      }
-      Result := True;
-      if not inherited DoMouseWheel(Shift, WheelDelta, MousePos) then begin
-        if Items.Count = 0 then
-          Exit;
-
-          if Selected = nil then
-            exit;
-          if Selected.HasChildren then
-            Selected.Expand( false );
-
-          oNode := nil;
-          oHold := Selected;
-          if WheelDelta < 0 then begin
-            if oHold.HasChildren then
-              oNode := oHold.getFirstChild;
-            if oNode = nil then
-              oNode := oHold.GetNextChild( oHold );
-            if oNode = nil then
-              oNode := oHold.GetNext;
-          end else begin
-            oNode := oHold.GetPrevChild( oHold );
-            if oNode <> nil then begin
-              if oNode.HasChildren then
-                oNode := oNode.GetLastChild;
-            end else
-              oNode := oHold.GetPrev;
-          end;
-          if oNode <> nil then
-            Selected := oNode;
-      end;
-    end;
-  {$ENDIF}
-{$ENDIF}
 { -------------------------------------------------------------------------- }
 procedure TAbZipDisplayOutline.SetOnWindowsDrop(Value : TWindowsDropEvent);
 {$IFNDEF UsingCLX}
@@ -1241,7 +1099,7 @@ begin
     if zaExternalFileAttributes in Attributes then begin
       ExtAttrString := '';
 {$IFDEF MSWINDOWS}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+{$WARN SYMBOL_PLATFORM OFF}
       if (faReadOnly and ExternalFileAttributes) = faReadOnly then
         ExtAttrString := ExtAttrString + AbReadOnlyS;
       if (faHidden and ExternalFileAttributes) = faHidden then
@@ -1250,7 +1108,7 @@ begin
         ExtAttrString := ExtAttrString + AbSystemS;
       if (faArchive and ExternalFileAttributes) = faArchive then
         ExtAttrString := ExtAttrString + AbArchivedS;
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
+{$WARN SYMBOL_PLATFORM ON}
 {$ENDIF}
       tmpNode := FOutline.Items.AddChild(oNode,
                          Format(AbEFAFormatS,
@@ -1581,15 +1439,6 @@ begin
     FOnMouseUp(Self, Button, Shift, X, Y);
 end;
 { -------------------------------------------------------------------------- }
-{$IFDEF NeedMouseWheel}
-procedure TAbCustomZipOutline.DoMouseWheel(Sender : TObject; Shift : TShiftState;
-                        Delta, XPos, YPos : Word);
-begin
-  if Assigned(FOnMouseWheel) then
-    FOnMouseWheel(Self, Shift, Delta, XPos, YPos);
-end;
-{$ENDIF}
-{ -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.DoNeedPassword(Sender : TObject;
                                         var NewPassword : AnsiString);
 begin
@@ -1605,7 +1454,7 @@ begin
     FOnSave(Self);
 end;
 { -------------------------------------------------------------------------- }
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
 procedure TAbCustomZipOutline.DoOnStartDrag(Sender: TObject;
                                        var DragObject: TDragObject);
 begin
@@ -1885,7 +1734,7 @@ begin
     FArchive.CompressionMethodToUse := FCompressionMethodToUse;
     SetBaseDirectory(FBaseDirectory);
     FArchive.DeflationOption := FDeflationOption;
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
     FArchive.DOSMode := FDOSMode;
 {$ENDIF}
     FArchive.ExtractOptions := FExtractOptions;
@@ -1936,12 +1785,9 @@ begin
   FOutline.OnMouseDown := DoMouseDown;
   FOutline.OnMouseMove := DoMouseMove;
   FOutline.OnMouseUp := DoMouseUp;
-{$IFDEF WIN32}
-  {$IFDEF NeedMouseWheel}
-  FOutline.OnMouseWheel := DoMouseWheel;
-  {$ENDIF}
+{$IFDEF MSWINDOWS}
   FOutline.OnStartDrag := DoOnStartDrag;
-{$ENDIF WIN32}
+{$ENDIF MSWINDOWS}
   if Assigned(FOnWindowsDrop) then
     FOutline.OnWindowsDrop := DoWindowsDrop
   else
@@ -2050,7 +1896,7 @@ begin
     FArchive.DeflationOption := Value;
 end;
 { -------------------------------------------------------------------------- }
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
 procedure TAbCustomZipOutline.SetDOSMode(Value : Boolean);
 begin
   FDOSMode := Value;
@@ -2069,7 +1915,7 @@ end;
 {$IFNDEF UsingCLX}
 procedure TAbCustomZipOutline.SetDragMode(Value : TDragMode);
 begin
-  {$IFDEF Win32}
+  {$IFDEF MSWINDOWS}
   inherited SetDragMode(Value);
   {$ENDIF}
   FOutline.DragMode := Value;
@@ -2372,12 +2218,7 @@ var
   var
     i : Integer;
   begin
-{$IFDEF WIN32}
-    i := Pos('\', ItemString);
-{$ENDIF}
-{$IFDEF LINUX}
-    i := Pos('/', ItemString);
-{$ENDIF}
+    i := Pos(AbPathDelim, ItemString);
     Result := '';
     if i > 0 then begin
       Result := Copy(ItemString, 1, pred(i));
@@ -2404,13 +2245,8 @@ begin
       ItemString := FArchive.ItemList[i].FileName;
       AbUnfixName(ItemString);
 
-{$IFDEF WIN32}
       if ItemString[ Length( ItemString )] = AbPathDelim then
-{$ENDIF}
-{$IFDEF LINUX}
-      if ItemString[ Length( ItemString )] = AbPathDelim then
-{$ENDIF}
-        continue;
+        Continue;
 
       if ( FOutline.Items.Count <> 0 ) and ( CurRoot <> nil ) then begin
         SubDir := GetSubDir(ItemString);

@@ -106,10 +106,8 @@ type
 
   TAbMeter = class(TAbCustomMeter)
   published
-    {$IFDEF VERSION4}
     property Anchors;
     property Constraints;
-    {$ENDIF}
     property Align;
     property BorderStyle;
     property Ctl3D;

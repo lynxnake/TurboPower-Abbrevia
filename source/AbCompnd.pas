@@ -36,10 +36,6 @@ unit AbCompnd;
 
 {$I AbDefine.inc}
 
-{$IFDEF Version6}
-  {$WARN SYMBOL_PLATFORM OFF}
-{$ENDIF}
-
 interface
 
 uses
@@ -829,15 +825,9 @@ begin
   FParentFolder   := rdUnused;
   if AsFile then begin
     FEntryType     := etFile;
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+    {$WARN SYMBOL_PLATFORM OFF}
     FAttributes     := faArchive;
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
-{$WARN SYMBOL_PLATFORM OFF}
-    FAttributes     := faArchive;
-{$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
+    {$WARN SYMBOL_PLATFORM ON}
   end else begin
     FEntryType     := etFolder;
     FAttributes     := faDirectory;
@@ -857,15 +847,9 @@ end;
 function TAbDirectoryEntry.IsArchive : Boolean;
   {- returns true if the entry is an archive}
 begin
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  Result := ((FAttributes and faArchive) > 0);
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
   Result := ((FAttributes and faArchive) > 0);
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
 end;
 {-----------------------------------------------------------------------------}
 function TAbDirectoryEntry.IsDirectory : Boolean;
@@ -877,58 +861,34 @@ end;
 function TAbDirectoryEntry.IsHidden : Boolean;
   {- returns true if the entry is hidden}
 begin
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  Result := ((FAttributes and faHidden) > 0);
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
   Result := ((FAttributes and faHidden) > 0);
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
 end;
 {-----------------------------------------------------------------------------}
 function TAbDirectoryEntry.IsReadOnly : Boolean;
   {- returns true if the entry is read-only}
 begin
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  Result := ((FAttributes and faReadOnly) > 0);
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
   Result := ((FAttributes and faReadOnly) > 0);
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
 end;
 {-----------------------------------------------------------------------------}
 function TAbDirectoryEntry.IsSysFile : Boolean;
   {- returns true if the entry is a system file}
 begin
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  Result := ((FAttributes and faSysFile) > 0);
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
   Result := ((FAttributes and faSysFile) > 0);
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
 end;
 {-----------------------------------------------------------------------------}
 function TAbDirectoryEntry.IsVolumeID : Boolean;
   {- returns true if the entry is a volume ID}
 begin
 {$WARN SYMBOL_DEPRECATED OFF}
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  Result := ((FAttributes and faVolumeID) > 0);
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
   Result := ((FAttributes and faVolumeID) > 0);
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
 {$WARN SYMBOL_DEPRECATED ON}
 end;
 {-----------------------------------------------------------------------------}
@@ -989,15 +949,9 @@ begin
     NewData := TAbDirectoryEntry.Create(True);
     NewData.FName := FileName;
     NewData.ParentFolder := 1;
-{$IFNDEF Linux}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-    NewData.Attributes := faArchive;
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-{$ELSE}
 {$WARN SYMBOL_PLATFORM OFF}
     NewData.Attributes := faArchive;
 {$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
     NewData.StartBlock := 3;
     NewData.LastModified := Now;
     NewData.Size := 4;

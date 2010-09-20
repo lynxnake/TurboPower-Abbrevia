@@ -240,13 +240,6 @@ implementation
 uses
   AbUtils;
 
-type
-  {$IFDEF HasLongWord}
-  DblWord = longword;
-  {$ELSE}
-  DblWord = longint;
-  {$ENDIF}
-
 {===TAbDeflateHelper=================================================}
 constructor TAbDeflateHelper.Create;
 begin
@@ -622,8 +615,8 @@ end;
 procedure AbUpdateAdlerBuffer(var aAdler : longint;
                               var aBuffer; aCount : integer);
 var
-  S1 : DblWord;
-  S2 : DblWord;
+  S1 : LongWord;
+  S2 : LongWord;
   i  : integer;
   Buffer     : PAnsiChar;
   BytesToUse : integer;
@@ -640,8 +633,8 @@ begin
          any signed problems.}
 
   {split the current Adler checksum into its halves}
-  S1 := DblWord(aAdler) and $FFFF;
-  S2 := DblWord(aAdler) shr 16;
+  S1 := LongWord(aAdler) and $FFFF;
+  S2 := LongWord(aAdler) shr 16;
 
   {reference the user buffer as a PChar: it makes it easier}
   Buffer := @aBuffer;
@@ -681,7 +674,7 @@ procedure AbUpdateCRCBuffer(var aCRC : longint;
                             var aBuffer; aCount : integer);
 var
   i      : integer;
-  CRC    : DblWord;
+  CRC    : LongWord;
   Buffer : PAnsiChar;
 begin
 {$R-}{$Q-}

@@ -61,12 +61,8 @@ uses
   AbQPeCol,
   AbQDgDir,
   AbQDgPwd,
-{$IFDEF VERSION6}
   DesignIntf,
   DesignEditors,
-{$ELSE}
-  DsgnIntf,
-{$ENDIF}
   SysUtils;
 
 procedure Register;

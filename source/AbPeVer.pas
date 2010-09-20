@@ -63,17 +63,8 @@ uses
   ExtCtrls,
   Dialogs,
 {$ENDIF}
-{$IFDEF LINUX}
   DesignIntf,
   DesignEditors,
-{$ELSE}
-{$IFDEF VERSION6}
-  DesignIntf,
-  DesignEditors,
-{$ELSE}
-  DsgnIntf,
-{$ENDIF VERSION6}
-{$ENDIF LINUX}
   SysUtils,
   Classes;
 

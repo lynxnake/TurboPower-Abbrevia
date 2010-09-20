@@ -47,9 +47,9 @@ uses
   QButtons, QExtCtrls, QGraphics, QForms, QControls, QStdCtrls,
 {$ELSE}
   Buttons, ExtCtrls, Graphics, Forms, Controls, StdCtrls,
-  {$IFDEF Version6} {$WARN UNIT_PLATFORM OFF} {$ENDIF}
+  {$WARN UNIT_PLATFORM OFF}
   FileCtrl,
-  {$IFDEF Version6} {$WARN UNIT_PLATFORM ON} {$ENDIF}
+  {$WARN UNIT_PLATFORM ON}
 {$ENDIF}
   AbResString;
 

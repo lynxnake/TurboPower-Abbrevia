@@ -91,7 +91,7 @@ type
       function Seek(const Offset : Int64; Origin : TSeekOrigin) : Int64; override;
         {-seek to a particular point in the stream}
 
-      procedure SetSize(const NewSize : Int64); {$IFDEF VERSION3} override; {$ENDIF}
+      procedure SetSize(const NewSize : Int64); override;
         {-set the stream size}
 
       property MaxMemToUse : Longint

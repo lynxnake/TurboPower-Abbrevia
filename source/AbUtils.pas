@@ -60,14 +60,6 @@ type
     (ecAbbrevia, ecInOutError, ecFilerError, ecFileCreateError,
      ecFileOpenError, ecCabError, ecOther);
 
-{$IFNDEF LINUX}
-{$IFNDEF VERSION6}
-const
-  PathDelim  = {$IFDEF MSWINDOWS} '\'; {$ELSE} '/'; {$ENDIF}
-  DriveDelim = {$IFDEF MSWINDOWS} ':'; {$ELSE} '';  {$ENDIF}
-  PathSep    = {$IFDEF MSWINDOWS} ';'; {$ELSE} ':'; {$ENDIF}
-{$ENDIF VERSION6}
-{$ENDIF LINUX}
 const
   AbPathDelim     = PathDelim; { Delphi/Linux constant }
   AbPathSep       = PathSep;   { Delphi/Linux constant }
@@ -370,12 +362,12 @@ uses
 function ExtractShortName(const SR : TSearchRec) : string;
 begin
   {$IFDEF MSWINDOWS}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM OFF}
   if SR.FindData.cAlternateFileName[0] <> #0 then
     Result := SR.FindData.cAlternateFileName
   else
     Result := SR.FindData.cFileName;
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM ON}
   {$ENDIF}
   {$IFDEF LINUX}
   Result := SR.Name;
@@ -834,7 +826,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 {$IFDEF MSWINDOWS}
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+{$WARN SYMBOL_PLATFORM OFF}
 function AbGetShortFileSpec(const LongFileSpec : string ) : string;
 var
   SR : TSearchRec;
@@ -878,7 +870,7 @@ begin
     SubPaths.Free;
   end;
 end;
-{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
+{$WARN SYMBOL_PLATFORM ON}
 {$ENDIF}
 { -------------------------------------------------------------------------- }
 procedure AbIncFilename( var Filename : string; Value : Word );
@@ -1248,9 +1240,9 @@ begin
     Result := GetLastError
   else
   begin
-    {$IFDEF DefeatWarnings}{$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF} {$ENDIF}
+    {$WARN SYMBOL_PLATFORM OFF}
     Result := FileSetDate(f, Age);
-    {$IFDEF DefeatWarnings}{$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}{$ENDIF}
+    {$WARN SYMBOL_PLATFORM ON}
     FileClose(f);
   end;
 end;
@@ -1294,8 +1286,7 @@ end;
 { -------------------------------------------------------------------------- }
 function AbDOS2UnixFileAttributes(Attr: LongInt): LongInt;
 begin
-  {$IFDEF LINUX} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM OFF}
   Result := { default permissions }
     AB_FPERMISSION_OWNERREAD or
     AB_FPERMISSION_OWNERWRITE or
@@ -1305,14 +1296,12 @@ begin
 
   if (Attr and faReadOnly) <> faReadOnly then
     Result := Result and not (AB_FPERMISSION_OWNERWRITE or AB_FPERMISSION_OWNEREXECUTE);
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-  {$IFDEF LINUX} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
 function AbUnix2DosFileAttributes(Attr: LongInt): LongInt;
 begin
-  {$IFDEF LINUX} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM OFF}
   Result := 0;
   case (Attr shr 24) shl 24 of
     AB_FMODE_FILE, AB_FMODE_FILE2: begin { standard file }
@@ -1334,8 +1323,7 @@ begin
 
   if (Attr and AB_FPERMISSION_OWNERWRITE) <> AB_FPERMISSION_OWNERWRITE then
     Result := Result or faReadOnly;
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
-  {$IFDEF LINUX} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
+  {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
 function AbFileGetAttr(const aFileName : string) : Integer;
@@ -1346,33 +1334,29 @@ var
 {$WARN SYMBOL_PLATFORM ON}
 {$ENDIF LINUX}
 begin
+  {$WARN SYMBOL_PLATFORM OFF}
   {$IFDEF MSWINDOWS}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
   Result := FileGetAttr(aFileName);
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
   {$ENDIF}
 
   {$IFDEF LINUX}
-  {$WARN SYMBOL_PLATFORM OFF}
   stat(PAnsiChar(aFileName), SB);
   Result := AbUnix2DosFileAttributes(SB.st_mode);                        {!!.01}
-  {$WARN SYMBOL_PLATFORM ON}
   {$ENDIF}
+  {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
 procedure AbFileSetAttr(const aFileName : string; aAttr : Integer);
 begin
+  {$WARN SYMBOL_PLATFORM OFF}
   {$IFDEF MSWINDOWS}
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM OFF} {$ENDIF}
   FileSetAttr(aFileName, aAttr);
-  {$IFDEF Version6} {$WARN SYMBOL_PLATFORM ON} {$ENDIF}
   {$ENDIF}
 
   {$IFDEF LINUX}
-  {$WARN SYMBOL_PLATFORM OFF}
   chmod(PAnsiChar(aFileName), AbDOS2UnixFileAttributes(aAttr));          {!!.01}
-  {$WARN SYMBOL_PLATFORM ON}
   {$ENDIF}
+  {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
