@@ -543,9 +543,13 @@ end;
 procedure TAbZipperTests.TestEmptyFolders;
 { Test creating a zip with empty directories }
   procedure CheckExists(const AFilename: string);
+  var
+    i: Integer;
   begin
-    Check(Component.FindFile(AFilename) >= 0,
-      'Item "' + AFilename + '" not found in archive');
+    i := Component.FindFile(AFilename);
+    Check(i >= 0, 'Item "' + AFilename + '" not found in archive');
+    Check(Component.Items[i].ExternalFileAttributes and faDirectory = faDirectory,
+      'Item "' + AFilename + '" doesn''t have faDirectory set')
   end;
 
 var

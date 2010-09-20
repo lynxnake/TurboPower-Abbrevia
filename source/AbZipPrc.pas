@@ -215,11 +215,10 @@ begin
 
 end;
 { ========================================================================== }
-procedure AbZipFromStream(Sender : TAbZipArchive; Item : TAbZipItem;
+procedure DoZipFromStream(Sender : TAbZipArchive; Item : TAbZipItem;
   OutStream, InStream : TStream);
 var
   ZipArchive : TAbZipArchive;
-  FileTimeStamp   : LongInt;
   InStartPos{, OutStartPos} : LongInt;                                   {!!.01}
   TempOut : TAbVirtualMemoryStream;                                      {!!.01}
 
@@ -228,16 +227,6 @@ begin
   Item.UncompressedSize := InStream.Size;
   Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag and AbLanguageEncodingFlag;
   Item.CompressedSize := 0;
-
-  { if not reading from a file, then set defaults for storing the item }
-  if not (InStream is TFileStream) or (InStream is TAbSpanStream) then begin
-    FileTimeStamp := DateTimeToFileDate(SysUtils.Now);
-    Item.ExternalFileAttributes := 0;
-    Item.UncompressedSize := InStream.Size;
-    Item.LastModFileTime := LongRec(FileTimeStamp).Lo;
-    Item.LastModFileDate := LongRec(FileTimeStamp).Hi;
-  end;
-
 {$IFDEF MSWINDOWS}
   Item.VersionMadeBy := (Item.VersionMadeBy and $FF00) + 20;
 {$ENDIF}
@@ -257,7 +246,6 @@ begin
     Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag
       or AbFileIsEncryptedFlag or AbHasDataDescriptorFlag;
   end;
-
 end;
 
 begin
@@ -331,6 +319,20 @@ begin
   Item.InternalFileAttributes := 0; { don't care }
 end;
 { -------------------------------------------------------------------------- }
+procedure AbZipFromStream(Sender : TAbZipArchive; Item : TAbZipItem;
+  OutStream, InStream : TStream);
+var
+  FileTimeStamp : LongInt;
+begin
+  // Set item properties for non-file streams
+  Item.ExternalFileAttributes := 0;
+  FileTimeStamp := DateTimeToFileDate(SysUtils.Now);
+  Item.LastModFileTime := LongRec(FileTimeStamp).Lo;
+  Item.LastModFileDate := LongRec(FileTimeStamp).Hi;
+
+  DoZipFromStream(Sender, Item, OutStream, InStream);
+end;
+{ -------------------------------------------------------------------------- }
 procedure AbZip( Sender : TAbZipArchive; Item : TAbZipItem;
                  OutStream : TStream );
 var
@@ -358,7 +360,7 @@ begin
     {$ENDIF}
     Item.LastModFileTime := LongRec(AttrEx.Time).Lo;
     Item.LastModFileDate := LongRec(AttrEx.Time).Hi;
-    AbZipFromStream(Sender, Item, OutStream, UncompressedStream);
+    DoZipFromStream(Sender, Item, OutStream, UncompressedStream);
   finally {UncompressedStream}
     UncompressedStream.Free;
   end; {UncompressedStream}
