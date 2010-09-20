@@ -22,8 +22,9 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
-{$I AbDefine.inc}
+program AbbreviaUnitTests;
 
+{$I AbDefine.inc}
 
 {$IFNDEF FPC}
   {$IFDEF MSWINDOWS}
@@ -44,8 +45,6 @@
   // Currently Abbrevia's Floppy Span Tests don't work will with console testing.
   {$APPTYPE CONSOLE}
 {$ENDIF}
-
-program AbbreviaUnitTests;
 
 uses
   TestFramework,
