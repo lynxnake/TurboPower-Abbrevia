@@ -1048,11 +1048,22 @@ begin
     aItem := FItemList.Items[FRowMap[ARow-1]];
     Attr := TAbViewAttribute(ColMap(ACol));
     S := AttrToStr(Attr, aItem);
-    if FSelList.IsSelected(FRowMap[ARow-1]) then begin
+    if (gdSelected in AState) or FSelList.IsSelected(FRowMap[ARow-1]) then begin
       if not DefaultDrawing then begin
         Brush.Color := FColors.Selected;
         Font.Color  := FColors.SelectedText;
+      end
+{$IFDEF HasGridDrawingStyle}
+      else begin
+        if DrawingStyle = gdsGradient then
+          Canvas.Font.Color := clHighlightText;
+        if not (gdSelected in AState) then begin
+          if (goRowSelect in Options) then
+            Include(AState, gdRowSelected);
+          DrawCellHighlight(ARect, AState, ACol, ARow);
+        end;
       end;
+{$ENDIF}
     end else if aItem.Action = aaDelete then begin
       Brush.Color := FColors.Deleted;
       Font.Color  := FColors.DeletedText;
