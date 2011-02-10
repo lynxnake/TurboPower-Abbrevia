@@ -157,7 +157,7 @@ begin
     Component.PasswordRetries := 3;
     Component.OnNeedPassword := NeedPassword3Tries;
     Component.ExtractToStream(Component.Items[0].FileName, MS);
-    CheckEquals(FPasswordTry, 3, 'NeedPassword not called enough times');
+    CheckEquals(3, FPasswordTry, 'NeedPassword not called enough times');
     CheckFileMatchesStream(MPLDir + 'MPL-1_1.txt', MS, '');
   finally
     MS.Free;
