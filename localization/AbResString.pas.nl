@@ -89,18 +89,23 @@ resourcestring
   AbInvalidCabTemplateS = 'Ongeldige sjabloon voor cabinetsbestand';
   AbInvalidCabFileS = 'Ongeldig bestand - geen cabinetsbestand';
 
-  AbMethod0S = 'Opgeslagen';
-  AbMethod1S = 'Gekrompen';
-  AbMethod2S = 'Gereduceerd';
-  AbMethod3S = 'Gereduceerd';
-  AbMethod4S = 'Gereduceerd';
-  AbMethod5S = 'Gereduceerd';
-  AbMethod6S = 'Geïmplodeerd';
-  AbMethod7S = 'In symbolen gepakt';
-  AbMethod8S = 'Gedeflationeerd';
-  AbMethod9S = 'Uitgebreid gedeflationeerd';
-  AbMethod10S = 'DCL geïmplodeerd';
-  AbMethod11S = 'Beste methode';
+  AbZipStored = 'Opgeslagen';
+  AbZipShrunk = 'Gekrompen';
+  AbZipReduced = 'Gereduceerd';
+  AbZipImploded = 'Geïmplodeerd';
+  AbZipTokenized = 'In symbolen gepakt';
+  AbZipDeflated = 'Gedeflationeerd';
+  AbZipDeflate64 = 'Uitgebreid gedeflationeerd';
+  AbZipDCLImploded = 'DCL geïmplodeerd';
+  AbZipBzip2 = 'Bzip2';
+  AbZipLZMA = 'LZMA';
+  AbZipIBMTerse = 'IBM Terse';
+  AbZipLZ77 = 'IBM LZ77';
+  AbZipJPEG = 'JPEG';
+  AbZipWavPack = 'WavPack';
+  AbZipPPMd = 'PPMd';
+  AbZipUnknown = 'Onbekend (%d)';
+  AbZipBestMethod = 'Beste methode';
 
   AbVersionFormatS = 'Versie %s';
   AbCompressedSizeFormatS = 'Gecomprimeerde grootte: %d';

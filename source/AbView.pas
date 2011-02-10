@@ -804,10 +804,6 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbBaseViewer.AttrToStr(Attr : TAbViewAttribute;
   aItem : TAbArchiveItem) : string;
-const
-  MethodStrings: array [TAbZipCompressionMethod] of string = (
-    AbMethod0S, AbMethod1S, AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S,
-    AbMethod6S, AbMethod7S, AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   FN : string;
   LI : Longint;
@@ -865,7 +861,7 @@ begin
       else
         Result := AbBinaryS;
     vaMethod :
-      Result := MethodStrings[CompressionMethod];
+      Result := ZipCompressionMethodToString(CompressionMethod);
     vaRatio :
       Result := IntToStr(Round(CompressionRatio));
     vaVersionMade :

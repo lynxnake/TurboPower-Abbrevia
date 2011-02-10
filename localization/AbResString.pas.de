@@ -89,18 +89,23 @@ resourcestring
   AbInvalidCabTemplateS = 'Ungültige Vorlage für eine Cabinet-Datei';
   AbInvalidCabFileS = 'Ungültige Datei - keine Kabinett Datei';
 
-  AbMethod0S = 'Gespeichert';
-  AbMethod1S = 'Geschrumpft';
-  AbMethod2S = 'Reduziert';
-  AbMethod3S = 'Reduziert';
-  AbMethod4S = 'Reduziert';
-  AbMethod5S = 'Reduziert';
-  AbMethod6S = 'Implodiert';
-  AbMethod7S = 'In Merkmale aufgeteilt';
-  AbMethod8S = 'Gepackt';
-  AbMethod9S = 'Stärker gepackt';
-  AbMethod10S = 'DCL Implodiert';
-  AbMethod11S = 'Beste Methode';
+  AbZipStored = 'Gespeichert';
+  AbZipShrunk = 'Geschrumpft';
+  AbZipReduced = 'Reduziert';
+  AbZipImploded = 'Implodiert';
+  AbZipTokenized = 'In Merkmale aufgeteilt';
+  AbZipDeflated = 'Gepackt';
+  AbZipDeflate64 = 'Stärker gepackt';
+  AbZipDCLImploded = 'DCL Implodiert';
+  AbZipBzip2 = 'Bzip2';
+  AbZipLZMA = 'LZMA';
+  AbZipIBMTerse = 'IBM Terse';
+  AbZipLZ77 = 'IBM LZ77';
+  AbZipJPEG = 'JPEG';
+  AbZipWavPack = 'WavPack';
+  AbZipPPMd = 'PPMd';
+  AbZipUnknown = 'Unbekannt (%d)';
+  AbZipBestMethod = 'Beste Methode';
 
   AbVersionFormatS = 'Version %s';
   AbCompressedSizeFormatS = 'Komprimierte Größe: %d';

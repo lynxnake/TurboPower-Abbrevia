@@ -93,18 +93,23 @@ resourcestring
   AbInvalidCabTemplateS = 'Неверный шаблон Cabinet-файла';
   AbInvalidCabFileS = ' Неверный Cabinet-файл';
 
-  AbMethod0S = 'Сохранено';
-  AbMethod1S = 'Сжато';
-  AbMethod2S = 'Сжато';
-  AbMethod3S = 'Сжато';
-  AbMethod4S = 'Сжато';
-  AbMethod5S = 'Сжато';
-  AbMethod6S = 'Сжато';
-  AbMethod7S = 'Разделен на части';
-  AbMethod8S = 'Сжато';
-  AbMethod9S = 'Лучшее сжатие';
-  AbMethod10S = 'DCL Сжато';
-  AbMethod11S = 'Лучший метод';
+  AbZipStored = 'Сохранено';
+  AbZipShrunk = 'Сжато';
+  AbZipReduced = 'Сжато';
+  AbZipImploded = 'Сжато';
+  AbZipTokenized = 'Разделен на части';
+  AbZipDeflated = 'Сжато';
+  AbZipDeflate64 = 'Лучшее сжатие';
+  AbZipDCLImploded = 'DCL Сжато';
+  AbZipBzip2 = 'Bzip2';
+  AbZipLZMA = 'LZMA';
+  AbZipIBMTerse = 'IBM Terse';
+  AbZipLZ77 = 'IBM LZ77';
+  AbZipJPEG = 'JPEG';
+  AbZipWavPack = 'WavPack';
+  AbZipPPMd = 'PPMd';
+  AbZipUnknown = 'Неизвестно (%d)';
+  AbZipBestMethod = 'Лучший метод';
 
   AbVersionFormatS = 'Версия %s';
   AbCompressedSizeFormatS = 'Размер в архиве: %d';

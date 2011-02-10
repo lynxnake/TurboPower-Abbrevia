@@ -131,7 +131,8 @@ type
   TAbZipCompressionMethod =
     (cmStored, cmShrunk, cmReduced1, cmReduced2, cmReduced3,
      cmReduced4, cmImploded, cmTokenized, cmDeflated,
-     cmEnhancedDeflated, cmDCLImploded, cmBestMethod);
+     cmEnhancedDeflated, cmDCLImploded, cmBzip2 = 12, cmLZMA = 14,
+     cmIBMTerse = 18, cmLZ77, cmJPEG = 96, cmWavPack = 97, cmPPMd);
 
   TAbZipSupportedMethod =
     (smStored, smDeflated, smBestMethod);
@@ -573,6 +574,8 @@ function VerifyZip(Strm : TStream) : TAbArchiveType;
 
 function VerifySelfExtracting(Strm : TStream) : TAbArchiveType;
 
+function ZipCompressionMethodToString(aMethod: TAbZipCompressionMethod): string;
+
 implementation
 
 uses
@@ -676,7 +679,44 @@ begin
 
   Strm.Position := StartPos;
 end;
-
+{============================================================================}
+function ZipCompressionMethodToString(aMethod: TAbZipCompressionMethod): string;
+begin
+  case aMethod of
+    cmStored:
+      Result := AbZipStored;
+    cmShrunk:
+      Result := AbZipShrunk;
+    cmReduced1..cmReduced4:
+      Result := AbZipReduced;
+    cmImploded:
+      Result := AbZipImploded;
+    cmTokenized:
+      Result := AbZipTokenized;
+    cmDeflated:
+      Result := AbZipDeflated;
+    cmEnhancedDeflated:
+      Result := AbZipDeflate64;
+    cmDCLImploded:
+      Result := AbZipDCLImploded;
+    cmBzip2:
+      Result := AbZipBzip2;
+    cmLZMA:
+      Result := AbZipLZMA;
+    cmIBMTerse:
+      Result := AbZipIBMTerse;
+    cmLZ77:
+      Result := AbZipLZ77;
+    cmJPEG:
+      Result := AbZipJPEG;
+    cmWavPack:
+      Result := AbZipWavPack;
+    cmPPMd:
+      Result := AbZipPPMd;
+    else
+      Result := Format(AbZipUnknown, [Ord(aMethod)]);
+  end;
+end;
 {============================================================================}
 function FindZip64CentralDirLocator(aStream: TStream; centralDirectoryPos: Int64): Int64;
 const

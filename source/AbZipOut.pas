@@ -1048,10 +1048,6 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipOutline.AddAttributeNodes( Item : TAbZipItem;
                                                  oNode : TTreeNode );
-const
-  MethodStrings: array [TAbZipCompressionMethod] of string = (
-    AbMethod0S, AbMethod1S, AbMethod2S, AbMethod3S, AbMethod4S, AbMethod5S,
-    AbMethod6S, AbMethod7S, AbMethod8S, AbMethod9S, AbMethod10S, AbMethod11S);
 var
   ExtAttrString : string;
   dt : TDateTime;
@@ -1077,7 +1073,7 @@ begin
     if zaCompressionMethod in Attributes then begin
       tmpNode := FOutline.Items.AddChild(oNode,                       
                          Format(AbCompressionMethodFormatS,
-                                 [MethodStrings[CompressionMethod]]));
+                                 [ZipCompressionMethodToString(CompressionMethod)]));
       tmpNode.ImageIndex    := FOutline.FAttrIndex;
       tmpNode.SelectedIndex := FOutline.FAttrSelectedIndex;
     end;
