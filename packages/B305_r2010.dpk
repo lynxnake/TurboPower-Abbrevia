@@ -95,8 +95,6 @@ contains
   AbZipKit in '..\source\AbZipKit.pas',
   AbZipper in '..\source\AbZipper.pas',
   AbUnzper in '..\source\AbUnzper.pas',
-  AbZipCry in '..\source\AbZipCry.pas',
-  AbSWStm in '..\source\AbSWStm.pas',
-  AbTempFileStream in '..\source\AbTempFileStream.pas';
+  AbSWStm in '..\source\AbSWStm.pas';
 
 end.

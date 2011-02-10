@@ -86,10 +86,6 @@ begin
 
   Hlpr := TAbDeflateHelper.Create;
 
-  if (Archive.Password <> '') then begin
-    Hlpr.Passphrase := Archive.Password;
-  end;
-
   {anything dealing with store options, etc. should already be done.}
 
   try {Hlpr}
@@ -138,7 +134,6 @@ begin
     Hlpr.OnProgressStep := Archive.DoInflateProgress;
 
     { provide encryption check value }
-    Hlpr.CheckValue := Item.LastModFileTime shl $10;
     Item.CRC32 := Deflate(InStream, OutStream, Hlpr);
 
   finally {Hlpr}
@@ -156,7 +151,6 @@ var
   Total       : Int64;
   Abort       : Boolean;
   Buffer      : array [0..8191] of byte;
-  DestStrm    : TStream;  { place holder for Output, either direct or encrypted }
 begin
   { setup }
   Item.CompressionMethod := cmStored;
@@ -167,38 +161,27 @@ begin
   LastPercent := 0;
   InSize := InStream.Size;
 
-  if Archive.Password <> '' then  { encrypt the stream }
-    DestStrm := TAbDfEncryptStream.Create(OutStream,
-                                          LongInt(Item.LastModFileTime shl $10),
-                                          Archive.Password)
-  else { just use data stream as-is }
-    DestStrm := OutStream;
-  try
-    { get first bufferful }
-    DataRead := InStream.Read(Buffer, SizeOf(Buffer));
-    { while more data has been read and we're not told to bail }
-    while (DataRead <> 0) and not Abort do begin
-      {report the progress}
-      if Assigned(Archive.OnProgress) then begin
-        Total := Total + DataRead;
-        Percent := Round((100.0 * Total) / InSize);
-        if (LastPercent <> Percent) then
-          Archive.OnProgress(Percent, Abort);
-        LastPercent := Percent;
-      end;
-
-      { update CRC}
-      AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
-
-      { write data (encrypting if needed) }
-      DestStrm.WriteBuffer(Buffer, DataRead);
-
-      { get next bufferful }
-      DataRead := InStream.Read(Buffer, SizeOf(Buffer));
+  { get first bufferful }
+  DataRead := InStream.Read(Buffer, SizeOf(Buffer));
+  { while more data has been read and we're not told to bail }
+  while (DataRead <> 0) and not Abort do begin
+    {report the progress}
+    if Assigned(Archive.OnProgress) then begin
+      Total := Total + DataRead;
+      Percent := Round((100.0 * Total) / InSize);
+      if (LastPercent <> Percent) then
+        Archive.OnProgress(Percent, Abort);
+      LastPercent := Percent;
     end;
-  finally
-    if Archive.Password <> '' then
-      DestStrm.Free;
+
+    { update CRC}
+    AbUpdateCRCBuffer(CRC32, Buffer, DataRead);
+
+    { write data (encrypting if needed) }
+    OutStream.WriteBuffer(Buffer, DataRead);
+
+    { get next bufferful }
+    DataRead := InStream.Read(Buffer, SizeOf(Buffer));
   end;
 
   { finish CRC calculation }
@@ -221,6 +204,7 @@ var
   ZipArchive : TAbZipArchive;
   InStartPos{, OutStartPos} : LongInt;                                   {!!.01}
   TempOut : TAbVirtualMemoryStream;                                      {!!.01}
+  DestStrm : TStream;
 
 procedure ConfigureItem;
 begin
@@ -251,13 +235,16 @@ end;
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  TempOut := TAbVirtualMemoryStream.Create;                              {!!.01}
-  TempOut.SwapFileDirectory := Sender.TempDirectory;                     {!!.01}
+  { configure Item }
+  ConfigureItem;
 
+  if ZipArchive.Password <> '' then  { encrypt the stream }
+    DestStrm := TAbDfEncryptStream.Create(OutStream,
+                                          LongInt(Item.LastModFileTime shl $10),
+                                          ZipArchive.Password)
+  else
+    DestStrm := OutStream;
   try
-    { configure Item }
-    ConfigureItem;
-
     if InStream.Size > 0 then begin                                      {!!.01}
 
       { determine how to store Item based on specified CompressionMethodToUse }
@@ -265,35 +252,45 @@ begin
         smDeflated : begin
         { Item is to be deflated regarless }
           { deflate item }
-          DoDeflate(ZipArchive, Item, TempOut, InStream);                {!!.01}
+          DoDeflate(ZipArchive, Item, DestStrm, InStream);               {!!.01}
         end;
 
         smStored : begin
         { Item is to be stored regardless }
           { store item }
-          DoStore(ZipArchive, Item, TempOut, InStream);                  {!!.01}
+          DoStore(ZipArchive, Item, DestStrm, InStream);                 {!!.01}
         end;
 
         smBestMethod : begin
         { Item is to be archived using method producing best compression }
-          { save starting points }
-          InStartPos  := InStream.Position;
-
-          { try deflating item }
-          DoDeflate(ZipArchive, Item, TempOut, InStream);                {!!.01}
-          { if deflated size > input size then got negative compression }
-          { so storing the item is more efficient }
-
-          if TempOut.Size > InStream.Size then begin { store item instead }
-            { reset streams to original positions }
-            InStream.Position  := InStartPos;
-            TempOut.Free;                                                {!!.01}
-            TempOut := TAbVirtualMemoryStream.Create;                    {!!.01}
+          TempOut := TAbVirtualMemoryStream.Create;                      {!!.01}
+          try
             TempOut.SwapFileDirectory := Sender.TempDirectory;           {!!.01}
 
-            { store item }
-            DoStore(ZipArchive, Item, TempOut, InStream);                {!!.01}
-          end {if};
+            { save starting points }
+            InStartPos  := InStream.Position;
+
+            { try deflating item }
+            DoDeflate(ZipArchive, Item, TempOut, InStream);              {!!.01}
+            { if deflated size > input size then got negative compression }
+            { so storing the item is more efficient }
+
+            if TempOut.Size > InStream.Size then begin { store item instead }
+              { reset streams to original positions }
+              InStream.Position  := InStartPos;
+              TempOut.Free;                                              {!!.01}
+              TempOut := TAbVirtualMemoryStream.Create;                  {!!.01}
+              TempOut.SwapFileDirectory := Sender.TempDirectory;         {!!.01}
+
+              { store item }
+              DoStore(ZipArchive, Item, TempOut, InStream);              {!!.01}
+            end {if};
+
+            TempOut.Seek(0, soBeginning);                                {!!.01}
+            DestStrm.CopyFrom(TempOut, TempOut.Size);
+          finally
+            TempOut.Free;                                                {!!.01}
+          end;
         end;
       end; { case }
 
@@ -302,17 +299,15 @@ begin
       { InStream is zero length}                                         {!!.01}
       Item.CRC32 := 0;                                                   {!!.01}
       { ignore any storage indicator and treat as stored }               {!!.01}
-      DoStore(ZipArchive, Item, TempOut, InStream);                      {!!.01}
+      DoStore(ZipArchive, Item, DestStrm, InStream);                     {!!.01}
     end;                                                                 {!!.01}
 
     { update item }
     UpdateItem;
 
-    TempOut.Seek(0, soFromBeginning);                                    {!!.01}
-    OutStream.CopyFrom(TempOut, TempOut.Size);                           {!!.01}
-
   finally                                                                {!!.01}
-    TempOut.Free;                                                        {!!.01}
+    if DestStrm <> OutStream then
+      DestStrm.Free;
   end;                                                                   {!!.01}
 
   Item.CompressedSize := OutStream.Size;

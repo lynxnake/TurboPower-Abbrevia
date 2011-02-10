@@ -101,13 +101,11 @@ type
     private
       FAmpleLength    : longint;
       FChainLength    : longint;
-      FCheckValue     : longint;
       FLogFile        : string;
       FMaxLazy        : longint;
       FOnProgressStep : TAbProgressStep;
       FOptions        : longint;
       FPartSize       : Int64;
-      FPassphrase     : AnsiString;
       FSizeCompressed : Int64;
       FSizeNormal     : Int64;
       FStreamSize     : Int64;
@@ -116,12 +114,10 @@ type
     protected
       procedure dhSetAmpleLength(aValue : longint);
       procedure dhSetChainLength(aValue : longint);
-      procedure dhSetCheckValue(aValue : longint);
       procedure dhSetLogFile(const aValue : string);
       procedure dhSetMaxLazy(aValue : longint);
       procedure dhSetOnProgressStep(aValue : TAbProgressStep);
       procedure dhSetOptions(aValue : longint);
-      procedure dhSetPassphrase(const aValue : AnsiString);
       procedure dhSetWindowSize(aValue : longint);
       procedure dhSetZipOption(aValue : AnsiChar);
     public
@@ -133,8 +129,6 @@ type
                   read FAmpleLength write dhSetAmpleLength;
       property ChainLength : longint
                   read FChainLength write dhSetChainLength;
-      property CheckValue : longint
-                  read FCheckValue write dhSetCheckValue;
       property LogFile : string
                   read FLogFile write dhSetLogFile;
       property MaxLazyLength : longint
@@ -143,8 +137,6 @@ type
                   read FOptions write dhSetOptions;
       property PartialSize : Int64
                   read FPartSize write FPartSize;
-      property Passphrase : AnsiString
-                  read FPassphrase write dhSetPassphrase;
       property PKZipOption : AnsiChar
                   read FZipOption write dhSetZipOption;
       property StreamSize : Int64
@@ -246,12 +238,10 @@ begin
   inherited Create;
   FAmpleLength := 8;
   FChainLength := 32;
-  FCheckValue := -1;
   {FLogFile := '';}
   FMaxLazy := 16;
   {FOnProgressStep := nil;}
   FOptions := $F;
-  {FPassphrase := '';}
   {FStreamSize := 0;}
   FWindowSize := 32 * 1024;
   FZipOption := 'n';
@@ -261,13 +251,11 @@ procedure TAbDeflateHelper.Assign(aHelper : TAbDeflateHelper);
 begin
   FAmpleLength := aHelper.FAmpleLength;
   FChainLength := aHelper.FChainLength;
-  FCheckValue := aHelper.FCheckValue;
   FLogFile := aHelper.FLogFile;
   FMaxLazy := aHelper.FMaxLazy;
   FOnProgressStep := aHelper.FOnProgressStep;
   FOptions := aHelper.FOptions;
   FPartSize := aHelper.FPartSize;
-  FPassphrase := aHelper.FPassphrase;
   FStreamSize := aHelper.FStreamSize;
   FWindowSize := aHelper.FWindowSize;
   FZipOption := aHelper.FZipOption;
@@ -291,20 +279,6 @@ begin
     FChainLength := aValue;
     FZipOption := '?';
   end;
-end;
-{--------}
-procedure TAbDeflateHelper.dhSetCheckValue(aValue : longint);
-begin
-  {Note: the CheckValue is only required during the inflate of an
-         encrypted stream. The encryption header contains part of the
-         CheckValue encrypted and this is used to check that the
-         supplied passphrase was correct.
-         The CheckValue is usually the CRC of the uncompressed stream
-         and the zip file has this value readily to hand prior to
-         decompression. With encryption during deflate the code will
-         calculate the CheckValue of the uncompressed stream prior to
-         compressing it.}
-  FCheckValue := aValue;
 end;
 {--------}
 procedure TAbDeflateHelper.dhSetLogFile(const aValue : string);
@@ -333,11 +307,6 @@ begin
     FOptions := aValue;
     FZipOption := '?';
   end;
-end;
-{--------}
-procedure TAbDeflateHelper.dhSetPassphrase(const aValue : AnsiString);
-begin
-  FPassphrase := aValue;
 end;
 {--------}
 procedure TAbDeflateHelper.dhSetWindowSize(aValue : longint);
