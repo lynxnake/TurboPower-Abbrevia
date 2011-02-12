@@ -20,6 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Craig Peterson
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -1057,7 +1058,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure ExtractPrep(ZipArchive: TAbZipArchive; Item: TAbZipItem;
-  out CompressedStream: TStream; out CompressionMethod: TAbZipCompressionMethod);
+  out CompressedStream: TStream);
 var
   LFH         : TAbZipLocalFileHeader;
   Abort       : Boolean;
@@ -1111,7 +1112,6 @@ begin
   LFH := TAbZipLocalFileHeader.Create;
   try
     GetHeader;
-    CompressionMethod := LFH.CompressionMethod;
   finally
     LFH.Free;
   end;
@@ -1143,12 +1143,12 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure DoExtract(ZipArchive: TAbZipArchive; Item: TAbZipItem;
-  CompressedStream, OutStream: TStream; CompressionMethod: TAbZipCompressionMethod);
+  CompressedStream, OutStream: TStream);
 var
   OutCRC: LongInt;
 begin
   { determine storage type }
-  case CompressionMethod of
+  case Item.CompressionMethod of
     cmStored: begin
       { unstore item }
       OutCRC := DoExtractStored(ZipArchive, Item, CompressedStream, OutStream);
@@ -1175,29 +1175,26 @@ end;
 { -------------------------------------------------------------------------- }
 procedure AbUnzipToStream( Sender : TObject; Item : TAbZipItem; OutStream : TStream);
 var
-  ZipArchive  : TAbZipArchive;
-  CompressedStream : TStream;
-  CompressionMethod: TAbZipCompressionMethod;
+  ZipArchive : TAbZipArchive;
+  InStream : TStream;
 begin
   ZipArchive := Sender as TAbZipArchive;
   if not Assigned(OutStream) then
     raise EAbBadStream.Create;
 
-  ExtractPrep(ZipArchive, Item, CompressedStream, CompressionMethod);
+  ExtractPrep(ZipArchive, Item, InStream);
   try
-    DoExtract(ZipArchive, Item, CompressedStream, OutStream, CompressionMethod);
+    DoExtract(ZipArchive, Item, InStream, OutStream);
   finally
-    if CompressedStream <> ZipArchive.FStream then
-      CompressedStream.Free
+    if InStream <> ZipArchive.FStream then
+      InStream.Free
   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure AbUnzip(Sender : TObject; Item : TAbZipItem; const UseName : string);
   {create the output filestream and pass it to DoExtract}
 var
-  CompressedStream: TStream;
-  CompressionMethod: TAbZipCompressionMethod;
-  OutStream  : TFileStream;
+  InStream, OutStream : TStream;
   ZipArchive : TAbZipArchive;
 {$IFDEF LINUX}                                                           {!!.01}
   FileDateTime  : TDateTime;                                             {!!.01}
@@ -1206,12 +1203,12 @@ var
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  ExtractPrep(ZipArchive, Item, CompressedStream, CompressionMethod);
+  ExtractPrep(ZipArchive, Item, InStream);
   try
     OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
     try
       try    {OutStream}
-        DoExtract(ZipArchive, Item, CompressedStream, OutStream, CompressionMethod);
+        DoExtract(ZipArchive, Item, InStream, OutStream);
       finally {OutStream}
         OutStream.Free;
       end;   {OutStream}
@@ -1222,8 +1219,8 @@ begin
       raise;
     end;
   finally
-    if CompressedStream <> ZipArchive.FStream then
-      CompressedStream.Free
+    if InStream <> ZipArchive.FStream then
+      InStream.Free
   end;
 
   // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
