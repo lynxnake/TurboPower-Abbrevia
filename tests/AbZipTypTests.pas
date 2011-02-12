@@ -53,6 +53,9 @@ type
     FFileName: string;
     procedure ExtractHelper(Sender : TObject; Item : TAbArchiveItem;
       const NewName : string);
+    procedure ItemFailure(Sender : TObject; Item : TAbArchiveItem;
+      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
+      ErrorCode : Integer);
   public
     constructor Create(const aFileName: string); reintroduce;
   published
@@ -78,7 +81,7 @@ type
 implementation
 
 uses
-  SysUtils, AbUnzPrc, AbZipPrc;
+  SysUtils, AbConst, AbUnzPrc, AbZipPrc;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchiveTests }
@@ -171,12 +174,21 @@ begin
   AbUnzip(Sender, TAbZipItem(Item), NewName);
 end;
 {----------------------------------------------------------------------------}
+procedure TAbZipDecompressTest.ItemFailure(Sender : TObject;
+  Item : TAbArchiveItem; ProcessType : TAbProcessType;
+  ErrorClass : TAbErrorClass; ErrorCode : Integer);
+begin
+  if ErrorClass = ecAbbrevia then
+    Fail('Extract failed: ' + AbStrRes(ErrorCode));
+end;
+{----------------------------------------------------------------------------}
 procedure TAbZipDecompressTest.TestDecompress;
 var
   Zip: TAbZipArchive;
 begin
   Zip := TAbZipArchive.Create(FFileName, fmOpenRead or fmShareDenyNone);
   try
+    Zip.OnProcessItemFailure := ItemFailure;
     Zip.ExtractHelper := ExtractHelper;
     Zip.BaseDirectory := TestTempDir;
     Zip.Password := 'password';
