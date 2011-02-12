@@ -243,7 +243,7 @@ type
   procedure AbUnfixName( var FName : string );
     {-changes forward slashes to backslashes}
 
-  procedure AbUpdateCRC( var CRC : LongInt; const Buffer; Len : Word );
+  procedure AbUpdateCRC( var CRC : LongInt; const Buffer; Len : Integer );
 
   function AbUpdateCRC32(CurByte : Byte; CurCrc : LongInt) : LongInt;
     {-Returns an updated crc32}
@@ -1067,9 +1067,9 @@ begin
       FName[i] := AbPathDelim;
 end;
 { -------------------------------------------------------------------------- }
-procedure AbUpdateCRC( var CRC : LongInt; const Buffer; Len : Word );
+procedure AbUpdateCRC( var CRC : LongInt; const Buffer; Len : Integer );
 type
-  TByteArray = array[0..65520] of Byte;
+  TByteArray = array[0..MaxInt - 1] of Byte;
 var
   BufArray : TByteArray absolute Buffer;
   i : Integer;
