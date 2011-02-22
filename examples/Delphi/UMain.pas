@@ -941,15 +941,6 @@ end;
 
 procedure TForm1.AbZipOutline1ArchiveItemProgress(Sender: TObject;
   Item: TAbArchiveItem; Progress: Byte; var Abort: Boolean);
-type
-  TMethodStrings = array [ TAbZipCompressionMethod ] of string;
-const
-  MethodStrings : TMethodStrings = ( 'UnStoring', 'UnShrinking',
-                                     'UnReducing', 'UnReducing',
-                                     'UnReducing', 'UnReducing',
-                                     'Exploding', 'DeTokenizing',
-                                     'Inflating', 'Enhanced Inflating',
-                                     'DCL Exploding', 'Extracting' );
 var
   ActionString : string;
 begin
@@ -957,8 +948,7 @@ begin
     aaAdd : ActionString := 'Adding  ';
     aaFreshen : ActionString := 'Freshening  ';
   else
-    ActionString := MethodStrings[(Item as TAbZipItem).CompressionMethod] +
-                    '  ';
+    ActionString :='Extracting  ';
   end;
   Panel5.Caption := ActionString + Item.FileName + '   ';
   if Progress = 100 then begin
