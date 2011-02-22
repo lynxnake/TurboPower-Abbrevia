@@ -353,7 +353,13 @@ procedure TAbTestCase.TearDown;
 begin
   inherited;
   if FTempDirCreated then begin
-    DelTree(TestTempDir);
+    try
+      DelTree(TestTempDir);
+    except
+      // Retry after a delay to handle something keeping the files open (e.g., anti-virus)
+      Sleep(500);
+      DelTree(TestTempDir);
+    end;
     FTempDirCreated := False;
   end;
 end;
