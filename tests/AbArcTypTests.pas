@@ -281,7 +281,7 @@ begin
   finally
     Arc.Free;
   end;
-  CheckDirMatch(aSourceDir, TestTempDir + 'test', False);
+  CheckDirMatch(aSourceDir, TestTempDir + 'test');
 end;
 {----------------------------------------------------------------------------}
 procedure TAbArchiveMultiFileTests.TestCompressCanterbury;

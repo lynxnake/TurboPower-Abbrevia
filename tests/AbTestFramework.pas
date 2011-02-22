@@ -70,7 +70,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
     class function FilesInDirectory(const aDir : string) : TStringList;
-    procedure CheckDirMatch(aDir1, aDir2 : string; IgnoreMissingFiles : Boolean = True);
+    procedure CheckDirMatch(aDir1, aDir2 : string);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
   {$IFDEF DUNIT2}
@@ -121,8 +121,7 @@ var
   ExePath : string;
 
 { ===== TAbTestCase ======================================================== }
-procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string;
-  IgnoreMissingFiles: Boolean);
+procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string);
 var
   d1,d2 : TStringList;
   I, J : Integer;
@@ -130,12 +129,12 @@ begin
   d1 := FilesInDirectory(aDir1);
   d2 := FilesInDirectory(aDir2);
   try
-    Check(IgnoreMissingFiles or (d1.count = d2.count),
+    Check(d1.count = d2.count,
       'Number of files in directories do not match');
     for I := 0 to d1.Count - 1 do begin
       J := d2.IndexOf(d1[I]); // Allow case insensitive matches on case-sensitive filesystems
       if J = - 1 then
-        Check(IgnoreMissingFiles, d1[I] + ' is missing in directory')
+        Fail(d1[I] + ' is missing in directory')
       else
         CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i], AbAddBackSlash(aDir2) + d2[J], d1[i] + ' does not match');
     end;
@@ -292,7 +291,8 @@ begin
   Result.Sorted := True;
   if FindFirst(AbAddBackSlash(aDir) + '*', faAnyFile, SR) = 0 then begin
     repeat
-      if SR.Attr and faDirectory = 0 then // Don't include sub directories
+      if (SR.Attr and faDirectory = 0) and // Don't include sub directories
+         (Pos('?', SR.Name) = 0) then      // Don't include Unicode filenames in ANSI builds
         Result.Add(SR.Name);
     until FindNext(SR) <> 0;
     FindClose(SR);

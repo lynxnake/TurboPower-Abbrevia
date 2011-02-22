@@ -106,18 +106,16 @@ end;
 class function TAbZipArchiveTests.Suite: ITestSuite;
 var
   CompressSuite: ITestSuite;
-  {$IFDEF MSWINDOWS}
+  {$IFDEF UnzipWavPackSupport}
   TestCase: TAbZipDecompressTest;
   {$ENDIF}
 begin
   Result := inherited Suite;
-  {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
   // Test compression/decompression of Unicode filenames
   Result.AddSuite(DecompressSuite(TestFileDir + 'Unicode'));
   Result.AddTest(
     TAbZipCompressTest.Create('Compress Unicode',
       TestFileDir + 'Unicode' + PathDelim + 'source', smStored, ''));
-  {$IFEND}
 
   // Test compression/decompression of Canterbury corpus
   Result.AddSuite(DecompressSuite(CanterburyDir));
@@ -132,7 +130,7 @@ begin
     TAbZipCompressTest.Create('DeflateP', CanterburySourceDir, smDeflated, 'password'));
   Result.AddSuite(CompressSuite);
 
-  {$IFDEF MSWINDOWS}
+  {$IFDEF UnzipWavPackSupport}
   // Test decompressiong of .wav files
   TestCase := TAbZipDecompressTest.Create(
     TestFileDir + 'WavPack' + PathDelim + 'wavpack.zip');
@@ -208,7 +206,7 @@ begin
   finally
     Zip.Free;
   end;
-  CheckDirMatch(ExtractFilePath(FFileName) + 'source', TestTempDir, False);
+  CheckDirMatch(ExtractFilePath(FFileName) + 'source', TestTempDir);
 end;
 
 {----------------------------------------------------------------------------}
@@ -264,7 +262,7 @@ begin
   finally
     Zip.Free;
   end;
-  CheckDirMatch(FSourceDir, TargetDir, False);
+  CheckDirMatch(FSourceDir, TargetDir);
 end;
 {----------------------------------------------------------------------------}
 

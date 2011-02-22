@@ -143,7 +143,7 @@ begin
     AbUnZip.BaseDirectory := ExtractDir;
     AbUnZip.ExtractFiles('*.*');
     // Compare Extracted Files
-    CheckDirMatch(TestFileDir,ExtractDir,False);
+    CheckDirMatch(TestFileDir,ExtractDir);
   finally
     AbUnZip.Free;
   end;
@@ -178,7 +178,7 @@ begin
     AbUnZip.BaseDirectory := ExtractDir;
     AbUnZip.ExtractFiles('*.*');
     // Compare Extracted Files
-    CheckDirMatch(TestFileDir,ExtractDir,False);
+	CheckDirMatch(TestFileDir,ExtractDir);
   finally
     AbUnZip.Free;
   end;
@@ -211,7 +211,7 @@ begin
     AbUnZip.BaseDirectory := ExtractDir;
     AbUnZip.ExtractFiles('*.*');
     // Compare Extracted Files
-    CheckDirMatch(TestFileDir,ExtractDir,False);
+	CheckDirMatch(TestFileDir,ExtractDir);
   finally
     AbUnZip.Free;
   end;
@@ -243,7 +243,7 @@ begin
     AbUnZip.BaseDirectory := ExtractDir;
     AbUnZip.ExtractFiles('*.*');
     // Compare Extracted Files
-    CheckDirMatch(TestFileDir,ExtractDir,False);
+    CheckDirMatch(TestFileDir,ExtractDir);
   finally
     AbUnZip.Free;
   end;
