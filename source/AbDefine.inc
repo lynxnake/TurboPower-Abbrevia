@@ -172,6 +172,26 @@ all older PKZip compatible methods (Shrink, Reduce, Implode}
 
 {$DEFINE UnzipBackwardSupport}
 
+{Activate the following to include support for extracting files using
+BZIP2 compression.  Added in AppNote.txt v4.6. }
+
+{.$DEFINE UnzipBzip2Support}
+
+{Activate the following to include support for extracting files using
+7-zip compatible Lzma compression.  Added in AppNote.txt v6.3. (Unsupported)}
+
+{.$DEFINE UnzipLzmaSupport}
+
+{Activate the following to include support for extracting files using
+zipx PPMd I compression.  Added in AppNote.txt v6.3.  (Unsupported)}
+
+{.$DEFINE UnzipPPMdSupport}
+
+{Activate the following to include support for extracting files using
+all newer (zipx) compatible methods (Bzip2, Lzma, PPMd)}
+
+{$DEFINE UnzipZipxSupport}
+
 {Activate the following to include logging support in the deflate/
  inflate code. Since this logging support is a by-product of assertion
  checking, you should only activate it if that is also on: $C+}
@@ -209,4 +229,10 @@ all older PKZip compatible methods (Shrink, Reduce, Implode}
   {$DEFINE UnzipShrinkSupport}
   {$DEFINE UnzipReduceSupport}
   {$DEFINE UnzipImplodeSupport}
+{$ENDIF}
+
+{$IFDEF UnzipZipxSupport}
+  {$DEFINE UnzipBzip2Support}
+  {.$DEFINE UnzipLzmaSupport}
+  {.$DEFINE UnzipPPMdSupport}
 {$ENDIF}

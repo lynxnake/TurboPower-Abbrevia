@@ -43,7 +43,7 @@ uses
 
 const
   { note  #$50 = 'P', #$4B = 'K'}
-  Ab_ZipVersion = 21;
+  Ab_ZipVersion = 63;
   Ab_ZipLocalFileHeaderSignature            : Longint = $04034B50;
   Ab_ZipCentralDirectoryFileHeaderSignature : Longint = $02014B50;
   Ab_ZipCentralDirectoryTailSignature       : Longint = $06054B50;

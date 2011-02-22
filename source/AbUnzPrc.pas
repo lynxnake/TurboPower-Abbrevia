@@ -143,6 +143,9 @@ uses
   {$ENDIF}
   {$ENDIF}
   SysUtils,
+  {$IFDEF UnzipBzip2Support}
+  AbBzip2,
+  {$ENDIF}
   AbBitBkt,
   AbConst,
   AbDfBase,
@@ -950,6 +953,20 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
+{$IFDEF UnzipBzip2Support}
+procedure DoExtractBzip2(Archive : TAbZipArchive; Item : TAbZipItem; InStream, OutStream : TStream);
+var
+  Bzip2Stream: TStream;
+begin
+  Bzip2Stream := TBZDecompressionStream.Create(InStream);
+  try
+    OutStream.CopyFrom(Bzip2Stream, Item.UncompressedSize);
+  finally
+    Bzip2Stream.Free;
+  end;
+end;
+{$ENDIF}
+{ -------------------------------------------------------------------------- }
 procedure ExtractPrep(ZipArchive: TAbZipArchive; Item: TAbZipItem;
   out CompressedStream: TStream);
 var
@@ -1058,6 +1075,11 @@ begin
         { inflate aItem }
         DoInflate(aZipArchive, aItem, aInStream, OutStream);
       end;
+      {$IFDEF UnzipBzip2Support}
+      cmBzip2: begin
+        DoExtractBzip2(aZipArchive, aItem, aInStream, OutStream);
+      end;
+      {$ENDIF}
       cmShrunk..cmImploded: begin
         DoLegacyUnzip(aZipArchive, aItem, aInStream, OutStream);
       end;
