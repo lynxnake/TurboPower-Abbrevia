@@ -65,6 +65,7 @@ type
     private
       FCheckValue : longint;
       FEngine     : TAbZipDecryptEngine;
+      FOwnsStream : Boolean;
       FPassphrase : AnsiString;
       FReady      : boolean;
       FStream     : TStream;
@@ -80,6 +81,10 @@ type
       function Read(var aBuffer; aCount : longint) : longint; override;
       function Seek(aOffset : longint; aOrigin : word) : longint; override;
       function Write(const aBuffer; aCount : longint) : longint; override;
+
+      property OwnsStream : Boolean
+        read FOwnsStream
+        write FOwnsStream;
   end;
 
   TAbZipEncryptEngine = class
@@ -309,6 +314,8 @@ end;
 destructor TAbDfDecryptStream.Destroy;                     {new !!.02}
 begin
   FEngine.Free;
+  if FOwnsStream then
+    FStream.Free;
   inherited Destroy;
 end;
 {--------}

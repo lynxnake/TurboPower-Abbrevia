@@ -13,13 +13,13 @@
  *
  * The Original Code is TurboPower Abbrevia
  *
- * The Initial Developer of the Original Code is
- * Craig Peterson
+ * The Initial Developer of the Original Code is Craig Peterson
  *
- * Portions created by the Initial Developer are Copyright (C) 1997-2002
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -39,6 +39,26 @@ uses
   SysUtils, Classes, AbArcTyp;
 
 type
+  // Fixed-length read-only stream, limits reads to the range between
+  // the input stream's starting position and a specified size.  Seek/Position
+  // are adjusted to be 0 based.
+  TAbUnzipSubsetStream = class( TStream )
+  private
+    FStream : TStream;
+    FStartPos: Int64;
+    FCurPos: Int64;
+    FEndPos: Int64;
+
+  public
+    constructor Create(aStream: TStream; aStreamSize: Int64);
+
+    function Read(var Buffer; Count: Longint): Longint; override;
+    function Write(const Buffer; Count: Longint): Longint; override;
+    function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
+  end;
+
+
+  // Write-only output stream, computes CRC32 and calls progress event
   TAbUnzipOutputStream = class( TStream )
   private
     FBytesWritten : Int64;
@@ -74,7 +94,53 @@ type
 implementation
 
 uses
-  AbExcept, AbUtils;
+  Math, AbExcept, AbUtils;
+
+{ TAbUnzipSubsetStream implementation ====================================== }
+
+{ -------------------------------------------------------------------------- }
+constructor TAbUnzipSubsetStream.Create(aStream: TStream; aStreamSize: Int64);
+begin
+  inherited Create;
+  FStream := aStream;
+  FStartPos := FStream.Position;
+  FCurPos := FStartPos;
+  FEndPos := FStartPos + aStreamSize;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbUnzipSubsetStream.Read(var Buffer; Count: Longint): Longint;
+begin
+  if Count > FEndPos - FCurPos then
+    Count := FEndPos - FCurPos;
+  if Count > 0 then begin
+    Result := FStream.Read(Buffer, Count);
+    Inc(FCurPos, Result);
+  end
+  else
+    Result := 0;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbUnzipSubsetStream.Write(const Buffer; Count: Longint): Longint;
+begin
+  raise EAbException.Create('TAbUnzipSubsetStream.Write not supported');
+end;
+{ -------------------------------------------------------------------------- }
+function TAbUnzipSubsetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
+begin
+  case Origin of
+    soBeginning: FCurPos := FStartPos + Offset;
+    soCurrent: FCurPos := FCurPos + Offset;
+    soEnd: FCurPos := FEndPos + Offset;
+  end;
+  if FCurPos < FStartPos then
+    FCurPos := FStartPos;
+  if FCurPos > FEndPos then
+    FCurPos := FEndPos;
+  FStream.Position := FCurPos;
+  Result := FCurPos - FStartPos;
+end;
+{ -------------------------------------------------------------------------- }
+
 
 { TAbUnzipOutputStream implementation ====================================== }
 

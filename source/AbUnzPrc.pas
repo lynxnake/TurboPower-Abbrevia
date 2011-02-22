@@ -20,7 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Craig Peterson
+ * Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -48,7 +48,6 @@ type
     FOutWriter : TStream;
     FOutStream : TStream;
     FUnCompressedSize : LongInt;
-    FCompressedSize : LongInt;
     FCompressionMethod : TAbZipCompressionMethod;
     FDictionarySize : TAbZipDictionarySize;
     FShannonFanoTreeCount : Byte;
@@ -61,8 +60,7 @@ type
     FInBuf : TAbByteArray4K;
     FInPos : Integer;                {current position in input buffer}
     FInCnt : Integer;                {number of bytes in input buffer}
-    FInLeft : LongInt;               {bytes remaining in compressed input file}
-    FInEof  : Boolean;               {set when FInLeft = 0}
+    FInEof  : Boolean;               {set when stream read returns 0}
     FCurByte : Byte;                 {current input byte}
     FBitsLeft : Byte;                {bits left to process in FCurByte}
 
@@ -98,10 +96,7 @@ type
       override;
 
     procedure Execute;
-      {returns the CRC}
-    property CompressedSize : LongInt
-      read FCompressedSize
-      write FCompressedSize;
+
     property UnCompressedSize : LongInt
       read FUncompressedSize
       write FUncompressedSize;
@@ -197,7 +192,6 @@ begin
   FOutPos := 0;                                                        
   FZStream := InputStream;
   FOutStream := OutputStream;
-  FCompressedSize := FZStream.Size;
   FUncompressedSize := 0;
   FDictionarySize := dsInvalid;
   FShannonFanoTreeCount := 0;
@@ -235,7 +229,6 @@ begin
   else
   {$ENDIF}
     FOutWriter := FOutStream;
-  FInLeft := FCompressedSize;
   FInPos := 1+SizeOf(FInBuf);
 
 {  GetMem( FInBuf, SizeOf(FInBuf^) );}
@@ -267,30 +260,12 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbUnzipHelper.uzReadNextPrim;
-var
-  L : LongInt;
 begin
-  if (FInLeft = 0) then begin
-    {we're done}
-    FInEof := True;
-    FInPos := FInCnt+1;
-  end
-  else begin
-    if FInLeft > sizeof( FInBuf ) then
-      L := sizeof( FInBuf )
-    else
-      L := FInLeft;
-    FInCnt := FZStream.Read( FInBuf, L );
-    if (FInCnt = 0) then
-      raise EAbReadError.Create;
-
-    {decrement count of bytes left to go}
-    Dec(FInLeft, FInCnt);
-
-    {load first byte in buffer and set position counter}
-    FCurByte := FInBuf[1];
-    FInPos := 2;
-  end;
+  FInCnt := FZStream.Read( FInBuf, sizeof( FInBuf ) );
+  FInEof := FInCnt = 0;
+  {load first byte in buffer and set position counter}
+  FCurByte := FInBuf[1];
+  FInPos := 2;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbUnzipHelper.uzFlushOutBuf;
@@ -940,10 +915,6 @@ begin
   Helper := TAbUnzipHelper.Create(InStream, OutStream);
   try {Helper}
     Helper.DictionarySize       := Item.DictionarySize;
-    if Item.IsEncrypted then
-      Helper.CompressedSize     := Item.CompressedSize - SizeOf(TAbZipEncryptHeader)
-    else
-      Helper.CompressedSize     := Item.CompressedSize;
     Helper.UnCompressedSize     := Item.UncompressedSize;
     Helper.CompressionMethod    := Item.CompressionMethod;
     Helper.ShannonFanoTreeCount := Item.ShannonFanoTreeCount;
@@ -967,8 +938,7 @@ begin
 end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
-procedure ExtractPrep(ZipArchive: TAbZipArchive; Item: TAbZipItem;
-  out CompressedStream: TStream);
+function ExtractPrep(ZipArchive: TAbZipArchive; Item: TAbZipItem): TStream;
 var
   LFH         : TAbZipLocalFileHeader;
   Abort       : Boolean;
@@ -1014,6 +984,8 @@ var
       CheckValue := Item.CRC32;
   end;
 
+var
+  DecryptStream: TAbDfDecryptStream;
 begin
   Validate;
   CheckForSpanning;
@@ -1026,28 +998,37 @@ begin
     LFH.Free;
   end;
 
-  { get raw or decrypting compressed stream }
-  if not Item.IsEncrypted then
-    CompressedStream := ZipArchive.FStream
-  else begin
-    { need to decrypt }
-    Tries := 0;
-    Abort := False;
-    CheckPassword(ZipArchive, Tries, Abort);
-    while True do begin
-      if Abort then
-        raise EAbUserAbort.Create;
-      { check for valid password }
-      CompressedStream := TAbDfDecryptStream.Create(ZipArchive.FStream,
-        CheckValue, ZipArchive.Password);
-      if TAbDfDecryptStream(CompressedStream).IsValid then
-        Break;
-      FreeAndNil(CompressedStream);
-      { prompt again }
-      Inc(Tries);
-      if (Tries > ZipArchive.PasswordRetries) then
-        raise EAbZipInvalidPassword.Create;
-      RequestPassword(ZipArchive, Abort);
+  Result := TAbUnzipSubsetStream.Create(ZipArchive.FStream,
+    Item.CompressedSize);
+
+  { get decrypting stream }
+  if Item.IsEncrypted then begin
+    try
+      { need to decrypt }
+      Tries := 0;
+      Abort := False;
+      CheckPassword(ZipArchive, Tries, Abort);
+      while True do begin
+        if Abort then
+          raise EAbUserAbort.Create;
+        { check for valid password }
+        DecryptStream := TAbDfDecryptStream.Create(Result,
+          CheckValue, ZipArchive.Password);
+        if DecryptStream.IsValid then begin
+          DecryptStream.OwnsStream := True;
+          Result := DecryptStream;
+          Break;
+        end;
+        FreeAndNil(DecryptStream);
+        { prompt again }
+        Inc(Tries);
+        if (Tries > ZipArchive.PasswordRetries) then
+          raise EAbZipInvalidPassword.Create;
+        RequestPassword(ZipArchive, Abort);
+      end;
+    except
+      Result.Free;
+      raise;
     end;
   end;
 end;
@@ -1108,12 +1089,11 @@ begin
   if not Assigned(OutStream) then
     raise EAbBadStream.Create;
 
-  ExtractPrep(ZipArchive, Item, InStream);
+  InStream := ExtractPrep(ZipArchive, Item);
   try
     DoExtract(ZipArchive, Item, InStream, OutStream);
   finally
-    if InStream <> ZipArchive.FStream then
-      InStream.Free
+    InStream.Free
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1129,7 +1109,7 @@ var
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  ExtractPrep(ZipArchive, Item, InStream);
+  InStream := ExtractPrep(ZipArchive, Item);
   try
     OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
     try
@@ -1145,8 +1125,7 @@ begin
       raise;
     end;
   finally
-    if InStream <> ZipArchive.FStream then
-      InStream.Free
+    InStream.Free
   end;
 
   // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
