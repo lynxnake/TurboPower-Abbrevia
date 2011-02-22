@@ -106,6 +106,9 @@ end;
 class function TAbZipArchiveTests.Suite: ITestSuite;
 var
   CompressSuite: ITestSuite;
+  {$IFDEF MSWINDOWS}
+  TestCase: TAbZipDecompressTest;
+  {$ENDIF}
 begin
   Result := inherited Suite;
   {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
@@ -128,6 +131,14 @@ begin
   CompressSuite.AddTest(
     TAbZipCompressTest.Create('DeflateP', CanterburySourceDir, smDeflated, 'password'));
   Result.AddSuite(CompressSuite);
+
+  {$IFDEF MSWINDOWS}
+  // Test decompressiong of .wav files
+  TestCase := TAbZipDecompressTest.Create(
+    TestFileDir + 'WavPack' + PathDelim + 'wavpack.zip');
+  TestCase.FTestName := 'Decompress WavPack';
+  Result.AddTest(TestCase);
+  {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchiveTests.SetUp;

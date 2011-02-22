@@ -178,17 +178,24 @@ BZIP2 compression.  Added in AppNote.txt v4.6. }
 {.$DEFINE UnzipBzip2Support}
 
 {Activate the following to include support for extracting files using
-7-zip compatible Lzma compression.  Added in AppNote.txt v6.3. (Unsupported)}
+7-zip compatible Lzma compression.  Added in AppNote.txt v6.3.}
 
 {.$DEFINE UnzipLzmaSupport}
 
 {Activate the following to include support for extracting files using
-zipx PPMd I compression.  Added in AppNote.txt v6.3.  (Unsupported)}
+zipx PPMd I compression.  Added in AppNote.txt v6.3.}
 
 {.$DEFINE UnzipPPMdSupport}
 
+{Activate the following to include support for extracting .wav files
+using zipx WavPack compression.  Requires copyright notice in your
+documentation.  Check "WavPack License.txt" for details.
+Added in AppNote.txt v6.3.  }
+
+{.$DEFINE UnzipWavPackSupport}
+
 {Activate the following to include support for extracting files using
-all newer (zipx) compatible methods (Bzip2, Lzma, PPMd)}
+all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
 
 {$DEFINE UnzipZipxSupport}
 
@@ -233,6 +240,7 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd)}
 
 {$IFDEF UnzipZipxSupport}
   {$DEFINE UnzipBzip2Support}
-  {.$DEFINE UnzipLzmaSupport}
-  {.$DEFINE UnzipPPMdSupport}
+  {$DEFINE UnzipLzmaSupport}
+  {$DEFINE UnzipPPMdSupport}
+  {$DEFINE UnzipWavPackSupport}
 {$ENDIF}

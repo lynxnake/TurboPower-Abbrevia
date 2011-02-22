@@ -141,6 +141,15 @@ uses
   {$IFDEF UnzipBzip2Support}
   AbBzip2,
   {$ENDIF}
+  {$IFDEF UnzipLzmaSupport}
+  AbLzma,
+  {$ENDIF}
+  {$IFDEF UnzipPPMdSupport}
+  AbPPMd,
+  {$ENDIF}
+  {$IFDEF UnzipWavPackSupport}
+  AbWavPack,
+  {$ENDIF}
   AbBitBkt,
   AbConst,
   AbDfBase,
@@ -938,6 +947,24 @@ begin
 end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
+{$IFDEF UnzipLzmaSupport}
+procedure DoExtractLzma(Archive : TAbZipArchive; Item : TAbZipItem;
+  InStream, OutStream : TStream);
+var
+  Header: packed record
+    MajorVer, MinorVer: Byte;
+    PropSize: Word;
+  end;
+  Properties: array of Byte;
+begin
+  InStream.ReadBuffer(Header, SizeOf(Header));
+  SetLength(Properties, Header.PropSize);
+  InStream.ReadBuffer(Properties[0], Header.PropSize);
+  LzmaDecode(PByte(Properties), Header.PropSize, InStream, OutStream,
+    Item.UncompressedSize);
+end;
+{$ENDIF}
+{ -------------------------------------------------------------------------- }
 function ExtractPrep(ZipArchive: TAbZipArchive; Item: TAbZipItem): TStream;
 var
   LFH         : TAbZipLocalFileHeader;
@@ -1059,6 +1086,21 @@ begin
       {$IFDEF UnzipBzip2Support}
       cmBzip2: begin
         DoExtractBzip2(aZipArchive, aItem, aInStream, OutStream);
+      end;
+      {$ENDIF}
+      {$IFDEF UnzipLzmaSupport}
+      cmLZMA: begin
+        DoExtractLzma(aZipArchive, aItem, aInStream, OutStream);
+      end;
+      {$ENDIF}
+      {$IFDEF UnzipPPMdSupport}
+      cmPPMd: begin
+        DecompressPPMd(aInStream, OutStream);
+      end;
+      {$ENDIF}
+      {$IFDEF UnzipWavPackSupport}
+      cmWavPack: begin
+        DecompressWavPack(aInStream, OutStream);
       end;
       {$ENDIF}
       cmShrunk..cmImploded: begin
