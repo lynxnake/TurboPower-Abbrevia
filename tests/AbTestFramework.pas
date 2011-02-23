@@ -52,6 +52,11 @@ type
   // DUnit2 has different return value for TTestCase.Suite function
   ITestSuite = ITestCase; 
 {$ENDIF}
+  TAbDirEntry = record
+    Name: string;
+    Size: Int64;
+  end;
+  TAbDirEntries = array of TAbDirEntry;
 
   TAbTestCase = class(TTestCase)
   private
@@ -69,7 +74,7 @@ type
     procedure CreateDummyFile(aFileName : string; aSize : Integer);
     procedure SetUp; override;
     procedure TearDown; override;
-    class function FilesInDirectory(const aDir : string) : TStringList;
+    class function FilesInDirectory(const aDir : string) : TAbDirEntries;
     procedure CheckDirMatch(aDir1, aDir2 : string);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
@@ -123,24 +128,40 @@ var
 { ===== TAbTestCase ======================================================== }
 procedure TAbTestCase.CheckDirMatch(aDir1, aDir2 : string);
 var
-  d1,d2 : TStringList;
-  I, J : Integer;
+  d1, d2 : TAbDirEntries;
+  i, j, cmp : Integer;
 begin
+  // When listing directories with Unicode filenames in pre-Unicode Delphis,
+  // the directory listing will include files with names names containing
+  // best-fit mappings that prevent actually opening those files.  The Unicode
+  // tests all use 0-byte files, so when decompressing we can just check that
+  // the files exist and the sizes match, and when compressing we skip files
+  // that FileExists fails for so we don't fail the test for files we can't open.
   d1 := FilesInDirectory(aDir1);
   d2 := FilesInDirectory(aDir2);
-  try
-    Check(d1.count = d2.count,
-      'Number of files in directories do not match');
-    for I := 0 to d1.Count - 1 do begin
-      J := d2.IndexOf(d1[I]); // Allow case insensitive matches on case-sensitive filesystems
-      if J = - 1 then
-        Fail(d1[I] + ' is missing in directory')
-      else
-        CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i], AbAddBackSlash(aDir2) + d2[J], d1[i] + ' does not match');
+  i := 0;
+  j := 0;
+  while (i < Length(d1)) or (j < Length(d2)) do begin
+    if i = Length(d1) then cmp := 1
+    else if j = Length(d2) then cmp := -1
+    else cmp := CompareText(d1[i].Name, d2[j].Name); // Allow case insensitive matches on case-sensitive filesystems
+    if cmp < 0 then begin
+      Check(not FileExists(AbAddBackSlash(aDir1) + d1[i].Name),
+        d1[i].Name + ' is missing in ' + aDir2);
+      Inc(i);
+    end
+    else if cmp > 0 then begin
+      Check(not FileExists(AbAddBackSlash(aDir2) + d2[j].Name),
+        d2[j].Name + ' is missing in ' + aDir1);
+      Inc(j);
+    end
+    else begin
+      if (d1[i].Size > 0) or (d2[j].Size > 0) then
+        CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i].Name, AbAddBackSlash(aDir2) + d2[i].Name,
+          d1[i].Name + ' does not match');
+      Inc(i);
+      Inc(j);
     end;
-  finally
-    d1.Free;
-    d2.Free;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -281,22 +302,37 @@ begin
   end; { If File Found with FindFirst }
 end;
 { -------------------------------------------------------------------------- }
-class function TAbTestCase.FilesInDirectory(const aDir : string) : TStringList;
+class function TAbTestCase.FilesInDirectory(const aDir : string) : TAbDirEntries;
 var
   SR : TSearchRec;
+  i, j: Integer;
+  Temp: TAbDirEntry;
 begin
+  // Retrieve both files and sizes for files.  See CheckDirMatch for details.
   if not DirectoryExists(aDir) then
     raise ETestFailure.Create('Directory Requested does not exist : ' + aDir);
-  Result := TStringList.Create;
-  Result.Sorted := True;
+  Result := nil;
   if FindFirst(AbAddBackSlash(aDir) + '*', faAnyFile, SR) = 0 then begin
     repeat
-      if (SR.Attr and faDirectory = 0) and // Don't include sub directories
-         (Pos('?', SR.Name) = 0) then      // Don't include Unicode filenames in ANSI builds
-        Result.Add(SR.Name);
+      if (SR.Attr and faDirectory = 0) and  // Don't include sub directories
+         (Pos('?', SR.Name) = 0) then begin // Don't include Unicode filenames in ANSI builds
+        SetLength(Result, Length(Result) + 1);
+        with Result[Length(Result) - 1] do begin
+          Name := SR.Name;
+          Size := SR.Size;
+        end;
+      end;
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;
+  // Sort results
+  for i := Low(Result) to High(Result) do
+    for j := Succ(i) to High(Result) do
+      if CompareText(Result[i].Name, Result[j].Name) > 0 then begin
+        Temp := Result[i];
+        Result[i] := Result[j];
+        Result[j] := Temp
+      end;
 end;
 { -------------------------------------------------------------------------- }
 class function TAbTestCase.TestFileDir: string;
