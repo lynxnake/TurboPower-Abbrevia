@@ -227,9 +227,9 @@ function _WavpackCloseFile(wpc: WavpackContext): WavpackContext; cdecl; external
 type
   PWavPackStream = ^TWavPackStream;
   TWavPackStream = record
-  	HasPushedByte: Boolean;
-  	PushedByte: Byte;
-  	Stream: TStream;
+    HasPushedByte: Boolean;
+    PushedByte: Byte;
+    Stream: TStream;
   end;
 { -------------------------------------------------------------------------- }
 function TWavPackStream_read_bytes(id, data: Pointer; bcount: int32_t): int32_t; cdecl;
@@ -299,7 +299,7 @@ end;
 //
 // Based on wvunpack.c::format_samples.
 // Conversions simplified since we only support little-endian processors
-function FormatSamples(bps: Integer; dst: PByte; src: PByte; samcnt: uint32_t): PByte;
+function FormatSamples(bps: Integer; dst, src: PByte; samcnt: uint32_t): PByte;
 var
   sample: LongWord;
 begin
@@ -316,9 +316,9 @@ begin
         PWord(dst)^ := sample;
       end;
       3: begin
-        dst^ := sample;
-        (dst + 1)^ := sample shr 8;
-        (dst + 2)^ := sample shr 16;
+        PByteArray(dst)[0] := sample;
+        PByteArray(dst)[1] := sample shr 8;
+        PByteArray(dst)[2] := sample shr 16;
       end;
       4: begin
         PLongWord(dst)^ := sample;
@@ -335,6 +335,8 @@ end;
 //
 // Based on wvunpack.c::unpack_file()
 procedure DecompressWavPack(aSrc, aDes: TStream);
+type
+  PtrInt = {$IF DEFINED(CPUX64)}UInt64{$ELSE}Cardinal{$IFEND};
 const
   OutputBufSize = 256 * 1024;
 var
@@ -382,7 +384,7 @@ begin
 
     repeat
       // Unpack samples
-      SamplesToUnpack := (OutputBufSize - (OutputPtr - OutputBuf)) div BytesPerSample;
+      SamplesToUnpack := (OutputBufSize - Integer(PtrInt(OutputPtr) - PtrInt(OutputBuf))) div BytesPerSample;
       if (SamplesToUnpack > 4096) then
         SamplesToUnpack := 4096;
       SamplesUnpacked := _WavpackUnpackSamples(Context, DecodeBuf, SamplesToUnpack);
@@ -395,8 +397,8 @@ begin
 
       // Write output when it's full or when we're done
       if (SamplesUnpacked = 0) or
-         ((OutputBufSize - (OutputPtr - OutputBuf)) < BytesPerSample) then begin
-        aDes.WriteBuffer(OutputBuf^, OutputPtr - OutputBuf);
+         ((OutputBufSize - (PtrInt(OutputPtr) - PtrInt(OutputBuf))) < BytesPerSample) then begin
+        aDes.WriteBuffer(OutputBuf^, PtrInt(OutputPtr) - PtrInt(OutputBuf));
         OutputPtr := OutputBuf;
       end;
     until (SamplesUnpacked = 0);
