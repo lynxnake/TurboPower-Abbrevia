@@ -126,7 +126,10 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function TAbUnzipSubsetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
+var
+  OldPos: Int64;
 begin
+  OldPos := FCurPos;
   case Origin of
     soBeginning: FCurPos := FStartPos + Offset;
     soCurrent: FCurPos := FCurPos + Offset;
@@ -136,7 +139,8 @@ begin
     FCurPos := FStartPos;
   if FCurPos > FEndPos then
     FCurPos := FEndPos;
-  FStream.Position := FCurPos;
+  if OldPos <> FCurPos then
+    FStream.Position := FCurPos;
   Result := FCurPos - FStartPos;
 end;
 { -------------------------------------------------------------------------- }
