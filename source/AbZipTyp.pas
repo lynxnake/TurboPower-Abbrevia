@@ -2036,11 +2036,22 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.DoRequestNthImage(ImageNumber : Integer;
   var Stream : TStream; var Abort : Boolean);
+
 var
   ImageName : string;
+  MediaType : TAbMediaType;
+
+  procedure RecreateStream;
+  begin
+    FreeAndNil(Stream);
+    Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
+    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
+    TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;
+  end;
+
+var
   i : Integer;
   Found : Boolean;
-  MediaType : TAbMediaType;
 begin
   Abort := False;
   ImageName := FArchiveName;
@@ -2053,25 +2064,22 @@ begin
 {$ENDIF}
     MediaType := mtRemoveable;
 
-    if (ImageNumber > AbLastDisk) then
+    if (ImageNumber > AbLastDisk) then begin
+      FreeAndNil(Stream);
       DoRequestNthDisk(Succ(ImageNumber), Abort);
-    if Abort then
-      raise EAbUserAbort.Create;
+      if Abort then
+        raise EAbUserAbort.Create;
+      RecreateStream;
+      CurrentDisk := ImageNumber;
+    end;
 
-    Stream.Free;
-    Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
-
-    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
-    TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;
-
-{!!.04 - changed}
-//    if FindCentralDirectoryTail(Stream) = -1 {not found} then
-    if (CurrentDisk = Word(-1))
-      and (FindCentralDirectoryTail(Stream) = -1) {not found} then
-{!!.04 - changed end}
+    if (CurrentDisk = Word(-1)) and (FindCentralDirectoryTail(Stream) = -1) {not found} then begin
+      FreeAndNil(Stream);
       DoRequestLastDisk(Abort);
-    if Abort then
-      raise EAbUserAbort.Create;
+      if Abort then
+        raise EAbUserAbort.Create;
+      RecreateStream;
+    end;
 
     Exit;
   end;
@@ -2085,14 +2093,11 @@ begin
 
   {if OnRequestImage assigned, then fire event}
   if Assigned(FOnRequestImage) then begin
-
+    FreeAndNil(Stream);
     FOnRequestImage(Self, ImageNumber, ImageName, Abort);
     if Abort then
       raise EAbUserAbort.Create;
-    Stream.Free;
-    Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
-    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
-    TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;  {!!.04}
+    RecreateStream;
 //    TAbSpanStream(Stream).SpanNumber := ImageNumber;                     {!!.01}
     Exit;
   end;
@@ -2105,16 +2110,10 @@ begin
       AbIncFilename(ImageName, ImageNumber);
     if not FileExists(ImageName) then
       raise EAbFileNotFound.Create;
-    Stream.Free;
-    Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
-    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;   {!!.05 [ 714944 ]}
-    TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;  {!!.04}
+    RecreateStream;
 //    TAbSpanStream(Stream).SpanNumber := ImageNumber;                     {!!.01}
     Exit;
   end;
-
-
-
 
   {search for last image, assuming images were auto-generated}
   FAutoGen := True;                                                  {!!.02}
@@ -2123,10 +2122,7 @@ begin
     if not FileExists(ImageName) then
       raise EAbFileNotFound.Create;
     // 885670 (Moved Stream to avoid file corruption)
-    Stream.Free;                                                     {!!.04}
-    Stream := TAbSpanStream.Create(ImageName, fmOpenRead, MediaType, FSpanningThreshold);
-    TAbSpanStream(Stream).OnRequestImage := DoSpanningMediaRequest;
-    TAbSpanStream(Stream).OnArchiveProgress := DoArchiveSaveProgress;  {!!.04}
+    RecreateStream;
 //    TAbSpanStream(Stream).SpanNumber := ImageNumber;                     {!!.01}
     Found := (FindCentralDirectoryTail(Stream) > -1);
     if Found then

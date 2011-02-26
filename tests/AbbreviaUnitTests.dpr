@@ -42,7 +42,6 @@ program AbbreviaUnitTests;
 {$ENDIF}
 
 {$IFNDEF VCL_CLX}
-  // Currently Abbrevia's Floppy Span Tests don't work will with console testing.
   {$APPTYPE CONSOLE}
 {$ENDIF}
 

@@ -20,49 +20,68 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbFloppySpanTests;
 
-{ TODO: Refactor these tests so they work without a floppy drive (VFD doesn't
-  work on Vista x64).  I'm thinking add a new TStream descendant that we can
-  make fail in predictable ways and at predictable sizes.  The archive classes
-  would gain a new "OpenFileStream" function that we can override to return
-  that stream.  Zips would be the only ones that use TAbSpanStream, so we can
-  drop its limitations for the other types. }
-
 {$I AbDefine.inc}
 
 interface
 
+// When run on a system without a floppy drive these tests require the
+// ImDisk virtual disk driver, available from http://www.ltr-data.se/opencode.html#ImDisk
+// This is really the preferred method to test, since it doesn't require any
+// user interaction.  ImDisk runs on WinNT4-Win7 on both 32-bit and 64-bit releases.
+//
+// TestCompress/TestDecompress are written to need 3 320KB disks.  If using a real
+// floppy drive use "format /Q /F:320 /FS:FAT a:" to format them to the right size.
+
 uses
 // Note: The Floppy Span tests are designed to be platform specific
-
   Windows,
   AbArcTyp, AbUtils,
   AbTestFramework;
 
 type
+  TAbRequestedDisk = (rdBlank, rdDisk1, rdDisk2, rdDisk3, rdLast);
+
   TAbFloppySpanTests = class(TabTestCase)
+  private
+    FDiskInserted: Boolean;
+    FErrorMode: UINT;
+    FNextDiskIndex: Integer;
+    FExpectedRequest: TAbRequestedDisk;
+
+    procedure CheckCopyFile(const aSrc, aDes: string);
+    procedure EjectDisk;
+    procedure InsertDisk(aDiskNumber: Integer; aReadOnly: Boolean = False);
+    procedure InsertBlankDisk(aReadOnly: Boolean = False);
+    function GetDiskFilename(aIndex: Integer): string;
+
+    procedure DecompressSpan;
+
+    // Events for TestDecompress/TestCompress
+    procedure CheckRequest(aActual: TAbRequestedDisk);
+    procedure DoRequestBlankDisk(Sender : TObject; var Abort : Boolean);
+    procedure DoRequestLastDisk(Sender : TObject; var Abort : Boolean);
+    procedure DoRequestNthDisk(Sender : TObject; DiskNumber : Byte;
+      var Abort : Boolean);
+
+    //Events for HandleWriteFailure1
+    procedure TestWriteFailureProgressEvent(Sender : TObject;
+      Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
+
   protected
-    HandleWriteFailure1Test : Boolean;
     procedure SetUp; override;
     procedure TearDown; override;
-    //Events for HandleWriteFailure1
-    procedure HandleWriteFailure1ProgressEvent(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
-
-    //Events for CheckFreeForAV
-    procedure CheckFreeForAVFailureEvent(Sender : TObject; Item : TAbArchiveItem;
-      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass; ErrorCode : Integer);
-    procedure CheckFreeForAVItemProgressEvent(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
 
   published
-    procedure CreateBasicSpan;
-    procedure VerifyBasicSpan;
-    procedure CheckFreeForAV;
-    procedure HandleWriteProtectedMedia;
-    procedure HandleWriteFailure1;
+    procedure TestDecompress;
+    procedure TestCompress;
+    procedure TestWriteProtectedMedia;
+    procedure TestWriteFailure;
   end;
 
 implementation
@@ -72,121 +91,219 @@ uses
   TestFrameWork,
   AbUnzper, AbZipper;
 
+var
+  ADriveType: Integer = -1;
+
 { -------------------------------------------------------------------------- }
+function HasFloppy: Boolean;
+begin
+  if ADriveType = -1 then
+    ADriveType := GetDriveType('a:');
+  Result := (ADriveType <> DRIVE_NO_ROOT_DIR)
+end;
+{ -------------------------------------------------------------------------- }
+procedure WinExecAndWait(CmdLine: string);
+var
+  pi : TProcessInformation;
+  si : TStartupInfo;
+  ExitCode: DWORD;
+begin
+  UniqueString(CmdLine);
+
+  FillChar(si, SizeOf(si), 0);
+  si.cb := SizeOf(TStartupInfo);
+  si.wShowWindow := SW_HIDE;
+  si.dwFlags := STARTF_USESHOWWINDOW;
+
+  if CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_NEW_CONSOLE,
+                   nil, nil, si, pi) then
+    try
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      if not GetExitCodeProcess(pi.hProcess, ExitCode) then
+        raise Exception.Create('GetExitCodeProcess failed: ' + SysErrorMessage(GetLastError));
+      if ExitCode <> 0 then
+        raise Exception.CreateFmt('Process exited with a non-zero exit code (%d)', [ExitCode]);
+    finally
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+    end
+  else
+    raise Exception.Create('CreateProcess failed: ' + SysErrorMessage(GetLastError));
+end;
+
+{============================================================================}
+{ TAbFloppySpanTests implementation ======================================== }
 procedure TAbFloppySpanTests.SetUp;
 begin
   inherited;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.VerifyBasicSpan;
-var
-  UnZip : TAbUnZipper;
-  mStream : TMemoryStream;
-  I : Integer;
-  TestFile : string;
-begin
-  // Create a Basic Span by zipping all .EXE Files in C:\WINDOWS\
-  // On My(Robert Love) Machine this takes two disks to do.
-
-  if MessageDlg('This test requires the TESTSPAN.ZIP created in the '+#13+#10+'"CreateBasicSpan" test.  Please Insert Disk #1'+#13+#10+''+#13+#10+'Pressing Cancel will terminate this test.', mtInformation, [mbOK,mbCancel], 0) = mrCancel then
-    Fail('Test Aborted');
-
-  UnZip := TAbUnZipper.create(nil);
-  mStream := TMemoryStream.Create;
-  try
-    UnZip.BaseDirectory := GetTestTempDir;
-    CheckFileExists('A:\SPANTEST.ZIP');
-    UnZip.FileName := 'A:\SPANTEST.ZIP';
-    Check(Unzip.Count > 0, 'Archive A:\SPANTEST.ZIP is empty');
-    for I := 0 to Unzip.Count -1 do begin
-      testFile := GetWindowsDir + ExtractFileName(UnZip.Items[I].FileName);
-      // Make sure file exist to compare to.
-      CheckFileExists(TestFile);
-      // Extract File in Span to Memory
-      UnZip.ExtractToStream(UnZip.Items[I].FileName, mStream);
-      // Open the Existing File in Read Only Mode.
-      CheckFileMatchesStream(TestFile, mStream, 'Test File: ' + TestFile + ' did not match archive');
-      mStream.SetSize(0);
-    end;
-  finally
-    UnZip.Free;
-    mStream.Free;
-  end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.CreateBasicSpan;
-var
-  Zip : TAbZipper;
-begin
-  // UnZips the Basic Span that was created by zipping all .EXE Files in C:\WINDOWS\
-  // Compares each file byte by byte to original.
-  if MessageDlg('Insert Disk #1 to create A:\TESTSPAN.ZIP'+#13+#10+''+#13+#10+'Pressing Cancel Abort Test', mtWarning, [mbOK,mbCancel], 0) = mrCancel then
-    Fail('User Aborted Test');
-  Zip := TAbZipper.create(nil);
-  try
-    Zip.BaseDirectory := GetWindowsDir;
-    Zip.FileName := 'A:\SPANTEST.ZIP';
-    Zip.AddFiles('*.EXE', faAnyFile);
-    Zip.Save;
-  finally
-    Zip.Free;
-  end;
+  FNextDiskIndex := 1;
+  // Disable error dialogs for read-only media
+	FErrorMode := SetErrorMode(SEM_FAILCRITICALERRORS or SEM_NOOPENFILEERRORBOX);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbFloppySpanTests.TearDown;
 begin
+  if FDiskInserted and not HasFloppy then EjectDisk;
+	SetErrorMode(FErrorMode);
   inherited;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.CheckFreeForAV;
-var
-  FUnZipper : TAbUnZipper;
+procedure TAbFloppySpanTests.CheckCopyFile(const aSrc, aDes: string);
 begin
-  //[ 785269 ] Access violation on free
-  ShowMessage('Insert Floppy Disk with FTest.zip on it');
-  FUnZipper := TAbUnZipper.Create(nil);
-  with FUnZipper do
-    try
-      ForceType := True;
-      ArchiveType := atZip;
-      BaseDirectory := GetTestTempDir;
-
-      OnProcessItemFailure := CheckFreeForAVFailureEvent;
-//      OnRequestLastDisk := RequestLastDisk;
-//      OnRequestNthDisk := RequestNthDisk;
-//      OnArchiveProgress := Progress;
-      OnArchiveItemProgress := CheckFreeForAVItemProgressEvent;
-      FileName:='A:\Ftest.zip';
-      ExtractFiles('*.*');
-    finally
-      Free;
-    end;
+  Check(AbCopyFile(PChar(aSrc), PChar(aDes), True),
+    Format('Copying %s to %s failed', [ExtractFileName(aSrc), ExtractFileName(aDes)]));
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.CheckFreeForAVFailureEvent(Sender: TObject;
-  Item: TAbArchiveItem; ProcessType: TAbProcessType;
-  ErrorClass: TAbErrorClass; ErrorCode: Integer);
+procedure TAbFloppySpanTests.EjectDisk;
 begin
-  // Do Nothing
+  Assert(FDiskInserted, 'EjectDisk called on empty drive');
+  WinExecAndWait('imdisk -D -m a:');
+  FDiskInserted := False;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.CheckFreeForAVItemProgressEvent(
-  Sender: TObject; Item: TAbArchiveItem; Progress: Byte;
+procedure TAbFloppySpanTests.InsertDisk(aDiskNumber: Integer; aReadOnly: Boolean = False);
+var Cmd: string;
+begin
+  if HasFloppy then
+    ShowMessage(Format('Insert disk #%d into drive A:', [aDiskNumber]))
+  else begin
+    if FDiskInserted then EjectDisk;
+    Cmd := Format('imdisk -a -f "%s" -m a: -o rem,fd', [GetDiskFilename(aDiskNumber)]);
+    if aReadOnly then
+      Cmd := Cmd + ',ro';
+    WinExecAndWait(Cmd);
+  end;
+  FDiskInserted := True;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.InsertBlankDisk(aReadOnly: Boolean = False);
+begin
+  if HasFloppy then
+    if aReadOnly then
+      ShowMessage('Insert a blank write protected disk into drive A:')
+    else
+      ShowMessage(Format('Insert blank disk #%d into drive A:', [FNextDiskIndex]))
+  else begin
+    CheckCopyFile(TestFileDir + 'Floppy.bin', GetDiskFilename(FNextDiskIndex));
+    InsertDisk(FNextDiskIndex, aReadOnly);
+  end;
+  Inc(FNextDiskIndex);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbFloppySpanTests.GetDiskFilename(aIndex: Integer): string;
+begin
+  Result := Format(TestTempDir + 'Floppy#%d.bin', [aIndex]);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.CheckRequest(aActual: TAbRequestedDisk);
+const
+  States: array[TAbRequestedDisk] of string =
+    ('RequestBlankDisk', 'RequestNthDisk(1)', 'RequestNthDisk(2)',
+     'RequestNthDisk(3)', 'RequestLastDisk');
+begin
+  Check(FExpectedRequest = aActual,
+    Format('Requested disk mismatch.  Expected %s, actual %s',
+    [States[FExpectedRequest], States[aActual]]));
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.DoRequestBlankDisk(Sender : TObject;
+  var Abort : Boolean);
+begin
+  CheckRequest(rdBlank);
+  InsertBlankDisk;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.DoRequestLastDisk(Sender: TObject;
   var Abort: Boolean);
 begin
-  Abort := True;
+
+  CheckRequest(rdLast);
+  InsertDisk(3);
+  FExpectedRequest := rdDisk1;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.HandleWriteProtectedMedia;
+procedure TAbFloppySpanTests.DoRequestNthDisk(Sender: TObject;
+  DiskNumber: Byte; var Abort: Boolean);
+begin
+  CheckRequest(TAbRequestedDisk(Ord(rdBlank) + DiskNumber));
+  InsertDisk(DiskNumber);
+  Inc(FExpectedRequest);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.DecompressSpan;
+var
+  Zip : TAbUnZipper;
+  OutputDir : string;
+begin
+  OutputDir := TestTempDir + 'output';
+  CreateDir(OutputDir);
+  // Extract spanned zip
+  Zip := TAbUnZipper.Create(nil);
+  try
+    Zip.OnRequestLastDisk := DoRequestLastDisk;
+    Zip.OnRequestNthDisk := DoRequestNthDisk;
+    Zip.BaseDirectory := OutputDir;
+    Zip.FileName := 'a:\Spanned.zip';
+    Zip.ExtractFiles('*');
+  finally
+    Zip.Free;
+  end;
+  CheckRequest(rdLast);
+  CheckDirMatch(CanterburySourceDir, OutputDir);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.TestDecompress;
+begin
+  // Initialize disk images
+  InsertBlankDisk;
+  AbWriteVolumeLabel('PKBACK#001', 'a');
+  CheckCopyFile(CanterburyDir + 'Split' + PathDelim + 'Split.z01', 'a:\Spanned.zip');
+  InsertBlankDisk;
+  AbWriteVolumeLabel('PKBACK#002', 'a');
+  CheckCopyFile(CanterburyDir + 'Split' + PathDelim + 'Split.z02', 'a:\Spanned.zip');
+  InsertBlankDisk;
+  AbWriteVolumeLabel('PKBACK#003', 'a');
+  CheckCopyFile(CanterburyDir + 'Split' + PathDelim + 'Split.zip', 'a:\Spanned.zip');
+  // Set initial state
+  InsertDisk(1);
+  FExpectedRequest := rdLast;
+
+  DecompressSpan;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.TestCompress;
+var
+  Zip: TAbZipper;
+begin
+  // Compress Canterbury corpus
+  FExpectedRequest := rdBlank;
+  InsertBlankDisk;
+  Zip := TAbZipper.Create(nil);
+  try
+    Zip.OnRequestBlankDisk := DoRequestBlankDisk;
+    Zip.BaseDirectory := CanterburySourceDir;
+    Zip.FileName := 'a:\Spanned.zip';
+    Zip.AddFiles('*', faAnyFile);
+    Zip.Save;
+  finally
+    Zip.Free;
+  end;
+  // Decompress it
+  FExpectedRequest := rdDisk1;
+  DecompressSpan;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbFloppySpanTests.TestWriteProtectedMedia;
 var
   Zip : TAbZipper;
 begin
   ExpectedException := EFCreateError;
-  ShowMessage('Insert Blank Write Protected Disk in to Drive A');
+  InsertBlankDisk(True);
+
   Zip := TAbZipper.Create(nil);
   try
     Zip.BaseDirectory := MPLDir;
-    Zip.FileName := 'A:\SPANTEST.ZIP';
+    Zip.FileName := 'a:\Spanned.zip';
     Zip.AddFiles('MPL-1_1.txt',faAnyFile);
     Zip.Save;
   finally
@@ -194,27 +311,33 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.HandleWriteFailure1ProgressEvent(
+procedure TAbFloppySpanTests.TestWriteFailureProgressEvent(
   Sender: TObject; Item: TAbArchiveItem; Progress: Byte;
   var Abort: Boolean);
 begin
-  if Progress > 50 then
-    ShowMessage('Take Disk out of drive to simulate failure');
+  if (Progress > 50) and FDiskInserted then begin
+    if HasFloppy then
+      ShowMessage('Take the disk out of drive A: to simulate failure')
+    else
+      EjectDisk;
+    FDiskInserted := False;
+  end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.HandleWriteFailure1;
+procedure TAbFloppySpanTests.TestWriteFailure;
 var
   Zip : TAbZipper;
 begin
   //[ 785249 ] ProcessItemFailure not called
   ExpectedException := EFOpenError;
-  ShowMessage('Insert Blank Formated Disk in to Drive A');
+  InsertBlankDisk;
+
   Zip := TAbZipper.Create(nil);
   try
     Zip.BaseDirectory := TestFileDir;
-    Zip.OnArchiveItemProgress := HandleWriteFailure1ProgressEvent;
-    Zip.FileName := 'A:\SPANTEST.ZIP';
-    Zip.AddFiles('MPL-1_1.txt', faAnyFile);
+    Zip.OnArchiveItemProgress := TestWriteFailureProgressEvent;
+    Zip.FileName := 'a:\Spanned.zip';
+    Zip.AddFiles(CanterburySourceDir + 'kennedy.xls', faAnyFile);
     Zip.Save;
   finally
     Zip.Free;
