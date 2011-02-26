@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQMeter.pas 3.05                           *}
+{* ABBREVIA: AbQMeter.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Progress meter (CLX)                        *}
 {*   Use AbMeter.pas for VCL                             *}

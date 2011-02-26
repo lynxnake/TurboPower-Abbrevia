@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbView.pas 3.05                             *}
+{* ABBREVIA: AbView.pas                                  *}
 {*********************************************************}
 {* ABBREVIA: Base archive viewer component               *}
 {*   Use AbQView.pas for CLX                             *}

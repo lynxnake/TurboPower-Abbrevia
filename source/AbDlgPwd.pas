@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbDlgPwd.pas 3.05                           *}
+{* ABBREVIA: AbDlgPwd.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Password                           *}
 {*   Use AbQDgPwd.pas for CLX                            *}

@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbCompnd.pas 3.05                           *}
+{* ABBREVIA: AbCompnd.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Compound File classes and component         *}
 {*   Use AbQCmpnd.pas for CLX                            *}

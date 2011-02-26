@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbSelfEx.pas 3.05                           *}
+{* ABBREVIA: AbSelfEx.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Component for building self-extracting zips *}
 {*********************************************************}

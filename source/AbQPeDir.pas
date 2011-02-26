@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeDir.pas 3.05                            *}
+{* ABBREVIA: AbPeDir.pas                                 *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - Directory (CLX)           *}
 {*   Use AbPeDir.pas for VCL                             *}

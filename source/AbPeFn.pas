@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbPeFn.pas 3.05                             *}
+{* ABBREVIA: AbPeFn.pas                                  *}
 {*********************************************************}
 {* ABBREVIA: Property Editor - FileName                  *}
 {*   Use AbQPeFn.pas for CLX                             *}

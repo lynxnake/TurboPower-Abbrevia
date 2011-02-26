@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQZpOut.pas 3.05                           *}
+{* ABBREVIA: AbQZpOut.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Visual Component with Zip and unzip support *}
 {* (CLX)                                                 *}

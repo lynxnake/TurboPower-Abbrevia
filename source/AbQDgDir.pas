@@ -24,7 +24,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbQDgDir.pas 3.05                           *}
+{* ABBREVIA: AbQDgDir.pas                                *}
 {*********************************************************}
 {* ABBREVIA: Dialog - Directory (CLX)                    *}
 {*   Use AbDlgDir.pas for VCL                            *}

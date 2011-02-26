@@ -25,7 +25,7 @@
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbZipTyp.pas 3.05                           *}
+{* ABBREVIA: AbZipTyp.pas                                *}
 {*********************************************************}
 {* ABBREVIA: PKZip types                                 *}
 {* Based on information from Appnote.txt, shipped with   *}
