@@ -336,7 +336,7 @@ end;
 // Based on wvunpack.c::unpack_file()
 procedure DecompressWavPack(aSrc, aDes: TStream);
 type
-  PtrInt = {$IF DEFINED(CPUX64)}UInt64{$ELSE}Cardinal{$IFEND};
+  PtrInt = {$IF DEFINED(CPUX64)}Int64{$ELSE}LongInt{$IFEND};
 const
   OutputBufSize = 256 * 1024;
 var
@@ -384,7 +384,7 @@ begin
 
     repeat
       // Unpack samples
-      SamplesToUnpack := (OutputBufSize - Integer(PtrInt(OutputPtr) - PtrInt(OutputBuf))) div BytesPerSample;
+      SamplesToUnpack := (OutputBufSize - (PtrInt(OutputPtr) - PtrInt(OutputBuf))) div BytesPerSample;
       if (SamplesToUnpack > 4096) then
         SamplesToUnpack := 4096;
       SamplesUnpacked := _WavpackUnpackSamples(Context, DecodeBuf, SamplesToUnpack);

@@ -78,14 +78,22 @@ type
                     atTar, atGzip, atGzippedTar, atCab, atBzip2, atBzippedTar);
 
 
-{$IFDEF LINUX}
+{$IF NOT DECLARED(DWORD)}
 type
   DWORD = LongWord;
-{$ENDIF LINUX}
+{$IFEND}
+
 {$IF NOT DECLARED(PtrInt)}
 type
+  {$IF DECLARED(NativeInt)}
+  PtrInt = NativeInt;
+  PtrUInt = NativeUInt;
+  {$ELSE}
   PtrInt = LongInt;
+  PtrUInt = LongWord;
+  {$IFEND}
 {$IFEND}
+
 {$IFNDEF UNICODE}
 type
   RawByteString = AnsiString;
