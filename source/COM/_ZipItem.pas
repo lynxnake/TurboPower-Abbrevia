@@ -172,12 +172,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipItem.Get_Password: WideString;
 begin
-  Result := FParent.Password;
+  Result := WideString(FParent.Password);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipItem.Set_Password(const Value: WideString);
 begin
-  FParent.Password := Value;
+  FParent.Password := AnsiString(Value);
   FParent.ZipArchive.IsDirty := True;
 end;
 {------------------------------------------------------------------------------}
@@ -220,12 +220,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipItem.Get_FileComment: WideString;
 begin
-  result := FOwner.FileComment;
+  result := WideString(FOwner.FileComment);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipItem.Set_FileComment(const Value: WideString);
 begin
-  FOwner.FileComment := Value;
+  FOwner.FileComment := AnsiString(Value);
   FParent.ZipArchive.IsDirty := True;
 end;
 {------------------------------------------------------------------------------}

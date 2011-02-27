@@ -220,12 +220,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TGzipItem.Get_FileComment: WideString;
 begin
-  result := FOwner.FileComment;
+  result := WideString(FOwner.FileComment);
 end;
 {------------------------------------------------------------------------------}
 procedure TGzipItem.Set_FileComment(const Value: WideString);
 begin
-  FOwner.FileComment := Value;
+  FOwner.FileComment := AnsiString(Value);
   FParent.ZipArchive.IsDirty := True;
 end;
 {------------------------------------------------------------------------------}

@@ -50,7 +50,7 @@ type
     procedure _OnConfirmProcessItem(Sender : TObject; Item : TAbArchiveItem; ProcessType : TAbProcessType; var Confirm : Boolean);
     procedure _OnConfirmSave(Sender : TObject; var Confirm : Boolean);
     procedure _OnLoad(Sender : TObject);
-    procedure _OnNeedPassword(Sender : TObject; var NewPassword : string);
+    procedure _OnNeedPassword(Sender : TObject; var NewPassword : AnsiString);
     procedure _OnProcessItemFailure(Sender : TObject; Item : TAbArchiveItem; ProcessType : TAbProcessType; ErrorClass : TAbErrorClass; ErrorCode : Integer);
     procedure _OnRequestBlankDisk(Sender : TObject; var Abort : Boolean);
     procedure _OnRequestImage(Sender : TObject; ImageNumber : Integer; var ImageName : string; var Abort : Boolean);
@@ -398,12 +398,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_Password: WideString;
 begin
-  Result := FOwner.Password;
+  Result := WideString(FOwner.Password);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_Password(const Value: WideString);
 begin
-  FOwner.Password := Value;
+  FOwner.Password := AnsiString(Value);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_PasswordRetries: Byte;
@@ -510,12 +510,12 @@ end;
 {------------------------------------------------------------------------------}
 function  TZipKit.Get_ZipFileComment: WideString;
 begin
-  Result := FOwner.ZipFileComment;
+  Result := WideString(FOwner.ZipFileComment);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit.Set_ZipFileComment(const Value: WideString);
 begin
-  FOwner.ZipfileComment := Value;
+  FOwner.ZipfileComment := AnsiString(Value);
 end;
 {------------------------------------------------------------------------------}
 function  TZipKit.License(const Key: WideString): WordBool;
@@ -653,14 +653,14 @@ begin
     FEvents.OnLoad;
 end;
 {------------------------------------------------------------------------------}
-procedure TZipKit._OnNeedPassword(Sender : TObject; var NewPassword : string);
+procedure TZipKit._OnNeedPassword(Sender : TObject; var NewPassword : AnsiString);
 var
   FNewPassword : WideString;
 begin
-  FNewPassword := NewPassword;
+  FNewPassword := WideString(NewPassword);
   if Assigned(FEvents) then
     FEvents.OnNeedPassword(FNewPassword);
-  NewPassword := FNewPassword;
+  NewPassword := AnsiString(FNewPassword);
 end;
 {------------------------------------------------------------------------------}
 procedure TZipKit._OnProcessItemFailure(Sender : TObject; Item : TAbArchiveItem;
