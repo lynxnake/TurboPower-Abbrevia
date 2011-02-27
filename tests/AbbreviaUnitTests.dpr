@@ -92,7 +92,8 @@ uses
   AbZipTypTests in 'AbZipTypTests.pas',
   AbBzip2TypTests in 'AbBzip2TypTests.pas',
   AbBrowseTests in 'AbBrowseTests.pas',
-  AbTarTypTests in 'AbTarTypTests.pas';
+  AbTarTypTests in 'AbTarTypTests.pas',
+  AbVMStrmTests in 'AbVMStrmTests.pas';
 
 {$R *.res}
 

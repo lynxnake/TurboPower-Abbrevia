@@ -1076,17 +1076,19 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure AbUpdateCRC( var CRC : LongInt; const Buffer; Len : Integer );
-type
-  TByteArray = array[0..MaxInt - 1] of Byte;
 var
-  BufArray : TByteArray absolute Buffer;
+  BufPtr : PByte;
   i : Integer;
   CRCTemp : DWORD;
 begin
+  BufPtr := @Buffer;
   CRCTemp := CRC;
   for i := 0 to pred( Len ) do
-    CRCTemp := AbCrc32Table[ Byte(CrcTemp xor DWORD( BufArray[i] ) ) ] xor
+  begin
+    CRCTemp := AbCrc32Table[ Byte(CrcTemp) xor (BufPtr^) ] xor
               ((CrcTemp shr 8) and $00FFFFFF);
+    Inc(BufPtr);
+  end;
   CRC := CRCTemp;
 end;
 { -------------------------------------------------------------------------- }
