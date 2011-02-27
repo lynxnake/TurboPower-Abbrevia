@@ -103,6 +103,7 @@ end;
 procedure TAbDetermineArcTypeTest.TestDetermineArcType;
 var
   Stream: TFileStream;
+  TmpFile: string;
 begin
   CheckEquals(FExpectedType, AbDetermineArcType(FFilename, FExpectedType),
     'Checking filename with asserted type');
@@ -114,6 +115,10 @@ begin
   finally
     Stream.Free;
   end;
+  TmpFile := TestTempDir + ChangeFileExt(ExtractFileName(FFilename), '.tmp');
+  AbCopyFile(FFilename, TmpFile, True);
+  CheckEquals(FExpectedType, AbDetermineArcType(TmpFile, atUnknown),
+    'Checking filename with unknown extension');
 end;
 
 initialization
