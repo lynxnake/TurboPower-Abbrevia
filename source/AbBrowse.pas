@@ -527,35 +527,39 @@ begin
     if (Ext = '.TBZ') then
       Result := atBzippedTar;
   end;
-{$IFNDEF MSWINDOWS}
+  {$IFNDEF MSWINDOWS}
   if Result = atCab then
     Result := atUnknown;
-{$ENDIF}
-  if (Result <> atUnknown) and FileExists(FN) and (AbFileGetSize(FN) > 0) then begin
+  {$ENDIF}
+  if FileExists(FN) and (AbFileGetSize(FN) > 0) then begin
     { If the file doesn't exist (or is empty) presume to make one, otherwise
-      verify the contents }
+      guess or verify the contents }
     FS := TFileStream.Create(FN, fmOpenRead or fmShareDenyNone);
     try
-      case Result of
-        atZip : begin
-          Result := VerifyZip(FS);
-        end;
-        atSelfExtZip : begin
-          Result := VerifySelfExtracting(FS);
-        end;
-        atTar : begin
-          Result := VerifyTar(FS);
-        end;
-        atGzip, atGzippedTar: begin
-          Result := VerifyGzip(FS);
-        end;
-{$IFDEF MSWINDOWS}
-        atCab : begin
-          Result := VerifyCab(FS);
-        end;
-{$ENDIF}
-        atBzip2, atBzippedTar: begin
-          Result := VerifyBzip2(FS);
+      if Result = atUnknown then
+        Result := AbDetermineArcType(FS)
+      else begin
+        case Result of
+          atZip : begin
+            Result := VerifyZip(FS);
+          end;
+          atSelfExtZip : begin
+            Result := VerifySelfExtracting(FS);
+          end;
+          atTar : begin
+            Result := VerifyTar(FS);
+          end;
+          atGzip, atGzippedTar: begin
+            Result := VerifyGzip(FS);
+          end;
+          {$IFDEF MSWINDOWS}
+          atCab : begin
+            Result := VerifyCab(FS);
+          end;
+          {$ENDIF}
+          atBzip2, atBzippedTar: begin
+            Result := VerifyBzip2(FS);
+          end;
         end;
       end;
     finally
