@@ -137,9 +137,13 @@ type
   TAbZipSupportedMethod =
     (smStored, smDeflated, smBestMethod);
 
+  {ExternalFileAttributes compatibility;  aliases are Info-ZIP/PKZIP overlaps}
   TAbZipHostOS =
     (hosDOS, hosAmiga, hosVAX, hosUnix, hosVMCMS, hosAtari,
-     hosOS2, hosMacintosh, hosZSystem, hosCPM, hosNTFS);
+     hosOS2, hosMacintosh, hosZSystem, hosCPM, hosNTFS, hosTOPS20 = hosNTFS,
+     hosMVS, hosWinNT = hosMVS, hosVSE, hosQDOS = hosVSE, hosRISC,
+     hosVFAT, hosAltMVS, hosBeOS, hosTandem, hosOS400, hosTHEOS = hosOS400,
+     hosDarwin, hosAtheOS = 30);
 
   {for method 6 - imploding}
   TAbZipDictionarySize =
@@ -347,6 +351,7 @@ type
     function GetExtraField : TAbExtraField;
     function GetFileComment : AnsiString;
     function GetGeneralPurposeBitFlag : Word;
+    function GetHostOS: TAbZipHostOS;
     function GetInternalFileAttributes : Word;
     function GetRawFileName : AnsiString;
     function GetRelativeOffset : Int64;
@@ -404,6 +409,8 @@ type
     property FileComment : AnsiString
       read GetFileComment
       write SetFileComment;
+    property HostOS: TAbZipHostOS
+      read GetHostOS;
     property InternalFileAttributes : Word
       read GetInternalFileAttributes
       write SetInternalFileAttributes;
@@ -1552,6 +1559,11 @@ end;
 function TAbZipItem.GetGeneralPurposeBitFlag : Word;
 begin
   Result := FItemInfo.GeneralPurposeBitFlag;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbZipItem.GetHostOS: TAbZipHostOS;
+begin
+  Result := TAbZipHostOS(Hi(VersionMadeBy));
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetDiskNumberStart : Word;
