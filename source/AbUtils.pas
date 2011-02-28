@@ -342,7 +342,6 @@ const
   AB_FPERMISSION_GENERIC      =
     AB_FPERMISSION_OWNERREAD or
     AB_FPERMISSION_OWNERWRITE or
-    AB_FPERMISSION_OWNEREXECUTE or
     AB_FPERMISSION_GROUPREAD or
     AB_FPERMISSION_OTHERREAD;
 
@@ -1299,13 +1298,16 @@ begin
   {$WARN SYMBOL_PLATFORM OFF}
   Result := { default permissions }
     AB_FPERMISSION_OWNERREAD or
-    AB_FPERMISSION_OWNERWRITE or
-    AB_FPERMISSION_OWNEREXECUTE or
     AB_FPERMISSION_GROUPREAD or
     AB_FPERMISSION_OTHERREAD;
 
-  if (Attr and faReadOnly) <> faReadOnly then
-    Result := Result and not (AB_FPERMISSION_OWNERWRITE or AB_FPERMISSION_OWNEREXECUTE);
+  if (Attr and faReadOnly) = 0 then
+    Result := Result or AB_FPERMISSION_OWNERWRITE;
+
+  if (Attr and faDirectory) <> 0 then
+    Result := Result or AB_FMODE_DIR or AB_FPERMISSION_OWNEREXECUTE
+  else
+    Result := Result or AB_FMODE_FILE;
   {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
@@ -1313,22 +1315,21 @@ function AbUnix2DosFileAttributes(Attr: LongInt): LongInt;
 begin
   {$WARN SYMBOL_PLATFORM OFF}
   Result := 0;
-  case (Attr shr 24) shl 24 of
-    AB_FMODE_FILE, AB_FMODE_FILE2: begin { standard file }
+  case (Attr and $F000) of
+    AB_FMODE_FILE, AB_FMODE_FILE2: { standard file }
       Result := 0;
-    end;
 
-    AB_FMODE_DIR : begin  { directory }
+    AB_FMODE_FILELINK:
+      Result := Result or faSymLink;
+
+    AB_FMODE_DIR: { directory }
       Result := Result or faDirectory;
-    end;
 
     AB_FMODE_FIFO,
     AB_FMODE_CHARSPECFILE,
     AB_FMODE_BLOCKSPECFILE,
-    AB_FMODE_FILELINK,
-    AB_FMODE_SOCKET: begin
+    AB_FMODE_SOCKET:
       Result := Result or faSysFile;
-    end;
   end;
 
   if (Attr and AB_FPERMISSION_OWNERWRITE) <> AB_FPERMISSION_OWNERWRITE then
