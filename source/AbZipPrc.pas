@@ -349,12 +349,12 @@ begin
     ChDir( SaveDir );
   end; {SaveDir}
   try {UncompressedStream}
+    {$IFDEF LINUX}
+    Item.ExternalFileAttributes := AttrEx.Mode shl 16 + AttrEx.Attr;
+    {$ELSE}
     Item.ExternalFileAttributes := AttrEx.Attr;
-    {$IFDEF Linux}
-    AttrEx.Time := AbDateTimeToDosFileDate(FileDateToDateTime(AttrEx.Time));
     {$ENDIF}
-    Item.LastModFileTime := LongRec(AttrEx.Time).Lo;
-    Item.LastModFileDate := LongRec(AttrEx.Time).Hi;
+    Item.LastModTimeAsDateTime := AttrEx.Time;
     DoZipFromStream(Sender, Item, OutStream, UncompressedStream);
   finally {UncompressedStream}
     UncompressedStream.Free;

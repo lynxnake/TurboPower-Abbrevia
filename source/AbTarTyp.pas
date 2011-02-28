@@ -143,6 +143,7 @@ type
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
     function GetLastModTimeAsDateTime: TDateTime; override;
+    function GetNativeFileAttributes : LongInt; override;
     function GetUncompressedSize : Int64; override;
 
     procedure SetCompressedSize(const Value : Int64); override;
@@ -515,6 +516,14 @@ end;
 function TAbTarItem.GetMagic: string;
 begin
   Result := string(FTarHeader.Magic);
+end;
+
+function TAbTarItem.GetNativeFileAttributes : LongInt;
+begin
+  Result := GetExternalFileAttributes;
+{$IFDEF MSWINDOWS}
+  Result := AbUnix2DosFileAttributes(Result);
+{$ENDIF}
 end;
 
 function TAbTarItem.GetUncompressedSize: Int64;
@@ -907,10 +916,6 @@ procedure TAbTarArchive.ExtractItemAt(Index: Integer;
 var
   OutStream : TFileStream;
   CurItem : TAbTarItem;
-{$IFDEF LINUX}                                                           {!!.01}
-  FileDateTime  : TDateTime;                                             {!!.01}
-  LinuxFileTime : LongInt;                                               {!!.01}
-{$ENDIF LINUX}                                                           {!!.01}
 begin
   CurItem := TAbTarItem(ItemList[Index]);
 
@@ -921,21 +926,8 @@ begin
     finally {OutStream}
       OutStream.Free;
     end; {OutStream}
-    // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-    {$IFDEF MSWINDOWS}
-//  FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
-//    + CurItem.LastModFileTime);
-    AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
-      + CurItem.LastModFileTime);
-     AbFileSetAttr(UseName, AbUnix2DosFileAttributes(CurItem.ExternalFileAttributes));
-    {$ENDIF}
-    {$IFDEF LINUX}
-    FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate,     {!!.01}
-      CurItem.LastModFileTime);                                          {!!.01}
-    LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);                 {!!.01}
-    FileSetDate(UseName, LinuxFileTime);                                 {!!.01}
-    AbFileSetAttr(UseName, CurItem.ExternalFileAttributes);              {!!.01}
-    {$ENDIF}
+    AbSetFileTime(UseName, CurItem.LastModTimeAsDateTime);
+    AbSetFileAttr(UseName, CurItem.NativeFileAttributes);
   except
     on E : EAbUserAbort do begin
       FStatus := asInvalid;
@@ -1103,12 +1095,9 @@ var
   NewStream          : TAbVirtualMemoryStream;
   WorkingStream      : TAbVirtualMemoryStream;
   UncompressedStream : TStream;
-  DateTime           : LongInt;
   SaveDir            : string;
   CurItem            : TAbTarItem;
-  {$IFDEF LINUX}
-  TmpDT              : TDateTime;
-  {$ENDIF}
+  AttrEx             : TAbAttrExRec;
 begin
   InTarHelp := TAbTarStreamHelper.Create(FStream);
   try { InTarHelp }
@@ -1162,24 +1151,15 @@ begin
                     fmOpenRead or fmShareDenyWrite );
 
                   {Now get the file's attributes}
-                  CurItem.ExternalFileAttributes :=
-                     AbDOS2UnixFileAttributes(AbFileGetAttr(CurItem.DiskFileName));
-                  CurItem.UncompressedSize := UncompressedStream.Size;
+                  AbFileGetAttrEx(CurItem.DiskFileName, AttrEx);
                 finally {SaveDir}
                   ChDir( SaveDir );
                 end; {SaveDir}
 
                 try {UncompressedStream}
-                  {$WARN SYMBOL_DEPRECATED OFF}
-                  DateTime := FileAge(CurItem.DiskFileName);
-                  {$WARN SYMBOL_DEPRECATED ON}                  
-                  {$IFDEF LINUX}                                         {!!.01}
-                  TmpDT := AbUnixTimeToDateTime(DateTime);               {!!.01}
-                  DateTime := AbDateTimeToDosFileDate(TmpDT);            {!!.01}
-                  {$ENDIF}                                               {!!.01}
-
-                  CurItem.LastModFileTime := LongRec(DateTime).Lo;
-                  CurItem.LastModFileDate := LongRec(DateTime).Hi;
+                  CurItem.ExternalFileAttributes := AttrEx.Mode;
+                  CurItem.LastModTimeAsDateTime := AttrEx.Time;
+                  CurItem.UncompressedSize := UncompressedStream.Size;
 
                   CurItem.SaveTarHeaderToStream(NewStream);
                   OutTarHelp.WriteArchiveItem(UncompressedStream);

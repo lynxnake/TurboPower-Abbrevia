@@ -966,10 +966,6 @@ procedure TAbGzipArchive.ExtractItemAt(Index: Integer;
 var
   OutStream : TFileStream;
   CurItem : TAbGzipItem;
-{$IFDEF LINUX}                                                           {!!.01}
-  FileDateTime  : TDateTime;                                             {!!.01}
-  LinuxFileTime : LongInt;                                               {!!.01}
-{$ENDIF LINUX}                                                           {!!.01}
 begin
   if IsGZippedTar and TarAutoHandle then begin
     SwapToTar;
@@ -988,21 +984,8 @@ begin
       finally {OutStream}
         OutStream.Free;
       end; {OutStream}
-      // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-      {$IFDEF MSWINDOWS}
-//    FileSetDate(OutStream.Handle, (Longint(CurItem.LastModFileDate) shl 16)
-//      + CurItem.LastModFileTime);
-      AbSetFileDate(UseName, (Longint(CurItem.LastModFileDate) shl 16)
-        + CurItem.LastModFileTime);
-      AbFileSetAttr(UseName, 0); {normal file}                           {!!.01}
-      {$ENDIF}
-      {$IFDEF LINUX}
-      FileDateTime := AbDosFileDateToDateTime(CurItem.LastModFileDate,   {!!.01}
-        CurItem.LastModFileTime);                                        {!!.01}
-      LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);               {!!.01}
-      FileSetDate(UseName, LinuxFileTime);                               {!!.01}
-      AbFileSetAttr(UseName, AB_FPERMISSION_GENERIC);                    {!!.01}
-      {$ENDIF}
+      AbSetFileTime(UseName, CurItem.LastModTimeAsDateTime);
+      AbSetFileAttr(UseName, CurItem.NativeFileAttributes);
     except
       on E : EAbUserAbort do begin
         FStatus := asInvalid;
@@ -1148,7 +1131,6 @@ var
   i                   : Integer;
   NewStream           : TAbVirtualMemoryStream;
   UncompressedStream  : TStream;
-  DateTime            : LongInt;
   SaveDir             : string;
   CurItem             : TAbGzipItem;
 begin
@@ -1215,28 +1197,19 @@ begin
                 end
                 else begin
                 { it's coming from a file }
-                  UncompressedStream := TFileStream.Create(CurItem.DiskFileName,
+                  GetDir(0, SaveDir);
+                  try {SaveDir}
+                    if (BaseDirectory <> '') then
+                      ChDir(BaseDirectory);
+                    CurItem.LastModTimeAsDateTime := AbGetFileTime(CurItem.DiskFileName);
+                    UncompressedStream := TFileStream.Create(CurItem.DiskFileName,
                       fmOpenRead or fmShareDenyWrite );
+                  finally {SaveDir}
+                    ChDir( SaveDir );
+                  end; {SaveDir}
+
                   try
-                    GetDir(0, SaveDir);
-                    try {SaveDir}
-                      if (BaseDirectory <> '') then
-                        ChDir(BaseDirectory);
-
-                      {Now get the file's attributes}
-                      CurItem.ExternalFileAttributes := AbFileGetAttr(CurItem.DiskFileName);
-
-                      CurItem.UncompressedSize := UncompressedStream.Size;
-                    finally {SaveDir}
-                      ChDir( SaveDir );
-                    end; {SaveDir}
-
-                    {$WARN SYMBOL_DEPRECATED OFF}
-                    DateTime := FileAge(CurItem.DiskFileName);
-                    {$WARN SYMBOL_DEPRECATED ON}
-                    CurItem.LastModFileTime := LongRec(DateTime).Lo;
-                    CurItem.LastModFileDate := LongRec(DateTime).Hi;
-
+                    CurItem.UncompressedSize := UncompressedStream.Size;
                     CurItem.SaveGzHeaderToStream(NewStream);
                     OutGzHelp.WriteArchiveItem(UncompressedStream);
                     OutGzHelp.WriteArchiveTail;

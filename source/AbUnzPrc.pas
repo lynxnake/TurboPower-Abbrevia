@@ -1167,19 +1167,8 @@ begin
     InStream.Free
   end;
 
-  // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-  {$IFDEF MSWINDOWS}
-  AbSetFileDate(UseName, (Longint(Item.LastModFileDate) shl 16)
-    + Item.LastModFileTime);
-  {$ENDIF}
-  {$IFDEF LINUX}
-  FileDateTime := AbDosFileDateToDateTime(Item.LastModFileDate,        {!!.01}
-    Item.LastModFileTime);                                             {!!.01}
-  LinuxFileTime := AbDateTimeToUnixTime(FileDateTime);                 {!!.01}
-  FileSetDate(UseName, LinuxFileTime);                                 {!!.01}
-  {$ENDIF}
-
-  AbFileSetAttr(UseName, Item.ExternalFileAttributes); {!!.05 Moved to after OutStream.Free to make sure File Handle is closed}
+  AbSetFileTime(UseName, Item.LastModTimeAsDateTime);
+  AbSetFileAttr(UseName, Item.NativeFileAttributes);
 end;
 { -------------------------------------------------------------------------- }
 procedure AbTestZipItem(Sender : TObject; Item : TAbZipItem);

@@ -270,14 +270,13 @@ const
   function AbTestSpanVolumeLabel(Drive: Char; VolNo : Integer): Boolean;
 {!!.04 - Added End }
 
-  function AbFileGetAttr(const aFileName : string) : integer;
-  procedure AbFileSetAttr(const aFileName : string; aAttr : integer);
-    {-Get or set file attributes for a file. Uses DOS format attributes}
+  procedure AbSetFileAttr(const aFileName : string; aAttr: Integer);
+    {-Sets platform-native file attributes (DOS attr or Unix mode)}
   function AbFileGetSize(const aFileName : string) : Int64;
 
 type
   TAbAttrExRec = record
-    Time: Integer;
+    Time: TDateTime;
     Size: Int64;
     Attr: Integer;
     Mode: {$IFDEF LINUX}mode_t{$ELSE}Cardinal{$ENDIF};
@@ -308,7 +307,8 @@ const
   function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;  {!!.01}
   function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;            {!!.01}
 
-  function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
+  function AbGetFileTime(const aFileName: string): TDateTime;
+  function AbSetFileTime(const aFileName: string; aValue: TDateTime): Boolean;
 
   procedure AbFlushOsBuffers(Handle : Integer);
 
@@ -1239,34 +1239,26 @@ begin
 {$ENDIF}
 end;
 
-function AbSetFileDate(const FileName : string;const Age : LongInt) : Integer; {!!.05}
-{$IFDEF MSWINDOWS}
+{ -------------------------------------------------------------------------- }
+
+function AbGetFileTime(const aFileName: string): TDateTime;
 var
-  f: THandle;
+  Attr: TAbAttrExRec;
 begin
-  f := FileOpen(FileName, fmOpenWrite);
-  if f = THandle(-1) then
-    Result := GetLastError
-  else
-  begin
-    {$WARN SYMBOL_PLATFORM OFF}
-    Result := FileSetDate(f, Age);
-    {$WARN SYMBOL_PLATFORM ON}
-    FileClose(f);
-  end;
+  AbFileGetAttrEx(aFileName, Attr);
+  Result := Attr.Time;
 end;
-{$ENDIF}
-{$IFDEF LINUX}
-var
-  ut: TUTimeBuffer;
+
+function AbSetFileTime(const aFileName: string; aValue: TDateTime): Boolean;
 begin
-  Result := 0;
-  ut.actime := Age;
-  ut.modtime := Age;
-  if utime(PChar(FileName), @ut) = -1 then
-    Result := GetLastError;
+  {$IFDEF MSWINDOWS}
+  Result := FileSetDate(aFileName, AbDateTimeToDosFileDate(aValue)) = 0;
+  {$ENDIF}
+  {$IFDEF LINUX}
+  Result := FileSetDate(aFileName, AbDateTimeToUnixTime(aValue)) = 0;
+  {$ENDIF}
 end;
-{$ENDIF}
+
 { -------------------------------------------------------------------------- }
 
 procedure AbFlushOsBuffers(Handle : Integer);
@@ -1337,35 +1329,14 @@ begin
   {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
-function AbFileGetAttr(const aFileName : string) : Integer;
-{$IFDEF LINUX}
-{$WARN SYMBOL_PLATFORM OFF}
-var
-  SB: TStatBuf;
-{$WARN SYMBOL_PLATFORM ON}
-{$ENDIF LINUX}
-begin
-  {$WARN SYMBOL_PLATFORM OFF}
-  {$IFDEF MSWINDOWS}
-  Result := FileGetAttr(aFileName);
-  {$ENDIF}
-
-  {$IFDEF LINUX}
-  stat(PAnsiChar(aFileName), SB);
-  Result := AbUnix2DosFileAttributes(SB.st_mode);                        {!!.01}
-  {$ENDIF}
-  {$WARN SYMBOL_PLATFORM ON}
-end;
-{ -------------------------------------------------------------------------- }
-procedure AbFileSetAttr(const aFileName : string; aAttr : Integer);
+procedure AbSetFileAttr(const aFileName : string; aAttr: Integer);
 begin
   {$WARN SYMBOL_PLATFORM OFF}
   {$IFDEF MSWINDOWS}
   FileSetAttr(aFileName, aAttr);
   {$ENDIF}
-
   {$IFDEF LINUX}
-  chmod(PAnsiChar(aFileName), AbDOS2UnixFileAttributes(aAttr));          {!!.01}
+  chmod(PAnsiChar(aFileName), aAttr);
   {$ENDIF}
   {$WARN SYMBOL_PLATFORM ON}
 end;
@@ -1394,7 +1365,7 @@ var
   StatBuf: TStatBuf64;
 {$ENDIF}
 begin
-  aAttr.Time := -1;
+  aAttr.Time := 0;
   aAttr.Size := -1;
   aAttr.Attr := -1;
   aAttr.Mode := 0;
@@ -1403,7 +1374,7 @@ begin
   if Result then begin
     if FileTimeToLocalFileTime(FindData.ftLastWriteTime, LocalFileTime) and
        FileTimeToDosDateTime(LocalFileTime, FileDate.Hi, FileDate.Lo) then
-      aAttr.Time := Integer(FileDate);
+      aAttr.Time := FileDateToDateTime(Integer(FileDate));
     LARGE_INTEGER(aAttr.Size).LowPart := FindData.nFileSizeLow;
     LARGE_INTEGER(aAttr.Size).HighPart := FindData.nFileSizeHigh;
     aAttr.Attr := FindData.dwFileAttributes;
@@ -1414,7 +1385,7 @@ begin
   // Work around Kylix QC#2761: Stat64, et al., are defined incorrectly
   Result := (__lxstat64(_STAT_VER, PChar(aFileName), StatBuf) = 0);
   if Result then begin
-    aAttr.Time := StatBuf.st_mtime;
+    aAttr.Time := FileDateToDateTime(StatBuf.st_mtime);
     aAttr.Size := StatBuf.st_size;
     aAttr.Attr := AbUnix2DosFileAttributes(StatBuf.st_mode);
     aAttr.Mode := StatBuf.st_mode;

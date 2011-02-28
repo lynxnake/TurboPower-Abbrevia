@@ -299,7 +299,7 @@ function FCI_GetOpenInfo(lpPathname: Pointer; PDate, PTime, PAttribs : PWord;
   {open a file and return date/attributes}
 var
   AttrEx: TAbAttrExRec;
-  I: Integer;
+  I, DT: Integer;
   RawName: RawByteString;
 begin
   Result := FileOpen(string(lpPathname), fmOpenRead or fmShareDenyNone);
@@ -307,8 +307,9 @@ begin
     raise EAbFCIFileOpenError.Create;
   AbFileGetAttrEx(string(lpPathname), AttrEx);
   PAttribs^ := AttrEx.Attr;
-  PDate^ := AttrEx.Time shr 16;
-  PTime^ := AttrEx.Time and $0FFFF;
+  DT := DateTimeToFileDate(AttrEx.Time);
+  PDate^ := DT shr 16;
+  PTime^ := DT and $0FFFF;
   Archive.ItemProgress := 0;
   Archive.FItemInProgress.UncompressedSize := AttrEx.Size;
   RawName := Archive.FItemInProgress.RawFileName;
@@ -464,8 +465,7 @@ begin
           FileSetDate(TFileStream(pfdin^.hf).Handle,
             Longint(pfdin^.date) shl 16 + pfdin^.time);
           TFileStream(pfdin^.hf).Free;
-          // [ 880505 ]  Need to Set Attributes after File is closed {!!.05}
-          AbFileSetAttr(Archive.FIIPName, pfdin^.attribs);
+          FileSetAttr(Archive.FIIPName, pfdin^.attribs);
         end;
         Archive.DoCabItemProcessed;
       end;

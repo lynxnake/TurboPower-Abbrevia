@@ -71,6 +71,7 @@ type
     function GetIsEncrypted : Boolean; virtual;
     function GetLastModFileDate : Word; virtual;
     function GetLastModFileTime : Word; virtual;
+    function GetNativeFileAttributes : LongInt; virtual;
     function GetStoredPath : string;
     function GetUncompressedSize : Int64; virtual;
     procedure SetCompressedSize(const Value : Int64); virtual;
@@ -126,6 +127,8 @@ type
     property LastModFileTime : Word
       read GetLastModFileTime
       write SetLastModFileTime;
+    property NativeFileAttributes : LongInt
+      read GetNativeFileAttributes;
     property StoredPath : string
       read GetStoredPath;
     property Tagged : Boolean
@@ -623,6 +626,22 @@ end;
 function TAbArchiveItem.GetLastModFileDate : Word;
 begin
   Result := FLastModFileDate;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbArchiveItem.GetNativeFileAttributes : LongInt;
+begin
+  {$IFDEF MSWINDOWS}
+  if IsDirectory then
+    Result := faDirectory
+  else
+    Result := 0;
+  {$ENDIF}
+  {$IFDEF LINUX}
+  if IsDirectory then
+    Result := AB_FPERMISSION_GENERIC or AB_FPERMISSION_OWNEREXECUTE
+  else
+    Result := AB_FPERMISSION_GENERIC;
+  {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetStoredPath : string;

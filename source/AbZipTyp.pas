@@ -377,6 +377,7 @@ type
     function  GetIsEncrypted : Boolean; override;
     function  GetLastModFileDate : Word; override;
     function  GetLastModFileTime : Word; override;
+    function  GetNativeFileAttributes : LongInt; override;
     function  GetUncompressedSize : Int64; override;
     procedure SetCompressedSize( const Value : Int64 ); override;
     procedure SetCRC32( const Value : Longint ); override;
@@ -1604,6 +1605,22 @@ end;
 function TAbZipItem.GetLastModFileTime : Word;
 begin
   Result := FItemInfo.LastModFileTime;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbZipItem.GetNativeFileAttributes : LongInt;
+begin
+{$IFDEF MSWINDOWS}
+  if (HostOS = hosUnix) or (ExternalFileAttributes > $1FFFF) then
+    Result := AbUnix2DosFileAttributes(ExternalFileAttributes shr 16)
+  else
+    Result := Byte(ExternalFileAttributes);
+{$ENDIF}
+{$IFDEF LINUX}
+  if HostOS in [hosDOS, hosNTFS, hosWinNT] then
+    Result := AbDOS2UnixFileAttributes(ExternalFileAttributes)
+  else
+    Result := ExternalFileAttributes shr 16;
+{$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetRawFileName : AnsiString;
