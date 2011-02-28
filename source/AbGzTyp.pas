@@ -369,7 +369,7 @@ var
   GHlp : TAbGzipStreamHelper;
   Hlpr : TAbDeflateHelper;
   PartialTarData : TMemoryStream;
-  CurPos : LongInt;
+  CurPos : Int64;
 begin
   Result := atUnknown;
 
@@ -615,6 +615,8 @@ end;
 
 constructor TAbGzipItem.Create;
 begin
+  inherited Create;
+
   { default ID fields }
   FGzHeader.ID1 := AB_GZ_HDR_ID1;
   FGzHeader.ID2 := AB_GZ_HDR_ID2;

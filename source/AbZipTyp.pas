@@ -2186,7 +2186,7 @@ begin
   if SpanStrm.SpanMode = smWriting then begin
     if SpanStrm.MediaType = mtRemoveable then begin
       DoRequestBlankDisk(Abort);
-      AbWriteVolumeLabel(Format('PKBACK# %3.3d',                         {!!.01}
+      AbWriteVolumeLabel(Format(AB_SPAN_VOL_LABEL,                       {!!.01}
         [Pred(ImageNumber)]), AbDrive(FArchiveName));                    {!!.01}
     end
     else begin
@@ -2672,7 +2672,7 @@ begin
       if Spanned and AbDriveIsRemovable(FArchiveName) then begin         {!!.03}
         {reset image number }
         SCurrentImage := 0;
-        AbWriteVolumeLabel(Format('PKBACK# %3.3d',
+        AbWriteVolumeLabel(Format(AB_SPAN_VOL_LABEL,
           [Succ(SCurrentImage)]), AbDrive(FArchiveName));
         FStream := TAbSpanStream.Create(FArchiveName,
           fmOpenWrite or fmShareDenyWrite, mtRemoveable,

@@ -304,7 +304,6 @@ var
 begin
   {read next byte if we're out of bits}
   if FBitsLeft = 0 then begin
-    {uzReadNext;}
     {do we still have a byte buffered?}
     if FInPos <= FInCnt then begin
       {get next byte out of buffer and advance position counter}
@@ -332,8 +331,6 @@ begin
     SaveBitsLeft := FBitsLeft;
     {number of additional bits that we need}
     Delta := Bits - FBitsLeft;
-    {read next byte}
-    {uzReadNext;}
     {do we still have a byte buffered?}
     if FInPos <= FInCnt then begin
       {get next byte out of buffer and advance position counter}

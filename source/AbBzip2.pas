@@ -181,15 +181,15 @@ type
 
 implementation
 
+uses
 {$IFDEF Bzip2Runtime}
 {$IF DEFINED(FPC)}
-uses
-  dynlibs;
+  dynlibs,
 {$ELSEIF DEFINED(MSWINDOWS)}
-uses
-  Windows;
+  Windows,
 {$IFEND}
 {$ENDIF}
+  AbUtils;
 
 {$IFDEF Bzip2Static}
 {$L bz2_blocksort.obj}
@@ -502,8 +502,8 @@ begin
         P := OutBuf;
         Inc(OutBytes, 256);
         ReallocMem(OutBuf, OutBytes);
-        strm.next_out := PByte(Integer(OutBuf)
-			       + (Integer(strm.next_out) - Integer(P)));
+        strm.next_out := PByte(PtrInt(OutBuf)
+             + (PtrInt(strm.next_out) - PtrInt(P)));
         strm.avail_out := 256;
       end;
     finally
@@ -546,7 +546,7 @@ begin
         P := OutBuf;
         Inc(OutBytes, BufInc);
         ReallocMem(OutBuf, OutBytes);
-        strm.next_out := PByte(Integer(OutBuf) + (Integer(strm.next_out) - Integer(P)));
+        strm.next_out := PByte(PtrInt(OutBuf) + (PtrInt(strm.next_out) - PtrInt(P)));
         strm.avail_out := BufInc;
       end;
     finally
