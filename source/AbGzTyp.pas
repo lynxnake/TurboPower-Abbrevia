@@ -134,13 +134,13 @@ type
     procedure SetFileSystem(const Value: TAbGzFileSystem);
     procedure SetIsText(const Value: Boolean);
 
-    function GetExternalFileAttributes : LongInt; override;
+    function GetExternalFileAttributes : LongWord; override;
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
     function GetLastModTimeAsDateTime: TDateTime; override;
 
-    procedure SetExternalFileAttributes( Value : LongInt ); override;
+    procedure SetExternalFileAttributes( Value : LongWord ); override;
     procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
@@ -648,7 +648,7 @@ begin
   inherited;
 end;
 
-function TAbGzipItem.GetExternalFileAttributes: LongInt;
+function TAbGzipItem.GetExternalFileAttributes: LongWord;
 begin
   { GZip has no provision for storing attributes }
   Result := 0;
@@ -818,7 +818,7 @@ begin
     AStream.Write(FFileComment[1], Length(FFileComment) + 1);
 end;
 
-procedure TAbGzipItem.SetExternalFileAttributes(Value: LongInt);
+procedure TAbGzipItem.SetExternalFileAttributes(Value: LongWord);
 begin
   { do nothing }
 end;

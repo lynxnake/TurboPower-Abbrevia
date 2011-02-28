@@ -137,7 +137,7 @@ type
     procedure SetUserName(const Value: string);
 
     function GetCompressedSize : Int64; override;
-    function GetExternalFileAttributes : LongInt; override;
+    function GetExternalFileAttributes : LongWord; override;
     function GetFileName : string; override;
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
@@ -146,7 +146,7 @@ type
     function GetUncompressedSize : Int64; override;
 
     procedure SetCompressedSize(const Value : Int64); override;
-    procedure SetExternalFileAttributes( Value : LongInt ); override;
+    procedure SetExternalFileAttributes( Value : LongWord ); override;
     procedure SetFileName(const Value : string); override;
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
@@ -171,7 +171,7 @@ type
       read FTarHeader.LinkFlag write FTarHeader.LinkFlag;
     property LinkName : string
       read GetLinkName write SetLinkName;
-    property Mode : LongInt
+    property Mode : LongWord
       read GetExternalFileAttributes write SetExternalFileAttributes;
     property UserID : Integer
       read GetUserID write SetUserID;
@@ -442,7 +442,7 @@ begin
   Result := OctalToInt(FTarHeader.DevMinor, SizeOf(FTarHeader.DevMinor));
 end;
 
-function TAbTarItem.GetExternalFileAttributes: LongInt;
+function TAbTarItem.GetExternalFileAttributes: LongWord;
 begin
   Result := OctalToInt(FTarHeader.Mode, SizeOf(FTarHeader.Mode));
 end;
@@ -601,7 +601,7 @@ begin
   Move(S[1], FTarHeader.DevMinor, Length(S));
 end;
 
-procedure TAbTarItem.SetExternalFileAttributes(Value: Integer);
+procedure TAbTarItem.SetExternalFileAttributes(Value: LongWord);
 var
   S : AnsiString;
 begin

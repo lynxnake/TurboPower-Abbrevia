@@ -270,7 +270,7 @@ type
     FVersionMadeBy          : Word;
     FDiskNumberStart        : Word;
     FInternalFileAttributes : Word;
-    FExternalFileAttributes : Longint;
+    FExternalFileAttributes : LongWord;
     FRelativeOffset         : LongWord;
     FFileComment            : AnsiString;
   public {methods}
@@ -285,7 +285,7 @@ type
       read FDiskNumberStart write FDiskNumberStart;
     property InternalFileAttributes : Word
       read FInternalFileAttributes write FInternalFileAttributes;
-    property ExternalFileAttributes : Longint
+    property ExternalFileAttributes : LongWord
       read FExternalFileAttributes write FExternalFileAttributes;
     property RelativeOffset : LongWord
       read FRelativeOffset write FRelativeOffset;
@@ -373,14 +373,14 @@ type
   protected {redefined property methods}
     function  GetCompressedSize : Int64; override;
     function  GetCRC32 : Longint; override;
-    function  GetExternalFileAttributes : Longint; override;
+    function  GetExternalFileAttributes : LongWord; override;
     function  GetIsEncrypted : Boolean; override;
     function  GetLastModFileDate : Word; override;
     function  GetLastModFileTime : Word; override;
     function  GetUncompressedSize : Int64; override;
     procedure SetCompressedSize( const Value : Int64 ); override;
     procedure SetCRC32( const Value : Longint ); override;
-    procedure SetExternalFileAttributes( Value : Longint ); override;
+    procedure SetExternalFileAttributes( Value : LongWord ); override;
     procedure SetFileName(const Value : string ); override;
     procedure SetLastModFileDate(const Value : Word ); override;
     procedure SetLastModFileTime(const Value : Word ); override;
@@ -1571,7 +1571,7 @@ begin
   Result := FItemInfo.DiskNumberStart;
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipItem.GetExternalFileAttributes : Longint;
+function TAbZipItem.GetExternalFileAttributes : LongWord;
 begin
   Result := FItemInfo.ExternalFileAttributes;
 end;
@@ -1744,7 +1744,7 @@ begin
   FItemInfo.DiskNumberStart := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipItem.SetExternalFileAttributes( Value : Longint );
+procedure TAbZipItem.SetExternalFileAttributes( Value : LongWord );
 begin
   FItemInfo.ExternalFileAttributes := Value;
 end;
