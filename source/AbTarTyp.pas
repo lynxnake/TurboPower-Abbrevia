@@ -142,6 +142,7 @@ type
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
+    function GetLastModTimeAsDateTime: TDateTime; override;
     function GetUncompressedSize : Int64; override;
 
     procedure SetCompressedSize(const Value : Int64); override;
@@ -495,6 +496,14 @@ begin
 
   { convert to DOS file Time }
   Result := LongRec(DateTimeToFileDate(D)).Lo;
+end;
+
+function TAbTarItem.GetLastModTimeAsDateTime: TDateTime;
+var
+  UnixDate : Integer;
+begin
+  UnixDate := OctalToInt(FTarHeader.ModTime, sizeof(FTarHeader.ModTime));
+  Result := AbUnixTimeToDateTime(UnixDate);
 end;
 
 function TAbTarItem.GetLinkName: string;

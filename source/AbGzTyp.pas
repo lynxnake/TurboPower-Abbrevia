@@ -20,6 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -137,6 +138,7 @@ type
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
+    function GetLastModTimeAsDateTime: TDateTime; override;
 
     procedure SetExternalFileAttributes( Value : LongInt ); override;
     procedure SetFileName(const Value : string); override;
@@ -711,6 +713,11 @@ begin
   { convert to DOS file Time }
   Rslt := DateTimeToFileDate(D);
   Result := LongRec(Rslt).Lo;
+end;
+
+function TAbGzipItem.GetLastModTimeAsDateTime: TDateTime;
+begin
+  Result := AbUnixTimeToDateTime(FGZHeader.ModTime);
 end;
 
 procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);

@@ -46,9 +46,6 @@ uses
 { ===== TAbArchiveItem ====================================================== }
 type
   TAbArchiveItem = class(TObject)
-  private
-    function GetLastModTimeAsDateTime: TDateTime;                        {!!.01}
-    procedure SetLastModTimeAsDateTime(const Value: TDateTime);          {!!.01}
   protected {private}
     NextItem          : TAbArchiveItem;
     FAction           : TAbArchiveAction;
@@ -85,6 +82,8 @@ type
     procedure SetLastModFileDate(const Value : Word); virtual;
     procedure SetLastModFileTime(const Value : Word); virtual;
     procedure SetUncompressedSize(const Value : Int64); virtual;
+    function GetLastModTimeAsDateTime: TDateTime; virtual;
+    procedure SetLastModTimeAsDateTime(const Value: TDateTime); virtual;
 
   public {methods}
     constructor Create;
