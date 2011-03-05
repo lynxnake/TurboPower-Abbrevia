@@ -276,10 +276,10 @@ type
     procedure DetectHeaderFormat; { Helper to stuff HeaderFormat }
     procedure GetFileNameFromHeaders; { Helper to pull name from Headers }
     procedure GetLinkNameFromHeaders; { Helper to pull name from Headers }
-    procedure SaveModDate(UnixTime:AnsiString);
+    procedure SaveModDate(UnixTime: AnsiString);
     function  TestCheckSum: Boolean;  { Helper to Calculate Checksum of a header. }
-    procedure DoGNUExistingLongNameLink(LinkFlag:AnsiChar; I:Integer; const Value: string);
-    procedure DoGNUNewLongNameLink(LinkFlag:AnsiChar; I:Integer; const Value: string);
+    procedure DoGNUExistingLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: string);
+    procedure DoGNUNewLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: string);
   protected {private}
     PTarHeader: PAbTarHeaderRec;{ Points to FTarHeaderList.Items[FTarHeaderList.Count-1] }
     FTarHeaderList: TList;      { List of The Headers }
@@ -331,7 +331,7 @@ type
     procedure SetUncompressedSize(const Value : Int64); override;     { Extended Headers }
 
     procedure SaveTarHeaderToStream(AStream : TStream);
-    procedure LoadTarHeaderFromStream(AStream :TStream);
+    procedure LoadTarHeaderFromStream(AStream : TStream);
 
     property Magic : string { Magic value }
       read GetMagic write SetMagic;
@@ -1175,7 +1175,7 @@ begin
 end;
 
 { Add/Remove Headers as needed To/From Existing GNU Long (Link/Name) TarItems }
-procedure TAbTarItem.DoGNUExistingLongNameLink(LinkFlag:AnsiChar; I:Integer; const Value: string);
+procedure TAbTarItem.DoGNUExistingLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: string);
 var
   PHeader: PAbTarHeaderRec;
   J: Integer;
@@ -1256,7 +1256,7 @@ end;
 
 
 { Always inserts the L/K Headers at index 0+ }
-procedure TAbTarItem.DoGNUNewLongNameLink(LinkFlag:AnsiChar; I:Integer; const Value: string);
+procedure TAbTarItem.DoGNUNewLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: string);
 var
   PHeader: PAbTarHeaderRec;
   J: Integer;
@@ -1500,7 +1500,7 @@ begin
   { do nothing, TAR has no native encryption }
 end;
 
-procedure TAbTarItem.SaveModDate(UnixTime:AnsiString);
+procedure TAbTarItem.SaveModDate(UnixTime: AnsiString);
 var
   I: Integer;
 begin
