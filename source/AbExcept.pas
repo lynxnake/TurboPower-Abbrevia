@@ -209,6 +209,26 @@ type
     constructor Create;
   end;
 
+  EAbTarInvalid = class( EAbTarException)
+  public
+    constructor Create;
+  end;
+
+  EAbTarBadFileName = class( EAbTarException)
+  public
+    constructor Create;
+  end;
+
+  EAbTarBadLinkName = class( EAbTarException)
+  public
+    constructor Create;
+  end;
+
+  EAbTarBadOp = class( EAbTarException)
+  public
+    constructor Create;
+  end;
+
   EAbVMSReadTooManyBytes = class( EAbZipException )
   public
     constructor Create( Count : Integer; Dummy : Word );
@@ -788,6 +808,38 @@ begin
   inherited Create(AbSpanningNotSupportedS);
   ErrorCode := AbSpanningNotSupported;
 
+end;
+
+{ EAbTarInvalid }
+
+constructor EAbTarInvalid.Create;
+begin
+  inherited Create(AbTarInvalidS);
+  ErrorCode := AbTarInvalid;
+end;
+
+{ EAbTarBadFileName }
+
+constructor EAbTarBadFileName.Create;
+begin
+  inherited Create(AbTarBadFileNameS);
+  ErrorCode := AbTarBadFileName;
+end;
+
+{ EAbTarBadLinkName }
+
+constructor EAbTarBadLinkName.Create;
+begin
+  inherited Create(AbTarBadLinkNameS);
+  ErrorCode := AbTarBadLinkName;
+end;
+
+{ EAbTarBadOp }
+
+constructor EAbTarBadOp.Create;
+begin
+  inherited Create(AbTarBadOpS);
+  ErrorCode := AbTarBadOp;
 end;
 
 { EAbSpanningNotSupported }

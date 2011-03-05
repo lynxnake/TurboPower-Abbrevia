@@ -109,6 +109,11 @@ const
   AbGzipBadCRC                    = 201;
   AbGzipBadFileSize               = 202;
 
+  AbTarInvalid                    = 220;
+  AbTarBadFileName                = 221;
+  AbTarBadLinkName                = 222;
+  AbTarBadOp                      = 223;
+
 
 function AbStrRes(Index : Integer) : string;
 
@@ -124,7 +129,7 @@ type
   end;
 
 const
-  AbStrArray : array [0..62] of AbStrRec = (
+  AbStrArray : array [0..66] of AbStrRec = (
     (ID: AbZipVersionNeeded; Str: AbZipVersionNeededS),
     (ID: AbUnknownCompressionMethod; Str: AbUnknownCompressionMethodS),
     (ID: AbNoExtractionMethod; Str: AbNoExtractionMethodS),
@@ -192,7 +197,12 @@ const
 
     (ID: AbGzipInvalid; Str: AbGzipInvalidS),
     (ID: AbGzipBadCRC; Str: AbGzipBadCRCS),
-    (ID: AbGzipBadFileSize; Str: AbGzipBadFileSizeS)
+    (ID: AbGzipBadFileSize; Str: AbGzipBadFileSizeS),
+
+    (ID: AbTarInvalid; Str: AbTarInvalidS),
+    (ID: AbTarBadFileName; Str: AbTarBadFileNameS),
+    (ID: AbTarBadLinkName; Str: AbTarBadLinkNameS),
+    (ID: AbTarBadOp; Str: AbTarBadOpS)
   );
 
 function AbStrRes(Index : Integer) : string;

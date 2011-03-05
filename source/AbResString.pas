@@ -198,6 +198,11 @@ resourcestring
   AbGzipBadCRCS                    = 'Bad CRC';
   AbGzipBadFileSizeS               = 'Bad File Size';
 
+  AbTarInvalidS                    = 'Invalid Tar';
+  AbTarBadFileNameS                = 'File Name to Long';
+  AbTarBadLinkNameS                = 'Link Name to Long';
+  AbTarBadOpS                      = 'Unsupported Operation';
+
   AbUnhandledEntityS             = 'Unhandled Entity';
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
