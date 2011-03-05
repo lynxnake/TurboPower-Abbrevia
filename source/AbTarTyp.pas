@@ -88,17 +88,17 @@ const
   AB_TAR_LF_VOLHDR    = 'V';  {  FH, Extra GNU, File is Volume Header }
   AB_TAR_LF_EXHDR     = 'X';  { MDH, Extra GNU, Solaris Extended Header }
   { The only questionable MetaData type is 'V', file or meta-data? will treat as file header }
-AB_SUPPORTED_F_HEADERS   = [AB_TAR_LF_OLDNORMAL, AB_TAR_LF_NORMAL, AB_TAR_LF_LINK,
-                            AB_TAR_LF_SYMLINK, AB_TAR_LF_DIR];
-AB_UNSUPPORTED_F_HEADERS = [AB_TAR_LF_CHR, AB_TAR_LF_BLK, AB_TAR_LF_FIFO,
-                            AB_TAR_LF_CONTIG, AB_TAR_LF_DUMPDIR, AB_TAR_LF_MULTIVOL,
-                            AB_TAR_LF_SPARSE, AB_TAR_LF_VOLHDR];
-AB_SUPPORTED_MD_HEADERS  = [AB_TAR_LF_LONGNAME, AB_TAR_LF_LONGLINK];
-AB_UNSUPPORTED_MD_HEADERS= [AB_TAR_LF_XHDR, AB_TAR_LF_XGL, AB_TAR_LF_EXHDR];
-AB_GNU_MD_HEADERS        = [AB_TAR_LF_LONGLINK, AB_TAR_LF_LONGNAME]; { If present then OLD_/GNU_FORMAT }
-AB_PAX_MD_HEADERS        = [AB_TAR_LF_XHDR, AB_TAR_LF_XGL]; { If present then POSIX_FORMAT }
-AB_IGNORE_SIZE_HEADERS   = [AB_TAR_LF_LINK, AB_TAR_LF_SYMLINK, AB_TAR_LF_CHR,
-                            AB_TAR_LF_BLK, AB_TAR_LF_DIR, AB_TAR_LF_FIFO];
+  AB_SUPPORTED_F_HEADERS   = [AB_TAR_LF_OLDNORMAL, AB_TAR_LF_NORMAL, AB_TAR_LF_LINK,
+                              AB_TAR_LF_SYMLINK, AB_TAR_LF_DIR];
+  AB_UNSUPPORTED_F_HEADERS = [AB_TAR_LF_CHR, AB_TAR_LF_BLK, AB_TAR_LF_FIFO,
+                              AB_TAR_LF_CONTIG, AB_TAR_LF_DUMPDIR, AB_TAR_LF_MULTIVOL,
+                              AB_TAR_LF_SPARSE, AB_TAR_LF_VOLHDR];
+  AB_SUPPORTED_MD_HEADERS  = [AB_TAR_LF_LONGNAME, AB_TAR_LF_LONGLINK];
+  AB_UNSUPPORTED_MD_HEADERS= [AB_TAR_LF_XHDR, AB_TAR_LF_XGL, AB_TAR_LF_EXHDR];
+  AB_GNU_MD_HEADERS        = [AB_TAR_LF_LONGLINK, AB_TAR_LF_LONGNAME]; { If present then OLD_/GNU_FORMAT }
+  AB_PAX_MD_HEADERS        = [AB_TAR_LF_XHDR, AB_TAR_LF_XGL]; { If present then POSIX_FORMAT }
+  AB_IGNORE_SIZE_HEADERS   = [AB_TAR_LF_LINK, AB_TAR_LF_SYMLINK, AB_TAR_LF_CHR,
+                              AB_TAR_LF_BLK, AB_TAR_LF_DIR, AB_TAR_LF_FIFO];
 { The rest of the Chars are unsupported and unknown types Treat those headers as File types }
 { Further link types may be defined later. }
 
@@ -128,7 +128,7 @@ type
 {All the first 345 bytes are the same. }
 {   "USTAR_header": Prefix(155): 345-499,
                     empty(12): 500-511 }
-{ "old_gnu_ehader": atime(12): 345-356,
+{ "old_gnu_header": atime(12): 345-356,
                     ctime(12): 357-368,
                     offset(12): 369-380,
                     longnames(4): 381-384,
@@ -290,7 +290,7 @@ type
     function GetLinkName: string;
     function GetUserID: Integer;
     function GetUserName: string;
-    function GetModTime: int64;
+    function GetModTime: Int64;
     function GetNumHeaders: Integer;
     function GetMagic: string;
 
@@ -533,7 +533,7 @@ var
   j : Integer;
 begin
   { prepare for the checksum calculation }
-  HdrBuffer := PAnsiChar(@TarH);                                         
+  HdrBuffer := PAnsiChar(@TarH);
   HdrChkSum := 0;
 
   {calculate the checksum, a simple sum of the bytes in the header}
@@ -670,7 +670,7 @@ end;
 
 function TAbTarItem.GetFileName: string;
 begin
-  Result := FTarItem.Name; { FTarHeader.Name;} { Inherited String from Parent Class }
+  Result := FTarItem.Name; { Inherited String from Parent Class }
 end;
 
 function TAbTarItem.GetGroupID: Integer;
@@ -2087,7 +2087,7 @@ begin
      ((Length(CurItem.FileName) >= AB_TAR_NAMESIZE) or
       (Length(CurItem.LinkName) >= AB_TAR_NAMESIZE)) then
     raise EAbTarBadOp.Create; { Unsupported Type, Cannot Extract }
-  { We will allow extractions if the file name is strickly less than 100 chars }
+  { We will allow extractions if the file name is strictly less than 100 chars }
 
   FStream.Position := CurItem.StreamPosition+CurItem.FileHeaderCount*AB_TAR_RECORDSIZE;
   if CurItem.UncompressedSize <> 0 then
@@ -2112,9 +2112,9 @@ begin
     {build Items list from tar header records}
 
     { reset Tar }
-	ItemFound := (FStream.Size > 0) and TarHelp.FindFirstItem;
-	if ItemFound then FArchFormat := UNKNOWN_FORMAT
-	else FArchFormat := V7_FORMAT;
+    ItemFound := (FStream.Size > 0) and TarHelp.FindFirstItem;
+    if ItemFound then FArchFormat := UNKNOWN_FORMAT
+    else FArchFormat := V7_FORMAT;
 
     { while more data in Tar }
     while (FStream.Position < FStream.Size) and ItemFound do begin
@@ -2236,9 +2236,7 @@ var
   AttrEx         : TAbAttrExRec;
 begin
   if FArchReadOnly then
-  begin
     raise EAbTarBadOp.Create; { Archive is read only }
-  end;
 
   {init new archive stream}
   NewStream := TAbVirtualMemoryStream.Create;
