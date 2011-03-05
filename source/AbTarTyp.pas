@@ -239,7 +239,7 @@ type
     { Note: that the actual The name needs to be coherient with the name Inherited
             from parent type TAbArchiveItem }
     Name       : string;   { Path & File name. }
-    Mode       : LongInt;  { File Permissions }
+    Mode       : LongWord; { File Permissions }
     uid        : Integer;  { User ID }
     gid        : Integer;  { Group ID }
     Size       : int64;    { Tared File size }
@@ -324,6 +324,7 @@ type
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;       { Extended Headers }
     procedure SetLastModFileTime(const Value : Word); override;       { Extended Headers }
+    procedure SetLastModTimeAsDateTime(const Value: TDateTime); override;
     procedure SetUncompressedSize(const Value : Int64); override;     { Extended Headers }
 
     procedure SaveTarHeaderToStream(AStream : TStream);
@@ -430,17 +431,16 @@ type
 
     function GetItem(Index: Integer): TAbTarItem;
     procedure PutItem(Index: Integer; const Value: TAbTarItem);     
+
   public {methods}
-    constructor Create(const FileName : string; Mode : Word);
-      override;
-    destructor  Destroy;
+    constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
       override;
     property UnsupportedTypesDetected : Boolean
       read FArchReadOnly;
     property Items[Index : Integer] : TAbTarItem
       read GetItem
       write PutItem; default;                                       
- end;
+  end;
 
 function VerifyTar(Strm : TStream) : TAbArchiveType;
 
@@ -449,12 +449,12 @@ implementation
 
 uses
   {$IFDEF MSWINDOWS}
-  Windows,
+  Windows, // Fix inline warnings
   {$ENDIF MSWINDOWS}
   Math, RTLConsts, SysUtils, AbVMStrm, AbExcept;
 
 { ****************** Helper functions Not from Classes Above ***************** }
-function OctalToInt(const Oct : PAnsiChar; aLen : integer): Integer;
+function OctalToInt(const Oct : PAnsiChar; aLen : integer): Int64;
 var
   i : integer;
 begin
@@ -492,7 +492,7 @@ begin
   end;
 end;
 
-function IntToOctal(Value : Integer): AnsiString;
+function IntToOctal(Value : Int64): AnsiString;
 const
   OctDigits  : array[0..7] of AnsiChar = '01234567';
 begin
@@ -556,7 +556,7 @@ begin
   try
     { get current Tar Header }
     TarItem.LoadTarHeaderFromStream(Strm);
-    if TarItem.CheckSumGood or (TarItem.ItemType in [UNKNOWN_ITEM]) then
+    if TarItem.CheckSumGood then
       Result := atTar
     else
       Result := atUnknown;
@@ -712,11 +712,8 @@ begin
 end;
 
 function TAbTarItem.GetLastModTimeAsDateTime: TDateTime;
-var
-  UnixDate : Integer;
 begin
-  UnixDate := OctalToInt(FTarHeader.ModTime, sizeof(FTarHeader.ModTime));
-  Result := AbUnixTimeToDateTime(UnixDate);
+  Result := AbUnixTimeToDateTime(FTarItem.ModTime);
 end;
 
 function TAbTarItem.GetLinkName: string;
@@ -863,7 +860,13 @@ begin
   begin
     PHeader := FTarHeaderList.Items[FTarHeaderList.Count-1];
     case FTarItem.ArchiveFormat of
-      USTAR_FORMAT: FTarItem.Name := string(PHeader.ustar.Prefix+'/'+PHeader.Name);
+      USTAR_FORMAT:
+        begin
+          if PHeader.ustar.Prefix[0] = #0 then
+            FTarItem.Name := string(PHeader.Name)
+          else
+            FTarItem.Name := string(PHeader.ustar.Prefix+'/'+PHeader.Name);
+        end;
     else
       { V7_FORMAT, OLDGNU_FORMAT }
       { This is way it was before, No-Loss, No-Gain }
@@ -900,7 +903,7 @@ begin
       NameLength := OctalToInt64(PHeader.Size, SizeOf(PHeader.Size));
       NumMHeaders := Floor(NameLength / AB_TAR_RECORDSIZE);
       ExtraName := NameLength mod AB_TAR_RECORDSIZE; { Chars in the last Header }
-      { NumMHeasder should never be zero }
+      { NumMHeaders should never be zero }
       { It appears that it is not null terminated in the blocks }
       for J := 1 to NumMHeaders do
       begin
@@ -997,7 +1000,7 @@ var
 begin
   { Note: The SizeOf(TAbTarHeaderRec) = AB_TAR_RECORDSIZE }
   { We should expect FindNext/FirstItem, and next check for bounds. }
-  if FtarHeaderList.Count > 0 then
+  if FTarHeaderList.Count > 0 then
   begin { We're Going to stomp over the headers that are already present }
     { We need to destory the memory we've used }
     PTarHeader := nil;
@@ -1074,7 +1077,7 @@ begin
   begin
     ParseTarHeaders; { Update FTarItem values }
     FFileName := FTarItem.Name; {FTarHeader.Name;}
-    DiskFileName := FFileName;
+    FDiskFileName := FileName;
     AbUnfixName(FDiskFileName);
   end;
   Action := aaNone;
@@ -1099,9 +1102,7 @@ begin
     Exit;
   { Note: The SizeOf(TAbTarHeaderRec) = AB_TAR_RECORDSIZE }
   if FTarItem.Dirty then
-  begin
-    SkipNextChkSum := 0;
-  end
+    SkipNextChkSum := 0
   else
     SkipNextChkSum := FTarHeaderList.Count; { Don't recalc any chkSums }
 
@@ -1259,7 +1260,7 @@ begin
   NumHeaders := Floor((Length(Value)+1) / AB_TAR_RECORDSIZE); { Include Null terminator }
   ExtraName := (Length(Value)+1) mod AB_TAR_RECORDSIZE; { Chars in the last Header }
   { Now we have the number of headers set up, stuff the name in the Headers }
-  TempStr := Value;
+  TempStr := AnsiString(Value);
   for J := 1 to NumHeaders do
   begin
     { Copy entire next AB_TAR_RECORDSIZE bytes of tempString to content of Header }
@@ -1278,7 +1279,7 @@ begin
   end
   else { We already copied the entire name, but it must be null terminated }
   begin
-    FillChar(Pointer(Integer(PHeader)+AB_TAR_RECORDSIZE-1)^, 1, #0); { Zero rest of the block }
+    FillChar(Pointer(PtrInt(PHeader)+AB_TAR_RECORDSIZE-1)^, 1, #0); { Zero rest of the block }
   end;
 
   { Finally we need to stuff the file type Header. }
@@ -1329,7 +1330,7 @@ begin
   NumHeaders := Ceil((Length(Value)+1) / AB_TAR_RECORDSIZE); { Include Null terminator }
   ExtraName := (Length(Value)+1) mod AB_TAR_RECORDSIZE; { Chars in the last Header }
   { Now we have the number of headers set up, stuff the name in the Headers }
-  TempStr := Value;
+  TempStr := AnsiString(Value);
   for J := 1 to NumHeaders-1 do
   begin
     { Make a buffer, and copy entire next AB_TAR_RECORDSIZE bytes of tempStr to content of Header }
@@ -1353,7 +1354,7 @@ begin
   end
   else { We already copied the entire name, but it must be null terminated }
   begin
-    FillChar(Pointer(Integer(PHeader)+AB_TAR_RECORDSIZE-1)^, 1, #0); { Zero rest of the block }
+    FillChar(Pointer(PtrInt(PHeader)+AB_TAR_RECORDSIZE-1)^, 1, #0); { Zero rest of the block }
   end;
   { Finally we need to stuff the file type Header. }
   PHeader := FTarHeaderList.Items[FTarHeaderList.Count-1];
@@ -1494,7 +1495,7 @@ Add headers to length of new Name Length, update name in file header, update nam
     { Save off the new name and store to the Header }
     FTarItem.Name := Value;
     { Must add Null Termination before we store to Header }
-    StrPCopy(PTarHeader.Name, Value);
+    StrPCopy(PTarHeader.Name, AnsiString(Value));
   end;{ End else Short new name,... }
   { May have updated the Headers so point it back to the File type Header. }
   PTarHeader := FTarHeaderList.Items[FTarHeaderList.Count-1];
@@ -1529,7 +1530,7 @@ begin
     Exit;
   { GrpName is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
   FTarItem.GrpName := Value;
-  StrPLCopy(PTarHeader.GrpName, Value, SizeOf(PTarHeader.GrpName));
+  StrPLCopy(PTarHeader.GrpName, AnsiString(Value), SizeOf(PTarHeader.GrpName));
   FTarItem.Dirty := True;
 end;
 
@@ -1595,6 +1596,12 @@ begin
   TStr := PadString(IntToOctal(UT), SizeOf(Arr12));
   saveModDate(TStr);
   FTarItem.Dirty := True;
+end;
+
+procedure TAbTarItem.SetLastModTimeAsDateTime(const Value: TDateTime);
+begin
+  // TAR stores always Unix time.
+  Self.ModTime := AbDateTimeToUnixTime(Value);    // also updates headers
 end;
 
 procedure TAbTarItem.SetLinkFlag(Value: AnsiChar);
@@ -1698,7 +1705,7 @@ begin
     end; { End if GNU... }
     { Save off the new name and store to the Header }
     FTarItem.LinkName := Value;
-    StrPCopy(PTarHeader.LinkName, FTarItem.LinkName);
+    StrPCopy(PTarHeader.LinkName, AnsiString(FTarItem.LinkName));
   end;{ End else Short new name,... }
   { May have updated the Headers so point it back to the File type Header. }
   PTarHeader := FTarHeaderList.Items[FTarHeaderList.Count-1];
@@ -1709,7 +1716,7 @@ procedure TAbTarItem.SetMagic(const Value: String);
 begin
   if FTarItem.ItemReadOnly then { Read Only - Do Not Save }
     Exit;
-  FTarItem.Magic := Value;
+  FTarItem.Magic := AnsiString(Value);
   Move(Value[1], PTarHeader.Magic, SizeOf(TMagicRec));
   FTarItem.Dirty := True;
 end;
@@ -1750,7 +1757,7 @@ begin
     Exit;
   { UsrName is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
   FTarItem.UsrName := Value;
-  StrPLCopy(PTarHeader.UsrName, Value, SizeOf(PTarHeader.UsrName));
+  StrPLCopy(PTarHeader.UsrName, AnsiString(Value), SizeOf(PTarHeader.UsrName));
   FTarItem.Dirty := True;
 end;
 
@@ -1961,16 +1968,10 @@ end;
 
 
 { ***************************** TAbTarArchive ******************************** }
-constructor TAbTarArchive.Create(const FileName: string; Mode: Word);
+constructor TAbTarArchive.CreateFromStream(aStream : TStream; const aArchiveName : string);
 begin
-  inherited Create(FileName, Mode);
-  FArchReadOnly :=  False;
+  inherited;
   FArchFormat := V7_FORMAT;  // Default for new archives
-end;
-
-destructor TAbTarArchive.Destroy;
-begin
-  inherited Destroy;
 end;
 
 function TAbTarArchive.CreateItem(const FileSpec: string): TAbArchiveItem;
@@ -2291,7 +2292,7 @@ begin
                 { TODO: uid, gid, uname, gname are should be added here }
                 CurItem.ExternalFileAttributes := AttrEx.Mode;
                 CurItem.LastModTimeAsDateTime := AttrEx.Time;
-                CurItem.UncompressedSize := UncompressedStream.Size;
+                CurItem.UncompressedSize := TempStream.Size;
 
                 CurItem.StreamPosition := NewStream.Position;{ Reset the Stream Pointer. }
                 CurItem.SaveTarHeaderToStream(NewStream);
@@ -2320,13 +2321,14 @@ begin
       TMemoryStream(FStream).LoadFromStream(NewStream)
     else if (FStream is TAbVirtualMemoryStream) then begin
       FStream.Position := 0;
+      FStream.Size := 0;
       TAbVirtualMemoryStream(FStream).CopyFrom(NewStream, NewStream.Size)
     end
     else begin
       { need new stream to write }
-        FreeAndNil(FStream);
-        FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
-        FStream.CopyFrom(NewStream, NewStream.Size);
+      FreeAndNil(FStream);
+      FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
+      FStream.CopyFrom(NewStream, NewStream.Size);
     end;
 
     {update Items list}
