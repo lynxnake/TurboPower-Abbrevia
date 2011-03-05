@@ -117,11 +117,11 @@ type
   ArrName = array [0..AB_TAR_NAMESIZE-1] of AnsiChar;
   TAbTarHeaderFormat = (UNKNOWN_FORMAT, V7_FORMAT, OLDGNU_FORMAT, GNU_FORMAT,
                         USTAR_FORMAT, STAR_FORMAT, POSIX_FORMAT);
-  TarItemType = (SUPPORTED_ITEM, UNSUPPORTED_ITEM, UNKNOWN_ITEM);
-  HeaderType = (FILE_HEADER, META_DATA_HEADER, MD_DATA_HEADER, UNKNOWN_HEADER);
-  MagicType = (GNU_OLD, NORMAL);
-  TMagicRec = packed record
-    case MagicType of
+  TAbTarItemType = (SUPPORTED_ITEM, UNSUPPORTED_ITEM, UNKNOWN_ITEM);
+  TAbTarHeaderType = (FILE_HEADER, META_DATA_HEADER, MD_DATA_HEADER, UNKNOWN_HEADER);
+  TAbTarMagicType = (GNU_OLD, NORMAL);
+  TAbTarMagicRec = packed record
+    case TAbTarMagicType of
       GNU_OLD: (gnuOld : array[0..7] of AnsiChar); { Old GNU magic: (Magic.gnuOld) }
       NORMAL : (value  : array[0..5] of AnsiChar;  {   Magic value: (Magic.value)}
                 version: array[0..1] of AnsiChar); {       Version: (Magic.version) }
@@ -219,7 +219,8 @@ type
     ChkSum  : Arr8;     { 148-155, $ 94- 9B, checksum of header (6 bytes ASCII coded Octal, #00, #20) }
     LinkFlag: AnsiChar; {     156, $     9C, type of item, one of the Link Flag constants from above }
     LinkName: ArrName;  { 157-256, $ 9D-100, name of link, null terminated ASCII string }
-    Magic   : TMagicRec;{ 257-264, $101-108, identifier, usually 'ustar'#00'00' }
+    Magic   : TAbTarMagicRec;
+                        { 257-264, $101-108, identifier, usually 'ustar'#00'00' }
     UsrName : array [0..AB_TAR_TUSRNAMELEN-1] of AnsiChar;
                         { 265-296, $109-128, username, null terminated ASCII string }
     GrpName : array [0..AB_TAR_TGRPNAMELEN-1] of AnsiChar;
@@ -249,7 +250,7 @@ type
     ModTime    : Int64;    { Last time of Modification, in UnixTime }
     ChkSumPass : Boolean;  { Header Check sum found to be good }
     LinkFlag   : AnsiChar; { Link Flag, Echos the actual File Type of this Item. }
-    ItemType   : TarItemType; { Item Type Assigned from LinkFlag Header Types. }
+    ItemType   : TAbTarItemType; { Item Type Assigned from LinkFlag Header Types. }
     LinkName   : string;   { Link Name }
     Magic      : AnsiString;   { Magic value }
     Version    : Integer;  { Version Number }
@@ -276,7 +277,6 @@ type
     procedure DetectHeaderFormat; { Helper to stuff HeaderFormat }
     procedure GetFileNameFromHeaders; { Helper to pull name from Headers }
     procedure GetLinkNameFromHeaders; { Helper to pull name from Headers }
-    procedure SaveModDate(UnixTime: AnsiString);
     function  TestCheckSum: Boolean;  { Helper to Calculate Checksum of a header. }
     procedure DoGNUExistingLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: AnsiString);
     procedure DoGNUNewLongNameLink(LinkFlag: AnsiChar; I: Integer; const Value: AnsiString);
@@ -374,7 +374,7 @@ type
     property ExternalFileAttributes;
     property ArchiveFormat: TAbTarHeaderFormat
       read FTarItem.ArchiveFormat write FTarItem.ArchiveFormat;
-    property ItemType:  TarItemType
+    property ItemType: TAbTarItemType
       read FTarItem.ItemType write FTarItem.ItemType;
     property ItemReadOnly:  Boolean
       read FTarItem.ItemReadOnly write FTarItem.ItemReadOnly;
@@ -728,19 +728,18 @@ begin
   if FTarItem.ArchiveFormat <> UNKNOWN_FORMAT then
     Exit;{ We have already set the format. }
   { In the previous header parsing if pax headers are detected the format is changed }
-  { Also if gnu headers it is defined as a GNU format. }
+  { GNU_FORMAT is detected by the presence of GNU extended headers. }
 
-  { The final index is the Item index that is the header we parse for now }
-  { These Detections are referenced from the GNU Tar. }
-  if(PTarHeader.Magic.value = AB_TAR_MAGIC_VAL) then
+  { These detections are similar to GNU tar's. }
+  if (PTarHeader.Magic.value = AB_TAR_MAGIC_VAL) then
   begin { We have one of three types, STAR_FORMAT, USTAR_FORMAT, POSIX_FORMAT }
-    { This compare is ported from the GNU Tar: Comment out for now... }
-{    if(PTarHeader.star.Prefix[130] = #00) and
-      (PTarHeader.star.Atime[0] in ['0'..'7']) and
-      (PTarHeader.star.Atime[11] = #20) and
-      (PTarHeader.star.Ctime[0]in ['0'..'7']) and
-      (PTarHeader.star.Ctime[11] = #20) then
-      begin
+    { Detect STAR format.  Leave disabled until explicit STAR support is added. }
+    {if (PTarHeader.star.Prefix[130] = #00) and
+       (PTarHeader.star.Atime[0] in ['0'..'7']) and
+       (PTarHeader.star.Atime[11] = #20) and
+       (PTarHeader.star.Ctime[0]in ['0'..'7']) and
+       (PTarHeader.star.Ctime[11] = #20) then
+    begin
       FTarItme.ArchiveType := STAR_FORMAT;
     end }
     { else if } { POSIX uses the existance of x headers }
@@ -889,7 +888,7 @@ begin
   { Check sums are in valid headers but NOT in the data headers. }
   for I := 0 to FTarHeaderList.Count - 1 do
   begin
-    if HeaderType(FTarHeaderTypeList.Items[I]) in [FILE_HEADER, META_DATA_HEADER] then
+    if TAbTarHeaderType(FTarHeaderTypeList.Items[I]) in [FILE_HEADER, META_DATA_HEADER] then
     begin
       PHeader := FTarHeaderList.Items[i];
       { Save off old Check sum }
@@ -1146,7 +1145,7 @@ begin
   FTarItem.Mode := Value;
   S := PadString(IntToOctal(Value), SizeOf(Arr8));
   for I := 0 to FTarHeaderList.Count - 1 do
-    if HeaderType(FTarHeaderTypeList.Items[I]) in [FILE_HEADER, META_DATA_HEADER] then
+    if TAbTarHeaderType(FTarHeaderTypeList.Items[I]) in [FILE_HEADER, META_DATA_HEADER] then
       Move(S[1], PAbTarHeaderRec(FTarHeaderList.Items[I]).Mode, Length(S));
   FTarItem.Dirty := True;
 end;
@@ -1462,24 +1461,11 @@ begin
   { do nothing, TAR has no native encryption }
 end;
 
-procedure TAbTarItem.SaveModDate(UnixTime: AnsiString);
-var
-  I: Integer;
-begin
-  { ModTime is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
-  for I := 0 to FTarHeaderList.Count - 1 do
-    if HeaderType(FTarHeaderTypeList.Items[I]) in [FILE_HEADER, META_DATA_HEADER] then
-      Move(UnixTime[1], PAbTarHeaderRec(FTarHeaderList.Items[I]).ModTime, Length(UnixTime));
-end;
-
 procedure TAbTarItem.SetLastModFileDate(const Value: Word);
 var
   D : TDateTime;
   UT : LongInt;
-  DStr : AnsiString;
 begin
-  if FTarItem.ItemReadOnly then { Read Only - Do Not Save }
-    Exit;
   { ModTime is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
   { keep seconds in current day, discard date's seconds }
   UT := FTarItem.ModTime mod SecondsInDay;
@@ -1489,22 +1475,15 @@ begin
 
   { add to unix second count }
   UT := UT  + AbDateTimeToUnixTime(D);
-  FTarItem.ModTime := UT;
 
-  { store octal string }
-  DStr := PadString(IntToOctal(UT), SizeOf(Arr12));
-  saveModDate(DStr);
-  FTarItem.Dirty := True;
+  SetModTime(UT);
 end;
 
 procedure TAbTarItem.SetLastModFileTime(const Value: Word);
 var
   T : TDateTime;
   UT : LongInt;
-  TStr : AnsiString;
 begin
-  if FTarItem.ItemReadOnly then { Read Only - Do Not Save }
-    Exit;
   { ModTime is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
   { keep seconds in current date, discard day's seconds }
   UT := FTarItem.ModTime - (FTarItem.ModTime mod SecondsInDay);
@@ -1514,17 +1493,14 @@ begin
 
   { add to unix second count }
   UT := UT + AbDateTimeToUnixTime(T);
-  FTarItem.ModTime := UT;
-  { store octal string }
-  TStr := PadString(IntToOctal(UT), SizeOf(Arr12));
-  saveModDate(TStr);
-  FTarItem.Dirty := True;
+
+  SetModTime(UT);
 end;
 
 procedure TAbTarItem.SetLastModTimeAsDateTime(const Value: TDateTime);
 begin
   // TAR stores always Unix time.
-  Self.ModTime := AbDateTimeToUnixTime(Value);    // also updates headers
+  SetModTime(AbDateTimeToUnixTime(Value));    // also updates headers
 end;
 
 procedure TAbTarItem.SetLinkFlag(Value: AnsiChar);
@@ -1638,7 +1614,7 @@ begin
   if FTarItem.ItemReadOnly then { Read Only - Do Not Save }
     Exit;
   FTarItem.Magic := AnsiString(Value);
-  Move(Value[1], PTarHeader.Magic, SizeOf(TMagicRec));
+  Move(Value[1], PTarHeader.Magic, SizeOf(TAbTarMagicRec));
   FTarItem.Dirty := True;
 end;
 
@@ -1735,9 +1711,8 @@ begin
   FCurrItemSize := 0;
   FCurrItemPreHdrs := 0;
   DataRead := FStream.Read(FTarHeader, AB_TAR_RECORDSIZE); { Read in a header }
-  { Note: DataRead <> AB_TAR_RECORDSIZE means end of stream, The original version
-          of FindNextItem calls out to (StrLen(Header.Name) > 0), We shall leave
-          this first order validity check in place }
+  { DataRead <> AB_TAR_RECORDSIZE means end of stream, and the End Of Archive
+    record is all #0's, which the StrLen(FTarHeader.Name) check will catch }
   while (DataRead = AB_TAR_RECORDSIZE) and (StrLen(FTarHeader.Name) > 0) and not FoundItem do
   begin { Either exit when we find a supported file or end of file or an invalid header name. }
     if FTarHeader.LinkFlag in (AB_SUPPORTED_MD_HEADERS+AB_UNSUPPORTED_MD_HEADERS) then
