@@ -391,7 +391,7 @@ type
 
   TAbTarStreamHelper = class(TAbArchiveStreamHelper)
   private
-    function FindItem(FindFirst: Boolean): Boolean; { Tool for FindFirst/NextItem functions }
+    function FindItem: Boolean; { Tool for FindFirst/NextItem functions }
   protected
     FTarHeader      : TAbTarHeaderRec; { Speed-up Buffer only }
     FCurrItemSize   : Int64;           { Current Item size }
@@ -1689,7 +1689,7 @@ begin
 end;
 
 { This function Should only be used from LoadArchive, as it is slow. }
-function TAbTarStreamHelper.FindItem(FindFirst: Boolean): Boolean;
+function TAbTarStreamHelper.FindItem: Boolean;
 var
   DataRead : LongInt;
   FoundItem: Boolean;
@@ -1698,15 +1698,6 @@ begin
   { Note: The SizeOf(TAbTarHeaderRec) = AB_TAR_RECORDSIZE }
   { Note: Standard LBA size of hard disks is 512 bytes = AB_TAR_RECORDSIZE }
   FoundItem := False;
-  if FindFirst then
-  begin { Called from FindFirstItem() }
-    FStream.Seek(0, soFromBeginning);
-  end
-  else { FindFirst = False }
-  begin
-    { Fast Forward Past the current Item }
-    FStream.Seek((FCurrItemPreHdrs*AB_TAR_RECORDSIZE + RoundToTarBlock(FCurrItemSize)), soFromCurrent);
-  end;
   { Getting an new Item reset these numbers }
   FCurrItemSize := 0;
   FCurrItemPreHdrs := 0;
@@ -1752,13 +1743,16 @@ end;
 { Should only be used from LoadArchive, as it is slow. }
 function TAbTarStreamHelper.FindFirstItem: Boolean;
 begin
-   Result := FindItem(True); { FindFirst = True }
+  FStream.Seek(0, soFromBeginning);
+  Result := FindItem;
 end;
 
 { Should only be used from LoadArchive, as it is slow. }
 function TAbTarStreamHelper.FindNextItem: Boolean;
 begin
-   Result := FindItem(False); { FindFirst = False }
+  { Fast Forward Past the current Item }
+  FStream.Seek((FCurrItemPreHdrs*AB_TAR_RECORDSIZE + RoundToTarBlock(FCurrItemSize)), soFromCurrent);
+  Result := FindItem;
 end;
 
 { This is slow, use the archive class instead }
