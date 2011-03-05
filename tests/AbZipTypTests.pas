@@ -30,29 +30,26 @@
 interface
 
 uses
-  Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbUtils, AbZipTyp;
+  Classes, TestFrameWork, AbTestFrameWork, AbArcTypTests, AbArcTyp, AbUtils, AbZipTyp;
 
 type
-  TAbZipArchiveTests = class(TAbTestCase)
+  TAbZipArchiveTests = class(TAbArchiveTests)
   private
     class function DecompressSuite(const aDir: string): ITestSuite;
 
   protected
-    procedure SetUp; override;
-    procedure TearDown; override;
+    class function ArchiveClass: TAbArchiveClass; override;
+    class function ArchiveExt: string; override;
+    class function ArchiveType: TAbArchiveType; override;
+    class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
 
   public
     class function Suite: ITestSuite; override;
-
-  published
-    procedure TestVerifyZip;
   end;
 
   TAbZipDecompressTest = class(TAbTestCase)
   private
     FFileName: string;
-    procedure ExtractHelper(Sender : TObject; Item : TAbArchiveItem;
-      const NewName : string);
     procedure ItemFailure(Sender : TObject; Item : TAbArchiveItem;
       ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
       ErrorCode : Integer);
@@ -67,10 +64,6 @@ type
     FMethod: TAbZipSupportedMethod;
     FPassword: AnsiString;
     FSourceDir: string;
-    procedure ExtractHelper(Sender : TObject; Item : TAbArchiveItem;
-      const NewName : string);
-    procedure InsertHelper(Sender : TObject; Item : TAbArchiveItem;
-      OutStream : TStream);
   public
     constructor Create(const aTestName, aSourceDir: string;
       aMethod: TAbZipSupportedMethod; const aPassword: AnsiString); reintroduce;
@@ -82,6 +75,60 @@ implementation
 
 uses
   SysUtils, AbConst, AbUnzPrc, AbZipPrc;
+
+{----------------------------------------------------------------------------}
+{ TAbZipArchive with Extract/Insert helpers }
+{----------------------------------------------------------------------------}
+
+type
+  TAbZipArchive = class(AbZipTyp.TAbZipArchive)
+  private
+    procedure DoExtractHelper(Sender : TObject; Item : TAbArchiveItem;
+      const NewName : string);
+    procedure DoExtractToStreamHelper(Sender : TObject; Item : TAbArchiveItem;
+      OutStream : TStream);
+    procedure DoInsertHelper(Sender : TObject; Item : TAbArchiveItem;
+      OutStream : TStream);
+    procedure DoInsertFromStreamHelper(Sender : TObject; Item : TAbArchiveItem;
+      OutStream, InStream : TStream);
+  public {methods}
+    constructor CreateFromStream( aStream : TStream; const ArchiveName : string );
+      override;
+  end;
+
+constructor TAbZipArchive.CreateFromStream( aStream : TStream;
+  const ArchiveName : string );
+begin
+  inherited;
+  ExtractHelper := DoExtractHelper;
+  ExtractToStreamHelper := DoExtractToStreamHelper;
+  InsertHelper := DoInsertHelper;
+  InsertFromStreamHelper := DoInsertFromStreamHelper;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZipArchive.DoExtractHelper(Sender : TObject;
+  Item : TAbArchiveItem; const NewName : string);
+begin
+  AbUnzip(Sender, TAbZipItem(Item), NewName);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZipArchive.DoExtractToStreamHelper(Sender : TObject;
+  Item : TAbArchiveItem; OutStream : TStream);
+begin
+  AbUnzipToStream(Sender, TAbZipItem(Item), OutStream);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZipArchive.DoInsertHelper(Sender : TObject;
+  Item : TAbArchiveItem; OutStream : TStream);
+begin
+  AbZip(TAbZipArchive(Sender), TAbZipItem(Item), OutStream);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZipArchive.DoInsertFromStreamHelper(Sender : TObject;
+  Item : TAbArchiveItem; OutStream, InStream : TStream);
+begin
+  AbZipFromStream(TAbZipArchive(Sender), TAbZipItem(Item), OutStream, InStream);
+end;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchiveTests }
@@ -139,32 +186,24 @@ begin
   {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchiveTests.SetUp;
+class function TAbZipArchiveTests.ArchiveClass: TAbArchiveClass;
 begin
-  inherited;
+  Result := TAbZipArchive;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchiveTests.TearDown;
+class function TAbZipArchiveTests.ArchiveExt: string;
 begin
-  inherited;
+  Result := '.zip';
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipArchiveTests.TestVerifyZip;
-var
-  FS: TFileStream;
+class function TAbZipArchiveTests.ArchiveType: TAbArchiveType;
 begin
-  FS := TFileStream.Create(MPLDir + 'MPL.zip', fmOpenRead or fmShareDenyNone);
-  try
-    Check(VerifyZip(FS) = atZip, 'VerifyZip failed on valid ZIP');
-  finally
-    FS.Free;
-  end;
-  FS := TFileStream.Create(MPLDir + 'MPL.cab', fmOpenRead or fmShareDenyNone);
-  try
-    Check(VerifyZip(FS) = atUnknown, 'VerifyZip succeeded on CAB');
-  finally
-    FS.Free;
-  end;
+  Result := atZip;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbZipArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
+begin
+  Result := VerifyZip(aStream);
 end;
 
 {----------------------------------------------------------------------------}
@@ -175,12 +214,6 @@ begin
   inherited Create('TestDecompress');
   FTestName := ChangeFileExt(ExtractFileName(aFileName), '');
   FFileName := aFileName;
-end;
-{----------------------------------------------------------------------------}
-procedure TAbZipDecompressTest.ExtractHelper(Sender : TObject;
-  Item : TAbArchiveItem; const NewName : string);
-begin
-  AbUnzip(Sender, TAbZipItem(Item), NewName);
 end;
 {----------------------------------------------------------------------------}
 procedure TAbZipDecompressTest.ItemFailure(Sender : TObject;
@@ -198,7 +231,6 @@ begin
   Zip := TAbZipArchive.Create(FFileName, fmOpenRead or fmShareDenyNone);
   try
     Zip.OnProcessItemFailure := ItemFailure;
-    Zip.ExtractHelper := ExtractHelper;
     Zip.BaseDirectory := TestTempDir;
     Zip.Password := 'password';
     Zip.Load;
@@ -222,18 +254,6 @@ begin
   FPassword := aPassword;
 end;
 {----------------------------------------------------------------------------}
-procedure TAbZipCompressTest.ExtractHelper(Sender : TObject;
-  Item : TAbArchiveItem; const NewName : string);
-begin
-  AbUnzip(Sender, TAbZipItem(Item), NewName);
-end;
-{----------------------------------------------------------------------------}
-procedure TAbZipCompressTest.InsertHelper(Sender : TObject;
-  Item : TAbArchiveItem; OutStream : TStream);
-begin
-  AbZip(TAbZipArchive(Sender), TAbZipItem(Item), OutStream);
-end;
-{----------------------------------------------------------------------------}
 procedure TAbZipCompressTest.TestCompress;
 var
   Zip: TAbZipArchive;
@@ -242,7 +262,6 @@ begin
   Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmCreate);
   try
     Zip.CompressionMethodToUse := FMethod;
-    Zip.InsertHelper := InsertHelper;
     Zip.BaseDirectory := FSourceDir;
     Zip.Password := FPassword;
     Zip.AddFiles('*', faAnyFile);
@@ -254,7 +273,6 @@ begin
   CreateDir(TargetDir);
   Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmOpenRead or fmShareDenyNone);
   try
-    Zip.ExtractHelper := ExtractHelper;
     Zip.BaseDirectory := TargetDir;
     Zip.Password := FPassword;
     Zip.Load;
