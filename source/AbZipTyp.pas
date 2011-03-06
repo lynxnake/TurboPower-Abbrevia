@@ -615,39 +615,34 @@ var
 begin
   StartPos := Strm.Position;
   Result := atUnknown;
+  try
+    Strm.Position := 0;
+    Strm.Read(Sig, SizeOf(LongInt));                                   {!!.02}
+    if (Sig = Ab_ZipSpannedSetSignature) then                          {!!.02}
+      Result := atSpannedZip                                           {!!.02}
+    else begin                                                         {!!.02}
 
-  Strm.Position := 0;                                                {!!.02}
-  Strm.Read(Sig, SizeOf(LongInt));                                   {!!.02}
-  if (Sig = Ab_ZipSpannedSetSignature) then                          {!!.02}
-    Result := atSpannedZip                                           {!!.02}
-  else begin                                                         {!!.02}
-
-    { attempt to find Central Directory Tail }
-    TailPosition := FindCentralDirectoryTail( Strm );
-    if TailPosition <> -1 then begin
-      { check Central Directory Signature }
-      Footer := TAbZipDirectoryFileFooter.Create;
-      try
-        Footer.LoadFromStream(Strm);
-        if Footer.FSignature = AB_ZipCentralDirectoryTailSignature then
-          if Footer.DiskNumber = 0 then
-            Result := atZip
-          else
-            Result := atSpannedZip;
-      finally
-        Footer.Free;
-      end;
-    end
-(* {!!.02}
-  else begin  { may be a span }                                          {!!.01}
-    Strm.Seek(0, soBeginning);                                           {!!.01}
-    Strm.Read(Sig, SizeOf(LongInt));                                     {!!.01}
-    if (Sig = Ab_ZipSpannedSetSignature)                                 {!!.01}
-      or (Sig = Ab_ZipPossiblySpannedSignature)                          {!!.01}
-    then                                                                 {!!.01}
-      Result := atSpannedZip;                                            {!!.01}
-*) {!!.02}
-  end;                                                                   {!!.01}
+      { attempt to find Central Directory Tail }
+      TailPosition := FindCentralDirectoryTail( Strm );
+      if TailPosition <> -1 then begin
+        { check Central Directory Signature }
+        Footer := TAbZipDirectoryFileFooter.Create;
+        try
+          Footer.LoadFromStream(Strm);
+          if Footer.FSignature = AB_ZipCentralDirectoryTailSignature then
+            if Footer.DiskNumber = 0 then
+              Result := atZip
+            else
+              Result := atSpannedZip;
+        finally
+          Footer.Free;
+        end;
+      end
+    end;                                                                   {!!.01}
+  except
+    on EReadError do
+      Result := atUnknown;
+  end;
   Strm.Position := StartPos;
 end;
 

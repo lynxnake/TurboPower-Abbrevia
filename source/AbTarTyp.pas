@@ -516,18 +516,23 @@ var
   StartPos : Int64;
 begin
   StartPos := Strm.Position;
-  { Verifies that the header checksum is valid, and Item type is understood.
-    This does not mean that extraction is supported. }
-  TarItem := TAbTarItem.Create;
   try
-    { get current Tar Header }
-    TarItem.LoadTarHeaderFromStream(Strm);
-    if TarItem.CheckSumGood then
-      Result := atTar
-    else
+    { Verifies that the header checksum is valid, and Item type is understood.
+      This does not mean that extraction is supported. }
+    TarItem := TAbTarItem.Create;
+    try
+      { get current Tar Header }
+      TarItem.LoadTarHeaderFromStream(Strm);
+      if TarItem.CheckSumGood then
+        Result := atTar
+      else
+        Result := atUnknown;
+    finally
+      TarItem.Free;
+    end;
+  except
+    on EReadError do
       Result := atUnknown;
-  finally
-    TarItem.Free;
   end;
   Strm.Position := StartPos;
 end;
