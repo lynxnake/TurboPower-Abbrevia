@@ -33,11 +33,12 @@ uses
   Classes, TestFrameWork, AbTestFrameWork, AbArcTypTests, AbArcTyp, AbUtils, AbZipTyp;
 
 type
-  TAbZipArchiveTests = class(TAbArchiveTests)
+  TAbZipArchiveTests = class(TAbArchiveMultiFileTests)
   private
     class function DecompressSuite(const aDir: string): ITestSuite;
 
   protected
+    class procedure AddCanterburyTests(aSuite: ITestSuite); override;
     class function ArchiveClass: TAbArchiveClass; override;
     class function ArchiveExt: string; override;
     class function ArchiveType: TAbArchiveType; override;
@@ -47,28 +48,23 @@ type
     class function Suite: ITestSuite; override;
   end;
 
-  TAbZipDecompressTest = class(TAbTestCase)
-  private
-    FFileName: string;
-    procedure ItemFailure(Sender : TObject; Item : TAbArchiveItem;
-      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
-      ErrorCode : Integer);
-  public
-    constructor Create(const aFileName: string); reintroduce;
-  published
-    procedure TestDecompress;
+  TAbZipDecompressTest = class(TAbArchiveDecompressTest)
+  protected
+    function CreateArchive(const aFileName: string; aMode : Word): TAbArchive;
+      override;
   end;
 
-  TAbZipCompressTest = class(TAbTestCase)
+  TAbZipCompressTest = class(TAbArchiveCompressTest)
   private
     FMethod: TAbZipSupportedMethod;
     FPassword: AnsiString;
-    FSourceDir: string;
+  protected
+    function CreateArchive(const aFileName: string; aMode : Word): TAbArchive;
+      override;
   public
-    constructor Create(const aTestName, aSourceDir: string;
-      aMethod: TAbZipSupportedMethod; const aPassword: AnsiString); reintroduce;
-  published
-    procedure TestCompress;
+    constructor Create(aParent: TAbArchiveTestsClass;
+      const aTestName, aSourceDir: string; aMethod: TAbZipSupportedMethod;
+      const aPassword: AnsiString); reintroduce;
   end;
 
 implementation
@@ -143,7 +139,8 @@ begin
   if FindFirst(aDir + PathDelim + '*.zip', faAnyFile, SR) = 0 then
     try
       repeat
-        Result.AddTest(TAbZipDecompressTest.Create(Dir + PathDelim + SR.Name));
+        Result.AddTest(TAbZipDecompressTest.Create(Self,
+          ChangeFileExt(SR.Name, ''), Dir + PathDelim + SR.Name));
       until FindNext(SR) <> 0;
     finally
       FindClose(SR);
@@ -151,39 +148,35 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 class function TAbZipArchiveTests.Suite: ITestSuite;
-var
-  CompressSuite: ITestSuite;
-  {$IFDEF UnzipWavPackSupport}
-  TestCase: TAbZipDecompressTest;
-  {$ENDIF}
 begin
   Result := inherited Suite;
-  // Test compression/decompression of Unicode filenames
+  // Test decompression of Unicode filenames
   Result.AddSuite(DecompressSuite(TestFileDir + 'Unicode'));
-  Result.AddTest(
-    TAbZipCompressTest.Create('Compress Unicode',
-      TestFileDir + 'Unicode' + PathDelim + 'source', smStored, ''));
-
-  // Test compression/decompression of Canterbury corpus
-  Result.AddSuite(DecompressSuite(CanterburyDir));
-  CompressSuite := TTestSuite.Create('Compress Canterbury');
-  CompressSuite.AddTest(
-    TAbZipCompressTest.Create('Store', CanterburySourceDir, smStored, ''));
-  CompressSuite.AddTest(
-    TAbZipCompressTest.Create('Deflate', CanterburySourceDir, smDeflated, ''));
-  CompressSuite.AddTest(
-    TAbZipCompressTest.Create('StoreP', CanterburySourceDir, smStored, 'password'));
-  CompressSuite.AddTest(
-    TAbZipCompressTest.Create('DeflateP', CanterburySourceDir, smDeflated, 'password'));
-  Result.AddSuite(CompressSuite);
 
   {$IFDEF UnzipWavPackSupport}
   // Test decompressiong of .wav files
-  TestCase := TAbZipDecompressTest.Create(
-    TestFileDir + 'WavPack' + PathDelim + 'wavpack.zip');
-  TestCase.FTestName := 'Decompress WavPack';
-  Result.AddTest(TestCase);
+  Result.AddTest(
+    TAbZipDecompressTest.Create(Self, 'Decompress WavPack',
+      TestFileDir + 'WavPack' + PathDelim + 'wavpack.zip'));
   {$ENDIF}
+end;
+{ -------------------------------------------------------------------------- }
+class procedure TAbZipArchiveTests.AddCanterburyTests(aSuite: ITestSuite);
+var
+  CompressSuite: ITestSuite;
+begin
+  aSuite.AddSuite(DecompressSuite(CanterburyDir));
+
+  CompressSuite := TTestSuite.Create('Compress Canterbury');
+  CompressSuite.AddTest(
+    TAbZipCompressTest.Create(Self, 'Store', CanterburySourceDir, smStored, ''));
+  CompressSuite.AddTest(
+    TAbZipCompressTest.Create(Self, 'Deflate', CanterburySourceDir, smDeflated, ''));
+  CompressSuite.AddTest(
+    TAbZipCompressTest.Create(Self, 'StoreP', CanterburySourceDir, smStored, 'password'));
+  CompressSuite.AddTest(
+    TAbZipCompressTest.Create(Self, 'DeflateP', CanterburySourceDir, smDeflated, 'password'));
+  aSuite.AddSuite(CompressSuite);
 end;
 { -------------------------------------------------------------------------- }
 class function TAbZipArchiveTests.ArchiveClass: TAbArchiveClass;
@@ -209,78 +202,31 @@ end;
 {----------------------------------------------------------------------------}
 { TAbZipDecompressTest }
 {----------------------------------------------------------------------------}
-constructor TAbZipDecompressTest.Create(const aFileName: string);
+function TAbZipDecompressTest.CreateArchive(const aFileName: string;
+  aMode : Word): TAbArchive;
 begin
-  inherited Create('TestDecompress');
-  FTestName := ChangeFileExt(ExtractFileName(aFileName), '');
-  FFileName := aFileName;
-end;
-{----------------------------------------------------------------------------}
-procedure TAbZipDecompressTest.ItemFailure(Sender : TObject;
-  Item : TAbArchiveItem; ProcessType : TAbProcessType;
-  ErrorClass : TAbErrorClass; ErrorCode : Integer);
-begin
-  if ErrorClass = ecAbbrevia then
-    Fail('Extract failed: ' + AbStrRes(ErrorCode));
-end;
-{----------------------------------------------------------------------------}
-procedure TAbZipDecompressTest.TestDecompress;
-var
-  Zip: TAbZipArchive;
-begin
-  Zip := TAbZipArchive.Create(FFileName, fmOpenRead or fmShareDenyNone);
-  try
-    Zip.OnProcessItemFailure := ItemFailure;
-    Zip.BaseDirectory := TestTempDir;
-    Zip.Password := 'password';
-    Zip.Load;
-    Zip.ExtractFiles('*');
-  finally
-    Zip.Free;
-  end;
-  CheckDirMatch(ExtractFilePath(FFileName) + 'source', TestTempDir);
+  Result := inherited CreateArchive(aFileName, aMode);
+  (Result as TAbZipArchive).Password := 'password';
 end;
 
 {----------------------------------------------------------------------------}
 { TAbZipCompressTest }
 {----------------------------------------------------------------------------}
-constructor TAbZipCompressTest.Create(const aTestName, aSourceDir: string;
-  aMethod: TAbZipSupportedMethod; const aPassword: AnsiString);
+constructor TAbZipCompressTest.Create(aParent: TAbArchiveTestsClass;
+  const aTestName, aSourceDir: string; aMethod: TAbZipSupportedMethod;
+  const aPassword: AnsiString);
 begin
-  inherited Create('TestCompress');
-  FTestName := aTestName;
-  FSourceDir := aSourceDir;
+  inherited Create(aParent, aTestName, aSourceDir);
   FMethod := aMethod;
   FPassword := aPassword;
 end;
 {----------------------------------------------------------------------------}
-procedure TAbZipCompressTest.TestCompress;
-var
-  Zip: TAbZipArchive;
-  TargetDir: string;
+function TAbZipCompressTest.CreateArchive(const aFileName: string;
+  aMode : Word): TAbArchive;
 begin
-  Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmCreate);
-  try
-    Zip.CompressionMethodToUse := FMethod;
-    Zip.BaseDirectory := FSourceDir;
-    Zip.Password := FPassword;
-    Zip.AddFiles('*', faAnyFile);
-    Zip.Save;
-  finally
-    Zip.Free;
-  end;
-  TargetDir := TestTempDir + 'test';
-  CreateDir(TargetDir);
-  Zip := TAbZipArchive.Create(TestTempDir + 'test.zip', fmOpenRead or fmShareDenyNone);
-  try
-    Zip.BaseDirectory := TargetDir;
-    Zip.Password := FPassword;
-    Zip.Load;
-    Zip.ExtractFiles('*');
-  finally
-    Zip.Free;
-  end;
-  CheckDirMatch(FSourceDir, TargetDir);
+  Result := inherited CreateArchive(aFileName, aMode);
+  (Result as TAbZipArchive).CompressionMethodToUse := FMethod;
+  (Result as TAbZipArchive).Password := FPassword;
 end;
 {----------------------------------------------------------------------------}
 

@@ -156,6 +156,7 @@ begin
       Inc(j);
     end
     else begin
+      CheckEquals(d1[i].Size, d2[j].Size, d1[i].Name + 'sizes do not match');
       if (d1[i].Size > 0) or (d2[j].Size > 0) then
         CheckFilesMatch(AbAddBackSlash(aDir1) + d1[i].Name, AbAddBackSlash(aDir2) + d2[i].Name,
           d1[i].Name + ' does not match');

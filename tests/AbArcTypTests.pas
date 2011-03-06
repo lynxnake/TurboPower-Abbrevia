@@ -33,7 +33,7 @@
 interface
 
 uses
-  Classes, AbTestFrameWork, AbArcTyp, AbUtils;
+  Classes, TestFrameWork, AbTestFrameWork, AbArcTyp, AbUtils;
 
 type
   TAbArchiveListTests = class(TAbTestCase)
@@ -52,9 +52,9 @@ type
   protected
     procedure SetUp; override;
     procedure TearDown; override;
-    function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
+    class function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
       overload; virtual;
-    function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
+    class function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
       overload; virtual;
     class function ArchiveClass: TAbArchiveClass; virtual; abstract;
     class function ArchiveExt: string; virtual; abstract;
@@ -67,21 +67,53 @@ type
     procedure TestAddFromStream;
     procedure TestVerify;
   end;
+  TAbArchiveTestsClass = class of TAbArchiveTests;
 
   TAbArchiveMultiFileTests = class(TAbArchiveTests)
-  private
-    procedure TestCompressDir(const aSourceDir: string);
-  published
-    procedure TestCompressCanterbury;
-    {$IFDEF UNICODE}
-    procedure TestCompressUnicode;
-    {$ENDIF}
+  protected
+    class procedure AddCanterburyTests(aSuite: ITestSuite); virtual;
+  public
+    class function Suite: ITestSuite; override;
   end;
+
+  TAbArchiveTestCase = class(TAbTestCase)
+  protected
+    FParent: TAbArchiveTestsClass;
+    function CreateArchive(const aFileName: string; aMode : Word): TAbArchive;
+      virtual;
+    procedure ItemFailure(Sender : TObject; Item : TAbArchiveItem;
+      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
+      ErrorCode : Integer);
+  public
+    constructor Create(aParent: TAbArchiveTestsClass;
+      const aTestName: string); reintroduce;
+  end;
+
+  TAbArchiveDecompressTest = class(TAbArchiveTestCase)
+  private
+    FFileName: string;
+  public
+    constructor Create(aParent: TAbArchiveTestsClass;
+      const aTestName, aFileName: string); reintroduce;
+  published
+    procedure Execute;
+  end;
+
+  TAbArchiveCompressTest = class(TAbArchiveTestCase)
+  private
+    FSourceDir: string;
+  public
+    constructor Create(aParent: TAbArchiveTestsClass;
+      const aTestName, aSourceDir: string); reintroduce;
+  published
+    procedure Execute;
+  end;
+
 
 implementation
 
 uses
-  SysUtils, TestFrameWork;
+  SysUtils, AbConst;
 
 {----------------------------------------------------------------------------}
 { TAbArchiveListTests }
@@ -128,13 +160,13 @@ end;
 {----------------------------------------------------------------------------}
 { TAbArchiveTests }
 {----------------------------------------------------------------------------}
-function TAbArchiveTests.CreateArchive(const aFileName : string;
+class function TAbArchiveTests.CreateArchive(const aFileName : string;
   aMode : Word): TAbArchive;
 begin
   Result := ArchiveClass.Create(aFileName, aMode);
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchiveTests.CreateArchive(aStream : TStream;
+class function TAbArchiveTests.CreateArchive(aStream : TStream;
   const aArchiveName : string): TAbArchive;
 begin
   Result := ArchiveClass.CreateFromStream(aStream, aArchiveName);
@@ -257,44 +289,112 @@ end;
 {----------------------------------------------------------------------------}
 { TAbArchiveMultiFileTests }
 {----------------------------------------------------------------------------}
-procedure TAbArchiveMultiFileTests.TestCompressDir(const aSourceDir: string);
+class function TAbArchiveMultiFileTests.Suite: ITestSuite;
+begin
+  Result := inherited Suite;
+  Result.AddTest(TAbArchiveCompressTest.Create(Self, 'Compress Unicode',
+    TestFileDir + 'Unicode' + PathDelim + 'source'));
+  AddCanterburyTests(Result);
+end;
+{----------------------------------------------------------------------------}
+class procedure TAbArchiveMultiFileTests.AddCanterburyTests(aSuite: ITestSuite);
+begin
+  aSuite.AddTest(
+    TAbArchiveDecompressTest.Create(Self, 'Decompress Canterbury',
+      CanterburyDir + 'Canterbury' + ArchiveExt));
+  aSuite.AddTest(
+    TAbArchiveCompressTest.Create(Self, 'Compress Canterbury',
+      CanterburySourceDir));
+end;
+
+
+{----------------------------------------------------------------------------}
+{ TAbArchiveTestCase }
+{----------------------------------------------------------------------------}
+constructor TAbArchiveTestCase.Create(aParent: TAbArchiveTestsClass;
+  const aTestName: string);
+begin
+  inherited Create('Execute');
+  FParent := aParent;
+  FTestName := aTestName;
+end;
+{----------------------------------------------------------------------------}
+function TAbArchiveTestCase.CreateArchive(const aFileName: string;
+  aMode : Word): TAbArchive;
+begin
+  Result := FParent.CreateArchive(aFileName, aMode);
+  Result.OnProcessItemFailure := ItemFailure;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveTestCase.ItemFailure(Sender : TObject; Item : TAbArchiveItem;
+  ProcessType : TAbProcessType; ErrorClass : TAbErrorClass; ErrorCode : Integer);
+begin
+  if ErrorClass = ecAbbrevia then
+    Fail('Extract failed: ' + AbStrRes(ErrorCode));
+end;
+
+{----------------------------------------------------------------------------}
+{ TAbArchiveDecompressTest }
+{----------------------------------------------------------------------------}
+constructor TAbArchiveDecompressTest.Create(aParent: TAbArchiveTestsClass;
+  const aTestName, aFileName: string);
+begin
+  inherited Create(aParent, aTestName);
+  FFileName := aFileName;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveDecompressTest.Execute;
 var
   Arc: TAbArchive;
-  FileName: string;
 begin
-  FileName := TestTempDir + 'test' + ArchiveExt;
+  Arc := CreateArchive(FFileName, fmOpenRead or fmShareDenyNone);
+  try
+    Arc.BaseDirectory := TestTempDir;
+    Arc.Load;
+    Arc.ExtractFiles('*');
+  finally
+    Arc.Free;
+  end;
+  CheckDirMatch(ExtractFilePath(FFileName) + 'source', TestTempDir);
+end;
+
+{----------------------------------------------------------------------------}
+{ TAbArchiveMultiFileTests }
+{----------------------------------------------------------------------------}
+constructor TAbArchiveCompressTest.Create(aParent: TAbArchiveTestsClass;
+  const aTestName, aSourceDir: string);
+begin
+  inherited Create(aParent, aTestName);
+  FSourceDir := aSourceDir;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveCompressTest.Execute;
+var
+  Arc: TAbArchive;
+  FileName, TargetDir: string;
+begin
+  FileName := TestTempDir + 'test' + FParent.ArchiveExt;
   Arc := CreateArchive(FileName, fmCreate);
   try
-    Arc.BaseDirectory := aSourceDir;
+    Arc.BaseDirectory := FSourceDir;
     Arc.Load; // TODO: This shouldn't be necessary
     Arc.AddFiles('*', faAnyFile);
     Arc.Save;
   finally
     Arc.Free;
   end;
+  TargetDir := TestTempDir + 'test';
+  CreateDir(TargetDir);
   Arc := CreateArchive(FileName, fmOpenRead);
   try
-    CreateDir(TestTempDir + 'test');
-    Arc.BaseDirectory := TestTempDir + 'test';
+    Arc.BaseDirectory := TargetDir;
     Arc.Load;
     Arc.ExtractFiles('*');
   finally
     Arc.Free;
   end;
-  CheckDirMatch(aSourceDir, TestTempDir + 'test');
+  CheckDirMatch(FSourceDir, TargetDir);
 end;
-{----------------------------------------------------------------------------}
-procedure TAbArchiveMultiFileTests.TestCompressCanterbury;
-begin
-  TestCompressDir(CanterburySourceDir);
-end;
-{----------------------------------------------------------------------------}
-{$IFDEF UNICODE}
-procedure TAbArchiveMultiFileTests.TestCompressUnicode;
-begin
-  TestCompressDir(TestFileDir + 'Unicode' + PathDelim + 'source');
-end;
-{$ENDIF}
 {----------------------------------------------------------------------------}
 
 initialization

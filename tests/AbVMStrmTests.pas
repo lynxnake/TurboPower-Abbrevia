@@ -68,13 +68,12 @@ var
 begin
   Stream := TAbVirtualMemoryStream.Create;
   try
-
     for i := Low(Buf) to High(Buf) do
       Buf[i] := i;
-    Stream.WriteBuffer(Buf, SizeOf(Buf));
+    CheckEquals(Stream.Write(Buf, SizeOf(Buf)), SizeOf(Buf), 'Stream write failed');
     FillChar(Buf, SizeOf(Buf), 0);
     Stream.Position := 0;
-    Stream.ReadBuffer(Buf, SizeOf(Buf));
+    CheckEquals(Stream.Read(Buf, SizeOf(Buf)), SizeOf(Buf), 'Stream read failed');
     for i := Low(Buf) to High(Buf) do
       if Buf[i] <> i then
         FailEquals(IntToStr(i), IntToStr(Buf[i]));

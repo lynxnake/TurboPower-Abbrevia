@@ -98,6 +98,7 @@ end;
 procedure TAbDetermineArcTypeTest.CheckEquals(expected, actual: TAbArchiveType;
   const msg: string);
 begin
+  FCheckCalled := True;
   if expected <> actual then
     FailNotSame(ArcTypeToStr(expected), ArcTypeToStr(actual), msg);
 end;

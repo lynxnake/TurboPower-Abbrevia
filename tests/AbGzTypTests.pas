@@ -72,9 +72,9 @@ type
 
   TAbGzippedTarArchiveTests = class(TAbArchiveMultiFileTests)
   protected
-    function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
+    class function CreateArchive(const aFileName : string; aMode : Word): TAbArchive;
       override;
-    function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
+    class function CreateArchive(aStream : TStream; const aArchiveName : string): TAbArchive;
       override;
     class function ArchiveClass: TAbArchiveClass; override;
     class function ArchiveExt: string; override;
@@ -337,7 +337,7 @@ end;
 {----------------------------------------------------------------------------}
 { TAbGzippedTarArchiveTests }
 {----------------------------------------------------------------------------}
-function TAbGzippedTarArchiveTests.CreateArchive(const aFileName : string;
+class function TAbGzippedTarArchiveTests.CreateArchive(const aFileName : string;
   aMode : Word): TAbArchive;
 begin
   Result := inherited CreateArchive(aFileName, aMode);
@@ -345,7 +345,7 @@ begin
   TAbGzipArchive(Result).IsGzippedTar := True;
 end;
 {----------------------------------------------------------------------------}
-function TAbGzippedTarArchiveTests.CreateArchive(aStream : TStream;
+class function TAbGzippedTarArchiveTests.CreateArchive(aStream : TStream;
   const aArchiveName : string): TAbArchive;
 begin
   Result := inherited CreateArchive(aStream, aArchiveName);
