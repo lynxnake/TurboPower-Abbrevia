@@ -76,6 +76,8 @@ begin
       Suite.AddTest(TAbDetermineArcTypeTest.Create(
         MPLDir + Files[arcType], arcType));
   Suite.AddTest(TAbDetermineArcTypeTest.Create(
+    CanterburyDir + 'Split' + PathDelim + 'Split.z01', atSpannedZip));
+  Suite.AddTest(TAbDetermineArcTypeTest.Create(
     CanterburyDir + 'Split' + PathDelim + 'Split.zip', atSpannedZip));
   Suite.AddTest(TAbDetermineArcTypeTest.Create(
     TestFileDir + 'Test0001.cab', atCab));
