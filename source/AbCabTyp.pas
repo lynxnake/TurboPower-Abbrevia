@@ -690,7 +690,6 @@ end;
 {----------------------------------------------------------------------------}
 procedure TAbCabArchive.ExtractItemToStreamAt(Index : Integer; OutStream : TStream);
 begin
-  {not implemented for cabinet archives}
   FItemInProgress := GetItem(Index);
   FItemStream := OutStream;
   try

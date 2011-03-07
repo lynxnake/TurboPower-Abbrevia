@@ -325,8 +325,6 @@ type
     procedure SetLogFile(const Value : string);
     procedure SetLogging(Value : Boolean);
 
-   	class function SupportsEmptyFolder: Boolean; virtual;
-
   protected {abstract methods}
     function CreateItem(const FileSpec : string): TAbArchiveItem;
       virtual; abstract;
@@ -471,6 +469,8 @@ type
     property TempDirectory : string
       read FTempDir
       write FTempDir;
+
+   	class function SupportsEmptyFolder: Boolean; virtual;
 
   public {events}
     property OnProcessItemFailure : TAbArchiveItemFailureEvent

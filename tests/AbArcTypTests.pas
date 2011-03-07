@@ -81,6 +81,7 @@ type
     FParent: TAbArchiveTestsClass;
     function CreateArchive(const aFileName: string; aMode : Word): TAbArchive;
       virtual;
+    procedure DecompressArchive(const aSrcFile, aTargetDir: string);
     procedure ItemFailure(Sender : TObject; Item : TAbArchiveItem;
       ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
       ErrorCode : Integer);
@@ -95,6 +96,16 @@ type
   public
     constructor Create(aParent: TAbArchiveTestsClass;
       const aTestName, aFileName: string); reintroduce;
+  published
+    procedure Execute;
+  end;
+
+  TAbArchiveDecompressEmptyFoldersTest = class(TAbArchiveTestCase)
+  published
+    procedure Execute;
+  end;
+
+  TAbArchiveComrpessEmptyFoldersTest = class(TAbArchiveTestCase)
   published
     procedure Execute;
   end;
@@ -285,16 +296,21 @@ begin
   end;
 end;
 
-
 {----------------------------------------------------------------------------}
 { TAbArchiveMultiFileTests }
 {----------------------------------------------------------------------------}
 class function TAbArchiveMultiFileTests.Suite: ITestSuite;
 begin
   Result := inherited Suite;
+  if ArchiveClass.SupportsEmptyFolder then begin
+    Result.AddTest(
+      TAbArchiveDecompressEmptyFoldersTest.Create(Self, 'Decompress Empty Folders'));
+    Result.AddTest(
+      TAbArchiveComrpessEmptyFoldersTest.Create(Self, 'Compress Empty Folders'));
+  end;
+  AddCanterburyTests(Result);
   Result.AddTest(TAbArchiveCompressTest.Create(Self, 'Compress Unicode',
     TestFileDir + 'Unicode' + PathDelim + 'source'));
-  AddCanterburyTests(Result);
 end;
 {----------------------------------------------------------------------------}
 class procedure TAbArchiveMultiFileTests.AddCanterburyTests(aSuite: ITestSuite);
@@ -306,7 +322,6 @@ begin
     TAbArchiveCompressTest.Create(Self, 'Compress Canterbury',
       CanterburySourceDir));
 end;
-
 
 {----------------------------------------------------------------------------}
 { TAbArchiveTestCase }
@@ -323,14 +338,44 @@ function TAbArchiveTestCase.CreateArchive(const aFileName: string;
   aMode : Word): TAbArchive;
 begin
   Result := FParent.CreateArchive(aFileName, aMode);
-  Result.OnProcessItemFailure := ItemFailure;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveTestCase.DecompressArchive(const aSrcFile, aTargetDir: string);
+var
+  Arc: TAbArchive;
+begin
+  CreateDir(aTargetDir);
+  Arc := CreateArchive(aSrcFile, fmOpenRead or fmShareDenyNone);
+  try
+    Arc.OnProcessItemFailure := ItemFailure;
+    Arc.BaseDirectory := aTargetDir;
+    Arc.ExtractOptions := [eoCreateDirs, eoRestorePath];
+    Arc.Load;
+    Arc.ExtractFiles('*');
+  finally
+    Arc.Free;
+  end;
 end;
 {----------------------------------------------------------------------------}
 procedure TAbArchiveTestCase.ItemFailure(Sender : TObject; Item : TAbArchiveItem;
   ProcessType : TAbProcessType; ErrorClass : TAbErrorClass; ErrorCode : Integer);
+var
+  Msg: string;
 begin
-  if ErrorClass = ecAbbrevia then
-    Fail('Extract failed: ' + AbStrRes(ErrorCode));
+  if ExceptObject is Exception then
+    Msg := Exception(ExceptObject).Message
+  else begin
+    case ErrorClass of
+      ecAbbrevia: Msg := AbStrRes(ErrorCode);
+      ecInOutError: Msg := Format('EInOutError (%d)', [ErrorCode]);
+      ecFilerError: Msg := 'EFilerError';
+      ecFileCreateError: Msg := 'EFCreateError';
+      ecFileOpenError: Msg := 'EFOpenError';
+      ecCabError: Msg := 'CAB error: ' + SysErrorMessage(ErrorCode);
+      ecOther: Msg := 'ecOther';
+    end;
+  end;
+  Fail('Extract failed: ' + Msg);
 end;
 
 {----------------------------------------------------------------------------}
@@ -344,22 +389,68 @@ begin
 end;
 {----------------------------------------------------------------------------}
 procedure TAbArchiveDecompressTest.Execute;
-var
-  Arc: TAbArchive;
 begin
-  Arc := CreateArchive(FFileName, fmOpenRead or fmShareDenyNone);
-  try
-    Arc.BaseDirectory := TestTempDir;
-    Arc.Load;
-    Arc.ExtractFiles('*');
-  finally
-    Arc.Free;
-  end;
+  DecompressArchive(FFileName, TestTempDir);
   CheckDirMatch(ExtractFilePath(FFileName) + 'source', TestTempDir);
 end;
 
 {----------------------------------------------------------------------------}
-{ TAbArchiveMultiFileTests }
+{ TAbArchiveDecompressEmptyFoldersTest }
+{----------------------------------------------------------------------------}
+procedure TAbArchiveDecompressEmptyFoldersTest.Execute;
+begin
+  DecompressArchive(
+    TestFileDir + 'EmptyFolders' + PathDelim + 'EmptyFolders' + FParent.ArchiveExt,
+    TestTempDir);
+  CheckDirExists(TestTempDir + 'a');
+  CheckDirExists(TestTempDir + 'a' + PathDelim + '1');
+  CheckDirExists(TestTempDir + 'a' + PathDelim + '2');
+  CheckDirExists(TestTempDir + 'b');
+end;
+
+{----------------------------------------------------------------------------}
+{ TAbArchiveComrpessEmptyFoldersTest }
+{----------------------------------------------------------------------------}
+procedure TAbArchiveComrpessEmptyFoldersTest.Execute;
+var
+  Arc: TAbArchive;
+  Filename: string;
+  i: Integer;
+begin
+    // Create directories to compress
+  CreateDir(TestTempDir + 'a');
+  CreateDir(TestTempDir + 'a' + PathDelim + '1');
+  CreateDir(TestTempDir + 'a' + PathDelim + '2');
+  CreateDir(TestTempDir + 'b');
+    // Create archive
+  Filename := TestTempDir + 'test' + FParent.ArchiveExt;
+  Arc := CreateArchive(Filename, fmCreate);
+  try
+    Arc.BaseDirectory := TestTempDir;
+    Arc.StoreOptions := [soStripDrive, soRemoveDots, soRecurse];
+    Arc.AddFiles('*', faAnyFile);
+    Arc.Save;
+  finally
+    Arc.Free;
+  end;
+    // Verify
+  Arc := CreateArchive(Filename, fmOpenRead);
+  try
+    Arc.Load;
+    CheckEquals(4, Arc.ItemList.Count, 'item count does not match directory count');
+    for i := 0 to Arc.ItemList.Count - 1 do
+      Check(Arc.ItemList[i].IsDirectory, 'item is not a directory');
+    Check(Arc.FindFile('A/') >= 0);
+    Check(Arc.FindFile('A/1/') >= 0);
+    Check(Arc.FindFile('A/2/') >= 0);
+    Check(Arc.FindFile('B/') >= 0);
+  finally
+    Arc.Free;
+  end;
+end;
+
+{----------------------------------------------------------------------------}
+{ TAbArchiveCompressTest }
 {----------------------------------------------------------------------------}
 constructor TAbArchiveCompressTest.Create(aParent: TAbArchiveTestsClass;
   const aTestName, aSourceDir: string);

@@ -456,7 +456,6 @@ type
     FOnRequestLastDisk      : TAbRequestDiskEvent;
     FOnRequestNthDisk       : TAbRequestNthDiskEvent;
     FOnRequestBlankDisk     : TAbRequestDiskEvent;
-    class function SupportsEmptyFolder: Boolean; override;
 
   protected {methods}
     procedure DoExtractHelper(Index : Integer; const NewName : string);
@@ -554,6 +553,8 @@ type
     property Items[Index : Integer] : TAbZipItem                      {!!.03}
       read GetItem                                                    {!!.03}
       write PutItem; default;                                         {!!.03}
+
+    class function SupportsEmptyFolder: Boolean; override;
 
   public {events}
     property OnNeedPassword : TAbNeedPasswordEvent

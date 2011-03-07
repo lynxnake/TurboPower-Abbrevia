@@ -63,7 +63,6 @@ type
     procedure TestLocale2;
     procedure TestLocale3;
     procedure TestLocale4;
-    procedure TestEmptyFolders;
     procedure TestFindCentralDirTail;
   end;
 
@@ -413,19 +412,6 @@ begin
   Component.BaseDirectory := TestTempDir;
   Component.ExtractFiles('*.*');
   Check(True); //TODO: Replace this with a proper test
-end;
-
-procedure TAbUnZipperTests.TestEmptyFolders;
-var
-  i: Integer;
-begin
-  Component.FileName := TestFileDir + 'EmptyFolders.zip';
-  Component.BaseDirectory := TestTempDir;
-  Component.ExtractOptions := [eoCreateDirs, eoRestorePath];
-  CheckEquals(4, Component.Count, 'archive item count incorrect');
-  Component.ExtractFiles('*.*');
-  for i := 0 to Component.Count - 1 do
-    CheckDirExists(TestTempDir + Component.Items[i].DiskFileName);
 end;
 
 procedure TAbUnZipperTests.TestFindCentralDirTail;
