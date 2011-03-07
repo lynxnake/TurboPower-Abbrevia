@@ -1902,9 +1902,9 @@ begin
 
     { Most others are initialized in the .Create }
     Item.CRC32 := 0;
-    Item.DiskFileName := ExpandFileName(FileSpec);
     { Note this can raise exceptions for file name lengths. }
     Item.FileName := FixName(FileSpec);
+    Item.DiskFileName := ExpandFileName(FileSpec);
     Item.Action := aaNone;
   finally
     Result := Item;

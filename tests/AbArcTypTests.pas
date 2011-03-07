@@ -66,6 +66,7 @@ type
     procedure TestAdd;
     procedure TestAddFromStream;
     procedure TestVerify;
+    procedure TestBug3201728;
   end;
   TAbArchiveTestsClass = class of TAbArchiveTests;
 
@@ -293,6 +294,22 @@ begin
     Check(VerifyArchive(FS) = atUnknown, 'Verify succeeded on invalid archive');
   finally
     FS.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbArchiveTests.TestBug3201728;
+  { Test for failure when BaseDirectory set }
+var
+  Arc: TAbArchive;
+begin
+  Arc := CreateArchive(TestTempDir + 'test' + ArchiveExt, fmCreate);
+  try
+    Arc.Load;
+    Arc.AddFiles(MPLDir + 'MPL-1_1.txt', faAnyFile);
+    Arc.Save;
+    Check(Arc.ItemList.Count = 1);
+  finally
+    Arc.Free;
   end;
 end;
 
