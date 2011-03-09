@@ -106,7 +106,7 @@ type
     procedure Execute;
   end;
 
-  TAbArchiveComrpessEmptyFoldersTest = class(TAbArchiveTestCase)
+  TAbArchiveCompressEmptyFoldersTest = class(TAbArchiveTestCase)
   published
     procedure Execute;
   end;
@@ -323,7 +323,7 @@ begin
     Result.AddTest(
       TAbArchiveDecompressEmptyFoldersTest.Create(Self, 'Decompress Empty Folders'));
     Result.AddTest(
-      TAbArchiveComrpessEmptyFoldersTest.Create(Self, 'Compress Empty Folders'));
+      TAbArchiveCompressEmptyFoldersTest.Create(Self, 'Compress Empty Folders'));
   end;
   AddCanterburyTests(Result);
   Result.AddTest(TAbArchiveCompressTest.Create(Self, 'Compress Unicode',
@@ -426,9 +426,9 @@ begin
 end;
 
 {----------------------------------------------------------------------------}
-{ TAbArchiveComrpessEmptyFoldersTest }
+{ TAbArchiveCompressEmptyFoldersTest }
 {----------------------------------------------------------------------------}
-procedure TAbArchiveComrpessEmptyFoldersTest.Execute;
+procedure TAbArchiveCompressEmptyFoldersTest.Execute;
 var
   Arc: TAbArchive;
   Filename: string;
