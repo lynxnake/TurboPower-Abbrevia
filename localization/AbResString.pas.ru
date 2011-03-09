@@ -202,6 +202,11 @@ resourcestring
   AbGzipBadCRCS                    = 'Недействительная контрольная сумма';
   AbGzipBadFileSizeS               = 'Недействительный размер файла';
 
+  AbTarInvalidS                    = 'Недествительный Tar-архив'; 
+  AbTarBadFileNameS                = 'Слишком длинное имя файла';
+  AbTarBadLinkNameS                = 'Слишком длинная ссылка';
+  AbTarBadOpS                      = 'Неподдерживаемая операция';
+  
   AbUnhandledEntityS             = 'Необрабатываемый объект';
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
