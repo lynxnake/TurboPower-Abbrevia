@@ -54,7 +54,6 @@ type
     FDiskFileName     : string;
     FExternalFileAttributes : LongWord;
     FFileName         : string;
-    FIsDirectory      : Boolean;
     FIsEncrypted      : Boolean;
     FLastModFileTime  : Word;
     FLastModFileDate  : Word;
@@ -67,7 +66,7 @@ type
     function GetDiskPath : string;
     function GetExternalFileAttributes : LongWord; virtual;
     function GetFileName : string; virtual;
-    function GetIsDirectory: Boolean;
+    function GetIsDirectory: Boolean; virtual;
     function GetIsEncrypted : Boolean; virtual;
     function GetLastModFileDate : Word; virtual;
     function GetLastModFileTime : Word; virtual;
@@ -78,7 +77,6 @@ type
     procedure SetCRC32(const Value : Longint); virtual;
     procedure SetExternalFileAttributes( Value : LongWord ); virtual;
     procedure SetFileName(const Value : string); virtual;
-    procedure SetIsDirectory(const Value: Boolean);
     procedure SetIsEncrypted(Value : Boolean); virtual;
     procedure SetLastModFileDate(const Value : Word); virtual;
     procedure SetLastModFileTime(const Value : Word); virtual;
@@ -116,8 +114,7 @@ type
       read GetFileName
       write SetFileName;
     property IsDirectory: Boolean
-      read GetIsDirectory
-      write SetIsDirectory;
+      read GetIsDirectory;
     property IsEncrypted : Boolean
       read GetIsEncrypted
       write SetIsEncrypted;
@@ -610,7 +607,7 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetIsDirectory: Boolean;
 begin
-  Result := FIsDirectory;
+  Result := False;
 end;
 { -------------------------------------------------------------------------- }
 function TAbArchiveItem.GetIsEncrypted : Boolean;
@@ -717,11 +714,6 @@ end;
 procedure TAbArchiveItem.SetFileName(const Value : string);
 begin
   FFileName := Value;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbArchiveItem.SetIsDirectory(const Value: Boolean);
-begin
-  FIsDirectory := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveItem.SetIsEncrypted(Value : Boolean);
@@ -1208,20 +1200,16 @@ begin
   if (AbGetPathType(UseName) <> ptAbsolute) then
     UseName := AbAddBackSlash(BaseDirectory) + UseName;
 
-  Result := True;
-  if Item.IsDirectory then
-    AbCreateDirectory(UseName)
-  else begin
-    Path := ExtractFileDir(UseName);
-    if (Path <> '') and not AbDirectoryExists(Path) then
-      if (eoCreateDirs in ExtractOptions) then
-        AbCreateDirectory(Path)
-      else
-        raise EAbNoSuchDirectory.Create;
+  Path := ExtractFileDir(UseName);
+  if (Path <> '') and not AbDirectoryExists(Path) then
+    if (eoCreateDirs in ExtractOptions) then
+      AbCreateDirectory(Path)
+    else
+      raise EAbNoSuchDirectory.Create;
 
-    if FileExists(UseName) then
-      DoConfirmOverwrite(UseName, Result);
-  end;
+  Result := True;
+  if not Item.IsDirectory and FileExists(UseName) then
+    DoConfirmOverwrite(UseName, Result);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.Delete(aItem : TAbArchiveItem);

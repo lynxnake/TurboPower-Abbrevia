@@ -1148,23 +1148,27 @@ var
 begin
   ZipArchive := TAbZipArchive(Sender);
 
-  InStream := ExtractPrep(ZipArchive, Item);
-  try
-    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+  if Item.IsDirectory then
+    AbCreateDirectory(UseName)
+  else begin
+    InStream := ExtractPrep(ZipArchive, Item);
     try
-      try    {OutStream}
-        DoExtract(ZipArchive, Item, InStream, OutStream);
-      finally {OutStream}
-        OutStream.Free;
-      end;   {OutStream}
-    except
-      if ExceptObject is EAbUserAbort then
-        ZipArchive.FStatus := asInvalid;
-      DeleteFile(UseName);
-      raise;
+      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+      try
+        try    {OutStream}
+          DoExtract(ZipArchive, Item, InStream, OutStream);
+        finally {OutStream}
+          OutStream.Free;
+        end;   {OutStream}
+      except
+        if ExceptObject is EAbUserAbort then
+          ZipArchive.FStatus := asInvalid;
+        DeleteFile(UseName);
+        raise;
+      end;
+    finally
+      InStream.Free
     end;
-  finally
-    InStream.Free
   end;
 
   AbSetFileTime(UseName, Item.LastModTimeAsDateTime);

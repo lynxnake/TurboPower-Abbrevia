@@ -314,6 +314,7 @@ type
     function GetCompressedSize : Int64; override;
     function GetExternalFileAttributes : LongWord; override;
     function GetFileName : string; override;
+    function GetIsDirectory: Boolean; override;
     function GetIsEncrypted : Boolean; override;
     function GetLastModFileDate : Word; override;
     function GetLastModFileTime : Word; override;
@@ -442,7 +443,8 @@ type
       read FArchReadOnly;
     property Items[Index : Integer] : TAbTarItem
       read GetItem
-      write PutItem; default;                                       
+      write PutItem; default;
+   	class function SupportsEmptyFolder: Boolean; override;
   end;
 
 function VerifyTar(Strm : TStream) : TAbArchiveType;
@@ -645,6 +647,11 @@ end;
 function TAbTarItem.GetGroupName: string;
 begin
   Result := FTarItem.GrpName;
+end;
+
+function TAbTarItem.GetIsDirectory: Boolean;
+begin
+  Result := (LinkFlag = AB_TAR_LF_DIR);
 end;
 
 function TAbTarItem.GetIsEncrypted: Boolean;
@@ -1896,10 +1903,6 @@ begin
     end;
     }{ else  FArchFormat in [ UNKNOWN_FORMAT, V7_FORMAT and Length(S) <= 100 ] } { This is the default. }
 
-    { Flag empty directories }
-    if (S <> '') and (S[Length(S)] = '/') then
-      Item.LinkFlag := AB_TAR_LF_DIR;
-
     { Most others are initialized in the .Create }
     Item.CRC32 := 0;
     { Note this can raise exceptions for file name lengths. }
@@ -1931,27 +1934,25 @@ begin
     raise EAbTarBadOp.Create; { Unsupported Type, Cannot Extract }
   { We will allow extractions if the file name/Link name are strickly less than 100 chars }
 
-  OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
-  try
-    try {OutStream}
-      ExtractItemToStreamAt(Index, OutStream);
-    finally {OutStream}
-      OutStream.Free;
-    end; {OutStream}
-    AbSetFileTime(UseName, CurItem.LastModTimeAsDateTime);
-    AbSetFileAttr(UseName, CurItem.NativeFileAttributes);
-  except
-    on E : EAbUserAbort do begin
-      FStatus := asInvalid;
-      if FileExists(UseName) then
-        DeleteFile(UseName);
-      raise;
-    end else begin
-      if FileExists(UseName) then
-        DeleteFile(UseName);
+  if CurItem.IsDirectory then
+    AbCreateDirectory(UseName)
+  else begin
+    OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyNone);
+    try
+      try {OutStream}
+        ExtractItemToStreamAt(Index, OutStream);
+      finally {OutStream}
+        OutStream.Free;
+      end; {OutStream}
+    except
+      if ExceptObject is EAbUserAbort then
+        FStatus := asInvalid;
+      DeleteFile(UseName);
       raise;
     end;
   end;
+  AbSetFileTime(UseName, CurItem.LastModTimeAsDateTime);
+  AbSetFileAttr(UseName, CurItem.NativeFileAttributes);
 end;
 
 procedure TAbTarArchive.ExtractItemToStreamAt(Index: Integer;
@@ -2167,27 +2168,32 @@ begin
             try {SaveDir}
               if (BaseDirectory <> '') then
                 ChDir(BaseDirectory);
-              TempStream := TFileStream.Create(CurItem.DiskFileName, fmOpenRead or fmShareDenyWrite );
-              {Now get the file's attributes}
+              { update metadata }
               AbFileGetAttrEx(CurItem.DiskFileName, AttrEx);
+              CurItem.ExternalFileAttributes := AttrEx.Mode;
+              CurItem.LastModTimeAsDateTime := AttrEx.Time;
+              { TODO: uid, gid, uname, gname should be added here }
+              { TODO: Add support for different types of files here }
+              if (AttrEx.Mode and AB_FMODE_DIR) <> 0 then begin
+                CurItem.LinkFlag := AB_TAR_LF_DIR;
+                CurItem.UncompressedSize := 0;
+                CurItem.SaveTarHeaderToStream(NewStream);
+              end
+              else begin
+                TempStream := TFileStream.Create(CurItem.DiskFileName,
+                  fmOpenRead or fmShareDenyWrite );
+                try { TempStream }
+                  CurItem.UncompressedSize := TempStream.Size;
+                  CurItem.StreamPosition := NewStream.Position;{ Reset the Stream Pointer. }
+                  CurItem.SaveTarHeaderToStream(NewStream);
+                  OutTarHelp.WriteArchiveItemSize(TempStream, TempStream.Size);
+                finally { TempStream }
+                  TempStream.Free;
+                end; { TempStream }
+              end;
             finally {SaveDir}
               ChDir( SaveDir );
             end; {SaveDir}
-
-            try { TempStream }
-              { TODO: Add support for different types of files here }
-              { TODO: uid, gid, uname, gname are should be added here }
-              CurItem.ExternalFileAttributes := AttrEx.Mode;
-              CurItem.LastModTimeAsDateTime := AttrEx.Time;
-              CurItem.UncompressedSize := TempStream.Size;
-
-              CurItem.StreamPosition := NewStream.Position;{ Reset the Stream Pointer. }
-              CurItem.SaveTarHeaderToStream(NewStream);
-              OutTarHelp.WriteArchiveItemSize(TempStream, TempStream.Size);
-
-            finally { TempStream }
-              TempStream.Free;
-            end; { TempStream }
           except
             ItemList[i].Action := aaDelete;
             DoProcessItemFailure(ItemList[i], ptAdd, ecFileOpenError, 0);
@@ -2238,6 +2244,11 @@ begin
   FStream.Position := TAbTarItem(FItemList[Index]).StreamPosition;
   if VerifyTar(FStream) <> atTar then
     raise EAbTarInvalid.Create; { Invalid Tar }
+end;
+
+class function TAbTarArchive.SupportsEmptyFolder: Boolean;
+begin
+  Result := True;
 end;
 
 end.

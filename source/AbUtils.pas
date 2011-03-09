@@ -731,7 +731,10 @@ begin
         if (SR.Name <> AbThisDir) and 
            (SR.Name <> AbParentDir) and
            AbPatternMatch(UpperCase(SR.Name), 1, NameMask, 1) then
-          FileList.Add( NewFile );
+          if (SR.Attr and faDirectory) <> 0 then
+            FileList.Add( NewFile + PathDelim )
+          else
+            FileList.Add( NewFile );
         Found := FindNext( SR );
       end;
     finally

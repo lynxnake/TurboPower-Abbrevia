@@ -374,6 +374,7 @@ type
     function  GetCompressedSize : Int64; override;
     function  GetCRC32 : Longint; override;
     function  GetExternalFileAttributes : LongWord; override;
+    function  GetIsDirectory: Boolean; override;
     function  GetIsEncrypted : Boolean; override;
     function  GetLastModFileDate : Word; override;
     function  GetLastModFileTime : Word; override;
@@ -1588,6 +1589,12 @@ begin
   Result := FItemInfo.InternalFileAttributes;
 end;
 { -------------------------------------------------------------------------- }
+function TAbZipItem.GetIsDirectory: Boolean;
+begin
+  Result := ((ExternalFileAttributes and faDirectory) <> 0) or
+    ((FileName <> '') and CharInSet(Filename[Length(FFilename)], ['\','/']));
+end;
+{ -------------------------------------------------------------------------- }
 function TAbZipItem.GetIsEncrypted : Boolean;
 begin
   Result := FItemInfo.IsEncrypted;
@@ -1684,8 +1691,6 @@ begin
   else
     FFileName := string(FItemInfo.FileName);
 
-  IsDirectory := ((FItemInfo.ExternalFileAttributes and faDirectory) <> 0) or
-    ((FFileName <> '') and CharInSet(FFilename[Length(FFilename)], ['\','/']));
   LastModFileTime := FItemInfo.LastModFileTime;
   LastModFileDate := FItemInfo.LastModFileDate;
   FDiskFileName := FileName;
@@ -1922,10 +1927,6 @@ begin
     GeneralPurposeBitFlag := 0;
     CompressedSize := 0;
     CRC32 := 0;
-    if AbDirectoryExists(FileSpec) then begin
-      IsDirectory := True;
-      FileSpec := IncludeTrailingPathDelimiter(FileSpec);
-    end;
     DiskFileName := ExpandFileName(FileSpec);
     FileName := FixName(FileSpec);
     RelativeOffset := 0;
