@@ -145,6 +145,7 @@ type
     procedure SetIsEncrypted(Value : Boolean); override;
     procedure SetLastModFileDate(const Value : Word); override;
     procedure SetLastModFileTime(const Value : Word); override;
+    procedure SetLastModTimeAsDateTime(const Value: TDateTime); override;
 
     procedure SaveGzHeaderToStream(AStream : TStream);
     procedure LoadGzHeaderFromStream(AStream : TStream);
@@ -692,34 +693,20 @@ begin
 end;
 
 function TAbGzipItem.GetLastModFileDate: Word;
-var
-  Rslt : LongInt;
-  D : TDateTime;
 begin
-  { convert to TDateTime }
-  D := AbUnixTimeToDateTime(FGZHeader.ModTime);
-
-  { convert to DOS file Date }
-  Rslt := DateTimeToFileDate(D);
-  Result := LongRec(Rslt).Hi;
+  { convert to local DOS file Date }
+  Result := LongRec(AbDateTimeToDosFileDate(LastModTimeAsDateTime)).Hi;
 end;
 
 function TAbGzipItem.GetLastModFileTime: Word;
-var
-  Rslt : LongInt;
-  D : TDateTime;
 begin
-  { convert to TDateTime }
-  D := AbUnixTimeToDateTime(FGZHeader.ModTime);
-
-  { convert to DOS file Time }
-  Rslt := DateTimeToFileDate(D);
-  Result := LongRec(Rslt).Lo;
+  { convert to local DOS file Time }
+  Result := LongRec(AbDateTimeToDosFileDate(LastModTimeAsDateTime)).Lo;
 end;
 
 function TAbGzipItem.GetLastModTimeAsDateTime: TDateTime;
 begin
-  Result := AbUnixTimeToDateTime(FGZHeader.ModTime);
+  Result := AbUnixTimeToLocalDateTime(FGZHeader.ModTime);
 end;
 
 procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);
@@ -865,43 +852,30 @@ begin
 end;
 
 procedure TAbGzipItem.SetLastModFileDate(const Value: Word);
-var
-  D : TDateTime;
-  UT : LongInt;
 begin
-  UT := FGZHeader.ModTime;
-
-  { keep seconds in current day, discard date's seconds }
-  UT := UT mod SecondsInDay;
-
-  { build new date }
-  D := EncodeDate(Value shr 9 + 1980, Value shr 5 and 15, Value and 31);
-
-  { add to unix second count }
-  UT :=  UT + AbDateTimeToUnixTime(D);
-
-  { store back in header }
-  FGZHeader.ModTime := UT;
+  { replace date, keep existing time }
+  LastModTimeAsDateTime :=
+    EncodeDate(
+      Value shr 9 + 1980,
+      Value shr 5 and 15,
+      Value and 31) +
+    Frac(LastModTimeAsDateTime);
 end;
 
 procedure TAbGzipItem.SetLastModFileTime(const Value: Word);
-var
-  T : TDateTime;
-  UT : LongInt;
 begin
-  UT := FGZHeader.ModTime;
+  { keep current date, replace time }
+  LastModTimeAsDateTime :=
+    Trunc(LastModTimeAsDateTime) +
+    EncodeTime(
+      Value shr 11,
+      Value shr 5 and 63,
+      Value and 31 shl 1, 0);
+end;
 
-  { keep seconds in current date, discard day's seconds }
-  UT := UT - (UT mod SecondsInDay);
-
-  { build new time }
-  T := EncodeTime(Value shr 11, Value shr 5 and 63, Value and 31 shl 1, 0);
-
-  { add to unix second count }
-  UT := UT + AbDateTimeToUnixTime(T);
-
-  { store back in header }
-  FGZHeader.ModTime := UT;
+procedure TAbGzipItem.SetLastModTimeAsDateTime(const Value: TDateTime);
+begin
+  FGZHeader.ModTime := AbLocalDateTimeToUnixTime(Value);
 end;
 
 { TAbGzipArchive }

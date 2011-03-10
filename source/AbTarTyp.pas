@@ -661,30 +661,20 @@ begin
 end;
 
 function TAbTarItem.GetLastModFileDate: Word;
-var
-  D : TDateTime;
 begin
-  { convert to TDateTime }
-  D := AbUnixTimeToDateTime(FTarItem.ModTime);
-
-  { convert to DOS file Date }
-  Result := LongRec(DateTimeToFileDate(D)).Hi;
+  { convert to local DOS file Date }
+  Result := LongRec(AbDateTimeToDosFileDate(LastModTimeAsDateTime)).Hi;
 end;
 
 function TAbTarItem.GetLastModFileTime: Word;
-var
-  D : TDateTime;
 begin
-  { convert to TDateTime }
-  D := AbUnixTimeToDateTime(FTarItem.ModTime);
-
-  { convert to DOS file Time }
-  Result := LongRec(DateTimeToFileDate(D)).Lo;
+  { convert to local DOS file Time }
+  Result := LongRec(AbDateTimeToDosFileDate(LastModTimeAsDateTime)).Lo;
 end;
 
 function TAbTarItem.GetLastModTimeAsDateTime: TDateTime;
 begin
-  Result := AbUnixTimeToDateTime(FTarItem.ModTime);
+  Result := AbUnixTimeToLocalDateTime(FTarItem.ModTime);
 end;
 
 function TAbTarItem.GetLinkName: string;
@@ -1474,45 +1464,31 @@ begin
 end;
 
 procedure TAbTarItem.SetLastModFileDate(const Value: Word);
-var
-  D : TDateTime;
-  UT : LongInt;
 begin
-  { ModTime is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
-  { keep seconds in current day, discard date's seconds }
-  UT := FTarItem.ModTime mod SecondsInDay;
-
-  { build new date }
-  D := EncodeDate(Value shr 9 + 1980, Value shr 5 and 15, Value and 31);
-
-  { add to unix second count }
-  UT := UT  + AbDateTimeToUnixTime(D);
-
-  SetModTime(UT);
+  { replace date, keep existing time }
+  LastModTimeAsDateTime :=
+    EncodeDate(
+      Value shr 9 + 1980,
+      Value shr 5 and 15,
+      Value and 31) +
+    Frac(LastModTimeAsDateTime);
 end;
 
 procedure TAbTarItem.SetLastModFileTime(const Value: Word);
-var
-  T : TDateTime;
-  UT : LongInt;
 begin
-  { ModTime is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
-  { keep seconds in current date, discard day's seconds }
-  UT := FTarItem.ModTime - (FTarItem.ModTime mod SecondsInDay);
-
-  { build new time }
-  T := EncodeTime(Value shr 11, Value shr 5 and 63, Value and 31 shl 1, 0);
-
-  { add to unix second count }
-  UT := UT + AbDateTimeToUnixTime(T);
-
-  SetModTime(UT);
+  { keep current date, replace time }
+  LastModTimeAsDateTime :=
+    Trunc(LastModTimeAsDateTime) +
+    EncodeTime(
+      Value shr 11,
+      Value shr 5 and 63,
+      Value and 31 shl 1, 0);
 end;
 
 procedure TAbTarItem.SetLastModTimeAsDateTime(const Value: TDateTime);
 begin
   // TAR stores always Unix time.
-  SetModTime(AbDateTimeToUnixTime(Value));    // also updates headers
+  SetModTime(AbLocalDateTimeToUnixTime(Value));    // also updates headers
 end;
 
 procedure TAbTarItem.SetLinkFlag(Value: AnsiChar);

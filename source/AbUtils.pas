@@ -301,8 +301,8 @@ const
   MinutesInDay    =  1440;  {Number of minutes in a day}
 
 
-  function AbUnixTimeToDateTime(UnixTime : LongInt) : TDateTime;
-  function AbDateTimeToUnixTime(DateTime : TDateTime) : LongInt;
+  function AbUnixTimeToLocalDateTime(UnixTime : LongInt) : TDateTime;
+  function AbLocalDateTimeToUnixTime(DateTime : TDateTime) : LongInt;
 
   function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;  {!!.01}
   function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;            {!!.01}
@@ -1134,12 +1134,34 @@ begin
 {$ENDIF LINUX}
 end;
 { -------------------------------------------------------------------------- }
-function AbUnixTimeToDateTime(UnixTime : LongInt) : TDateTime;
-{ convert unix date to Delphi TDateTime }
+{$IFDEF MSWINDOWS}
+function AbOffsetFromUTC: LongInt;
+{ local timezone's offset from UTC in seconds (UTC = local + bias) }
+var
+	TZI: TTimeZoneInformation;
+begin
+case GetTimeZoneInformation(TZI) of
+	TIME_ZONE_ID_UNKNOWN:
+		Result := TZI.Bias;
+	TIME_ZONE_ID_DAYLIGHT:
+		Result := TZI.Bias + TZI.DaylightBias;
+	TIME_ZONE_ID_STANDARD:
+		Result := TZI.Bias + TZI.StandardBias
+	else
+    Result := 0
+	end;
+Result := Result * SecsPerMin;
+end;
+{$ENDIF}
+{ -------------------------------------------------------------------------- }
+function AbUnixTimeToLocalDateTime(UnixTime : LongInt) : TDateTime;
+{ convert UTC unix date to Delphi TDateTime in local timezone }
+{$IFDEF MSWINDOWS}
 var
   Hrs, Mins, Secs : Word;
   TodaysSecs : LongInt;
 begin
+  UnixTime := UnixTime - AbOffsetFromUTC;
   TodaysSecs := UnixTime mod SecondsInDay;
   Hrs := TodaysSecs div SecondsInHour;
   TodaysSecs := TodaysSecs - (Hrs * SecondsInHour);
@@ -1148,10 +1170,17 @@ begin
 
   Result := Unix0Date + (UnixTime div SecondsInDay) +
     EncodeTime(Hrs, Mins, Secs, 0);
+{$ENDIF}
+{$IFDEF LINUX}
+begin
+  Result := FileDateToDateTime(UnixTime);
+{$ENDIF}
 end;
+
 { -------------------------------------------------------------------------- }
-function AbDateTimeToUnixTime(DateTime : TDateTime) : LongInt;
-{ convert Delphi TDateTime to unix date }
+function AbLocalDateTimeToUnixTime(DateTime : TDateTime) : LongInt;
+{ convert local Delphi TDateTime to UTC unix date }
+{$IFDEF MSWINDOWS}
 var
   Hrs, Mins, Secs, MSecs : Word;
   Dt, Tm : TDateTime;
@@ -1165,6 +1194,12 @@ begin
 
   DecodeTime(Tm, Hrs, Mins, Secs, MSecs);
   Result := Result + (Hrs * SecondsInHour) + (Mins * SecondsInMinute) + Secs;
+  Result := Result + AbOffsetFromUTC;
+{$ENDIF}
+{$IFDEF LINUX}
+begin
+  Result := DateTimeToFileDate(DateTime);
+{$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- Added }
@@ -1258,7 +1293,7 @@ begin
   Result := FileSetDate(aFileName, AbDateTimeToDosFileDate(aValue)) = 0;
   {$ENDIF}
   {$IFDEF LINUX}
-  Result := FileSetDate(aFileName, AbDateTimeToUnixTime(aValue)) = 0;
+  Result := FileSetDate(aFileName, AbLocalDateTimeToUnixTime(aValue)) = 0;
   {$ENDIF}
 end;
 
