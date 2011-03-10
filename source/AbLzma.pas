@@ -44,7 +44,7 @@ procedure LzmaDecode(aProperties: PByte; aPropSize: Integer; aSrc, aDes: TStream
 
 // LzmaUtil stream routines
 procedure LzDecode(inStream, outStream: TStream);
-procedure LzEncode(inStream, outStream: TStream; fileSize: UInt64);
+procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
 
 
 implementation
@@ -121,7 +121,7 @@ type
   end;
 
   ICompressProgress = packed record
-    Progress: function(p: Pointer; inSize, outSize: UInt64): SRes; cdecl;
+    Progress: function(p: Pointer; inSize, outSize: Int64): SRes; cdecl;
   end;
 
   ISzAlloc = packed record
@@ -424,7 +424,7 @@ end;
 // Based on LzmaUtil.c::Decode
 procedure LzDecode(inStream, outStream: TStream);
 var
-  UncompressedSize: UInt64;
+  UncompressedSize: Int64;
   i: Integer;
   // header: 5 bytes of LZMA properties and 8 bytes of uncompressed size
   header: array [0..LZMA_PROPS_SIZE + 7] of Byte;
@@ -434,14 +434,14 @@ begin
 
   UncompressedSize := 0;
   for i := 0 to 7 do
-    Inc(UncompressedSize, UInt64(header[LZMA_PROPS_SIZE + i] shl (i * 8)));
+    Inc(UncompressedSize, Int64(header[LZMA_PROPS_SIZE + i] shl (i * 8)));
 
   LzmaDecode(@header[0], LZMA_PROPS_SIZE, inStream, outStream, UncompressedSize);
 end;
 { -------------------------------------------------------------------------- }
 // Compresses a stream so it's compatible with the LZMA SDK's LzmaUtil.exe.
 // Based on LzmaUtil.c::Encode
-procedure LzEncode(inStream, outStream: TStream; fileSize: UInt64);
+procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
 var
   enc: CLzmaEncHandle;
   props: CLzmaEncProps;

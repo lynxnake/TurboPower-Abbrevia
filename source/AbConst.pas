@@ -31,6 +31,8 @@
 
 unit AbConst;
 
+{$I AbDefine.inc}
+
 interface
 
 const

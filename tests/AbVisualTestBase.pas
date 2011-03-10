@@ -30,7 +30,12 @@ unit AbVisualTestBase;
 interface
 
 uses
-  Forms, AbTestFramework;
+  {$IFDEF UsingCLX }
+  QForms,
+  {$ELSE}
+  Forms,
+  {$ENDIF}
+  AbTestFramework;
 
 type
   TAbVisualTestCase = class(TAbCompTestCase)

@@ -113,6 +113,9 @@ type
 
 implementation
 
+uses
+  SysUtils;
+
 {Notes:
         Meaning of the internal pointers:
 

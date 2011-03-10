@@ -1141,10 +1141,6 @@ procedure AbUnzip(Sender : TObject; Item : TAbZipItem; const UseName : string);
 var
   InStream, OutStream : TStream;
   ZipArchive : TAbZipArchive;
-{$IFDEF LINUX}                                                           {!!.01}
-  FileDateTime  : TDateTime;                                             {!!.01}
-  LinuxFileTime : LongInt;                                               {!!.01}
-{$ENDIF LINUX}                                                           {!!.01}
 begin
   ZipArchive := TAbZipArchive(Sender);
 

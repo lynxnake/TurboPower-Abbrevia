@@ -755,7 +755,9 @@ type
 implementation
 
 uses
+{$IFDEF MSWINDOWS}
   ShellApi,
+{$ENDIF}
   SysUtils,
   AbConst,
   AbExcept,

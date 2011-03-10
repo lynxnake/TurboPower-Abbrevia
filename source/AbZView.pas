@@ -76,11 +76,13 @@ type
     property Align;
     property Anchors;
     property Attributes;
-    property BevelEdges;
-    property BevelInner;
-    property BevelKind;
-    property BevelOuter;
-    property BevelWidth;
+{$IFNDEF UsingCLX}
+	property BevelEdges;
+	property BevelInner;
+	property BevelKind;
+	property BevelOuter;
+	property BevelWidth;
+{$ENDIF}	
     property BorderStyle;
     property Color;
     property Colors;

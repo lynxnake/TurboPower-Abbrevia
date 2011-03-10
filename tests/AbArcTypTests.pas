@@ -419,10 +419,10 @@ begin
   DecompressArchive(
     TestFileDir + 'EmptyFolders' + PathDelim + 'EmptyFolders' + FParent.ArchiveExt,
     TestTempDir);
-  CheckDirExists(TestTempDir + 'a');
-  CheckDirExists(TestTempDir + 'a' + PathDelim + '1');
-  CheckDirExists(TestTempDir + 'a' + PathDelim + '2');
-  CheckDirExists(TestTempDir + 'b');
+  CheckDirExists(TestTempDir + 'A');
+  CheckDirExists(TestTempDir + 'A' + PathDelim + '1');
+  CheckDirExists(TestTempDir + 'A' + PathDelim + '2');
+  CheckDirExists(TestTempDir + 'B');
 end;
 
 {----------------------------------------------------------------------------}

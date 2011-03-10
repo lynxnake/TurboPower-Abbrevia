@@ -244,3 +244,10 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
   {$DEFINE UnzipPPMdSupport}
   {$DEFINE UnzipWavPackSupport}
 {$ENDIF}
+
+{$IFNDEF MSWINDOWS}
+  {$UNDEF UnzipLzmaSupport}
+  {$UNDEF UnzipPPMdSupport}
+  {$UNDEF UnzipWavPackSupport}
+{$ENDIF}
+

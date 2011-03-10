@@ -350,7 +350,7 @@ begin
   end; {SaveDir}
   try {UncompressedStream}
     {$IFDEF LINUX}
-    Item.ExternalFileAttributes := AttrEx.Mode shl 16 + AttrEx.Attr;
+    Item.ExternalFileAttributes := LongWord(AttrEx.Mode) shl 16 + LongWord(AttrEx.Attr);
     {$ELSE}
     Item.ExternalFileAttributes := AttrEx.Attr;
     {$ENDIF}
