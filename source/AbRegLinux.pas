@@ -29,9 +29,9 @@
 {* ABBREVIA: Registrations                               *}
 {*********************************************************}
 
-{$I AbDefine.inc}
 unit AbRegLinux;
 
+{$I AbDefine.inc}
 {$R AbReg.res}
 
 interface

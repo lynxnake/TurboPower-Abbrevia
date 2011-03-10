@@ -30,9 +30,9 @@
 {* ABBREVIA: UnZip procedures                            *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbUnzPrc;
+
+{$I AbDefine.inc}
 
 interface
 

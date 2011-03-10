@@ -29,9 +29,9 @@
 {* ABBREVIA: Base component class                        *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbBase;
+
+{$I AbDefine.inc}
 
 interface
 

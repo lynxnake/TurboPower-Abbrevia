@@ -33,9 +33,9 @@
 {* with Bzip2 files                                      *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbBzip2Typ;
+
+{$I AbDefine.inc}
 
 interface
 

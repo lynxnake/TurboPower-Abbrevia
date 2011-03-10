@@ -29,9 +29,9 @@
 {* ABBREVIA: TABZipHelper class                          *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbZipPrc;
+
+{$I AbDefine.inc}
 
 interface
 

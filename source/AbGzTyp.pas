@@ -38,9 +38,9 @@
 {* on gzip.org for differences from RFC                  *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbGzTyp;
+
+{$I AbDefine.inc}
 
 interface
 

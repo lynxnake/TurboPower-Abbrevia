@@ -29,9 +29,9 @@
 {* ABBREVIA: TABArchive, TABArchiveItem classes          *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbArcTyp;
+
+{$I AbDefine.inc}
 
 interface
 

@@ -41,9 +41,9 @@
  * http://edisonlife.homelinux.com/
  * ***** END LICENSE BLOCK ***** *)
 
-{$I AbDefine.inc}
-
 unit AbBzip2;
+
+{$I AbDefine.inc}
 
 interface
 

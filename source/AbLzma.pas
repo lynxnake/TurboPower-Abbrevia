@@ -29,9 +29,9 @@
 {* ABBREVIA: Lzma compression/decompression procedures.  *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbLzma;
+
+{$I AbDefine.inc}
 
 interface
 

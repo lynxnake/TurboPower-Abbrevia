@@ -29,9 +29,9 @@
 {* ABBREVIA: Component for building self-extracting zips *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbSelfEx;
+
+{$I AbDefine.inc}
 
 interface
 

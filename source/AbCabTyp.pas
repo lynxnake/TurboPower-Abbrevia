@@ -32,9 +32,9 @@
 {* included in the Microsoft Cabinet SDK                 *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbCabTyp;
+
+{$I AbDefine.inc}
 
 interface
 

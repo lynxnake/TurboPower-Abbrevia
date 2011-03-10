@@ -29,9 +29,9 @@
 {* ABBREVIA: Virtual Memory Stream                       *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbVMStrm;
+
+{$I AbDefine.inc}
 
 interface
 

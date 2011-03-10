@@ -29,9 +29,9 @@
 {* ABBREVIA: TabSlidingWindowStream class                *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-                 
 unit AbSWStm;    
+                 
+{$I AbDefine.inc}
                  
 {Notes: The TabSlidingWindowStream class provides a simple buffered
         stream for sliding window compression/decompression routines.

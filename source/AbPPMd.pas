@@ -29,9 +29,9 @@
 {* ABBREVIA: PPMd decompression                          *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbPPMd;
+
+{$I AbDefine.inc}
 
 interface
 

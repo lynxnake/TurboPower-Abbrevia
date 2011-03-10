@@ -29,9 +29,9 @@
 {* ABBREVIA: Base component class (CLX)                  *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbBseCLX;
+
+{$I AbDefine.inc}
 
 interface
 

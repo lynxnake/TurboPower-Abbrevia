@@ -29,10 +29,10 @@
 {* ABBREVIA: Registrations (VCL)                         *}
 {*********************************************************}
 
+unit AbReg;
+
 {$I AbDefine.inc}
 {$UNDEF UsingClx }
-
-unit AbReg;
 
 {$R AbReg.res}
 

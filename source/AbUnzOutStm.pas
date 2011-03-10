@@ -29,9 +29,9 @@
 {* ABBREVIA: UnZip output stream;  progress and CRC32    *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbUnzOutStm;
+
+{$I AbDefine.inc}
 
 interface
 

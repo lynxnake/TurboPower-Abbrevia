@@ -29,9 +29,9 @@
 {* ABBREVIA: WavPack decompression procedures            *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbWavPack;
+
+{$I AbDefine.inc}
 
 interface
 

@@ -29,9 +29,9 @@
 {* ABBREVIA: Bit bucket memory stream class              *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbBitBkt;
+
+{$I AbDefine.inc}
 
 interface
 

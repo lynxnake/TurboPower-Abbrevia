@@ -34,9 +34,9 @@
 {* with Tar files                                        *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbTarTyp;
+
+{$I AbDefine.inc}
 
 interface
 

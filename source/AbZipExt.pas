@@ -29,9 +29,9 @@
 {* ABBREVIA: Zip file registration                       *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbZipExt;
+
+{$I AbDefine.inc}
 
 interface
 

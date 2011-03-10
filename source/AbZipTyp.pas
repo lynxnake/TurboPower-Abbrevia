@@ -32,9 +32,9 @@
 {* PKWare's PKZip for Windows 2.5                        *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbZipTyp;
+
+{$I AbDefine.inc}
 
 interface
 

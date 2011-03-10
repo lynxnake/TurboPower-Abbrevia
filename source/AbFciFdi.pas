@@ -31,9 +31,9 @@
 {* included in the Microsoft Cabinet SDK                 *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbFciFdi;
+
+{$I AbDefine.inc}
 
 interface
 

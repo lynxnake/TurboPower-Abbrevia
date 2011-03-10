@@ -29,10 +29,10 @@
 {* ABBREVIA: Registrations (CLX)                         *}
 {*********************************************************}
 
+unit AbRegClx;
+
 {$I AbDefine.inc}
 {$DEFINE UsingCLX}
-
-unit AbRegClx;
 
 {$R AbReg.res}
 

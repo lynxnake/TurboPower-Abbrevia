@@ -23,9 +23,9 @@
  *
  * ***** END LICENSE BLOCK ***** *)
 
-{$I AbDefine.inc}
-
 unit AbBzip2TypTests;
+
+{$I AbDefine.inc}
 
 interface
 

@@ -29,9 +29,9 @@
 {* ABBREVIA: Utility classes and routines                *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbUtils;
+
+{$I AbDefine.inc}
 
 interface
 

@@ -29,9 +29,9 @@
 {* ABBREVIA: Base component class (VCL)                  *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbBseVCL;
+
+{$I AbDefine.inc}
 
 interface
 

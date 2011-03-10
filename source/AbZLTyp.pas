@@ -37,6 +37,8 @@
 
 unit AbZLTyp;
 
+{$I AbDefine.inc}
+
 interface
 
 uses

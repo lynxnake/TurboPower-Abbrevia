@@ -29,9 +29,9 @@
 {* ABBREVIA: Exception classes                           *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbExcept;
+
+{$I AbDefine.inc}
 
 interface
 

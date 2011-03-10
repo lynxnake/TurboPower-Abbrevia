@@ -31,9 +31,9 @@
 {* Stream to handle spanning ZIP files to diskettes      *}
 {*********************************************************}
 
-{$I AbDefine.inc}
-
 unit AbSpanSt;
+
+{$I AbDefine.inc}
 
 interface
 
