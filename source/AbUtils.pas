@@ -1127,6 +1127,7 @@ function AbUnixTimeToLocalDateTime(UnixTime : LongInt) : TDateTime;
 var
   Hrs, Mins, Secs : Word;
   TodaysSecs : LongInt;
+  Time: TDateTime;
 begin
   UnixTime := UnixTime - AbOffsetFromUTC;
   TodaysSecs := UnixTime mod SecondsInDay;
@@ -1135,8 +1136,10 @@ begin
   Mins := TodaysSecs div SecondsInMinute;
   Secs := TodaysSecs - (Mins * SecondsInMinute);
 
-  Result := Unix0Date + (UnixTime div SecondsInDay) +
-    EncodeTime(Hrs, Mins, Secs, 0);
+  if TryEncodeTime(Hrs, Mins, Secs, 0, Time) then
+    Result := Unix0Date + (UnixTime div SecondsInDay) + Time
+  else
+    Result := 0;
 {$ENDIF}
 {$IFDEF LINUX}
 begin
