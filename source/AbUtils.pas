@@ -187,10 +187,6 @@ type
 
   function AbGetTempFile(const Dir : string; CreateIt : Boolean) : string;
 
-  function AbDirectoryExists( const Path : string ) : Boolean;
-    {Returns true if Path is an existing directory
-     returns False on blank strings, filenames...}
-
   function AbDrive(const ArchiveName : string) : Char;
 
   function AbDriveIsRemovable(const ArchiveName : string) : Boolean;
@@ -424,7 +420,7 @@ var
   i : Integer;
   TempPath : string;
 begin
-  if AbDirectoryExists( Path ) then
+  if DirectoryExists( Path ) then
     Exit;
   {see how much of the path currently exists}
   if Pos( '\\', Path ) > 0 then
@@ -440,7 +436,7 @@ begin
     {get a temp path to try: drive:\path1}
     TempPath := Copy( Path, 1, i );
     {if it doesn't exist, create it}
-    if not AbDirectoryExists( TempPath ) then
+    if not DirectoryExists( TempPath ) then
       MkDir( TempPath );
     inc( iStartSlash );
   until ( Length( TempPath ) = Length( Path ) );
@@ -472,7 +468,7 @@ var
   hFile: Integer;
 {$ENDIF}
 begin
-  if AbDirectoryExists(Dir) then
+  if DirectoryExists(Dir) then
     TempPath := Dir
   else
     TempPath := AbGetTempDirectory;
@@ -666,35 +662,6 @@ end;
 { -------------------------------------------------------------------------- }
 {!!.01 -- End Rewritten}
 
-{ -------------------------------------------------------------------------- }
-function AbDirectoryExists( const Path : string ) : Boolean;
-{$IFDEF MSWINDOWS}
-var
-  Attr : DWORD;
-  PathZ: array [0..255] of Char;
-{$ENDIF}
-{$IFDEF LINUX}
-var
-  SB: TStatBuf;
-{$ENDIF}
-
-begin
-  Result := False;
-  {we don't support wildcards}
-  if (Pos('*', Path) <> 0) or (Pos('?', Path) <> 0) then
-    Exit;
-{$IFDEF MSWINDOWS}
-  Attr := GetFileAttributes( StrPCopy( PathZ, Path ) );
-  if (Attr <> DWORD(-1)) and ((Attr and faDirectory) <> 0) then
-    Result := true;
-{$ENDIF}
-{$IFDEF LINUX}
-  if FileExists(Path) then begin
-    stat(PAnsiChar(Path), SB);
-    Result := (SB.st_mode and AB_FMODE_DIR) = AB_FMODE_DIR;
-  end;
-{$ENDIF}
-end;
 { -------------------------------------------------------------------------- }
 function AbFileMatch(FileName: string; FileMask: string ): Boolean;
   {see if FileName matches FileMask}

@@ -1201,7 +1201,7 @@ begin
     UseName := AbAddBackSlash(BaseDirectory) + UseName;
 
   Path := ExtractFileDir(UseName);
-  if (Path <> '') and not AbDirectoryExists(Path) then
+  if (Path <> '') and not DirectoryExists(Path) then
     if (eoCreateDirs in ExtractOptions) then
       AbCreateDirectory(Path)
     else
@@ -1869,7 +1869,7 @@ begin
     if Value[Length(Value)] = AbPathDelim then
       if (Length(Value) > 1) and (Value[Length(Value) - 1] <> ':') then
         System.Delete(Value, Length(Value), 1);
-  if (Length(Value) = 0) or AbDirectoryExists(Value) then
+  if (Length(Value) = 0) or DirectoryExists(Value) then
     FBaseDirectory := Value
   else
     raise EAbNoSuchDirectory.Create;
