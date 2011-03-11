@@ -255,6 +255,8 @@ type
       override;
     function FixName(const Value : string) : string;
       override;
+    function GetSupportsEmptyFolders : Boolean;
+      override;
 
     function GetItem(Index: Integer): TAbGzipItem;                  {!!.03}
     procedure PutItem(Index: Integer; const Value: TAbGzipItem);    {!!.03}
@@ -1052,6 +1054,11 @@ begin
     Result := TAbGzipItem(FItemList.Items[Index]);
 end;
 {!!.03 -- End Added }
+
+function TAbGzipArchive.GetSupportsEmptyFolders : Boolean;
+begin
+  Result := IsGzippedTar and TarAutoHandle;
+end;
 
 procedure TAbGzipArchive.LoadArchive;
 var

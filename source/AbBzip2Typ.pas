@@ -92,6 +92,7 @@ type
     procedure LoadArchive; override;
     procedure SaveArchive; override;
     procedure TestItemAt(Index : Integer); override;
+    function GetSupportsEmptyFolders : Boolean; override;
 
   public {methods}
     constructor CreateFromStream(aStream : TStream; const aArchiveName : string); override;
@@ -265,6 +266,11 @@ begin
     { Index ignored as there's only one item in a Bz2 }
     DecompressToStream(aStream);
   end;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbBzip2Archive.GetSupportsEmptyFolders : Boolean;
+begin
+  Result := IsBzippedTar and TarAutoHandle;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBzip2Archive.LoadArchive;

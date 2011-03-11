@@ -432,9 +432,11 @@ type
       override;
     function FixName(const Value: string): string;
       override;
+   	function GetSupportsEmptyFolders: Boolean;
+      override;
 
     function GetItem(Index: Integer): TAbTarItem;
-    procedure PutItem(Index: Integer; const Value: TAbTarItem);     
+    procedure PutItem(Index: Integer; const Value: TAbTarItem);
 
   public {methods}
     constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
@@ -444,7 +446,6 @@ type
     property Items[Index : Integer] : TAbTarItem
       read GetItem
       write PutItem; default;
-   	class function SupportsEmptyFolder: Boolean; override;
   end;
 
 function VerifyTar(Strm : TStream) : TAbArchiveType;
@@ -2078,6 +2079,11 @@ begin
   Result := TAbTarItem(FItemList.Items[Index]);
 end;
 
+function TAbTarArchive.GetSupportsEmptyFolders: Boolean;
+begin
+  Result := True;
+end;
+
 procedure TAbTarArchive.PutItem(Index: Integer; const Value: TAbTarItem);
 begin
   //TODO: Remove this from all archives
@@ -2220,11 +2226,6 @@ begin
   FStream.Position := TAbTarItem(FItemList[Index]).StreamPosition;
   if VerifyTar(FStream) <> atTar then
     raise EAbTarInvalid.Create; { Invalid Tar }
-end;
-
-class function TAbTarArchive.SupportsEmptyFolder: Boolean;
-begin
-  Result := True;
 end;
 
 end.

@@ -319,7 +319,7 @@ end;
 class function TAbArchiveMultiFileTests.Suite: ITestSuite;
 begin
   Result := inherited Suite;
-  if ArchiveClass.SupportsEmptyFolder then begin
+  if ArchiveType <> atCab then begin
     Result.AddTest(
       TAbArchiveDecompressEmptyFoldersTest.Create(Self, 'Decompress Empty Folders'));
     Result.AddTest(

@@ -484,6 +484,8 @@ type
       override;
     function FixName(const Value : string ) : string;
       override;
+    function GetSupportsEmptyFolders: Boolean;
+      override;
     procedure LoadArchive;
       override;
     procedure SaveArchive;
@@ -554,8 +556,6 @@ type
     property Items[Index : Integer] : TAbZipItem                      {!!.03}
       read GetItem                                                    {!!.03}
       write PutItem; default;                                         {!!.03}
-
-    class function SupportsEmptyFolder: Boolean; override;
 
   public {events}
     property OnNeedPassword : TAbNeedPasswordEvent
@@ -2330,6 +2330,11 @@ begin
   Result := TAbZipItem(FItemList.Items[Index]);
 end;
 { -------------------------------------------------------------------------- }
+function TAbZipArchive.GetSupportsEmptyFolders: Boolean;
+begin
+  Result := True;
+end;
+{ -------------------------------------------------------------------------- }
 function TAbZipArchive.GetZipfileComment : AnsiString;
 begin
   Result := FInfo.ZipfileComment;
@@ -2810,11 +2815,6 @@ end;
 procedure TAbZipArchive.TestItemAt(Index : Integer);
 begin
   DoTestHelper(Index);
-end;
-{ -------------------------------------------------------------------------- }        
-class function TAbZipArchive.SupportsEmptyFolder: Boolean;
-begin
-	Result := True;
 end;
 
 end.

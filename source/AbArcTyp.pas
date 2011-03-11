@@ -366,6 +366,8 @@ type
       virtual;
     function GetSpanningThreshold : Int64;
       virtual;
+    function GetSupportsEmptyFolders : Boolean;
+      virtual;
     procedure SetSpanningThreshold( Value : Int64 );
       virtual;
 
@@ -463,11 +465,11 @@ type
     property StoreOptions : TAbStoreOptions
       read FStoreOptions
       write FStoreOptions;
+    property SupportsEmptyFolders :  Boolean
+      read GetSupportsEmptyFolders;
     property TempDirectory : string
       read FTempDir
       write FTempDir;
-
-   	class function SupportsEmptyFolder: Boolean; virtual;
 
   public {events}
     property OnProcessItemFailure : TAbArchiveItemFailureEvent
@@ -1094,7 +1096,7 @@ var
   end;
 
 begin
-   if not SupportsEmptyFolder then
+   if not SupportsEmptyFolders then
     SearchAttr := SearchAttr and not faDirectory;
 
   CheckValid;
@@ -1736,6 +1738,11 @@ begin
   Result := FSpanningThreshold;
 end;
 { -------------------------------------------------------------------------- }
+function TAbArchive.GetSupportsEmptyFolders : Boolean;
+begin
+  Result := False;
+end;
+{ -------------------------------------------------------------------------- }
 function TAbArchive.GetItemCount : Integer;
 begin
   if Assigned(FItemList) then
@@ -1932,11 +1939,6 @@ procedure TAbArchive.DoSpanningMediaRequest(Sender: TObject;
   ImageNumber: Integer; var ImageName: string; var Abort: Boolean);
 begin
   raise EAbSpanningNotSupported.Create;
-end;
-{ -------------------------------------------------------------------------- }
-class function TAbArchive.SupportsEmptyFolder: Boolean;
-begin
-	Result := False;
 end;
 { -------------------------------------------------------------------------- }
 
