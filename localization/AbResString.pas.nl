@@ -92,11 +92,11 @@ resourcestring
   AbZipStored = 'Opgeslagen';
   AbZipShrunk = 'Gekrompen';
   AbZipReduced = 'Gereduceerd';
-  AbZipImploded = 'GeÔmplodeerd';
+  AbZipImploded = 'Geïmplodeerd';
   AbZipTokenized = 'In symbolen gepakt';
   AbZipDeflated = 'Gedeflationeerd';
   AbZipDeflate64 = 'Uitgebreid gedeflationeerd';
-  AbZipDCLImploded = 'DCL geÔmplodeerd';
+  AbZipDCLImploded = 'DCL geïmplodeerd';
   AbZipBzip2 = 'Bzip2';
   AbZipLZMA = 'LZMA';
   AbZipIBMTerse = 'IBM Terse';
