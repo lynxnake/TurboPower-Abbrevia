@@ -39,10 +39,10 @@ resourcestring
   AbUnknownCompressionMethodS = 'Kan bestand niet ontpakken - niet ondersteunde compressiemethode';
   AbNoExtractionMethodS = 'Kan bestand niet ontpakken - ontpakken wordt niet ondersteund';
   AbInvalidPasswordS = 'Kan bestand niet ontpakken - ongeldig paswoord';
-  AbNoInsertionMethodS = 'Kan bestand niet tussenvoegen - tussenvoegen wordt niet ondersteund';
+  AbNoInsertionMethodS = 'Kan bestand niet invoegen - invoegen wordt niet ondersteund';
   AbInvalidFactorS = 'Ongeldige reductiefactor';
-  AbDuplicateNameS = 'Kan het bestand niet tussenvoegen - dupliceert opgeslagen naam';
-  AbUnsupportedCompressionMethodS = 'Kan het bestand niet tussenvoegen - niet ondersteunde compressiemethode';
+  AbDuplicateNameS = 'Kan het bestand niet invoegen - dupliceert opgeslagen naam';
+  AbUnsupportedCompressionMethodS = 'Kan het bestand niet invoegen - niet ondersteunde compressiemethode';
   AbUserAbortS = 'Proces werd door gebruiker afgebroken';
   AbArchiveBusyS = 'Archief is bezig - kan nieuwe aanvraag niet bewerken';
   AbLastDiskRequestS = 'Plaats laatste diskette van opgesplitst archief';
@@ -92,11 +92,11 @@ resourcestring
   AbZipStored = 'Opgeslagen';
   AbZipShrunk = 'Gekrompen';
   AbZipReduced = 'Gereduceerd';
-  AbZipImploded = 'Geïmplodeerd';
+  AbZipImploded = 'GeÔmplodeerd';
   AbZipTokenized = 'In symbolen gepakt';
   AbZipDeflated = 'Gedeflationeerd';
   AbZipDeflate64 = 'Uitgebreid gedeflationeerd';
-  AbZipDCLImploded = 'DCL geïmplodeerd';
+  AbZipDCLImploded = 'DCL geÔmplodeerd';
   AbZipBzip2 = 'Bzip2';
   AbZipLZMA = 'LZMA';
   AbZipIBMTerse = 'IBM Terse';
@@ -198,6 +198,16 @@ resourcestring
   AbGzipBadCRCS                    = 'Ongeldige CRC';
   AbGzipBadFileSizeS               = 'Ongeldige bestandsgrootte';
 
+  AbTarInvalidS                    = 'Ongeldige Tar';
+  
+  AbTarBadFileNameS                = 'Bestandsnaam te lang';
+  
+  AbTarBadLinkNameS                = 'Link naam te lang';
+  
+  AbTarBadOpS                      = 'Niet ondersteunde functie';
+
+  
+
   AbUnhandledEntityS               = 'Niet behandelde entiteit';
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
@@ -215,10 +225,10 @@ resourcestring
   AbGzOsTOPS_20     = 'TOPS-20';
   AbGzOsNTFS        = 'NTFS Bestandssysteem (NT)';
   AbGzOsQDOS        = 'QDOS';
-  AbGzOsAcornRISCOS = 'Acorn RISCOS';
+  AbGzOsAcornRISCOS = 'Acorn RISC OS';
   AbGzOsVFAT        = 'VFAT Bestandssysteem (Win95, NT)';
   AbGzOsMVS         = 'MVS';
-  AbGzOsBeOS        = 'BeOS (BeBox oder PowerMac)';
+  AbGzOsBeOS        = 'BeOS (BeBox of PowerMac)';
   AbGzOsTandem      = 'Tandem/NSK';
   AbGzOsTHEOS       = 'THEOS';
   AbGzOsunknown     = 'onbekend';
@@ -227,12 +237,12 @@ resourcestring
 {!!.03 - Moved from AbCompnd.inc }
 { Compound File specific error messages }
 resourcestring
-  AbCmpndIndexOutOfBounds   = 'Index buiten toegelaten bereik';
+  AbCmpndIndexOutOfBounds   = 'Index niet in toegelaten bereik';
   AbCmpndBusyUpdating       = 'Samengesteld bestand wordt geactualiseerd';
   AbCmpndInvalidFile        = 'Ongeldig samengesteld bestand ';
   AbCmpndFileNotFound       = 'Bestand/directory niet gevonden';
   AbCmpndFolderNotEmpty     = 'Directory is niet leeg';
-  AbCmpndExceedsMaxFileSize = 'Bestandsgroote overschrijdt toegelaten maximum';
+  AbCmpndExceedsMaxFileSize = 'Bestandsgrootte overschrijdt toegelaten maximum';
 {!!.03 - End Moved }
 
 
