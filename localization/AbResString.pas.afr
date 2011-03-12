@@ -198,6 +198,11 @@ resourcestring
   AbGzipBadCRCS                    = 'Ongeldige CRC';
   AbGzipBadFileSizeS               = 'Ongeldige bestaandsgroote'; 
 
+  AbTarInvalidS                    = 'Tar ongeldig';
+  AbTarBadFileNameS                = 'Lêer naam te lang';
+  AbTarBadLinkNameS                = 'Skakel naam te lang';
+  AbTarBadOpS                      = 'Operasie nie ondersteun nie';
+  
   AbUnhandledEntityS               = 'Nie behandelde entiteit'; 
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
