@@ -20,12 +20,12 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Henri Hakl
+ * Henri Hakl, Roman Kassebaum
  *
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* Abbrevia: AbResString.pas 3.05                        *}
+{* Abbrevia: AbResString.pas                             *}
 {*********************************************************}
 {* Abbrevia: Resource strings, Africaans localization    *}
 {*********************************************************}
