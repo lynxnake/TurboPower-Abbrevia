@@ -45,10 +45,6 @@ uses
 
 { ===== TAbArchiveItem ====================================================== }
 type
-  {$REGION 'Documentation'}
-  ///	<summary>The TAbArchiveItem class describes a single item in an
-  ///	archive.</summary>
-  {$ENDREGION}
   TAbArchiveItem = class(TObject)
   protected {private}
     NextItem          : TAbArchiveItem;
@@ -91,260 +87,54 @@ type
   public {methods}
     constructor Create;
     destructor Destroy; override;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Returns True if the item's <see cref="DiskFileName" /> matches
-    ///	the specified <paramref name="FileMask" />.</summary>
-    ///	<remarks>FileMask can contain '*' and '?' wild characters, and may
-    ///	contain a path as well as a filename. If the FileMask includes a
-    ///	directory, then the <see cref="DiskPath" /> must match the directory
-    ///	portion of the FileMask for MatchesDiskName to return True.</remarks>
-    ///	<seealso cref="MatchesStoredName"></seealso>
-    {$ENDREGION}
     function MatchesDiskName(const FileMask : string) : Boolean;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Returns True if the item's <see cref="Filename" /> matches the
-    ///	specified <paramref name="FileMask" />.</summary>
-    ///	<remarks>FileMask can contain '*' and '?' wild characters, and may
-    ///	contain a path as well as a filename. If the FileMask includes a
-    ///	directory, then the <see cref="StoredPath" /> must match the directory
-    ///	portion of the FileMask for MatchesStoredName to return True.</remarks>
-    ///	<seealso cref="MatchesDiskName"></seealso>
-    ///	<seealso cref="MatchesStoredNameEx"></seealso>
-    {$ENDREGION}
     function MatchesStoredName(const FileMask : string) : Boolean;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Returns True if the item's Filename matches any of the
-    ///	specified file masks.</summary>
-    ///	<param name="FileMask">Semi-colon separated list of masks</param>
-    ///	<seealso cref="MatchesStoredName"></seealso>
-    {$ENDREGION}
     function MatchesStoredNameEx(const FileMask : string) : Boolean;
 
 
   public {properties}
-    {$REGION 'Documentation'}
-    ///	<summary>Describes the pending process for this archive item.</summary>
-    ///	<remarks>
-    ///	  <para>If the TAbArchive that includes this TAbArchiveItem has its
-    ///	  <see cref="TAbArchive.AutoSave">AutoSave</see> property set
-    ///	  to False, then processing of archive actions is deferred until
-    ///	  either:</para>
-    ///	  <list type="bullet">
-    ///	    <item>The archive is explicitly saved using TAbArchive's Save
-    ///	    method.</item>
-    ///	    <item>Multiple operations on a single item require the archive to
-    ///	    be saved.</item>
-    ///	  </list>
-    ///	  <para>The Action property describes the processing that needs to
-    ///	  occur on this archive. During the Save operation on the archive, each
-    ///	  TAbArchiveItem's Action property is checked, and pending operations
-    ///	  occur. The archive's action is then reset to aaNone.</para>
-    ///	</remarks>
-    ///	<seealso cref="TAbArchive.Save"></seealso>
-    {$ENDREGION}
     property Action : TAbArchiveAction
       read FAction
       write FAction;
-
-    {$REGION 'Documentation'}
-    ///	<summary>The size in bytes of the file in its compressed
-    ///	state.</summary>
-    ///	<remarks>CompressedSize is the actual size of the file within the
-    ///	archive. It must be set by the routine that writes the archive. If the
-    ///	file is encrypted, the size of the encryption header is included in
-    ///	Compressed Size.</remarks>
-    ///	<seealso cref="UncompressedSize"></seealso>
-    {$ENDREGION}
     property CompressedSize : Int64
       read GetCompressedSize
       write SetCompressedSize;
-
-    {$REGION 'Documentation'}
-    ///	<summary>A 32-bit CRC for the original file represented by this item in
-    ///	the archive.</summary>
-    ///	<remarks>The CRC of the original file is stored in the header
-    ///	information for a zipped file to provide a verification check that the
-    ///	item was properly dearchived. Two files with the same CRC and the same
-    ///	size are almost certainly identical.</remarks>
-    ///	<seealso cref="LastModFileDate"></seealso>
-    ///	<seealso cref="LastModFileTime"></seealso>
-    ///	<seealso cref="UnCompressedSize"></seealso>
-    {$ENDREGION}
     property CRC32 : Longint
       read GetCRC32
       write SetCRC32;
-
-    {$REGION 'Documentation'}
-    ///	<summary>The file&#8217;s complete file name as stored on the
-    ///	disk.</summary>
-    ///	<remarks>
-    ///	  <para>This may differ from the FileName property, which contains the
-    ///	  file specification stored in the archive.</para>
-    ///	  <note type="caution">DiskFileName may not be stored in the archive.
-    ///	  PKZIP files do not store this information. When a PKZIP archive is
-    ///	  first opened, the DiskFileName of each item in the archive will
-    ///	  contain the same information found in the FileName property.</note>
-    ///	</remarks>
-    ///	<seealso cref="DiskPath"></seealso>
-    ///	<seealso cref="MatchesDiskName"></seealso>
-    {$ENDREGION}
     property DiskFileName : string
       read FDiskFileName
       write FDiskFileName;
-
-    {$REGION 'Documentation'}
-    ///	<summary>The path information of a file that is to be stored in the
-    ///	archive.</summary>
-    ///	<remarks>DiskPath is obtained by extracting the path information from
-    ///	DiskFileName.</remarks>
-    ///	<seealso cref="DiskFileName"></seealso>
-    ///	<seealso cref="MatchesDiskName"></seealso>
-    {$ENDREGION}
     property DiskPath : string
       read GetDiskPath;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Supplies the external file system attributes for the
-    ///	item.</summary>
-    ///	<remarks>
-    ///	  <para>ExternalFileAttributes is made up from the SysUtils unit file
-    ///	  attribute constants.</para>
-    ///	  <para><b>Windows:</b></para>
-    ///	  <para>The options are <c>faReadOnly</c>, <c>faHidden</c>,
-    ///	  <c>faSysFile</c>, <c>faVolumeID</c>, <c>faDirectory</c>, and
-    ///	  <c>faArchive</c>. These attributes can be combined by adding their
-    ///	  constants or values. For example: <c>(faReadOnly + faHidden)</c>
-    ///	  indicates a file with the read-only and hidden attributes set.</para>
-    ///	  <para><b>Linux:</b></para>
-    ///	  <para>The options are <c>faLinuxDir</c>, <c>faFileLink</c>
-    ///	  <c>faChrFile</c>, <c>faBlkFile</c>, <c>faFifoFile</c>, and
-    ///	  <c>faSockFile</c>. These attributes can be combined by adding their
-    ///	  constants or values. For example the Kylix definition of the
-    ///	  <c>faSysFile</c> constant specifies "<c>faChrFile + faBlkFile +
-    ///	  faFifoFile + faSockFile</c>" which is useful for searching for
-    ///	  various types; but for an individual file stored in an archive, these
-    ///	  values are mutually exclusive.</para>
-    ///	</remarks>
-    {$ENDREGION}
     property ExternalFileAttributes : LongWord
       read GetExternalFileAttributes
       write SetExternalFileAttributes;
-
-    {$REGION 'Documentation'}
-    ///	<summary>
-    ///	  <para>The name under which the archived file is stored.</para>
-    ///	</summary>
-    ///	<seealso cref="MatchesStoredName"></seealso>
-    ///	<seealso cref="StoredPath"></seealso>
-    {$ENDREGION}
     property FileName : string
       read GetFileName
       write SetFileName;
-
-    /// <summary>If true this item is a directory rather than a file</summary>
     property IsDirectory: Boolean
       read GetIsDirectory;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Indicates whether the item is encrypted.</summary>
-    {$ENDREGION}
     property IsEncrypted : Boolean
       read GetIsEncrypted
       write SetIsEncrypted;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Indicates the last date the compressed file was
-    ///	modified.</summary>
-    ///	<remarks>
-    ///	  The LastModFileDate property supplies the DOS file date (as is stored
-    ///	  in a ZIP compatible file) for the archived file.
-    ///	  <note type="note">This property is provided for backward
-    ///	  compatibility with earlier versions of Abbrevia. To access the file
-    ///	  date in a platform independent manner use the
-    ///   <see cref="LastModTimeAsDateTime" /> property.</note>
-    ///	</remarks>
-    ///	<seealso cref="LastModFileTime"></seealso>
-    {$ENDREGION}
     property LastModFileDate : Word
       read GetLastModFileDate
       write SetLastModFileDate;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Indicates the last time the compressed file was
-    ///	modified.</summary>
-    ///	<remarks>
-    ///	  The LastModFileDate property supplies the DOS file time (as is stored
-    ///	  in a ZIP compatible file) for the archived file.
-    ///	  <note type="note">This property is provided for backward
-    ///	  compatibility with earlier versions of Abbrevia. To access the file
-    ///	  time in a platform independent manner use the
-    ///   <see cref="LastModTimeAsDateTime">LastModTimeAsDateTime</see>
-    ///   property.</note>
-    ///	</remarks>
-    ///	<example>
-    ///	  <para>The last modified date and time for the compressed file can be
-    ///	  converted to a string by:</para>
-    ///	  <para><c>DateTimeToStr(FileDateToDateTime(LastModFileDate shl 16 +
-    ///	  LastModFileTime));</c></para>
-    ///	</example>
-    {$ENDREGION}
     property LastModFileTime : Word
       read GetLastModFileTime
       write SetLastModFileTime;
     property NativeFileAttributes : LongInt
       read GetNativeFileAttributes;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Returns the path stored in the compressed file&#8217;s header
-    ///	information.</summary>
-    ///	<remarks>As each file is stored in an archive, information relative to
-    ///	that file is also stored. This can optionally include path information.
-    ///	If path information is included, it can be accessed via StoredPath. If
-    ///	no path information is included, StoredPath returns an empty
-    ///	string.</remarks>
-    ///	<seealso cref="Filename"></seealso>
-    ///	<seealso cref="MatchesStoredName"></seealso>
-    {$ENDREGION}
     property StoredPath : string
       read GetStoredPath;
-
-    {$REGION 'Documentation'}
-    ///	<summary>Selects items for Archive operations, such as Delete, Extract
-    ///	and Freshen.</summary>
-    ///	<remarks>Tagged archive items are ones that have been
-    ///	selected.</remarks>
-    ///	<seealso cref="TAbArchive.ClearTags"></seealso>
-    ///	<seealso cref="TAbArchive.TagItems"></seealso>
-    ///	<seealso cref="TAbArchive.UnTagItems"></seealso>
-    ///	<seealso cref="TAbArchive.DeleteTaggedItems"></seealso>
-    ///	<seealso cref="TAbArchive.ExtractTaggedItems"></seealso>
-    ///	<seealso cref="TAbArchive.FreshenTaggedItems"></seealso>
-    {$ENDREGION}
     property Tagged : Boolean
       read FTagged
       write FTagged;
-
-    {$REGION 'Documentation'}
-    ///	<summary>The size in bytes of the file in its original, uncompressed
-    ///	state.</summary>
-    ///	<seealso cref="CompressedSize"></seealso>
-    {$ENDREGION}
     property UncompressedSize : Int64
       read GetUncompressedSize
       write SetUncompressedSize;
 
-    {$REGION 'Documentation'}
-    ///	<summary>Indicates the date and time of the last modification to the
-    ///	compressed file.</summary>
-    ///	<remarks>The LastModTimeAsDateTime property specifies a TDateTime value
-    ///	indicating the file system date and time of last modification as was
-    ///	reported at the time of archiving.</remarks>
-    ///	<seealso cref="LastModFileDate"></seealso>
-    ///	<seealso cref="LastModFileTime"></seealso>
-    {$ENDREGION}
     property LastModTimeAsDateTime : TDateTime                           {!!.01}
       read GetLastModTimeAsDateTime                                      {!!.01}
       write SetLastModTimeAsDateTime;                                    {!!.01}
