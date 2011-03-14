@@ -18,7 +18,7 @@
 <h1>Abbrevia</h1>
 
 <p>Version 4.0<br>
-March 13, 2011<br>
+March 14, 2011<br>
 <a href="http://www.sourceforge.net/projects/tpabbrevia">Home Page</a></p>
 
 <hr>
@@ -27,7 +27,7 @@ March 13, 2011<br>
 
 <ul>
   <li><a href="#intro">Introduction</a></li>
-  <li><a href="#packages">Package names</a></li>
+  <li><a href="#packages">Packages</a></li>
   <li><a href="#install">Installation</a></li>
   <li><a href="#support">Support and feedback</a></li>
   <li><a href="#devel">Development sources</a></li>
@@ -55,15 +55,24 @@ March 13, 2011<br>
   <li>Translations available in Afrikaans, Dutch, French, German and Russian</li>
 </ul>
 
-<p>This is a source-only release. It includes design-time and run-time packages for Delphi 6 through Delphi XE and Kylix 3. C++Builder 2010 packages are included but have not been tested.</p>
+<p>This is a source-only release. It includes design-time and run-time packages for Delphi 6 through Delphi XE and Kylix 3.</p>
 
 
 <!--====================--><hr>
 
 
-<h3><a name="packages">Package names</a></h3>
+<h3><a name="packages">Packages</a></h3>
 
-<p>To be completed</p>
+<p>Abbrevia includes the following packages:</p>
+
+<ul>
+  <li><b>Abbrevia.bpl</b>: Runtime non-visual components.  <code>TAbZipBrowse</code>, <code>TAbZipKit</code>, <code>TAbMakeCab</code>, etc.</li>
+  <li><b>AbbreviaVCL.bpl</b>: Runtime visual components.  <code>TAbProgressMeter</code>, <code>TAbZipOutline</code>.</li>
+  <li><b>AbbreviaVCLDesign.bpl</b>: Designtime support.</li>
+  <li><b>AbbreviaCLX.bpl</b>, <b>AbbreviaCLXDesign.bpl</b> (Delphi 6/7): CLX visual components.</li>
+</ul>
+
+<p>Under Kylix 3 the <code>AbbreviaCLX</code> package includes all of the non-visual runtime units, and the <code>Abbrevia</code> package is not included separately.</p>
 
 
 <!--====================--><hr>
@@ -77,9 +86,9 @@ March 13, 2011<br>
   <li>Unzip the release files into a directory (e.g., d:\abbrevia).</li>
   <li>Start Delphi or C++Builder.</li>
   <li>Add the source subdirectory (e.g. d:\abbrevia\source) to the IDE's library path.</li>
-  <li>Open and compile the non-visual runtime package specific to the IDE being used (e.g. B305_r2007.dpk for Delphi 2007).</li>
-  <li>Open and compile the visual runtime package specific to the IDE being used (e.g. B305vr2007.dpk for Delphi 2007).</li>
-  <li>Open and install the designtime package specific to the IDE being used (e.g. B305vd2007.dpk for Delphi 2007). The IDE should notify you the components have been installed.</li>
+  <li>Open the project group in the packages directory that corresponds to the IDE being used (e.g. "Delphi XE.groupproj").</li>
+  <li>Start at the top of the project group and compile each package in turn.</li>
+  <li>Select the "AbbreviaVCLDesign" package and install it.  The IDE should notify you that the components have been installed.  If you are using Delphi 7 you can install "AbbreviaCLXDesign" as well to get CLX designtime support.</li>
   <li>Make sure the PATH environmental variable contains the directory in which the compiled packages (i.e. BPL or DPL files) were placed.</li>
 </ol>
 
