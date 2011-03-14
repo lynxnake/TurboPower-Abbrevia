@@ -46,7 +46,11 @@ procedure DecompressWavPack(aSrc, aDes: TStream);
 implementation
 
 uses
+  {$IFDEF BCB}
+  AbCrtl,
+  {$ELSE}
   crtl,
+  {$ENDIF}
   Math,
   SysUtils;
 

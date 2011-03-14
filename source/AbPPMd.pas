@@ -43,7 +43,11 @@ procedure DecompressPPMd(aSrc, aDes: TStream);
 implementation
 
 uses
+  {$IFDEF BCB}
+  AbCrtl,
+  {$ELSE}
   crtl, //__assert, _malloc, _free, _memmove, _memset, _memcpy
+  {$ENDIF}
   SysUtils,
   AbExcept;
 

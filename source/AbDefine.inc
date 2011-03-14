@@ -245,10 +245,15 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
   {$DEFINE UnzipWavPackSupport}
 {$ENDIF}
 
-{ Linking .obj files isn't currently supported in Kylix or C++Builder }
-{$IF NOT DEFINED(MSWINDOWS) OR DEFINED(BCB)}
+{ Linking .obj files isn't currently supported in Kylix }
+{$IFNDEF MSWINDOWS}
   {$UNDEF UnzipLzmaSupport}
   {$UNDEF UnzipPPMdSupport}
   {$UNDEF UnzipWavPackSupport}
-{$IFEND}
+{$ENDIF}
 
+{ Lzma/WavPack fails with link errors in C++Builder }
+{$IFDEF BCB}
+  {$UNDEF UnzipLzmaSupport}
+  {$UNDEF UnzipWavPackSupport}
+{$ENDIF}
