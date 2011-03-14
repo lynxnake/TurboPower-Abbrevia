@@ -1,0 +1,36 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{4FBB3CA0-F846-45F2-941F-FBAF2589C62E}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="C++Builder 2009\Abbrevia.cbproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="Abbrevia">
+			<MSBuild Projects="C++Builder 2009\Abbrevia.cbproj"/>
+		</Target>
+		<Target Name="Abbrevia:Clean">
+			<MSBuild Targets="Clean" Projects="C++Builder 2009\Abbrevia.cbproj"/>
+		</Target>
+		<Target Name="Abbrevia:Make">
+			<MSBuild Targets="Make" Projects="C++Builder 2009\Abbrevia.cbproj"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="Abbrevia"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="Abbrevia:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="Abbrevia:Make"/>
+		</Target>
+		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+	</Project>
