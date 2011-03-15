@@ -202,8 +202,8 @@ resourcestring
   AbGzipBadFileSizeS               = 'Bad File Size';
 
   AbTarInvalidS                    = 'Invalid Tar';
-  AbTarBadFileNameS                = 'File Name too long';
-  AbTarBadLinkNameS                = 'Link Name too long';
+  AbTarBadFileNameS                = 'File name too long';
+  AbTarBadLinkNameS                = 'Symbolic link path too long';
   AbTarBadOpS                      = 'Unsupported Operation';
 
   AbUnhandledEntityS             = 'Unhandled Entity';
