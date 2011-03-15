@@ -82,7 +82,7 @@ function __stricmp(str1, str2: PAnsiChar): Integer; cdecl;
   external 'msvcrt.dll' name '_stricmp';
 
 function _strncmp(str1, str2: PAnsiChar; num: Integer): Integer; cdecl;
-  external 'msvcrt.dll' name 'strncmp';
+  external 'msvcrt.dll';
 
 
 { Forward declarations ===================================================== }

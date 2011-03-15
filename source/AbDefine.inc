@@ -251,9 +251,3 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
   {$UNDEF UnzipPPMdSupport}
   {$UNDEF UnzipWavPackSupport}
 {$ENDIF}
-
-{ Lzma/WavPack fails with link errors in C++Builder }
-{$IFDEF BCB}
-  {$UNDEF UnzipLzmaSupport}
-  {$UNDEF UnzipWavPackSupport}
-{$ENDIF}

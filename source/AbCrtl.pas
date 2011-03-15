@@ -36,10 +36,12 @@ unit AbCrtl;
 
 interface
 
+const
+  __turboFloat: LongInt = 0;
+
 procedure __llshl; cdecl;
 procedure __llushr; cdecl;
-procedure __ftol; cdecl; external 'msvcrt.dll' name '_ftol';
-procedure __turboFloat; cdecl; external 'msvcrt.dll' name '_turboFloat';
+procedure __ftol; cdecl; external 'msvcrt.dll';
 
 { ctype.h declarations ===================================================== }
 function _isdigit(ch: Integer): Integer; cdecl;
@@ -50,14 +52,12 @@ procedure _memmove(var Dest; const Src; Count: Integer); cdecl;
 procedure _memset(var Dest; Value: Byte; Count: Integer); cdecl;
 function _strlen(P: PAnsiChar): Integer; cdecl;
 function _strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
-function _strncmp(str1, str2: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
-  external 'msvcrt.dll' name 'strncmp';
 function _strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
 
 function _memcmp(s1,s2: Pointer; numBytes: LongWord): integer; cdecl;
-  external 'msvcrt.dll' name 'memcmp';
+  external 'msvcrt.dll';
 function _wcscpy(strDestination, strSource: PWideChar): PWideChar; cdecl;
-  external 'msvcrt.dll' name 'wcscpy';
+  external 'msvcrt.dll';
 
 { stdlib.h declarations ==================================================== }
 function _malloc(Size: Integer): Pointer; cdecl;
@@ -69,7 +69,7 @@ procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
 
 { stdio.h declarations ===================================================== }
 function _sprintf(S: PChar; const Format: PChar): Integer;
-  cdecl; varargs; external 'msvcrt.dll' name 'sprintf';
+  cdecl; varargs; external 'msvcrt.dll';
 
 implementation
 

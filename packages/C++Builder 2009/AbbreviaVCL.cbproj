@@ -65,7 +65,6 @@
 				<BuildOrder>0</BuildOrder>
 			</CppCompile>
 			<ResFiles Include="AbbreviaVCL.res">
-				<ModuleName>AbbreviaVCL.res</ModuleName>
 				<BuildOrder>2</BuildOrder>
 			</ResFiles>
 			<PackageImport Include="Abbrevia.bpi">

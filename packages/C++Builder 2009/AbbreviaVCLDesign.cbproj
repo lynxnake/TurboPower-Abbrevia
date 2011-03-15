@@ -62,52 +62,51 @@
 			<TASM_Debugging>None</TASM_Debugging>
 		</PropertyGroup>
 		<ItemGroup>
-			<CppCompile Include="AbbreviaVCLDesign.cpp">
-				<BuildOrder>0</BuildOrder>
-			</CppCompile>
-			<ResFiles Include="AbbreviaVCLDesign.res">
-				<ModuleName>AbbreviaVCLDesign.res</ModuleName>
-				<BuildOrder>2</BuildOrder>
-			</ResFiles>
-			<PackageImport Include="AbbreviaVCL.bpi">
-				<BuildOrder>3</BuildOrder>
-			</PackageImport>
-			<PackageImport Include="designide.bpi">
-				<BuildOrder>3</BuildOrder>
-			</PackageImport>
-			<DelphiCompile Include="..\..\source\AbPeDir.pas">
-				<BuildOrder>4</BuildOrder>
-			</DelphiCompile>
-			<DelphiCompile Include="..\..\source\AbPeFn.pas">
-				<BuildOrder>5</BuildOrder>
-			</DelphiCompile>
-			<DelphiCompile Include="..\..\source\AbPePass.pas">
-				<BuildOrder>6</BuildOrder>
-			</DelphiCompile>
-			<DelphiCompile Include="..\..\source\AbPeVer.pas">
-				<BuildOrder>7</BuildOrder>
-			</DelphiCompile>
-			<DelphiCompile Include="..\..\source\AbRegVcl.pas">
-				<BuildOrder>8</BuildOrder>
+			<DelphiCompile Include="..\..\source\AbDlgPwd.pas">
+				<BuildOrder>10</BuildOrder>
 			</DelphiCompile>
 			<DelphiCompile Include="..\..\source\AbDlgDir.pas">
 				<BuildOrder>9</BuildOrder>
 			</DelphiCompile>
-			<DelphiCompile Include="..\..\source\AbDlgPwd.pas">
-				<BuildOrder>10</BuildOrder>
+			<DelphiCompile Include="..\..\source\AbRegVcl.pas">
+				<BuildOrder>8</BuildOrder>
 			</DelphiCompile>
 			<DelphiCompile Include="..\..\source\AbPeCol.pas">
 				<BuildOrder>11</BuildOrder>
 			</DelphiCompile>
-			<PackageImport Include="rtl.bpi">
-				<BuildOrder>12</BuildOrder>
+			<PackageImport Include="vclx.bpi">
+				<BuildOrder>14</BuildOrder>
 			</PackageImport>
 			<PackageImport Include="vcl.bpi">
 				<BuildOrder>13</BuildOrder>
 			</PackageImport>
-			<PackageImport Include="vclx.bpi">
-				<BuildOrder>14</BuildOrder>
+			<PackageImport Include="rtl.bpi">
+				<BuildOrder>12</BuildOrder>
 			</PackageImport>
+			<DelphiCompile Include="..\..\source\AbPeVer.pas">
+				<BuildOrder>7</BuildOrder>
+			</DelphiCompile>
+			<PackageImport Include="AbbreviaVCL.bpi">
+				<BuildOrder>3</BuildOrder>
+			</PackageImport>
+			<ResFiles Include="AbbreviaVCLDesign.res">
+				<BuildOrder>2</BuildOrder>
+			</ResFiles>
+			<CppCompile Include="AbbreviaVCLDesign.cpp">
+				<BuildOrder>0</BuildOrder>
+			</CppCompile>
+			<PackageImport Include="designide.bpi">
+				<BuildOrder>3</BuildOrder>
+			</PackageImport>
+			<DelphiCompile Include="..\..\source\AbPePass.pas">
+				<BuildOrder>6</BuildOrder>
+			</DelphiCompile>
+			<DelphiCompile Include="..\..\source\AbPeFn.pas">
+				<BuildOrder>5</BuildOrder>
+			</DelphiCompile>
+			<DelphiCompile Include="..\..\source\AbPeDir.pas">
+				<BuildOrder>4</BuildOrder>
+			</DelphiCompile>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
