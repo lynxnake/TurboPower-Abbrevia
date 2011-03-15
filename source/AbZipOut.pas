@@ -1712,7 +1712,7 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbCustomZipOutline.GetVersion : string;
 begin
-  Result := AbVersion;
+  Result := AbVersionS;
 end;
 { -------------------------------------------------------------------------- }
 function TAbCustomZipOutline.GetZipfileComment : AnsiString;

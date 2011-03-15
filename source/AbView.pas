@@ -1304,7 +1304,7 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbBaseViewer.GetVersion : string;
 begin
-  Result := AbVersion;
+  Result := AbVersionS;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.InitColMap;

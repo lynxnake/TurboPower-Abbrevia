@@ -259,7 +259,7 @@ procedure TAbAboutBox.FormCreate(Sender: TObject);
 begin
   Top := (Screen.Height - Height ) div 3;
   Left := (Screen.Width - Width ) div 2;
-  lblVersion.Caption := Format(AbVersionFormatS, [AbVersion] );
+  lblVersion.Caption := Format(AbVersionFormatS, [AbVersionS] );
 end;
 
 function TAbVersionProperty.GetAttributes: TPropertyAttributes;
@@ -285,13 +285,13 @@ end;
 procedure TAbAboutBox.WebLblClick(Sender: TObject);
 begin
 {$IFDEF MSWINDOWS }
-  if ShellExecute(0, 'open', 'http://www.turbopower.com', '', '',
+  if ShellExecute(0, 'open', 'http://www.sourceforge.net/projects/tpabbrevia', '', '',
     SW_SHOWNORMAL) <= 32 then
     ShowMessage('Unable to start web browser');
 {$ENDIF MSWINDOWS }
 {$IFDEF LINUX }
   try
-    StartBrowser('http://www.turbopower.com');
+    StartBrowser('http://www.sourceforge.net/projects/tpabbrevia');
   except
     on ECannotStartBrowser do
       ShowMessage('Unable to start web browser');
@@ -309,13 +309,13 @@ end;
 procedure TAbAboutBox.NewsLblClick(Sender: TObject);
 begin
 {$IFDEF MSWINDOWS }
-  if ShellExecute(0, 'open', 'news://news.turbopower.com', '', '',
+  if ShellExecute(0, 'open', 'http://www.sourceforge.net/forum/forum.php?forum_id=241865', '', '',
     SW_SHOWNORMAL) <= 32 then
-    ShowMessage('Unable to start news reader');
+    ShowMessage('Unable to start web browser');
 {$ENDIF MSWINDOWS }
 {$IFDEF LINUX }
   try
-    StartBrowser('news://news.turbopower.com');
+    StartBrowser('http://www.sourceforge.net/forum/forum.php?forum_id=241865');
   except
     on ECannotStartBrowser do
       ShowMessage('Unable to start web browser');
