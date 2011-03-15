@@ -55,7 +55,7 @@ March 14, 2011<br>
   <li>Translations available in Afrikaans, Dutch, French, German and Russian</li>
 </ul>
 
-<p>This is a source-only release. It includes design-time and run-time packages for Delphi 6 through Delphi XE, C++Builder 2009, 2010, and XE, and Kylix 3.  C++Builder does not currently support Lzma or WavPack decompression and Kylix 3 doesn't support Lzma, PPMd, or WavPack decompression.</p>
+<p>This is a source-only release. It includes design-time and run-time packages for Delphi 6 through Delphi XE, C++Builder 2009, 2010, and XE, and Kylix 3.  Kylix 3 does not support Lzma, PPMd, or WavPack decompression.</p>
 
 
 <!--====================--><hr>
@@ -90,7 +90,7 @@ March 14, 2011<br>
   <li>Add the source subdirectory (e.g. d:\abbrevia\source) to the Delphi Library path.</li>
   <li>If using C++Builder, add the source subdirectory to C++Builder's Include and Library paths.</li>
   <li>Open the project group in the packages directory that corresponds to the IDE being used (e.g. "Delphi XE.groupproj").</li>
-  <li>Start at the top of the project group and compile each package in turn.</li>
+  <li>Start at the top of the project group and compile each package in turn.  If using C++Builder, install it each one after compiling.</li>
   <li>Select the "AbbreviaVCLDesign" package and install it.  The IDE should notify you that the components have been installed.  If you are using Delphi 7 you can install "AbbreviaCLXDesign" as well to get CLX designtime support.</li>
   <li>Make sure the PATH environmental variable contains the directory in which the compiled packages (i.e. BPL or DPL files) were placed.</li>
 </ol>
