@@ -69,7 +69,7 @@ type
 function __beginthreadex(security: Pointer; stack_size: Cardinal;
   start_address: Pointer; arglist: Pointer; initflag: Cardinal;
   thrdaddr: Pointer): PUInt; cdecl;
-  external 'msvcrt.dll';
+  external 'msvcrt.dll' {$IFNDEF BCB}name '_beginthreadex'{$ENDIF};
 
 function _BigAlloc(size: size_t): Pointer; cdecl;
 begin
