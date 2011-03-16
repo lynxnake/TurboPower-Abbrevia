@@ -42,18 +42,18 @@ resourcestring
   AbNoInsertionMethodS = 'Imossible d''insérer le fichier - aucun support d''insertion fourni';
   AbInvalidFactorS = 'Facteur de réduction Invalide';
   AbDuplicateNameS = 'Impossible d''insérer le fichier - Nom du fichier existe en double';
-  AbUnsupportedCompressionMethodS = 'Imossible d''insérer le fichier - méthode de compression non suppotée';
-  AbUserAbortS = 'Processus abandoné par l''utilisateur';
+  AbUnsupportedCompressionMethodS = 'Impossible d''insérer le fichier - méthode de compression non suppotée';
+  AbUserAbortS = 'Processus abandonné par l''utilisateur';
   AbArchiveBusyS = 'Archivage en cours - ne peut traiter de nouvelles demandes'; 
   AbLastDiskRequestS = 'Insérer la dernière disquette du jeu multi-disquettes';
   AbDiskRequestS = 'Insérer une disquette'; 
   AbImageRequestS = 'Nom du fichier image';
-  AbBadSpanStreamS = 'Archives multi-disquettes doivent être ouverts comme fichiers de flux';
-  AbDiskNumRequestS = 'Insérer la disquette %d du jeu multi-disquettes';  
+  AbBadSpanStreamS = 'Archives multi-disquettes doivent être ouvertes comme fichiers de flux';
+  AbDiskNumRequestS = 'Insérer la disquette %d du jeu multi-disquettes';
   AbImageNumRequestS = 'Insérer la disquette %d du jeu multi-disquettes';  
   AbNoOverwriteSpanStreamS = 'Impossible de mettre à jour un jeu multi-disquettes existant';
   AbNoSpannedSelfExtractS = 'Impossible de créer un fichier auto-extractible à partir d''une archive multi-disquettes';
-  AbBlankDiskS = 'Insérer une disquette vièrge'; 
+  AbBlankDiskS = 'Insérer une disquette vierge';
   AbStreamFullS = 'Erreur d''écriture du flux';
   AbNoSuchDirectoryS = 'Dossier inexistant';
   AbInflateBlockErrorS = 'Décompression du bloc impossible';
@@ -146,9 +146,9 @@ resourcestring
   AbLogExtS = '*.txt';
   AbLogFilterS = 'Fichiers Text (*.txt)|*.TXT|Tous les fichiers (*.*)|*.*';
   AbExeExtS = '*.exe';
-  AbExeFilterS = 'Fichiers Zip auto-extractible (*.exe)|*.EXE|Tous les fichiers (*.*)|*.*';
+  AbExeFilterS = 'Fichiers Zip auto-extractibles (*.exe)|*.EXE|Tous les fichiers (*.*)|*.*';
 
-  AbVMSReadTooManyBytesS = 'VMS: Tentative de l''ecture trop d''octets [%d]';
+  AbVMSReadTooManyBytesS = VMS: Tentative de l''ecture de trop d''octets [%d]';
   AbVMSInvalidOriginS = 'VMS: Origine invalide %d, doit être 0, 1, 2';
   AbVMSErrorOpenSwapS = 'VMS: Impossible d''ouvrir le fichier d''échange %s';
   AbVMSSeekFailS = 'VMS: Impossible de se déplacer dans le fichier d''échange %s';
@@ -156,14 +156,14 @@ resourcestring
   AbVMSWriteFailS = 'VMS: impossible d''écrire %d octets dans le fichier d''échange %s'; 
   AbVMSWriteTooManyBytesS = 'VMS: tentative d''écrire trop d''octets [%d]';
 
-  AbBBSReadTooManyBytesS = 'BBS: tentative de lecture trop d''octets [%d]';
+  AbBBSReadTooManyBytesS = 'BBS: tentative de lecture de trop d''octets [%d]';
   AbBBSSeekOutsideBufferS = 'BBS: la nouvelle position est en dehors du buffer';
   AbBBSInvalidOriginS = 'BBS: Valeur d''origine invalide';
-  AbBBSWriteTooManyBytesS = 'BBS: tentative d''écrire trop d''octets [%d]';
+  AbBBSWriteTooManyBytesS = 'BBS: tentative d''écrire de trop d''octets [%d]';
 
-  AbSWSNotEndofStreamS = 'TabSlidingWindowStream.Write: Pas a la fin du flux'; 
-  AbSWSSeekFailedS = 'TabSlidingWindowStream.bsWriteChunk: echec de recherche'; 
-  AbSWSWriteFailedS = 'TabSlidingWindowStream.bsWriteChunk: echec d''ecriture';
+  AbSWSNotEndofStreamS = 'TabSlidingWindowStream.Write: Pas à la fin du flux';
+  AbSWSSeekFailedS = 'TabSlidingWindowStream.bsWriteChunk: échec de recherche';
+  AbSWSWriteFailedS = 'TabSlidingWindowStream.bsWriteChunk: échec d''ecriture';
   AbSWSInvalidOriginS = 'TabSlidingWindowStream.Seek: Origine incorrecte';
   AbSWSInvalidNewOriginS = 'TabSlidingWindowStream.Seek: Nouvelle position incorrecte';
 
@@ -177,7 +177,7 @@ resourcestring
   AbEncryptionHeadingS = 'Crypté';
   AbTimeStampHeadingS = 'Heure';
   AbFileSizeHeadingS = 'Taille';
-  AbVersionMadeHeadingS = 'Version Utilisé'; 
+  AbVersionMadeHeadingS = 'Version Utilisée';
   AbVersionNeededHeadingS = 'Version nécessaire';
   AbPathHeadingS = 'Chemin';
   AbPartialHeadingS = 'Partiel';
