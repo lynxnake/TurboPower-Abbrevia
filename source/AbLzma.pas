@@ -280,7 +280,7 @@ function _LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
   const progress: ICompressProgress; const alloc, allocBig: ISzAlloc): SRes; cdecl; external;
 
 
-{ Linker derectives ======================================================== }
+{ Linker directives ======================================================== }
 
 {$L LzFind.obj}
 {$L LzFindMt.obj}
@@ -429,16 +429,13 @@ end;
 procedure LzDecode(inStream, outStream: TStream);
 var
   UncompressedSize: Int64;
-  i: Integer;
   // header: 5 bytes of LZMA properties and 8 bytes of uncompressed size
   header: array [0..LZMA_PROPS_SIZE + 7] of Byte;
 begin
   // Read and parse header
   inStream.ReadBuffer(header, SizeOf(Header));
 
-  UncompressedSize := 0;
-  for i := 0 to 7 do
-    Inc(UncompressedSize, Int64(header[LZMA_PROPS_SIZE + i] shl (i * 8)));
+  UncompressedSize := PInt64(@header[LZMA_PROPS_SIZE])^;
 
   LzmaDecode(@header[0], LZMA_PROPS_SIZE, inStream, outStream, UncompressedSize);
 end;
@@ -451,7 +448,6 @@ var
   props: CLzmaEncProps;
   header: array[0..LZMA_PROPS_SIZE + 7] of Byte;
   headerSize: size_t;
-  i: Integer;
   inStreamRec: CSeqInStream;
   outStreamRec: CSeqOutStream;
 begin
@@ -470,10 +466,10 @@ begin
     headerSize := LZMA_PROPS_SIZE;
 
     RINOK(_LzmaEnc_WriteProperties(enc, @header[0], headerSize));
-    for i := 0 to 7 do begin
-      header[headerSize] := Byte(fileSize shr (8 * i));
-      Inc(headerSize);
-    end;
+
+    PInt64(@header[headerSize])^ := fileSize;
+    Inc(HeaderSize, SizeOf(Int64));
+
     if outStream.Write(header, headerSize) <> headerSize then
       RINOK(SZ_ERROR_WRITE)
     else
@@ -484,5 +480,8 @@ begin
   end;
 end;
 
+initialization
+  {The LZMA routines are multithreaded and use the Delphi memory manager.}
+  IsMultiThread := True;
 
 end.
