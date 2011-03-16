@@ -20,12 +20,12 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Hichem BOUKSANI
+ * Hichem BOUKSANI, John Riche, Roman Kassebaum
  *
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* Abbrevia: AbResString.pas 3.05                        *}
+{* Abbrevia: AbResString.pas                             *}
 {*********************************************************}
 {* Abbrevia: Resource strings                            *}
 {*********************************************************}
@@ -198,6 +198,11 @@ resourcestring
   AbGzipBadCRCS                    = 'Mauvais CRC'; 
   AbGzipBadFileSizeS               = 'Taille du fichier erronée'; 
 
+  AbTarInvalidS                    = 'Tar invalide';
+  AbTarBadFileNameS                = 'Nom de fichier trop long';
+  AbTarBadLinkNameS                = 'Chemin du lien symbolique trop long';
+  AbTarBadOpS                      = 'Opération non supportée';
+  
   AbUnhandledEntityS             = 'Entité non prise en charge';
 
   { pre-defined "operating system" (really more FILE system) identifiers for the
