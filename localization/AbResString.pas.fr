@@ -163,7 +163,7 @@ resourcestring
 
   AbSWSNotEndofStreamS = 'TabSlidingWindowStream.Write: Pas à la fin du flux';
   AbSWSSeekFailedS = 'TabSlidingWindowStream.bsWriteChunk: échec de recherche';
-  AbSWSWriteFailedS = 'TabSlidingWindowStream.bsWriteChunk: échec d''ecriture';
+  AbSWSWriteFailedS = 'TabSlidingWindowStream.bsWriteChunk: échec d''écriture';
   AbSWSInvalidOriginS = 'TabSlidingWindowStream.Seek: Origine incorrecte';
   AbSWSInvalidNewOriginS = 'TabSlidingWindowStream.Seek: Nouvelle position incorrecte';
 
