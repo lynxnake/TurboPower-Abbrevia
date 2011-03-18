@@ -82,7 +82,7 @@ resourcestring
   AbFCIFileDeleteErrorS = 'FCI erreur de suppression du fichier';
   AbFCIAddFileErrorS = 'FCI impossible d''ajouter le fichier';
   AbFCICreateErrorS = 'FCI impossible de créer le contexte';
-  AbFCIFlushCabinetErrorS = 'FCI cannot flush cabinet';XX
+  AbFCIFlushCabinetErrorS = 'FCI impossible de vider le cabinet';
   AbFCIFlushFolderErrorS = 'FCI Impossible de vider le dossier';
   AbFDICopyErrorS = 'FDI impossible d''enumérer les fichiers'; 
   AbFDICreateErrorS = 'FDI impossible de créer le contexte';
