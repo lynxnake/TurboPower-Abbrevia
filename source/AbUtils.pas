@@ -531,137 +531,29 @@ begin
 
 end;
 { -------------------------------------------------------------------------- }
-{!!.01 -- Rewritten}
 function AbGetDriveFreeSpace(const ArchiveName : string) : Int64;
 { attempt to find free space (in bytes) on drive/volume,
-  returns MaxLongInt on drives with greater space,
   returns -1 if fails for some reason }
-
-{$IFDEF MSWINDOWS }
-
-function GetDiskFree(const Path : string) : Int64;
-var
-  FreeAvailable, TotalSpace, TotalFree: Int64;
-  Succeeded : BOOL;
-  PathBuf : array[0..255] of char;
-begin
-  Result := -1;
-  StrPCopy(PathBuf, AbAddBackSlash(ExtractFilePath(Path)));
-  Succeeded := GetDiskFreeSpaceEx(PathBuf, FreeAvailable, TotalSpace, @TotalFree);
-  if Succeeded then
-    Result := FreeAvailable;
-end;
-
-function GetRemoveableDiskFree(const Path : string) : Int64;
-begin
-  Result := DiskFree(Ord(AbDrive(Path)) - Ord('A') + 1);
-end;
-
-function OSOK : boolean;
-var
-  VerInfo : TOSVersionInfo;
-begin
-  Result := False;
-  {get the version info}
-  VerInfo.dwOSVersionInfoSize := sizeof(VerInfo);
-  if GetVersionEx(VerInfo) then
-    { if is NT or Win9x > 95a }
-    Result :=
-      ((VerInfo.dwPlatformId = VER_PLATFORM_WIN32_NT) and
-       (VerInfo.dwMajorVersion >= 4))
-      or
-      ((VerInfo.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS) and
-       (LongRec(VerInfo.dwBuildNumber).Lo <> 1000));
-end;
-{$ENDIF MSWINDOWS}
-{$IFDEF LINUX}
-function LinuxVolumeFree(const Path : string): Int64;
-var
-  FStats : TStatFs;
-  Rslt : Integer;
-begin
-  Result := -1;
-  Rslt := statfs(PAnsiChar(ExtractFilePath(Path)), FStats);
-  if Rslt = 0 then
-    Result := Int64(FStats.f_bAvail) * Int64(FStats.f_bsize);
-end;
-
-function LinuxVolumeSize(const Path : string): Int64;
-var
-  FStats : TStatFs;
-  Rslt : Integer;
-begin
-  Result := -1;
-  Rslt := statfs(PAnsiChar(ExtractFilePath(Path)), FStats);
-  if Rslt = 0 then
-    Result := Int64(FStats.f_blocks) * Int64(FStats.f_bsize);
-end;
-{$ENDIF LINUX}
-
-var
-  Size : Int64;
 {$IFDEF MSWINDOWS}
-  DrvTyp : Integer;
-  DrvStr : string;                                                       {!!.02}
-{$ENDIF MSWINDOWS}
+var
+  FreeAvailable, TotalSpace: Int64;
 begin
-{$IFDEF MSWINDOWS }
-  Size := -1;
-
-  DrvStr := ExtractFileDrive(ArchiveName);                               {!!.02}
-  if DrvStr = '' then                                                    {!!.02}
-    DrvStr := ExtractFileDrive(GetCurrentDir);                           {!!.02}
-  DrvStr := DrvStr + AbDosPathDelim;                                     {!!.02}
-
-  case AbGetPathType(ArchiveName) of
-    ptNone, ptRelative: { if path is relative or bad }
-      Size := -1; { fail }
-    ptAbsolute : begin {path is absolute}
-      if Pos('\\', ArchiveName) = 1 then begin  {path is UNC; must refer to network }
-        { check OS version }
-        if OSOK then begin
-          Size := GetDiskFree(DrvStr);                             {!!.02}
-        end
-        else begin {OS < Win95b }
-          {GetDiskFreeSpaceEx isn't available and
-           GetDiskFreeSpace and DiskFree fail on UNC paths,
-           about all we can do is hope the server isn't full}
-            Size := High(Int64);
-        end; {if}
-      end
-      else begin { path is not UNC}
-        { determine drive type }
-        DrvTyp := GetDriveType(PChar(DrvStr));                       {!!.02}
-        {DrvTyp := GetDriveType(PAnsiChar(ExtractFilePath(ArchiveName))); }{!!.02}
-        case DrvTyp of
-          0 {type undeterminable} : Size := -1; { fail }
-          1 {root non-existant}   : Size := -1; { fail }
-          DRIVE_RAMDISK           : Size := -1; { fail }
-
-//        DRIVE_CDROM           : Size := -1; { fail }                 {!!.04}
-//        DRIVE_CDROM           : Size := 0; { Read-Only }             {!!.04}
-          DRIVE_CDROM             : Size := GetDiskFree(DrvStr);  {!!.04}
-          DRIVE_REMOVABLE         : Size := GetRemoveableDiskFree(DrvStr); {!!.02}
-          DRIVE_FIXED             : Size := GetDiskFree(DrvStr);      {!!.02}
-          DRIVE_REMOTE            : Size := GetDiskFree(DrvStr);     {!!.02}
-        end; {case}
-      end; {if}
-    end; {ptAbsolute}
-  end; {case AbGetPathType}
-{$ENDIF MSWINDOWS}
+  if GetDiskFreeSpaceEx(PChar(ExtractFilePath(ExpandFileName(ArchiveName))),
+                        FreeAvailable, TotalSpace, nil) then
+    Result := FreeAvailable
+  else
+    Result := -1;
+{$ENDIF}
 {$IFDEF LINUX}
-  Size := LinuxVolumeFree(ArchiveName);
+var
+  FStats : TStatFs;
+begin
+  if statfs(PAnsiChar(ExtractFilePath(Path)), FStats) = 0 then
+    Result := Int64(FStats.f_bAvail) * Int64(FStats.f_bsize)
+  else
+    Result := -1;
 {$ENDIF LINUX}
-  if (Size < -1) or (Size > MaxLongInt) then begin
-    Result := MaxLongInt;
-  end
-  else begin
-    Result := Size;
-  end;
 end;
-{ -------------------------------------------------------------------------- }
-{!!.01 -- End Rewritten}
-
 { -------------------------------------------------------------------------- }
 function AbFileMatch(FileName: string; FileMask: string ): Boolean;
   {see if FileName matches FileMask}
