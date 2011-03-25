@@ -968,35 +968,22 @@ var
   Abort       : Boolean;
   Tries       : Integer;
   CheckValue  : LongInt;
+  DecryptStream: TAbDfDecryptStream;
+begin
+  { validate }
+  if (Lo(Item.VersionNeededToExtract) > Ab_ZipVersion) then
+    raise EAbZipVersion.Create;
 
-  procedure Validate;
-  begin
-    if (Lo(Item.VersionNeededToExtract) > Ab_ZipVersion) then
-      raise EAbZipVersion.Create;
-  end;
+  { seek to compressed file }
+  if ZipArchive.FStream is TAbSpanReadStream then
+    TAbSpanReadStream(ZipArchive.FStream).SeekImage(Item.DiskNumberStart,
+                                                    Item.RelativeOffset)
+  else
+    ZipArchive.FStream.Position := Item.RelativeOffset;
 
-  procedure CheckForSpanning;
-  begin
-    if ZipArchive.Spanned then begin                                 {!!.02}
-      if (ZipArchive.CurrentDisk <> Item.DiskNumberStart) then begin {!!.02}
-        ZipArchive.CurrentDisk := Item.DiskNumberStart;
-        if not (ZipArchive.FStream is TAbSpanStream) then
-          raise EAbZipBadSpanStream.Create;
-        if not TAbSpanStream(ZipArchive.FStream).SpanStreamInCharge then begin {!!.02}
-          ZipArchive.DoRequestNthImage(ZipArchive.CurrentDisk,
-            ZipArchive.FStream, Abort );
-          if Abort then
-            raise EAbUserAbort.Create;
-        end;                                                         {!!.02}
-      end;
-    end;                                                             {!!.02}
-  end;
-
-  procedure GetHeader;
-  begin
-    {get past the item's local file header}
-    ZipArchive.FStream.Seek(Item.RelativeOffset, soBeginning);
-
+  { get local header info for Item}
+  LFH := TAbZipLocalFileHeader.Create;
+  try
     { select appropriate CRC value based on General Purpose Bit Flag }
     { also get whether the file is stored, while we've got the local file header }
     LFH.LoadFromStream(ZipArchive.FStream);
@@ -1006,18 +993,6 @@ var
       CheckValue := LFH.LastModFileTime shl $10
     else
       CheckValue := Item.CRC32;
-  end;
-
-var
-  DecryptStream: TAbDfDecryptStream;
-begin
-  Validate;
-  CheckForSpanning;
-
-  { get local header info for Item}
-  LFH := TAbZipLocalFileHeader.Create;
-  try
-    GetHeader;
   finally
     LFH.Free;
   end;
@@ -1177,24 +1152,18 @@ var
   BitBucket  : TAbBitBucketStream;
   LFH        : TAbZipLocalFileHeader;
   ZipArchive : TAbZipArchive;
-  Abort : Boolean;
 begin
   ZipArchive := TAbZipArchive(Sender);
 
   if (Lo(Item.VersionNeededToExtract) > Ab_ZipVersion) then
     raise EAbZipVersion.Create;
 
-  if ZipArchive.Spanned and (ZipArchive.CurrentDisk <> Item.DiskNumberStart) then
-  begin
-    ZipArchive.CurrentDisk := Item.DiskNumberStart;
-//    if not (ZipArchive.FStream is TFileStream) then                  {!!.04}
-    if not (ZipArchive.FStream is TAbSpanStream) then                  {!!.04}
-      raise EAbZipBadSpanStream.Create;
-    ZipArchive.DoRequestNthImage(ZipArchive.CurrentDisk,
-      ZipArchive.FStream, Abort );
-    if Abort then
-      raise EAbUserAbort.Create;
-  end;
+  { seek to compressed file }
+  if ZipArchive.FStream is TAbSpanReadStream then
+    TAbSpanReadStream(ZipArchive.FStream).SeekImage(Item.DiskNumberStart,
+                                                    Item.RelativeOffset)
+  else
+    ZipArchive.FStream.Position := Item.RelativeOffset;
 
   BitBucket := nil;
   LFH := nil;

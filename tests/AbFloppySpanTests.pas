@@ -69,10 +69,6 @@ type
     procedure DoRequestNthDisk(Sender : TObject; DiskNumber : Byte;
       var Abort : Boolean);
 
-    //Events for HandleWriteFailure1
-    procedure TestWriteFailureProgressEvent(Sender : TObject;
-      Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
-
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -81,7 +77,6 @@ type
     procedure TestDecompress;
     procedure TestCompress;
     procedure TestWriteProtectedMedia;
-    procedure TestWriteFailure;
   end;
 
 implementation
@@ -305,39 +300,6 @@ begin
     Zip.BaseDirectory := MPLDir;
     Zip.FileName := 'a:\Spanned.zip';
     Zip.AddFiles('MPL-1_1.txt',faAnyFile);
-    Zip.Save;
-  finally
-    Zip.Free;
-  end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.TestWriteFailureProgressEvent(
-  Sender: TObject; Item: TAbArchiveItem; Progress: Byte;
-  var Abort: Boolean);
-begin
-  if (Progress > 50) and FDiskInserted then begin
-    if HasFloppy then
-      ShowMessage('Take the disk out of drive A: to simulate failure')
-    else
-      EjectDisk;
-    FDiskInserted := False;
-  end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbFloppySpanTests.TestWriteFailure;
-var
-  Zip : TAbZipper;
-begin
-  //[ 785249 ] ProcessItemFailure not called
-  ExpectedException := EFOpenError;
-  InsertBlankDisk;
-
-  Zip := TAbZipper.Create(nil);
-  try
-    Zip.BaseDirectory := TestFileDir;
-    Zip.OnArchiveItemProgress := TestWriteFailureProgressEvent;
-    Zip.FileName := 'a:\Spanned.zip';
-    Zip.AddFiles(CanterburySourceDir + 'kennedy.xls', faAnyFile);
     Zip.Save;
   finally
     Zip.Free;

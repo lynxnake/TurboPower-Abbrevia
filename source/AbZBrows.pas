@@ -46,7 +46,6 @@ type
     function GetTarAutoHandle: Boolean;
     procedure SetTarAutoHandle(const Value: Boolean);
   protected {private}
-    FSpanStream        : TAbSpanStream;
     FPassword          : AnsiString;
     FOnRequestLastDisk : TAbRequestDiskEvent;
     FOnRequestNthDisk  : TAbRequestNthDiskEvent;
@@ -65,7 +64,6 @@ type
     procedure SetOnRequestLastDisk(Value : TAbRequestDiskEvent);
     procedure SetOnRequestNthDisk(Value : TAbRequestNthDiskEvent);
     procedure SetOnRequestBlankDisk(Value : TAbRequestDiskEvent);
-    procedure SetOnRequestImage(Value : TAbRequestImageEvent); override;
 
     procedure SetPassword(const Value : AnsiString);
     procedure SetZipfileComment(const Value : AnsiString);
@@ -314,13 +312,6 @@ begin
   FOnRequestBlankDisk := Value;
   if ZipArchive is TAbZipArchive then
     TAbZipArchive(ZipArchive).OnRequestBlankDisk := FOnRequestBlankDisk;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbCustomZipBrowser.SetOnRequestImage(Value : TAbRequestImageEvent);
-begin
-  inherited SetOnRequestImage(Value);
-  if (ZipArchive <> nil) and Assigned(FSpanStream) then
-      FSpanStream.OnRequestImage := FOnRequestImage;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipBrowser.SetOnRequestLastDisk(Value : TAbRequestDiskEvent);
