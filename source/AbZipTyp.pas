@@ -20,7 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *   Craig Peterson <capeterson@users.sourceforge.net>
+ * Craig Peterson <capeterson@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
@@ -58,8 +58,7 @@ const
   Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
 
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
-  Ab_LinuxExeSigWord1                       : Word    = $457F;       {!!.02}
-  Ab_LinuxExeSigWord2                       : Word    = $464C;       {!!.02}
+  Ab_LinuxExeSignature                      : Longint = $464C457F;   {!!.02}
 
   AbDefZipSpanningThreshold = 0;
   AbDefPasswordRetries      = 3;
@@ -651,7 +650,7 @@ end;
 function VerifySelfExtracting(Strm : TStream) : TAbArchiveType;
 { determine if stream appears to be an executable with appended PkZip data }
 var
-  FileSignature : LongInt;
+  FileSignature : Longint;
   StartPos      : Int64;
   IsWinExe, IsLinuxExe : Boolean;                                        {!!.01}
 begin
@@ -664,16 +663,8 @@ begin
   Result := atSelfExtZip;
 
 {!!.01 -- re-written Executable Type Detection to allow use of non-native stubs }
-  IsLinuxExe := False;
+  IsLinuxExe := FileSignature = Ab_LinuxExeSignature;
   IsWinExe := LongRec(FileSignature).Lo = Ab_WindowsExeSignature;        {!!.02}
-  if not IsWinExe then begin
-    IsLinuxExe := FileSignature = Ab_LinuxExeSigWord1; { check 1st sig }
-    if IsLinuxExe then begin
-      Strm.Read(FileSignature, SizeOf(FileSignature)); { check 2nd sig }
-      IsLinuxExe := FileSignature = Ab_LinuxExeSigWord2;
-    end;
-  end;
-
   if not (IsWinExe or IsLinuxExe) then
     Result := atUnknown;
 
@@ -914,7 +905,7 @@ procedure MakeSelfExtracting( StubStream, ZipStream,
    This routine updates the RelativeOffset of each item in the archive}
 var
   DirectoryStart : Int64;
-  FileSignature : Word;
+  FileSignature : Longint;
   StubSize : LongWord;
   TailPosition : Int64;
   ZDFF : TAbZipDirectoryFileFooter;
@@ -926,15 +917,8 @@ begin
   StubStream.Read(FileSignature, SizeOf(FileSignature));
 
 {!!.01 -- re-written executable Type Detection to allow use of non-native stubs }
-  IsLinuxExe := False;
-  IsWinExe := FileSignature = Ab_WindowsExeSignature;
-  if not IsWinExe then begin
-    IsLinuxExe := FileSignature = Ab_LinuxExeSigWord1; { check 1st sig }
-    if IsLinuxExe then begin
-      StubStream.Read(FileSignature, SizeOf(FileSignature)); { check 2nd sig }
-      IsLinuxExe := FileSignature = Ab_LinuxExeSigWord2;
-    end;
-  end;
+  IsLinuxExe := FileSignature = Ab_LinuxExeSignature;
+  IsWinExe := LongRec(FileSignature).Lo = Ab_WindowsExeSignature;
 
   if not (IsWinExe or IsLinuxExe) then
     raise EAbZipInvalidStub.Create;
@@ -945,7 +929,7 @@ begin
 
   ZipStream.Position := 0;
   ZipStream.Read( FileSignature, sizeof( FileSignature ) );
-  if FileSignature <> $4B50 then
+  if LongRec(FileSignature).Lo <> Ab_GeneralZipSignature then
     raise EAbZipInvalid.Create;
   ZipStream.Position := 0;
 
@@ -2347,7 +2331,7 @@ var
   Item : TAbZipItem;
   i : Integer;
   Progress : Byte;
-  FileSignature : DWord;                                             {!!.02}
+  FileSignature : Longint;                                             {!!.02}
   IsZip : Boolean;
   Lowest : Int64;
 begin
@@ -2363,17 +2347,10 @@ begin
 
   IsZip := (FileSignature and $0000FFFF) = Ab_GeneralZipSignature;   {!!.02}
 
-{$IFDEF MSWINDOWS}
-// [ 719083 ] Windows exe signature check
-  IsExecutable := (FileSignature and $0000FFFF) = Ab_WindowsExeSignature;
-{$ENDIF}
-{$IFDEF LINUX}
-  if FileSignature = Ab_LinuxExeSigWord1 then begin
-    FStream.Read( FileSignature, sizeof( FileSignature ) );
-    IsExecutable := FileSignature = Ab_LinuxExeSigWord2;
-  end;
-{$ENDIF}
-
+  {Get Executable Type;  allow non-native stubs}
+  IsExecutable :=
+    (LongRec(FileSignature).Lo = Ab_WindowsExeSignature) or
+    (FileSignature = Ab_LinuxExeSignature);
 
   {Check for spanning}
   if (FStream is TAbSpanStream) then
