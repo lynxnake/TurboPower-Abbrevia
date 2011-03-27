@@ -45,6 +45,7 @@ const
   { note  #$50 = 'P', #$4B = 'K'}
   Ab_ZipVersion = 63;
   Ab_ZipLocalFileHeaderSignature            : Longint = $04034B50;
+  Ab_ZipDataDescriptorSignature             : Longint = $08074B50;
   Ab_ZipCentralDirectoryFileHeaderSignature : Longint = $02014B50;
   Ab_ZipCentralDirectoryTailSignature       : Longint = $06054B50;
   Ab_ZipSpannedSetSignature                 : Longint = $08074B50;
@@ -1108,7 +1109,7 @@ end;
 procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
 begin
   Stream.Read( FCRC32, sizeof(FCRC32) );
-  if FCRC32 = Ab_ZipSpannedSetSignature then
+  if FCRC32 = Ab_ZipDataDescriptorSignature then
   	Stream.Read( FCRC32, sizeof( FCRC32 ) );
   Stream.Read( FCompressedSize, sizeof( FCompressedSize ) );
   Stream.Read( FUncompressedSize, sizeof( FUncompressedSize ) );
@@ -1116,12 +1117,10 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDataDescriptor.SaveToStream( Stream : TStream );
 begin
-  {!!.01 -- rewritten}
-  Stream.Write( Ab_ZipSpannedSetSignature, sizeof( Ab_ZipSpannedSetSignature ) );
+  Stream.Write( Ab_ZipDataDescriptorSignature, sizeof( Ab_ZipDataDescriptorSignature ) );
   Stream.Write( FCRC32, sizeof( FCRC32 ) );
   Stream.Write( FCompressedSize, sizeof( FCompressedSize ) );
   Stream.Write( FUncompressedSize, sizeof( FUncompressedSize ) );
-  {!!.01 -- end rewritten}
 end;
 { -------------------------------------------------------------------------- }
 
