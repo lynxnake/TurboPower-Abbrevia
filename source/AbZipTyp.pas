@@ -47,16 +47,15 @@ const
   Ab_ZipLocalFileHeaderSignature            : Longint = $04034B50;
   Ab_ZipDataDescriptorSignature             : Longint = $08074B50;
   Ab_ZipCentralDirectoryFileHeaderSignature : Longint = $02014B50;
-  Ab_ZipCentralDirectoryTailSignature       : Longint = $06054B50;
+  Ab_Zip64EndCentralDirectorySignature      : Longint = $06064B50;
+  Ab_Zip64EndCentralDirectoryLocatorSignature:Longint = $07064B50;
+  Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
   Ab_ZipSpannedSetSignature                 : Longint = $08074B50;
   Ab_ZipPossiblySpannedSignature            : Longint = $30304B50;
   Ab_GeneralZipSignature                    : Word    = $4B50;       {!!.02}
 
   Ab_ArchiveExtraDataRecord                 : Longint = $08064B50;
   Ab_DigitalSignature                       : Longint = $05054B50;
-  Ab_Zip64EndCentralDirectory               : Longint = $06064B50;
-  Ab_Zip64EndCentralDirectoryLocator        : Longint = $07064B50;
-  Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
 
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
   Ab_LinuxExeSignature                      : Longint = $464C457F;   {!!.02}
@@ -614,7 +613,7 @@ begin
         Footer := TAbZipDirectoryFileFooter.Create;
         try
           Footer.LoadFromStream(Strm);
-          if Footer.FSignature = AB_ZipCentralDirectoryTailSignature then
+          if Footer.FSignature = Ab_ZipEndCentralDirectorySignature then
             if Footer.DiskNumber = 0 then
               Result := atZip
             else
