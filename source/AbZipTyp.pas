@@ -54,8 +54,8 @@ const
 
   Ab_ArchiveExtraDataRecord                 : Longint = $08064B50;
   Ab_DigitalSignature                       : Longint = $05054B50;
-  Ab_Zip64EndCetralDirectory                : Longint = $06064B50;
-  Ab_Zip64EndCetralDirectoryLocator         : Longint = $07064B50;
+  Ab_Zip64EndCentralDirectory               : Longint = $06064B50;
+  Ab_Zip64EndCentralDirectoryLocator        : Longint = $07064B50;
   Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
 
   Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
@@ -734,7 +734,7 @@ begin
   BytesRead := aStream.Read(Buffer, SizeOf(buffer));
 
 	for i := BytesRead - SizeOf(DataRec) downto 0 do begin
-    if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCetralDirectoryLocator) then begin
+    if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCentralDirectoryLocator) then begin
       Position := EndPosition - (BytesRead - i);
       aStream.Seek(Position, soBeginning);
       Found := True;
