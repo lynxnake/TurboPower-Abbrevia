@@ -731,7 +731,7 @@ begin
   BytesRead := aStream.Read(Buffer, SizeOf(buffer));
 
 	for i := BytesRead - SizeOf(DataRec) downto 0 do begin
-    if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCentralDirectoryLocator) then begin
+    if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCentralDirectoryLocatorSignature) then begin
       Position := EndPosition - (BytesRead - i);
       aStream.Seek(Position, soBeginning);
       Found := True;
@@ -2252,7 +2252,7 @@ begin
                 MemStream := TMemoryStream.Create;
                 try
                   CurrItem.SaveLFHToStream(MemStream);
-                  TAbSpanWriteStream(NewStream).WriteUnbuffered(
+                  TAbSpanWriteStream(NewStream).WriteUnspanned(
                     MemStream.Memory^, MemStream.Size);
                   {calculate positions after the write in case it triggered a new span}
                   CurrItem.DiskNumberStart := TAbSpanWriteStream(NewStream).CurrentImage;
