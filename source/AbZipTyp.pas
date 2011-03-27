@@ -2161,7 +2161,7 @@ procedure TAbZipArchive.SaveArchive;
   {builds a new archive and copies it to FStream}
 var
   Abort              : Boolean;
-  CDHStream          : TMemoryStream;
+  MemStream          : TMemoryStream;
   HasDataDescriptor  : Boolean;
   i                  : LongWord;
   LFH                : TAbZipLocalFileHeader;
@@ -2213,7 +2213,7 @@ begin
 
       case CurrItem.Action of
         aaNone, aaMove: begin
-          {just copy the file to new stream, and add CDH record}
+          {just copy the file to new stream}
           Assert(not (NewStream is TAbSpanWriteStream));
           FStream.Position := CurrItem.RelativeOffset;
           CurrItem.DiskNumberStart := 0;
@@ -2237,25 +2237,42 @@ begin
         end;
 
         aaAdd, aaFreshen, aaReplace, aaStreamAdd: begin
-          {compress the file, add it new stream, and add CDH record}
-          if NewStream is TAbSpanWriteStream then
-            CurrItem.DiskNumberStart := TAbSpanWriteStream(NewStream).CurrentImage
-          else
-            CurrItem.DiskNumberStart := 0;
-          CurrItem.RelativeOffset := NewStream.Position;
-          WorkingStream := TAbVirtualMemoryStream.Create;
+          {compress the file and add it to new stream}
           try
-          try {WorkingStream}
-
-            WorkingStream.SwapFileDirectory := FTempDir;
-            if (CurrItem.Action = aaStreamAdd) then
-              DoInsertFromStreamHelper(i, WorkingStream)
-            else
-              DoInsertHelper(i, WorkingStream);
-            CurrItem.SaveLFHToStream(NewStream);
-            NewStream.CopyFrom(WorkingStream, 0);
-            if CurrItem.IsEncrypted then
-              CurrItem.SaveDDToStream(NewStream);
+            WorkingStream := TAbVirtualMemoryStream.Create;
+            try {WorkingStream}
+              WorkingStream.SwapFileDirectory := FTempDir;
+              {compress the file}
+              if (CurrItem.Action = aaStreamAdd) then
+                DoInsertFromStreamHelper(i, WorkingStream)
+              else
+                DoInsertHelper(i, WorkingStream);
+              {write local header}
+              if NewStream is TAbSpanWriteStream then begin
+                MemStream := TMemoryStream.Create;
+                try
+                  CurrItem.SaveLFHToStream(MemStream);
+                  TAbSpanWriteStream(NewStream).WriteUnbuffered(
+                    MemStream.Memory^, MemStream.Size);
+                  {calculate positions after the write in case it triggered a new span}
+                  CurrItem.DiskNumberStart := TAbSpanWriteStream(NewStream).CurrentImage;
+                  CurrItem.RelativeOffset := NewStream.Position - MemStream.Size;
+                finally
+                  MemStream.Free;
+                end;
+              end
+              else begin
+                CurrItem.DiskNumberStart := 0;
+                CurrItem.RelativeOffset := NewStream.Position;
+                CurrItem.SaveLFHToStream(NewStream);
+              end;
+              {copy compressed data}
+              NewStream.CopyFrom(WorkingStream, 0);
+              if CurrItem.IsEncrypted then
+                CurrItem.SaveDDToStream(NewStream);
+            finally
+              WorkingStream.Free;
+            end;
           except
             on E : Exception do
             begin
@@ -2267,9 +2284,6 @@ begin
               CurrItem.Action := aaDelete;
               DoProcessItemFailure(CurrItem, ptAdd, ecFileOpenError, 0);
             end;
-          end;
-          finally
-            WorkingStream.Free;
           end;
         end;
       end; { case }
@@ -2298,37 +2312,48 @@ begin
     FInfo.DirectorySize := 0;
     FInfo.EntriesOnDisk := 0;
     FInfo.TotalEntries := 0;
-    {init central directory stream}
-    CDHStream := TMemoryStream.Create;
+    MemStream := TMemoryStream.Create;
     try
       {write central directory entries}
       for i := 0 to Count - 1 do begin
         if not (FItemList[i].Action in [aaDelete, aaFailed]) then begin
-          (FItemList[i] as TAbZipItem).SaveCDHToStream(CDHStream);
+          (FItemList[i] as TAbZipItem).SaveCDHToStream(MemStream);
           if NewStream is TAbSpanWriteStream then begin
-            TAbSpanWriteStream(NewStream).WriteUnspanned(CDHStream.Memory^, CDHStream.Size);
+            TAbSpanWriteStream(NewStream).WriteUnspanned(MemStream.Memory^, MemStream.Size);
+            {update tail info on span change}
             if FInfo.DiskNumber <> TAbSpanWriteStream(NewStream).CurrentImage then begin
               FInfo.DiskNumber := TAbSpanWriteStream(NewStream).CurrentImage;
               FInfo.EntriesOnDisk := 0;
+              if FInfo.TotalEntries = 0 then begin
+                FInfo.StartDiskNumber := FInfo.DiskNumber;
+                FInfo.DirectoryOffset := NewStream.Position - MemStream.Size;
+              end;
             end;
           end
           else
-            NewStream.WriteBuffer(CDHStream.Memory^, CDHStream.Size);
-          FInfo.DirectorySize := FInfo.DirectorySize + CDHStream.Size;
+            NewStream.WriteBuffer(MemStream.Memory^, MemStream.Size);
+          FInfo.DirectorySize := FInfo.DirectorySize + MemStream.Size;
           FInfo.EntriesOnDisk := FInfo.EntriesOnDisk + 1;
           FInfo.TotalEntries := FInfo.TotalEntries + 1;
-          CDHStream.Clear;
+          MemStream.Clear;
         end;
       end;
       {append the central directory footer}
-      FInfo.SaveToStream(CDHStream);
-      if NewStream is TAbSpanWriteStream then
-        TAbSpanWriteStream(NewStream).WriteUnspanned(CDHStream.Memory^, CDHStream.Size)
+      FInfo.SaveToStream(MemStream);
+      if NewStream is TAbSpanWriteStream then begin
+        {update the footer if writing it would trigger a new span}
+        if not TAbSpanWriteStream(NewStream).WriteUnspanned(MemStream.Memory^,
+                                                            MemStream.Size) then begin
+          FInfo.DiskNumber := TAbSpanWriteStream(NewStream).CurrentImage;
+          FInfo.EntriesOnDisk := 0;
+          FInfo.SaveToStream(NewStream);
+        end;
+      end
       else
-        NewStream.WriteBuffer(CDHStream.Memory^, CDHStream.Size);
-    finally {CDHStream}
-      CDHStream.Free;
-    end; {CDHStream}
+        NewStream.WriteBuffer(MemStream.Memory^, MemStream.Size);
+    finally {MemStream}
+      MemStream.Free;
+    end; {MemStream}
 
     FSpanned := (FInfo.DiskNumber > 0);
 

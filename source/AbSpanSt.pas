@@ -120,7 +120,8 @@ type
       override;
     function Write(const Buffer; Count: Longint): Longint;
       override;
-    procedure WriteUnspanned(const Buffer; Count: Longint);
+    function WriteUnspanned(const Buffer; Count: Longint;
+      FailOnSpan: Boolean = False): Boolean;
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
       override;
     function ReleaseStream: TStream;
@@ -349,11 +350,14 @@ begin
   end;
 end;
 {------------------------------------------------------------------------------}
-procedure TAbSpanWriteStream.WriteUnspanned(const Buffer; Count: Longint);
+function TAbSpanWriteStream.WriteUnspanned(const Buffer; Count: Longint;
+  FailOnSpan: Boolean = False): Boolean;
 var
   BytesWritten: LongInt;
 begin
-  { write as a contiguous block, starting a new span if there isn't room }
+  { write as a contiguous block, starting a new span if there isn't room.
+    FailOnSpan (and result = false) can be used to update data before it's
+    written again }
   if FStream = nil then
     raise EWriteError.Create(SWriteError);
   if (FThreshold > 0) and (FThreshold - FImageSize < Count) then
@@ -364,10 +368,15 @@ begin
     if BytesWritten > 0 then
       FStream.Size := FStream.Size - BytesWritten;
     NewImage;
-    BytesWritten := Count;
-    FStream.WriteBuffer(Buffer, Count);
+    if FailOnSpan then
+      BytesWritten := 0
+    else begin
+      BytesWritten := Count;
+      FStream.WriteBuffer(Buffer, Count);
+    end;
   end;
   Inc(FImageSize, BytesWritten);
+  Result := (BytesWritten = Count);
 end;
 {------------------------------------------------------------------------------}
 function TAbSpanWriteStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
