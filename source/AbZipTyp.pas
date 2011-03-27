@@ -444,7 +444,6 @@ type
     FPassword               : AnsiString;
     FPasswordRetries        : Byte;
     FStubSize               : LongWord;
-    FAutoGen                : Boolean;                               {!!.02}
 
     FExtractHelper          : TAbArchiveItemExtractEvent;
     FExtractToStreamHelper  : TAbArchiveItemExtractToStreamEvent;
