@@ -52,13 +52,13 @@ const
   Ab_ZipEndCentralDirectorySignature        : Longint = $06054B50;
   Ab_ZipSpannedSetSignature                 : Longint = $08074B50;
   Ab_ZipPossiblySpannedSignature            : Longint = $30304B50;
-  Ab_GeneralZipSignature                    : Word    = $4B50;       {!!.02}
+  Ab_GeneralZipSignature                    : Word    = $4B50;
 
   Ab_ArchiveExtraDataRecord                 : Longint = $08064B50;
   Ab_DigitalSignature                       : Longint = $05054B50;
 
-  Ab_WindowsExeSignature                    : Word    = $5A4D;       {!!.02}
-  Ab_LinuxExeSignature                      : Longint = $464C457F;   {!!.02}
+  Ab_WindowsExeSignature                    : Word    = $5A4D;
+  Ab_LinuxExeSignature                      : Longint = $464C457F;
 
   AbDefZipSpanningThreshold = 0;
   AbDefPasswordRetries      = 3;
@@ -498,7 +498,8 @@ type
       override;
     destructor Destroy;
       override;
-    function CreateItem(const FileName : string): TAbArchiveItem; override; {!!.05}
+    function CreateItem(const FileName : string): TAbArchiveItem;
+      override;
 
   public {properties}
     property CompressionMethodToUse : TAbZipSupportedMethod
@@ -573,7 +574,6 @@ implementation
 uses
   {$IFDEF MSWINDOWS}
   Windows,
-//  Dialogs,                                                           {!!.04}
   {$ENDIF}
   {$IFDEF LINUX}
   Libc,
@@ -593,7 +593,7 @@ function VerifyZip(Strm : TStream) : TAbArchiveType;
 { determine if stream appears to be in PkZip format }
 var
   Footer       : TAbZipDirectoryFileFooter;
-  Sig          : LongInt;                                                {!!.01}
+  Sig          : LongInt;
   TailPosition : int64;
   StartPos     : int64;
 begin
@@ -601,11 +601,10 @@ begin
   Result := atUnknown;
   try
     Strm.Position := 0;
-    Strm.Read(Sig, SizeOf(LongInt));                                   {!!.02}
-    if (Sig = Ab_ZipSpannedSetSignature) then                          {!!.02}
-      Result := atSpannedZip                                           {!!.02}
-    else begin                                                         {!!.02}
-
+    Strm.Read(Sig, SizeOf(Sig));
+    if (Sig = Ab_ZipSpannedSetSignature) then
+      Result := atSpannedZip
+    else begin
       { attempt to find Central Directory Tail }
       TailPosition := FindCentralDirectoryTail( Strm );
       if TailPosition <> -1 then begin
@@ -621,8 +620,8 @@ begin
         finally
           Footer.Free;
         end;
-      end
-    end;                                                                   {!!.01}
+      end;
+    end;
   except
     on EReadError do
       Result := atUnknown;
@@ -635,7 +634,7 @@ function VerifySelfExtracting(Strm : TStream) : TAbArchiveType;
 var
   FileSignature : Longint;
   StartPos      : Int64;
-  IsWinExe, IsLinuxExe : Boolean;                                        {!!.01}
+  IsWinExe, IsLinuxExe : Boolean;
 begin
   StartPos := Strm.Position;
   { verify presence of executable stub }
@@ -645,13 +644,12 @@ begin
 
   Result := atSelfExtZip;
 
-{!!.01 -- re-written Executable Type Detection to allow use of non-native stubs }
+  { detect executable type }
   IsLinuxExe := FileSignature = Ab_LinuxExeSignature;
-  IsWinExe := LongRec(FileSignature).Lo = Ab_WindowsExeSignature;        {!!.02}
+  IsWinExe := LongRec(FileSignature).Lo = Ab_WindowsExeSignature;
   if not (IsWinExe or IsLinuxExe) then
     Result := atUnknown;
 
-{!!.01 -- end re-written }
   { Check for central directory tail }
   if VerifyZip(Strm) <> atZip then
     Result := atUnknown;
@@ -804,7 +802,7 @@ begin
 
       {seek to the search position}
       Result := aStream.Seek(Offset, soEnd);
-      if (Result <= 0) then begin                                        {!!.01}
+      if (Result <= 0) then begin
         Result := aStream.Seek(0, soBeginning);
         Done := true;
       end;
@@ -841,11 +839,11 @@ begin
       end;
 
       {otherwise move back one step, doubling the buffer}
-      if (BufSize < MaxBufSize) then begin                               {!!.01}
+      if (BufSize < MaxBufSize) then begin
         FreeMem(Buffer);
         BufSize := BufSize * 2;
-        if BufSize > MaxBufSize then                                     {!!.01}
-          BufSize := MaxBufSize;                                         {!!.01}
+        if BufSize > MaxBufSize then
+          BufSize := MaxBufSize;
         GetMem(Buffer, BufSize);
       end;
       dec(Offset, BufSize - SizeOf(TailRec));
@@ -873,19 +871,18 @@ var
   TailPosition : Int64;
   ZDFF : TAbZipDirectoryFileFooter;
   ZipItem : TAbZipItem;
-  IsWinExe, IsLinuxExe : Boolean;                                        {!!.01}
+  IsWinExe, IsLinuxExe : Boolean;
 begin
   {check file type of stub stream}
   StubStream.Position := 0;
   StubStream.Read(FileSignature, SizeOf(FileSignature));
 
-{!!.01 -- re-written executable Type Detection to allow use of non-native stubs }
+  {detect executable type }
   IsLinuxExe := FileSignature = Ab_LinuxExeSignature;
   IsWinExe := LongRec(FileSignature).Lo = Ab_WindowsExeSignature;
 
   if not (IsWinExe or IsLinuxExe) then
     raise EAbZipInvalidStub.Create;
-{!!.01 -- End Re-written}
 
   StubStream.Position := 0;
   StubSize := StubStream.Size;
@@ -2007,7 +2004,7 @@ var
   i : SmallInt;
   lValue : string;
 begin
-  lValue := Value; {!!.05 [ 783583 ]}
+  lValue := Value;
   {$IFDEF MSWINDOWS}
   if DOSMode then begin
     {Add the base directory to the filename before converting }
@@ -2016,7 +2013,7 @@ begin
       {Does the filename contain a drive or a leading backslash? }
       if not ((Pos(':', lValue) = 2) or (Pos(AbPathDelim, lValue) = 1)) then
         {If not, add the BaseDirectory to the filename.}
-        lValue := AbAddBackSlash(BaseDirectory) + lValue;                {!!.04}
+        lValue := AbAddBackSlash(BaseDirectory) + lValue;
     end;
     lValue := AbGetShortFileSpec( lValue );
   end;
@@ -2030,7 +2027,7 @@ begin
     AbStripDrive( lValue );
 
   {check for a leading backslash}
-  if (Length(lValue) > 1) and (lValue[1] = AbPathDelim) then {!!.05  - [ 799438 ]}
+  if (Length(lValue) > 1) and (lValue[1] = AbPathDelim) then
     System.Delete( lValue, 1, 1 );
 
   if soStripPath in StoreOptions then begin
@@ -2067,7 +2064,7 @@ var
   TailPosition : int64;
   Item : TAbZipItem;
   Progress : Byte;
-  FileSignature : Longint;                                             {!!.02}
+  FileSignature : Longint;
 begin
   Abort := False;
   if FStream.Size = 0 then
@@ -2257,8 +2254,8 @@ begin
               DoInsertHelper(i, WorkingStream);
             CurrItem.SaveLFHToStream(NewStream);
             NewStream.CopyFrom(WorkingStream, 0);
-            if CurrItem.IsEncrypted then                               {!!.01}
-              CurrItem.SaveDDToStream(NewStream);                      {!!.01}
+            if CurrItem.IsEncrypted then
+              CurrItem.SaveDDToStream(NewStream);
           except
             on E : Exception do
             begin
@@ -2378,7 +2375,7 @@ begin
         FItemList[i].Action := aaNone;
     end;
 
-    DoArchiveSaveProgress( 100, Abort );                               {!!.04}
+    DoArchiveSaveProgress( 100, Abort );
     DoArchiveProgress( 100, Abort );
   finally {NewStream}
     NewStream.Free;
