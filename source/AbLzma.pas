@@ -50,10 +50,10 @@ procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
 implementation
 
 uses
-  {$IFDEF BCB}
-  AbCrtl,
-  {$ELSE}
+  {$IFDEF HasCrtl}
   crtl,
+  {$ELSE}
+  AbCrtl,
   {$ENDIF}
   Windows,
   SysUtils;

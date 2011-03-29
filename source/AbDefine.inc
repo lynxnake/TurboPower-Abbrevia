@@ -103,6 +103,9 @@
     {$DEFINE HasGridDrawingStyle}
     {$DEFINE HasTouch}
   {$IFEND}
+  {$IF (CompilerVersion > 15) AND NOT DEFINED(BCB)}
+    {$DEFINE HasCRTL}
+  {$IFEND}
 {$ENDIF}
 
 {====General defines=================================================}
