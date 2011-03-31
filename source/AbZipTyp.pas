@@ -88,6 +88,17 @@ type
   PAbIntegerArray = ^TAbIntegerArray;
   TAbIntegerArray = array[0..65535 div sizeof(integer)-1] of integer;
 
+  TAbZipEndOfCentralDirectoryRecord = packed record
+    Signature               : Longint;
+    DiskNumber              : Word;
+    StartDiskNumber         : Word;
+    EntriesOnDisk           : Word;
+    TotalEntries            : Word;
+    DirectorySize           : LongWord;
+    DirectoryOffset         : LongWord;
+    CommentLength           : Word;
+  end;
+
   TAbFollower =                      {used to expand reduced files}
     packed record
       Size : Byte;                {size of follower set}
@@ -592,7 +603,7 @@ uses
 function VerifyZip(Strm : TStream) : TAbArchiveType;
 { determine if stream appears to be in PkZip format }
 var
-  Footer       : TAbZipDirectoryFileFooter;
+  Footer       : TAbZipEndOfCentralDirectoryRecord;
   Sig          : LongInt;
   TailPosition : int64;
   StartPos     : int64;
@@ -609,17 +620,12 @@ begin
       TailPosition := FindCentralDirectoryTail( Strm );
       if TailPosition <> -1 then begin
         { check Central Directory Signature }
-        Footer := TAbZipDirectoryFileFooter.Create;
-        try
-          Footer.LoadFromStream(Strm);
-          if Footer.FSignature = Ab_ZipEndCentralDirectorySignature then
-            if Footer.DiskNumber = 0 then
-              Result := atZip
-            else
-              Result := atSpannedZip;
-        finally
-          Footer.Free;
-        end;
+        Strm.ReadBuffer(Footer, SizeOf(Footer));
+        if Footer.Signature = Ab_ZipEndCentralDirectorySignature then
+          if Footer.DiskNumber = 0 then
+            Result := atZip
+          else
+            Result := atSpannedZip;
       end;
     end;
   except
@@ -755,11 +761,7 @@ const
   MaxBufSize = 64 * 1024;
 var
   StartPos  : Int64;
-  TailRec : packed record
-    trSig : longint;
-    trMid : array [0..15] of byte;
-    trLen : word;
-  end;
+  TailRec   : TAbZipEndOfCentralDirectoryRecord;
   Buffer    : PAnsiChar;
   Offset    : Int64;
   TestPos   : PAnsiChar;
@@ -777,8 +779,8 @@ begin
   Result := aStream.Seek(-sizeof(TailRec), soEnd);
   if (Result >= 0) then begin
     aStream.ReadBuffer(TailRec, sizeof(TailRec));
-    if (TailRec.trSig = Ab_ZipEndCentralDirectorySignature) and
-       (TailRec.trLen = 0) then begin
+    if (TailRec.Signature = Ab_ZipEndCentralDirectorySignature) and
+       (TailRec.CommentLength = 0) then begin
       aStream.Seek(Result, soBeginning);
       Exit;
     end;
@@ -829,7 +831,7 @@ begin
 
         {if it's as valid a tail as we can check here...}
         CommentLen := -Offset - (TestPos - Buffer + sizeof(TailRec));
-        if (TailRec.trLen <= CommentLen) then begin
+        if (TailRec.CommentLength <= CommentLen) then begin
 
           {calculate its position and exit}
           Result := Result + (TestPos - Buffer);
