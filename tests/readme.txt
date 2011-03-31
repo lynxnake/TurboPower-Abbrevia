@@ -23,6 +23,10 @@ extract the outer zip into "testfiles/WavPack".  This is relatively slow test,
 and is generally only needed if you're changing the WavPack support or adding 
 new compilers/platforms.
 
+- The Zip64 data is also available as a separate download from SourceForge.
+Download any files in the "Test Files/Zip64" folder and copy them into the
+"testfiles/Zip64" directory without extracting them.
+
 - To test Unicode filename support, open "testfiles/Unicode" and extract one of 
 the "OEM & ANSI" zips using WinZip or PowerArchiver into the "source" 
 subdirectory.  The readme there includes original filenames for verification.
