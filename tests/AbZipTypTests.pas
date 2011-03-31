@@ -67,6 +67,14 @@ type
       const aPassword: AnsiString); reintroduce;
   end;
 
+  TAbZip64Tests = class(TAbTestCase)
+  private
+    procedure CheckLargeListing(const aFileName: string);
+  published
+    procedure TestLoadLargeListing;
+    procedure TestSaveLargeListing;
+  end;
+
 implementation
 
 uses
@@ -152,6 +160,8 @@ begin
   Result := inherited Suite;
   // Test decompression of Unicode filenames
   Result.AddSuite(DecompressSuite(TestFileDir + 'Unicode'));
+  // Test ZIP64 extensions
+  Result.AddSuite(TAbZip64Tests.Suite);
 
   {$IFDEF UnzipWavPackSupport}
   // Test decompressiong of .wav files
@@ -227,6 +237,64 @@ begin
   Result := inherited CreateArchive(aFileName, aMode);
   (Result as TAbZipArchive).CompressionMethodToUse := FMethod;
   (Result as TAbZipArchive).Password := FPassword;
+end;
+
+
+{----------------------------------------------------------------------------}
+{ TAbZip64Tests }
+{----------------------------------------------------------------------------}
+procedure TAbZip64Tests.CheckLargeListing(const aFileName: string);
+var
+  Arc: TAbZipArchive;
+  i: Integer;
+  ExpectedName: string;
+begin
+  Arc := TAbZipArchive.Create(aFileName, fmOpenRead);
+  try
+    Arc.Load;
+    CheckEquals(90000, Arc.Count, 'Item counts don''t match');
+    for i := 0 to Arc.Count - 1 do begin
+      ExpectedName := Format('%.5d.txt', [i]);
+      CheckEquals(ExpectedName, Arc.Items[i].FileName);
+    end;
+  finally
+    Arc.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZip64Tests.TestLoadLargeListing;
+begin
+  CheckLargeListing(TestFileDir + 'Zip64' + PathDelim + '90,000_files.zip');
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZip64Tests.TestSaveLargeListing;
+var
+  Arc: TAbZipArchive;
+  Filename: string;
+  Item : TAbArchiveItem;
+  i: Integer;
+begin
+  Filename := TestTempDir + '90,000_files.zip';
+  Arc := TAbZipArchive.Create(Filename, fmCreate);
+  try
+    Arc.FInStream := TMemoryStream.Create;
+    try
+      { Use ItemList.Add instead of AddFromStream so we can use the same
+        source stream and only save to disk once }
+      for i := 0 to 89999 do begin
+        Item := Arc.CreateItem(Format('%.5d.txt', [i]));
+        Item.Action := aaStreamAdd;
+        Arc.ItemList.Add(Item);
+      end;
+      Arc.IsDirty := True;
+      Arc.Save;
+    finally
+      Arc.FInStream.Free;
+    end;
+  finally
+    Arc.Free;
+  end;
+  CheckLargeListing(Filename);
 end;
 {----------------------------------------------------------------------------}
 

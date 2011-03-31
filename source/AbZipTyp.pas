@@ -88,6 +88,26 @@ type
   PAbIntegerArray = ^TAbIntegerArray;
   TAbIntegerArray = array[0..65535 div sizeof(integer)-1] of integer;
 
+  TAbZip64EndOfCentralDirectoryRecord = packed record
+    Signature               : Longint;
+    RecordSize              : Int64;
+    VersionMadeBy           : Word;
+    VersionNeededToExtract  : Word;
+    DiskNumber              : LongWord;
+    StartDiskNumber         : LongWord;
+    EntriesOnDisk           : Int64;
+    TotalEntries            : Int64;
+    DirectorySize           : Int64;
+    DirectoryOffset         : Int64;
+  end;
+
+  TAbZip64EndOfCentralDirectoryLocator = packed record
+    Signature               : Longint;
+    StartDiskNumber         : Longint;
+    RelativeOffset          : Int64;
+    TotalDisks              : Longint;
+  end;
+
   TAbZipEndOfCentralDirectoryRecord = packed record
     Signature               : Longint;
     DiskNumber              : Word;
@@ -207,7 +227,6 @@ type
     FUncompressedSize : LongWord;
     FFileName : AnsiString;
     FExtraField : TAbExtraField;
-    FIsValid : Boolean;
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
     function GetCompressionRatio : Double;
@@ -305,44 +324,34 @@ type
 
 { TAbZipDirectoryFileFooter interface ====================================== }
   TAbZipDirectoryFileFooter = class( TObject )
-  private
-    function GetIsZip64: Boolean;
   protected {private}
-    FValidSignature       : Longint;
-    FSignature            : Longint;
-    FDiskNumber           : Word;
-    FStartDiskNumber      : Word;
-    FEntriesOnDisk        : Word;
-    FTotalEntries         : Word;
-    FDirectorySize        : LongWord;
-    FDirectoryOffset      : LongWord;
-    FZipfileComment       : AnsiString;
-    function GetValid : Boolean;
+    FDiskNumber             : LongWord;
+    FStartDiskNumber        : LongWord;
+    FEntriesOnDisk          : Int64;
+    FTotalEntries           : Int64;
+    FDirectorySize          : Int64;
+    FDirectoryOffset        : Int64;
+    FZipfileComment         : AnsiString;
+    function GetIsZip64: Boolean;
   public {methods}
-    constructor Create;
-    destructor Destroy;
-      override;
     procedure LoadFromStream( Stream : TStream );
-    procedure SaveToStream( Stream : TStream );
+    procedure LoadZip64FromStream( Stream : TStream );
+    procedure SaveToStream( Stream : TStream; aZip64TailOffset : Int64 = -1 );
   public {properties}
-    property Signature : Longint
-      read FSignature write FSignature;
-    property DiskNumber : Word
+    property DiskNumber : LongWord
       read FDiskNumber write FDiskNumber;
-    property EntriesOnDisk : Word
+    property EntriesOnDisk : Int64
       read FEntriesOnDisk write FEntriesOnDisk;
-    property TotalEntries : Word
+    property TotalEntries : Int64
       read FTotalEntries write FTotalEntries;
-    property DirectorySize : LongWord
+    property DirectorySize : Int64
       read FDirectorySize write FDirectorySize;
-    property DirectoryOffset : LongWord
+    property DirectoryOffset : Int64
       read FDirectoryOffset write FDirectoryOffset;
-    property StartDiskNumber : Word
+    property StartDiskNumber : LongWord
       read FStartDiskNumber write FStartDiskNumber;
     property ZipfileComment : AnsiString
       read FZipfileComment write FZipfileComment;
-    property IsValid : Boolean
-      read GetValid;
     property IsZip64: Boolean
       read GetIsZip64;
   end;
@@ -572,7 +581,6 @@ procedure MakeSelfExtracting( StubStream, ZipStream,
      This routine updates the RelativeOffset of each item in the archive}
 
 function FindCentralDirectoryTail(aStream : TStream) : Int64;
-function FindZip64CentralDirLocator(aStream: TStream; centralDirectoryPos: Int64): Int64;
 
 function VerifyZip(Strm : TStream) : TAbArchiveType;
 
@@ -595,6 +603,7 @@ uses
   {$ENDIF}
   {$ENDIF}
   {$ENDIF}
+  Math,
   AbResString,
   AbExcept,
   AbVMStrm,
@@ -699,56 +708,6 @@ begin
     else
       Result := Format(AbZipUnknown, [Ord(aMethod)]);
   end;
-end;
-{============================================================================}
-function FindZip64CentralDirLocator(aStream: TStream; centralDirectoryPos: Int64): Int64;
-const
-  minimumBlockSize: Integer = $14;
-  maximumVariableData: Integer = $1000;
-type
-  DataRec = packed record
-    signature: Longint;
-    Data: array[0..15] of Byte;
-  end;
-  PDataRec = ^DataRec;
-var
-	Found: Boolean;
-	i, BytesRead: Integer;
-  Position, EndPosition: Int64;
-  Buffer: array[0..4095] of Byte;
-
-  function ToInt(value: Longint): integer;
-  var
-    Bytes: array[0..3] of byte absolute value;
-  begin
-    Result := (bytes[0]) or (bytes[1] shl 8)
-      or (bytes[2] shl 16) or (bytes[3] shl 24);
-  end;
-
-begin
-	Found := False;
-	Position := centralDirectoryPos;
-  EndPosition := Position - maximumVariableData;
-
-  if Position < 0 then
-    Position := 0;
-
-  aStream.Seek(EndPosition, soBeginning);
-  BytesRead := aStream.Read(Buffer, SizeOf(buffer));
-
-	for i := BytesRead - SizeOf(DataRec) downto 0 do begin
-    if (ToInt(PDataRec(@Buffer[i])^.signature) = Ab_Zip64EndCentralDirectoryLocatorSignature) then begin
-      Position := EndPosition - (BytesRead - i);
-      aStream.Seek(Position, soBeginning);
-      Found := True;
-      Break;
-    end;
-  end;
-
-  if Found then 
-    Result := Position
-  else
-    Result := -1;
 end;
 {============================================================================}
 function FindCentralDirectoryTail(aStream : TStream) : Int64;
@@ -1385,72 +1344,104 @@ end;
 { -------------------------------------------------------------------------- }
 
 { TAbZipDirectoryFileFooter implementation ================================= }
-constructor TAbZipDirectoryFileFooter.Create;
-begin
-  inherited Create;
-  FValidSignature := Ab_ZipEndCentralDirectorySignature;
-end;
-{ -------------------------------------------------------------------------- }
-destructor TAbZipDirectoryFileFooter.Destroy;
-begin
-  inherited Destroy;
-end;
-{ -------------------------------------------------------------------------- }
 function TAbZipDirectoryFileFooter.GetIsZip64: Boolean;
 begin
-  Result := (DiskNumber = $FFFF) or
-            (StartDiskNumber = $FFFF) or
-            (EntriesOnDisk = $FFFF) or
-            (TotalEntries = $FFFF) or
-            (DirectorySize = LongWord(-1)) or
-            (DirectoryOffset = LongWord(-1));
-end;
-{ -------------------------------------------------------------------------- }
-function TAbZipDirectoryFileFooter.GetValid : Boolean;
-begin
-  Result := (FSignature = FValidSignature);
+  Result := (DiskNumber >= $FFFF) or
+            (StartDiskNumber >= $FFFF) or
+            (EntriesOnDisk >= $FFFF) or
+            (TotalEntries >= $FFFF) or
+            (DirectorySize >= $FFFFFFFF) or
+            (DirectoryOffset >= $FFFFFFFF);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipDirectoryFileFooter.LoadFromStream( Stream : TStream );
 var
-  ZipfileCommentLength : Word;
+  Footer: TAbZipEndOfCentralDirectoryRecord;
 begin
-  with Stream do begin
-    Read( FSignature, sizeof( FSignature ) );
-    Read( FDiskNumber, sizeof( FDiskNumber ) );
-    Read( FStartDiskNumber, sizeof( FStartDiskNumber ) );
-    Read( FEntriesOnDisk, sizeof( FEntriesOnDisk ) );
-    Read( FTotalEntries, sizeof( FTotalEntries ) );
-    Read( FDirectorySize, sizeof( FDirectorySize ) );
-    Read( FDirectoryOffset, sizeof( FDirectoryOffset ) );
-    Read( ZipfileCommentLength, sizeof( ZipfileCommentLength ) );
-
-    SetLength( FZipfileComment, ZipfileCommentLength );
-    if ZipfileCommentLength > 0 then
-      Read( FZipfileComment[1], ZipfileCommentLength );
-  end;
-  if not IsValid then
+  Stream.ReadBuffer( Footer, SizeOf(Footer) );
+  if Footer.Signature <> Ab_ZipEndCentralDirectorySignature then
     raise EAbZipInvalid.Create;
+  FDiskNumber := Footer.DiskNumber;
+  FStartDiskNumber := Footer.StartDiskNumber;
+  FEntriesOnDisk := Footer.EntriesOnDisk;
+  FTotalEntries := Footer.TotalEntries;
+  FDirectorySize := Footer.DirectorySize;
+  FDirectoryOffset := Footer.DirectoryOffset;
+  SetLength( FZipfileComment, Footer.CommentLength );
+  if Footer.CommentLength > 0 then
+    Stream.ReadBuffer( FZipfileComment[1], Footer.CommentLength );
 end;
-
 { -------------------------------------------------------------------------- }
-procedure TAbZipDirectoryFileFooter.SaveToStream( Stream : TStream );
+procedure TAbZipDirectoryFileFooter.LoadZip64FromStream( Stream : TStream );
+  {load the ZIP64 end of central directory record.
+   LoadFromStream() must be called first to load the standard record}
 var
-  ZipfileCommentLength : Word;
+  Footer: TAbZip64EndOfCentralDirectoryRecord;
 begin
-  with Stream do begin
-    Write( FValidSignature, sizeof( FValidSignature ) );
-    Write( FDiskNumber, sizeof( FDiskNumber ) );
-    Write( FStartDiskNumber, sizeof( FStartDiskNumber ) );
-    Write( FEntriesOnDisk, sizeof( FEntriesOnDisk ) );
-    Write( FTotalEntries, sizeof( FTotalEntries ) );
-    Write( FDirectorySize, sizeof( FDirectorySize ) );
-    Write( FDirectoryOffset, sizeof( FDirectoryOffset ) );
-    ZipfileCommentLength := Length( FZipfileComment );
-    Write( ZipfileCommentLength, sizeof( ZipfileCommentLength ) );
-    if ZipfileCommentLength > 0 then
-      Write( FZipfileComment[1], ZipfileCommentLength );
+  Stream.ReadBuffer( Footer, SizeOf(Footer) );
+  if Footer.Signature <> Ab_Zip64EndCentralDirectorySignature then
+    raise EAbZipInvalid.Create;
+  if FDiskNumber = $FFFF then
+    FDiskNumber := Footer.DiskNumber;
+  if FStartDiskNumber = $FFFF then
+    FStartDiskNumber := Footer.StartDiskNumber;
+  if FEntriesOnDisk = $FFFF then
+    FEntriesOnDisk := Footer.EntriesOnDisk;
+  if FTotalEntries = $FFFF then
+    FTotalEntries := Footer.TotalEntries;
+  if FDirectorySize = $FFFFFFFF then
+    FDirectorySize := Footer.DirectorySize;
+  if FDirectoryOffset = $FFFFFFFF then
+    FDirectoryOffset := Footer.DirectoryOffset;
+  {RecordSize, VersionMadeBy, and VersionNeededToExtract are currently ignored}
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipDirectoryFileFooter.SaveToStream( Stream : TStream;
+  aZip64TailOffset: Int64 = -1);
+  {write end of central directory record, along with Zip64 records if necessary.
+   aZip64TailOffset is the value to use for the Zip64 locator's directory
+   offset, and is only necessary when writing to an intermediate stream}
+var
+  Footer: TAbZipEndOfCentralDirectoryRecord;
+  Zip64Footer: TAbZip64EndOfCentralDirectoryRecord;
+  Zip64Locator: TAbZip64EndOfCentralDirectoryLocator;
+begin
+  if IsZip64 then begin
+    {setup Zip64 end of central directory record}
+    Zip64Footer.Signature := Ab_Zip64EndCentralDirectorySignature;
+    Zip64Footer.RecordSize := SizeOf(Zip64Footer) -
+      SizeOf(Zip64Footer.Signature) - SizeOf(Zip64Footer.RecordSize);
+    Zip64Footer.VersionMadeBy := 45;
+    Zip64Footer.VersionNeededToExtract := 45;
+    Zip64Footer.DiskNumber := DiskNumber;
+    Zip64Footer.StartDiskNumber := StartDiskNumber;
+    Zip64Footer.EntriesOnDisk := EntriesOnDisk;
+    Zip64Footer.TotalEntries := TotalEntries;
+    Zip64Footer.DirectorySize := DirectorySize;
+    Zip64Footer.DirectoryOffset := DirectoryOffset;
+    {setup Zip64 end of central directory locator}
+    Zip64Locator.Signature := Ab_Zip64EndCentralDirectoryLocatorSignature;
+    Zip64Locator.StartDiskNumber := DiskNumber;
+    if aZip64TailOffset = -1 then
+      Zip64Locator.RelativeOffset := Stream.Position
+    else
+      Zip64Locator.RelativeOffset := aZip64TailOffset;
+    Zip64Locator.TotalDisks := DiskNumber + 1;
+    {write Zip64 records}
+    Stream.WriteBuffer(Zip64Footer, SizeOf(Zip64Footer));
+    Stream.WriteBuffer(Zip64Locator, SizeOf(Zip64Locator));
   end;
+  Footer.Signature := Ab_ZipEndCentralDirectorySignature;
+  Footer.DiskNumber := Min(FDiskNumber, $FFFF);
+  Footer.StartDiskNumber := Min(FStartDiskNumber, $FFFF);
+  Footer.EntriesOnDisk := Min(FEntriesOnDisk, $FFFF);
+  Footer.TotalEntries := Min(FTotalEntries, $FFFF);
+  Footer.DirectorySize := Min(FDirectorySize, $FFFFFFFF);
+  Footer.DirectoryOffset := Min(FDirectoryOffset, $FFFFFFFF);
+  Footer.CommentLength := Length( FZipfileComment );
+  Stream.WriteBuffer( Footer, SizeOf(Footer) );
+  if FZipfileComment <> '' then
+    Write( FZipfileComment[1], Length(FZipfileComment) );
 end;
 { -------------------------------------------------------------------------- }
 
@@ -2067,6 +2058,7 @@ var
   Item : TAbZipItem;
   Progress : Byte;
   FileSignature : Longint;
+  Zip64Locator : TAbZip64EndOfCentralDirectoryLocator;
 begin
   Abort := False;
   if FStream.Size = 0 then
@@ -2095,7 +2087,6 @@ begin
       FStream := TFileStream.Create( ArchiveName, Mode );
       TailPosition := FindCentralDirectoryTail( FStream );
     end;
-    FSpanned := True;
   end;
 
   if TailPosition = -1 then begin
@@ -2106,22 +2097,47 @@ begin
   { load the ZipDirectoryFileFooter }
   FInfo.LoadFromStream(FStream);
 
+  { find Zip64 end of central directory locator; it will usually occur
+    immediately before the standard end of central directory record.
+    the actual Zip64 end of central directory may be on another disk }
+  if FInfo.IsZip64 then begin
+    Dec(TailPosition, SizeOf(Zip64Locator));
+    repeat
+      if TailPosition < 0 then
+        raise EAbZipInvalid.Create;
+      FStream.Position := TailPosition;
+      FStream.ReadBuffer(Zip64Locator, SizeOf(Zip64Locator));
+      Dec(TailPosition);
+    until Zip64Locator.Signature = Ab_Zip64EndCentralDirectoryLocatorSignature;
+    { update current image number }
+    FInfo.DiskNumber := Zip64Locator.TotalDisks - 1;
+  end;
+
   { setup spanning support and move to the start of the central directory }
-  if (FInfo.DiskNumber > 0) then
-    FSpanned := True;
+  FSpanned := FInfo.DiskNumber > 0;
 
   if FSpanned then begin
     if FOwnsStream then begin
       FStream := TAbSpanReadStream.Create( ArchiveName, FInfo.DiskNumber, FStream );
       TAbSpanReadStream(FStream).OnRequestImage := DoRequestImage;
       TAbSpanReadStream(FStream).OnRequestNthDisk := DoRequestNthDisk;
+      if FInfo.IsZip64 then begin
+        TAbSpanReadStream(FStream).SeekImage(Zip64Locator.StartDiskNumber,
+          Zip64Locator.RelativeOffset);
+        FInfo.LoadZip64FromStream(FStream);
+      end;
       TAbSpanReadStream(FStream).SeekImage(FInfo.StartDiskNumber, FInfo.DirectoryOffset);
     end
     else
       raise EAbZipBadSpanStream.Create;
   end
-  else
+  else begin
+    if FInfo.IsZip64 then begin
+      FStream.Position := Zip64Locator.RelativeOffset;
+      FInfo.LoadZip64FromStream(FStream);
+    end;
     FStream.Position := FInfo.DirectoryOffset;
+  end;
 
   { build Items list from central directory records }
   FStubSize := High(LongWord);
@@ -2341,7 +2357,7 @@ begin
         end;
       end;
       {append the central directory footer}
-      FInfo.SaveToStream(MemStream);
+      FInfo.SaveToStream(MemStream, NewStream.Position);
       if NewStream is TAbSpanWriteStream then begin
         {update the footer if writing it would trigger a new span}
         if not TAbSpanWriteStream(NewStream).WriteUnspanned(MemStream.Memory^,
