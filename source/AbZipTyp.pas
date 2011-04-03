@@ -397,6 +397,7 @@ type
     procedure SetRelativeOffset( Value : Int64 );
     procedure SetVersionMadeBy( Value : Word );
     procedure SetVersionNeededToExtract( Value : Word );
+    procedure UpdateVersionNeededToExtract;
 
   protected {redefined property methods}
     function  GetCRC32 : Longint; override;
@@ -1702,6 +1703,7 @@ end;
 procedure TAbZipItem.SetCompressionMethod( Value : TAbZipCompressionMethod );
 begin
   FItemInfo.CompressionMethod := Value;
+  UpdateVersionNeededToExtract;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetCRC32( const Value : Longint );
@@ -1792,6 +1794,7 @@ end;
 procedure TAbZipItem.SetGeneralPurposeBitFlag( Value : Word );
 begin
   FItemInfo.GeneralPurposeBitFlag := Value;
+  UpdateVersionNeededToExtract;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetHostOS( Value : TAbZipHostOS );
@@ -1835,6 +1838,23 @@ end;
 procedure TAbZipItem.SetVersionNeededToExtract( Value : Word );
 begin
   FItemInfo.VersionNeededToExtract := Value;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipItem.UpdateVersionNeededToExtract;
+  {calculates VersionNeededToExtract and VersionMadeBy based on used features}
+begin
+  {According to AppNote.txt zipx compression methods should set the Version
+   Needed To Extract to the AppNote version the method was introduced in (e.g.,
+   6.3 for PPMd).  Most utilities just set it to 2.0 and rely on the extractor
+   detecting unsupported compression methods, since it's easier to add support
+   for decompression methods without implementing the entire newer spec. }
+  if IsEncrypted then
+    VersionNeededToExtract := 21
+  else if IsDirectory or not (CompressionMethod in [cmStored..cmImploded]) then
+    VersionNeededToExtract := 20
+  else
+    VersionNeededToExtract := 10;
+  VersionMadeBy := (VersionMadeBy and $FF00) + Max(20, VersionNeededToExtract);
 end;
 { -------------------------------------------------------------------------- }
 

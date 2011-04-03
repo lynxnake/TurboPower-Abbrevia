@@ -205,38 +205,12 @@ var
   InStartPos{, OutStartPos} : LongInt;                                   {!!.01}
   TempOut : TAbVirtualMemoryStream;                                      {!!.01}
   DestStrm : TStream;
-
-procedure ConfigureItem;
-begin
-  Item.UncompressedSize := InStream.Size;
-  Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag and AbLanguageEncodingFlag;
-  Item.CompressedSize := 0;
-{$IFDEF MSWINDOWS}
-  Item.VersionMadeBy := (Item.VersionMadeBy and $FF00) + 20;
-{$ENDIF}
-{$IFDEF LINUX}
-  Item.VersionMadeBy := 20;
-{$ENDIF}
-end;
-
-procedure UpdateItem;
-begin
-  if (Item.CompressionMethod = cmDeflated) then
-    Item.VersionNeededToExtract := 20
-  else
-    Item.VersionNeededToExtract := 10;
-
-  if (ZipArchive.Password <> '') then begin
-    Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag
-      or AbFileIsEncryptedFlag or AbHasDataDescriptorFlag;
-  end;
-end;
-
 begin
   ZipArchive := TAbZipArchive(Sender);
 
   { configure Item }
-  ConfigureItem;
+  Item.UncompressedSize := InStream.Size;
+  Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag and AbLanguageEncodingFlag;
 
   if ZipArchive.Password <> '' then  { encrypt the stream }
     DestStrm := TAbDfEncryptStream.Create(OutStream,
@@ -301,17 +275,17 @@ begin
       { ignore any storage indicator and treat as stored }               {!!.01}
       DoStore(ZipArchive, Item, DestStrm, InStream);                     {!!.01}
     end;                                                                 {!!.01}
-
-    { update item }
-    UpdateItem;
-
   finally                                                                {!!.01}
     if DestStrm <> OutStream then
       DestStrm.Free;
   end;                                                                   {!!.01}
 
+  { update item }
   Item.CompressedSize := OutStream.Size;
   Item.InternalFileAttributes := 0; { don't care }
+  if (ZipArchive.Password <> '') then
+    Item.GeneralPurposeBitFlag := Item.GeneralPurposeBitFlag
+      or AbFileIsEncryptedFlag or AbHasDataDescriptorFlag;
 end;
 { -------------------------------------------------------------------------- }
 procedure AbZipFromStream(Sender : TAbZipArchive; Item : TAbZipItem;
