@@ -46,6 +46,10 @@ type
 
   public
     class function Suite: ITestSuite; override;
+
+  published
+    procedure TestTestItemAt;
+    procedure TestTestItemAtCorrupt;
   end;
 
   TAbZipDecompressTest = class(TAbArchiveDecompressTest)
@@ -78,7 +82,7 @@ type
 implementation
 
 uses
-  SysUtils, AbConst, AbUnzPrc, AbZipPrc;
+  SysUtils, AbConst, AbExcept, AbUnzPrc, AbZipPrc;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchive with Extract/Insert helpers }
@@ -95,6 +99,7 @@ type
       OutStream : TStream);
     procedure DoInsertFromStreamHelper(Sender : TObject; Item : TAbArchiveItem;
       OutStream, InStream : TStream);
+    procedure DoTestHelper(Sender : TObject; Item : TAbArchiveItem);
   public {methods}
     constructor CreateFromStream( aStream : TStream; const ArchiveName : string );
       override;
@@ -108,6 +113,7 @@ begin
   ExtractToStreamHelper := DoExtractToStreamHelper;
   InsertHelper := DoInsertHelper;
   InsertFromStreamHelper := DoInsertFromStreamHelper;
+  TestHelper := DoTestHelper;
 end;
 {----------------------------------------------------------------------------}
 procedure TAbZipArchive.DoExtractHelper(Sender : TObject;
@@ -132,6 +138,11 @@ procedure TAbZipArchive.DoInsertFromStreamHelper(Sender : TObject;
   Item : TAbArchiveItem; OutStream, InStream : TStream);
 begin
   AbZipFromStream(TAbZipArchive(Sender), TAbZipItem(Item), OutStream, InStream);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZipArchive.DoTestHelper(Sender : TObject; Item : TAbArchiveItem);
+begin
+  AbTestZipItem(Sender, TAbZipItem(Item));
 end;
 
 {----------------------------------------------------------------------------}
@@ -208,6 +219,39 @@ class function TAbZipArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveTyp
 begin
   Result := VerifyZip(aStream);
 end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipArchiveTests.TestTestItemAt;
+var
+  Arc: TAbZipArchive;
+begin
+  Arc := TAbZipArchive.Create(MPLDir + 'MPL.zip', fmOpenRead);
+  try
+    Arc.Load;
+    Arc.TestItemAt(0);
+    Check(True);
+  finally
+    Arc.Free;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipArchiveTests.TestTestItemAtCorrupt;
+var
+  Arc: TAbZipArchive;
+begin
+  Arc := TAbZipArchive.Create(TestFileDir + 'CorruptMPL.zip', fmOpenRead);
+  try
+    Arc.Load;
+    try
+      Arc.TestItemAt(0);
+    except
+      on E: Exception do
+        Check((E is EAbZipBadCRC) or (E is EAbZipInvalidLFH));
+    end;
+  finally
+    Arc.Free;
+  end;
+end;
+
 
 {----------------------------------------------------------------------------}
 { TAbZipDecompressTest }
