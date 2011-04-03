@@ -1186,10 +1186,6 @@ begin
       raise EAbZipInvalidLFH.Create;
     if (LFH.FileName <> Item.RawFileName) then
       raise EAbZipInvalidLFH.Create;
-    if (Length(LFH.ExtraField.Buffer) <> Length(Item.ExtraField.Buffer)) or
-       ((Length(LFH.ExtraField.Buffer) <> 0) and
-       (not CompareMem(LFH.ExtraField.Buffer, Item.ExtraField.Buffer, Length(Item.ExtraField.Buffer)))) then
-      raise EAbZipInvalidLFH.Create;
 
       {any CRC errors will raise exception during extraction}
     AbUnZipToStream(Sender, Item, BitBucket);
