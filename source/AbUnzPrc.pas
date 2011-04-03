@@ -897,12 +897,6 @@ var
 begin
   Hlpr := TAbDeflateHelper.Create;
   try
-
-    if (OutStream is TAbBitBucketStream) or   { we're just validating the item }
-       ((OutStream is TAbUnzipOutputStream) and
-        (TAbUnzipOutputStream(OutStream).Stream is TAbBitBucketStream)) then
-      Hlpr.Options := Hlpr.Options or dfc_TestOnly;
-
     if Item.CompressionMethod = cmEnhancedDeflated then
       Hlpr.Options := Hlpr.Options or dfc_UseDeflate64;
 
