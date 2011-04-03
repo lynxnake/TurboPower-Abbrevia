@@ -1441,7 +1441,7 @@ begin
   Footer.CommentLength := Length( FZipfileComment );
   Stream.WriteBuffer( Footer, SizeOf(Footer) );
   if FZipfileComment <> '' then
-    Write( FZipfileComment[1], Length(FZipfileComment) );
+    Stream.Write( FZipfileComment[1], Length(FZipfileComment) );
 end;
 { -------------------------------------------------------------------------- }
 
