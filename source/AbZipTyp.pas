@@ -368,6 +368,7 @@ type
   protected {private}
     FItemInfo : TAbZipDirectoryFileHeader;
     FDiskNumberStart : LongWord;
+    FLFHExtraField : TAbExtraField;
     FRelativeOffset : Int64;
 
   protected {methods}
@@ -443,6 +444,8 @@ type
     property GeneralPurposeBitFlag : Word
       read GetGeneralPurposeBitFlag
       write SetGeneralPurposeBitFlag;
+    property LFHExtraField : TAbExtraField
+      read FLFHExtraField;
     property RawFileName : AnsiString
       read GetRawFileName;
     property RelativeOffset : Int64
@@ -1455,10 +1458,12 @@ constructor TAbZipItem.Create;
 begin
   inherited Create;
   FItemInfo := TAbZipDirectoryFileHeader.Create;
+  FLFHExtraField := TAbExtraField.Create;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbZipItem.Destroy;
 begin
+  FLFHExtraField.Free;
   FItemInfo.Free;
   FItemInfo := nil;
   inherited Destroy;
@@ -1656,7 +1661,9 @@ begin
     LFH.CompressedSize := CompressedSize;
     LFH.UncompressedSize := UncompressedSize;
     LFH.FileName := RawFileName;
-    LFH.ExtraField.Buffer := ExtraField.Buffer;
+    LFH.ExtraField.Assign(LFHExtraField);
+    LFH.ExtraField.CloneFrom(ExtraField, Ab_InfoZipUnicodePathSubfieldID);
+    LFH.ExtraField.CloneFrom(ExtraField, Ab_XceedUnicodePathSubfieldID);
     LFH.SaveToStream( Stream );
   finally
     LFH.Free;
@@ -2250,6 +2257,8 @@ begin
           LFH := TAbZipLocalFileHeader.Create;
           try {LFH}
             LFH.LoadFromStream( FStream );
+            if CurrItem.LFHExtraField.Count = 0 then
+              CurrItem.LFHExtraField.Assign(LFH.ExtraField);
           finally {LFH}
             LFH.Free;
           end; {LFH}

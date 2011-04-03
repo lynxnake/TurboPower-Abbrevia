@@ -527,7 +527,9 @@ type
   protected {methods}
     procedure Changed; virtual;
   public {methods}
+    procedure Assign(aSource : TAbExtraField);
     procedure Clear;
+    procedure CloneFrom(aSource : TAbExtraField; aID : Word);
     procedure Delete(aID : Word);
     function Get(aID : Word; out aData : Pointer; out aDataSize : Word) : Boolean;
     function GetStream(aID : Word; out aStream : TStream): Boolean;
@@ -1942,6 +1944,11 @@ end;
 { -------------------------------------------------------------------------- }
 
 { TAbExtraField implementation ============================================= }
+procedure TAbExtraField.Assign(aSource : TAbExtraField);
+begin
+  SetBuffer(aSource.Buffer);
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbExtraField.Changed;
 begin
   // No-op
@@ -1951,6 +1958,16 @@ procedure TAbExtraField.Clear;
 begin
   FBuffer := nil;
   Changed;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbExtraField.CloneFrom(aSource : TAbExtraField; aID : Word);
+var
+  Data : Pointer;
+  DataSize : Word;
+begin
+  if aSource.Get(aID, Data, DataSize) then
+    Put(aID, Data, DataSize)
+  else Delete(aID);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbExtraField.Delete(aID : Word);
