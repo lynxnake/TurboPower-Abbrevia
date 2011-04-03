@@ -47,7 +47,7 @@ type
       FBufPosn : longint;
       FPosn    : Int64;
       FSize    : Int64;
-      FTail    : Int64;
+      FTail    : longint;
     protected
     public
       constructor Create(aBufSize : cardinal);
@@ -62,7 +62,7 @@ type
 implementation
 
 uses
-  SysUtils, AbExcept;
+  Math, SysUtils, AbExcept;
 
 {Notes: The buffer is a circular queue without a head pointer; FTail
         is where data is next going to be written and it wraps
@@ -108,8 +108,8 @@ end;
 {--------}
 function TAbBitBucketStream.Read(var Buffer; Count : Longint) : Longint;
 var
-  Chunk2Size : Int64;
-  Chunk1Size : Int64;
+  Chunk2Size : longint;
+  Chunk1Size : longint;
   OutBuffer  : PByte;
 begin
   OutBuffer := @Buffer;
@@ -158,11 +158,17 @@ var
   Chunk2Size : longint;
   Chunk1Size : longint;
   InBuffer   : PByte;
+  Overage    : longint;
 begin
+  Result := Count;
   InBuffer := @Buffer;
   {we cannot write more bytes than there is buffer}
-  if (Count > FBufSize) then
-    raise EAbBBSWriteTooManyBytes.Create(Count, 0);
+  while Count > FBufSize do begin
+    Overage := Min(FBufSize, Count - FBufSize);
+    Write(InBuffer^, Overage);
+    Inc(PtrInt(InBuffer), Overage);
+    Dec(Count, Overage);
+  end;
   {calculate the size of the chunks}
   Chunk1Size := FBufSize - FTail;
   if (Chunk1Size > Count) then begin
@@ -187,12 +193,11 @@ begin
   inc(FSize, Count);
   FPosn := FSize;
   FBufPosn := FTail;
-  Result := Count;
 end;
 {--------}
 function TAbBitBucketStream.Seek(const Offset : Int64; Origin : TSeekOrigin): Int64;
 var
-  Posn : longint;
+  Posn : Int64;
   BytesBack : longint;
 begin
 {$IFDEF LINUX}
