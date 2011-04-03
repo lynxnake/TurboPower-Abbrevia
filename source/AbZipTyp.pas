@@ -392,6 +392,7 @@ type
     procedure SetDiskNumberStart( Value : LongWord );
     procedure SetFileComment(const Value : AnsiString );
     procedure SetGeneralPurposeBitFlag( Value : Word );
+    procedure SetHostOS( Value : TAbZipHostOS );
     procedure SetInternalFileAttributes( Value : Word );
     procedure SetRelativeOffset( Value : Int64 );
     procedure SetVersionMadeBy( Value : Word );
@@ -437,7 +438,8 @@ type
       read GetFileComment
       write SetFileComment;
     property HostOS: TAbZipHostOS
-      read GetHostOS;
+      read GetHostOS
+      write SetHostOS;
     property InternalFileAttributes : Word
       read GetInternalFileAttributes
       write SetInternalFileAttributes;
@@ -1611,7 +1613,7 @@ begin
     FFileName := string(UnicodeName);
   end
   {$IFDEF MSWINDOWS}
-  else if (GetACP <> GetOEMCP) and ((Hi(VersionMadeBy) = 0) or IsOEM(FItemInfo.FileName)) then begin
+  else if (GetACP <> GetOEMCP) and ((HostOS = hosDOS) or IsOEM(FItemInfo.FileName)) then begin
     SetLength(FFileName, Length(FItemInfo.FileName));
     OemToCharBuff(PAnsiChar(FItemInfo.FileName), PChar(FFileName), Length(FFileName));
   end
@@ -1738,15 +1740,15 @@ begin
   inherited SetFileName(Value);
   {$IFDEF MSWINDOWS}
   FItemInfo.IsUTF8 := False;
-  VersionMadeBy := Low(VersionMadeBy);
+  HostOS := hosDOS;
   if TryEncode(Value, CP_OEMCP, False, AnsiName) then
     {no-op}
   else if (GetACP <> GetOEMCP) and TryEncode(Value, CP_ACP, False, AnsiName) then
-    VersionMadeBy := VersionMadeBy or $0B00
+    HostOS := hosWinNT
   else if TryEncode(Value, CP_OEMCP, True, AnsiName) then
     {no-op}
   else if (GetACP <> GetOEMCP) and TryEncode(Value, CP_ACP, True, AnsiName) then
-    VersionMadeBy := VersionMadeBy or $0B00
+    HostOS := hosWinNT
   else
     FItemInfo.IsUTF8 := True;
   if FItemInfo.IsUTF8 then
@@ -1790,6 +1792,12 @@ end;
 procedure TAbZipItem.SetGeneralPurposeBitFlag( Value : Word );
 begin
   FItemInfo.GeneralPurposeBitFlag := Value;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipItem.SetHostOS( Value : TAbZipHostOS );
+begin
+  FItemInfo.VersionMadeBy := Low(FItemInfo.VersionMadeBy) or
+    Word(Ord(Value)) shl 8;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetInternalFileAttributes( Value : Word );
