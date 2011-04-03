@@ -1144,7 +1144,9 @@ procedure AbTestZipItem(Sender : TObject; Item : TAbZipItem);
   {extract item to bit bucket and verify its local file header}
 var
   BitBucket  : TAbBitBucketStream;
+  FieldSize  : Word;
   LFH        : TAbZipLocalFileHeader;
+  Zip64Field : PZip64LocalHeaderRec;
   ZipArchive : TAbZipArchive;
 begin
   ZipArchive := TAbZipArchive(Sender);
@@ -1180,10 +1182,18 @@ begin
       raise EAbZipInvalidLFH.Create;
     if (LFH.CRC32 <> Item.CRC32) then
       raise EAbZipInvalidLFH.Create;
-    if (LFH.CompressedSize <> Item.CompressedSize) then
-      raise EAbZipInvalidLFH.Create;
-    if (LFH.UncompressedSize <> Item.UncompressedSize) then
-      raise EAbZipInvalidLFH.Create;
+    if LFH.ExtraField.Get(Ab_Zip64SubfieldID, Pointer(Zip64Field), FieldSize) then begin
+      if (Zip64Field.CompressedSize <> Item.CompressedSize) then
+        raise EAbZipInvalidLFH.Create;
+      if (Zip64Field.UncompressedSize <> Item.UncompressedSize) then
+        raise EAbZipInvalidLFH.Create;
+    end
+    else begin
+      if (LFH.CompressedSize <> Item.CompressedSize) then
+        raise EAbZipInvalidLFH.Create;
+      if (LFH.UncompressedSize <> Item.UncompressedSize) then
+        raise EAbZipInvalidLFH.Create;
+    end;
     if (LFH.FileName <> Item.RawFileName) then
       raise EAbZipInvalidLFH.Create;
 

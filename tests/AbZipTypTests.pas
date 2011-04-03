@@ -74,15 +74,18 @@ type
   TAbZip64Tests = class(TAbTestCase)
   private
     procedure CheckLargeListing(const aFileName: string);
+    function Zip64Dir: string;
   published
     procedure TestLoadLargeListing;
     procedure TestSaveLargeListing;
+    procedure TestLoadLargeUncompressedSize;
+    procedure TestExtractLargeUncompressedSize;
   end;
 
 implementation
 
 uses
-  SysUtils, AbConst, AbExcept, AbUnzPrc, AbZipPrc;
+  SysUtils, AbBitBkt, AbConst, AbExcept, AbUnzPrc, AbZipPrc;
 
 {----------------------------------------------------------------------------}
 { TAbZipArchive with Extract/Insert helpers }
@@ -308,7 +311,7 @@ end;
 {----------------------------------------------------------------------------}
 procedure TAbZip64Tests.TestLoadLargeListing;
 begin
-  CheckLargeListing(TestFileDir + 'Zip64' + PathDelim + '90,000_files.zip');
+  CheckLargeListing(Zip64Dir + '90,000_files.zip');
 end;
 {----------------------------------------------------------------------------}
 procedure TAbZip64Tests.TestSaveLargeListing;
@@ -339,6 +342,44 @@ begin
     Arc.Free;
   end;
   CheckLargeListing(Filename);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZip64Tests.TestLoadLargeUncompressedSize;
+var
+  Arc: TAbZipArchive;
+begin
+  Arc := TAbZipArchive.Create(Zip64Dir + 'Zeros.zip', fmOpenRead);
+  try
+    Arc.Load;
+    CheckEquals(5368709120, Arc.Items[0].UncompressedSize);
+  finally
+    Arc.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbZip64Tests.TestExtractLargeUncompressedSize;
+var
+  Arc: TAbZipArchive;
+  Stream: TStream;
+begin
+  Arc := TAbZipArchive.Create(Zip64Dir + 'Zeros.zip', fmOpenRead);
+  try
+    Arc.Load;
+    Stream := TAbBitBucketStream.Create(32768);
+    try
+      Arc.ExtractToStream('0000', Stream);
+      CheckEquals(5368709120, Stream.Size);
+    finally
+      Stream.Free;
+    end;
+  finally
+    Arc.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+function TAbZip64Tests.Zip64Dir: string;
+begin
+  Result := TestFileDir + 'Zip64' + PathDelim;
 end;
 {----------------------------------------------------------------------------}
 

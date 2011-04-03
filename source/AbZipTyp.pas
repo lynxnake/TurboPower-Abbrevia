@@ -66,6 +66,7 @@ const
   AbHasDataDescriptorFlag   = $0008;
   AbLanguageEncodingFlag    = $0800;
 
+  Ab_Zip64SubfieldID                        : Word    = $0001;
   Ab_InfoZipUnicodePathSubfieldID           : Word    = $7075;
   Ab_XceedUnicodePathSubfieldID             : Word    = $554E;
   Ab_XceedUnicodePathSignature              : LongWord= $5843554E;
@@ -155,6 +156,12 @@ type
     Signature: LongWord;
     Length: Integer;
     UnicodeName: array[0..0] of WideChar;
+  end;
+
+  PZip64LocalHeaderRec = ^TZip64LocalHeaderRec;
+  TZip64LocalHeaderRec = packed record
+    UncompressedSize: Int64;
+    CompressedSize: Int64;
   end;
 
 type
@@ -360,20 +367,20 @@ type
   TAbZipItem = class( TAbArchiveItem )
   protected {private}
     FItemInfo : TAbZipDirectoryFileHeader;
+    FDiskNumberStart : LongWord;
+    FRelativeOffset : Int64;
 
   protected {methods}
     function GetCompressionMethod : TAbZipCompressionMethod;
     function GetCompressionRatio : Double;
     function GetDeflationOption : TAbZipDeflationOption;
     function GetDictionarySize : TAbZipDictionarySize;
-    function GetDiskNumberStart : Word;
     function GetExtraField : TAbExtraField;
     function GetFileComment : AnsiString;
     function GetGeneralPurposeBitFlag : Word;
     function GetHostOS: TAbZipHostOS;
     function GetInternalFileAttributes : Word;
     function GetRawFileName : AnsiString;
-    function GetRelativeOffset : Int64;
     function GetShannonFanoTreeCount : Byte;
     function GetVersionMadeBy : Word;
     function GetVersionNeededToExtract : Word;
@@ -381,7 +388,7 @@ type
     procedure SaveDDToStream( Stream : TStream );
     procedure SaveLFHToStream( Stream : TStream );
     procedure SetCompressionMethod( Value : TAbZipCompressionMethod );
-    procedure SetDiskNumberStart( Value : Word );
+    procedure SetDiskNumberStart( Value : LongWord );
     procedure SetFileComment(const Value : AnsiString );
     procedure SetGeneralPurposeBitFlag( Value : Word );
     procedure SetInternalFileAttributes( Value : Word );
@@ -390,7 +397,6 @@ type
     procedure SetVersionNeededToExtract( Value : Word );
 
   protected {redefined property methods}
-    function  GetCompressedSize : Int64; override;
     function  GetCRC32 : Longint; override;
     function  GetExternalFileAttributes : LongWord; override;
     function  GetIsDirectory: Boolean; override;
@@ -398,7 +404,6 @@ type
     function  GetLastModFileDate : Word; override;
     function  GetLastModFileTime : Word; override;
     function  GetNativeFileAttributes : LongInt; override;
-    function  GetUncompressedSize : Int64; override;
     procedure SetCompressedSize( const Value : Int64 ); override;
     procedure SetCRC32( const Value : Longint ); override;
     procedure SetExternalFileAttributes( Value : LongWord ); override;
@@ -422,8 +427,8 @@ type
       read GetDeflationOption;
     property DictionarySize : TAbZipDictionarySize
       read GetDictionarySize;
-    property DiskNumberStart : Word
-      read GetDiskNumberStart
+    property DiskNumberStart : LongWord
+      read FDiskNumberStart
       write SetDiskNumberStart;
     property ExtraField : TAbExtraField
       read GetExtraField;
@@ -441,7 +446,7 @@ type
     property RawFileName : AnsiString
       read GetRawFileName;
     property RelativeOffset : Int64
-      read GetRelativeOffset
+      read FRelativeOffset
       write SetRelativeOffset;
     property ShannonFanoTreeCount : Byte
       read GetShannonFanoTreeCount;
@@ -1459,11 +1464,6 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipItem.GetCompressedSize : Int64;
-begin
-  Result := FItemInfo.CompressedSize;
-end;
-{ -------------------------------------------------------------------------- }
 function TAbZipItem.GetCompressionMethod : TAbZipCompressionMethod;
 begin
   Result := FItemInfo.CompressionMethod;
@@ -1497,11 +1497,6 @@ end;
 function TAbZipItem.GetHostOS: TAbZipHostOS;
 begin
   Result := TAbZipHostOS(Hi(VersionMadeBy));
-end;
-{ -------------------------------------------------------------------------- }
-function TAbZipItem.GetDiskNumberStart : Word;
-begin
-  Result := FItemInfo.DiskNumberStart;
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetExternalFileAttributes : LongWord;
@@ -1566,19 +1561,9 @@ begin
   Result := FItemInfo.FileName;
 end;
 { -------------------------------------------------------------------------- }
-function TAbZipItem.GetRelativeOffset : Int64;
-begin
-  Result := FItemInfo.RelativeOffset;
-end;
-{ -------------------------------------------------------------------------- }
 function TAbZipItem.GetShannonFanoTreeCount : Byte;
 begin
   Result := FItemInfo.ShannonFanoTreeCount;
-end;
-{ -------------------------------------------------------------------------- }
-function TAbZipItem.GetUncompressedSize : Int64;
-begin
-  Result := FItemInfo.UncompressedSize;
 end;
 { -------------------------------------------------------------------------- }
 function TAbZipItem.GetVersionMadeBy : Word;
@@ -1594,12 +1579,15 @@ end;
 procedure TAbZipItem.LoadFromStream( Stream : TStream );
 var
   FieldSize: Word;
+  FieldStream: TStream;
   InfoZipField: PInfoZipUnicodePathRec;
   UnicodeName: UnicodeString;
   UTF8Name: UTF8String;
   XceedField: PXceedUnicodePathRec;
 begin
   FItemInfo.LoadFromStream( Stream );
+
+  { decode filename (ANSI/OEM/UTF-8) }
   if FItemInfo.IsUTF8 or (AbDetectCharSet(FItemInfo.FileName) = csUTF8) then
     FFileName := UTF8ToString(FItemInfo.FileName)
   else if FItemInfo.ExtraField.Get(Ab_InfoZipUnicodePathSubfieldID, Pointer(InfoZipField), FieldSize) and
@@ -1625,6 +1613,25 @@ begin
   {$ENDIF}
   else
     FFileName := string(FItemInfo.FileName);
+
+  { read ZIP64 extended header }
+  FUncompressedSize := FItemInfo.UncompressedSize;
+  FCompressedSize := FItemInfo.CompressedSize;
+  FRelativeOffset := FItemInfo.RelativeOffset;
+  FDiskNumberStart := FItemInfo.DiskNumberStart;
+  if FItemInfo.ExtraField.GetStream(Ab_Zip64SubfieldID, FieldStream) then
+    try
+      if FItemInfo.UncompressedSize = $FFFFFFFF then
+        FieldStream.ReadBuffer(FUncompressedSize, SizeOf(Int64));
+      if FItemInfo.CompressedSize = $FFFFFFFF then
+        FieldStream.ReadBuffer(FCompressedSize, SizeOf(Int64));
+      if FItemInfo.RelativeOffset = $FFFFFFFF then
+        FieldStream.ReadBuffer(FRelativeOffset, SizeOf(Int64));
+      if FItemInfo.DiskNumberStart = $FFFF then
+        FieldStream.ReadBuffer(FDiskNumberStart, SizeOf(LongWord));
+    finally
+      FieldStream.Free;
+    end;
 
   LastModFileTime := FItemInfo.LastModFileTime;
   LastModFileDate := FItemInfo.LastModFileDate;
@@ -1679,6 +1686,7 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetCompressedSize( const Value : Int64 );
 begin
+  FCompressedSize := Value;
   FItemInfo.CompressedSize:= Value;
 end;
 { -------------------------------------------------------------------------- }
@@ -1692,8 +1700,9 @@ begin
   FItemInfo.CRC32 := Value;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbZipItem.SetDiskNumberStart( Value : Word );
+procedure TAbZipItem.SetDiskNumberStart( Value : LongWord );
 begin
+  FDiskNumberStart := Value;
   FItemInfo.DiskNumberStart := Value;
 end;
 { -------------------------------------------------------------------------- }
@@ -1793,12 +1802,13 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetRelativeOffset( Value : Int64 );
 begin
+  FRelativeOffset := Value;
   FItemInfo.RelativeOffset := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetUncompressedSize( const Value : Int64 );
 begin
-  inherited SetUncompressedSize( Value );
+  FUncompressedSize := Value;
   FItemInfo.UncompressedSize:= Value;
 end;
 { -------------------------------------------------------------------------- }

@@ -530,6 +530,7 @@ type
     procedure Clear;
     procedure Delete(aID : Word);
     function Get(aID : Word; out aData : Pointer; out aDataSize : Word) : Boolean;
+    function GetStream(aID : Word; out aStream : TStream): Boolean;
     procedure LoadFromStream(aStream : TStream; aSize : Word);
     procedure Put(aID : Word; const aData; aDataSize : Word);
   public {properties}
@@ -735,8 +736,6 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveItem.SetUnCompressedSize(const Value : Int64);
 begin
-  if Value > High(LongWord) then
-    raise EAbFileTooLarge.Create;
   FUnCompressedSize := Value;
 end;
 { -------------------------------------------------------------------------- }
@@ -2047,6 +2046,19 @@ begin
     else
       Inc(i);
   raise EListError.CreateFmt(SListIndexError, [aIndex]);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.GetStream(aID : Word; out aStream : TStream): Boolean;
+var
+  Data: Pointer;
+  DataSize: Word;
+begin
+  Result := Get(aID, Data, DataSize);
+  if Result then begin
+    aStream := TMemoryStream.Create;
+    aStream.WriteBuffer(Data^, DataSize);
+    aStream.Position := 0;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbExtraField.LoadFromStream(aStream : TStream; aSize : Word);
