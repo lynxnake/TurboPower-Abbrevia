@@ -203,17 +203,16 @@ type
   TAbZipDataDescriptor = class( TObject )
   protected {private}
     FCRC32            : Longint;
-    FCompressedSize   : LongWord;
-    FUncompressedSize : LongWord;
+    FCompressedSize   : Int64;
+    FUncompressedSize : Int64;
   public {methods}
-    procedure LoadFromStream( Stream : TStream );
     procedure SaveToStream( Stream : TStream );
   public {properties}
     property CRC32 : Longint
       read FCRC32 write FCRC32;
-    property CompressedSize : LongWord
+    property CompressedSize : Int64
       read FCompressedSize write FCompressedSize;
-    property UncompressedSize : LongWord
+    property UncompressedSize : Int64
       read FUncompressedSize write FUncompressedSize;
   end;
 
@@ -398,6 +397,7 @@ type
     procedure SetVersionMadeBy( Value : Word );
     procedure SetVersionNeededToExtract( Value : Word );
     procedure UpdateVersionNeededToExtract;
+    procedure UpdateZip64ExtraHeader;
 
   protected {redefined property methods}
     function  GetCRC32 : Longint; override;
@@ -1073,21 +1073,18 @@ end;
 {$ENDIF MSWINDOWS}
 {============================================================================}
 { TAbZipDataDescriptor implementation ====================================== }
-procedure TAbZipDataDescriptor.LoadFromStream( Stream : TStream );
-begin
-  Stream.Read( FCRC32, sizeof(FCRC32) );
-  if FCRC32 = Ab_ZipDataDescriptorSignature then
-  	Stream.Read( FCRC32, sizeof( FCRC32 ) );
-  Stream.Read( FCompressedSize, sizeof( FCompressedSize ) );
-  Stream.Read( FUncompressedSize, sizeof( FUncompressedSize ) );
-end;
-{ -------------------------------------------------------------------------- }
 procedure TAbZipDataDescriptor.SaveToStream( Stream : TStream );
 begin
   Stream.Write( Ab_ZipDataDescriptorSignature, sizeof( Ab_ZipDataDescriptorSignature ) );
   Stream.Write( FCRC32, sizeof( FCRC32 ) );
-  Stream.Write( FCompressedSize, sizeof( FCompressedSize ) );
-  Stream.Write( FUncompressedSize, sizeof( FUncompressedSize ) );
+  if (FCompressedSize >= $FFFFFFFF) or (FUncompressedSize >= $FFFFFFFF) then begin
+    Stream.Write( FCompressedSize, sizeof( FCompressedSize ) );
+    Stream.Write( FUncompressedSize, sizeof( FUncompressedSize ) );
+  end
+  else begin
+    Stream.Write( FCompressedSize, sizeof( LongWord ) );
+    Stream.Write( FUncompressedSize, sizeof( LongWord ) );
+  end;
 end;
 { -------------------------------------------------------------------------- }
 
@@ -1652,6 +1649,7 @@ end;
 procedure TAbZipItem.SaveLFHToStream( Stream : TStream );
 var
   LFH : TAbZipLocalFileHeader;
+  Zip64Field: TZip64LocalHeaderRec;
 begin
   LFH := TAbZipLocalFileHeader.Create;
   try
@@ -1661,12 +1659,24 @@ begin
     LFH.LastModFileTime := LastModFileTime;
     LFH.LastModFileDate := LastModFileDate;
     LFH.CRC32 := CRC32;
-    LFH.CompressedSize := CompressedSize;
-    LFH.UncompressedSize := UncompressedSize;
     LFH.FileName := RawFileName;
     LFH.ExtraField.Assign(LFHExtraField);
     LFH.ExtraField.CloneFrom(ExtraField, Ab_InfoZipUnicodePathSubfieldID);
     LFH.ExtraField.CloneFrom(ExtraField, Ab_XceedUnicodePathSubfieldID);
+    { setup sizes;  unlike the central directory header, the ZIP64 local header
+      needs to store both compressed and uncompressed sizes if either needs it }
+    if (CompressedSize >= $FFFFFFFF) or (UncompressedSize >= $FFFFFFFF) then begin
+      LFH.UncompressedSize := $FFFFFFFF;
+      LFH.CompressedSize := $FFFFFFFF;
+      Zip64Field.UncompressedSize := UncompressedSize;
+      Zip64Field.CompressedSize := CompressedSize;
+      LFH.ExtraField.Put(Ab_Zip64SubfieldID, Zip64Field, SizeOf(Zip64Field));
+    end
+    else begin
+      LFH.UncompressedSize := UncompressedSize;
+      LFH.CompressedSize := CompressedSize;
+      LFH.ExtraField.Delete(Ab_Zip64SubfieldID);
+    end;
     LFH.SaveToStream( Stream );
   finally
     LFH.Free;
@@ -1697,7 +1707,8 @@ end;
 procedure TAbZipItem.SetCompressedSize( const Value : Int64 );
 begin
   FCompressedSize := Value;
-  FItemInfo.CompressedSize:= Value;
+  FItemInfo.CompressedSize := Min(Value, $FFFFFFFF);
+  UpdateZip64ExtraHeader;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetCompressionMethod( Value : TAbZipCompressionMethod );
@@ -1714,7 +1725,8 @@ end;
 procedure TAbZipItem.SetDiskNumberStart( Value : LongWord );
 begin
   FDiskNumberStart := Value;
-  FItemInfo.DiskNumberStart := Value;
+  FItemInfo.DiskNumberStart := Min(Value, $FFFF);
+  UpdateZip64ExtraHeader;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetExternalFileAttributes( Value : LongWord );
@@ -1821,13 +1833,15 @@ end;
 procedure TAbZipItem.SetRelativeOffset( Value : Int64 );
 begin
   FRelativeOffset := Value;
-  FItemInfo.RelativeOffset := Value;
+  FItemInfo.RelativeOffset := Min(Value, $FFFFFFFF);
+  UpdateZip64ExtraHeader;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetUncompressedSize( const Value : Int64 );
 begin
   FUncompressedSize := Value;
-  FItemInfo.UncompressedSize:= Value;
+  FItemInfo.UncompressedSize:= Min(Value, $FFFFFFFF);
+  UpdateZip64ExtraHeader;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipItem.SetVersionMadeBy( Value : Word );
@@ -1848,13 +1862,42 @@ begin
    6.3 for PPMd).  Most utilities just set it to 2.0 and rely on the extractor
    detecting unsupported compression methods, since it's easier to add support
    for decompression methods without implementing the entire newer spec. }
-  if IsEncrypted then
+  if ExtraField.Has(Ab_Zip64SubfieldID) then
+    VersionNeededToExtract := 45
+  else if IsEncrypted then
     VersionNeededToExtract := 21
   else if IsDirectory or not (CompressionMethod in [cmStored..cmImploded]) then
     VersionNeededToExtract := 20
   else
     VersionNeededToExtract := 10;
   VersionMadeBy := (VersionMadeBy and $FF00) + Max(20, VersionNeededToExtract);
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbZipItem.UpdateZip64ExtraHeader;
+var
+  Changed: Boolean;
+  FieldStream: TMemoryStream;
+begin
+  FieldStream := TMemoryStream.Create;
+  try
+    if UncompressedSize >= $FFFFFFFF then
+      FieldStream.WriteBuffer(FUncompressedSize, SizeOf(Int64));
+    if CompressedSize >= $FFFFFFFF then
+      FieldStream.WriteBuffer(FCompressedSize, SizeOf(Int64));
+    if RelativeOffset >= $FFFFFFFF then
+      FieldStream.WriteBuffer(FRelativeOffset, SizeOf(Int64));
+    if DiskNumberStart >= $FFFF then
+      FieldStream.WriteBuffer(FDiskNumberStart, SizeOf(LongWord));
+    Changed := (FieldStream.Size > 0) <> ExtraField.Has(Ab_Zip64SubfieldID);
+    if FieldStream.Size > 0 then
+      ExtraField.Put(Ab_Zip64SubfieldID, FieldStream.Memory^, FieldStream.Size)
+    else
+      ExtraField.Delete(Ab_Zip64SubfieldID);
+    if Changed then
+      UpdateVersionNeededToExtract;
+  finally
+    FieldStream.Free;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 

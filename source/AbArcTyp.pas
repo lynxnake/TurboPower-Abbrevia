@@ -533,6 +533,7 @@ type
     procedure Delete(aID : Word);
     function Get(aID : Word; out aData : Pointer; out aDataSize : Word) : Boolean;
     function GetStream(aID : Word; out aStream : TStream): Boolean;
+    function Has(aID : Word): Boolean;
     procedure LoadFromStream(aStream : TStream; aSize : Word);
     procedure Put(aID : Word; const aData; aDataSize : Word);
   public {properties}
@@ -2076,6 +2077,13 @@ begin
     aStream.WriteBuffer(Data^, DataSize);
     aStream.Position := 0;
   end;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbExtraField.Has(aID : Word): Boolean;
+var
+  SubField : PAbExtraSubField;
+begin
+  Result := FindField(aID, SubField);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbExtraField.LoadFromStream(aStream : TStream; aSize : Word);
