@@ -494,7 +494,7 @@ begin
   Bmp := TBitmap.Create;
   try
     Bmp.LoadFromResourceName(HInstance, 'AbComCtrls_Lock');
-    FHeaderImages.AddMasked(Bmp, clBlack)
+    FHeaderImages.AddMasked(Bmp, clFuchsia);
   finally
     Bmp.Free;
   end;
@@ -1063,7 +1063,7 @@ begin
   Bmp := TBitmap.Create;
   try
     Bmp.LoadFromResourceName(HInstance, 'AbComCtrls_Zip');
-    Images.AddMasked(Bmp, clBlack);
+    Images.AddMasked(Bmp, clFuchsia);
     Icon := TIcon.Create;
     try
       // On Windows 7 an empty filename returns the drive icon instead of a folder
