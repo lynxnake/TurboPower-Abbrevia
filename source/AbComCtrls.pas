@@ -915,8 +915,15 @@ begin
             ParentDir := ExtractFileDir(FileName);
             if FlatList or (ParentDir = Path) then begin
               // If an ListItem has already been created for a folder, use it
-              if ArcItem.IsDirectory and Folders.Find(ExtractFileName(FileName), j) then
-                ListItem := Folders.Objects[j] as TAbListItem
+              if ArcItem.IsDirectory then begin
+                FolderName := ExtractFileName(FileName);
+                if Folders.Find(FolderName, j) then
+                  ListItem := Folders.Objects[j] as TAbListItem
+                else begin
+                  ListItem := Items.Add as TAbListItem;
+                  Folders.AddObject(FolderName, ListItem);
+                end
+              end
               else
                 ListItem := Items.Add as TAbListItem;
               ListItem.ArchiveItem := FArchive[i];
