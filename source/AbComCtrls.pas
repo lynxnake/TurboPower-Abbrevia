@@ -33,7 +33,6 @@
 {*********************************************************}
 //TODO: Add to AbbreviaVCL packages
 //TODO: Listview encrypted column
-//TODO: Listview sort arrows are cleared when resizing
 //TODO: Listview support for implicit folders
 //TODO: Tighten up component cooperation
 unit AbComCtrls;
@@ -89,8 +88,12 @@ type
   TAbCustomListView = class(TCustomListView)
   protected {private}
     FArchive : TAbBaseBrowser;
+    FDefHeaderProc : TWindowProcPtr;
     FFlatList: Boolean;
+    FHeaderHandle : HWND;
     FHeaderImages : TImageList;
+    FHeaderInstance : Pointer;
+    FInUpdateSortArrows: Boolean;
     FPath : string;
     FSortAscending : Boolean;
     FSortColIndex : Integer;
@@ -114,6 +117,8 @@ type
     procedure DoChange(Sender : TObject);
       virtual;
     function GetListItems: TAbListItems;
+    procedure HeaderWndProc(var Msg: TMessage);
+      virtual;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SetArchive(aValue : TAbBaseBrowser);
@@ -378,6 +383,10 @@ implementation
 uses
   CommCtrl, Contnrs, ShellAPI, StrUtils, AbResString, AbUtils, AbZipTyp;
 
+const
+  HDF_SORTDOWN = $0200;
+  HDF_SORTUP   = $0400;
+
 { -------------------------------------------------------------------------- }
 function AbNormalizeFilename(const aFilename: string): string;
 var
@@ -449,6 +458,7 @@ var
   sfi: SHFILEINFO;
 begin
   inherited;
+  FHeaderInstance := MakeObjectInstance(HeaderWndProc);
   // Load header image into an image list;  the header's hbm property
   // doesn't support transparency
   FHeaderImages := TImageList.Create(Self);
@@ -482,6 +492,9 @@ end;
 { -------------------------------------------------------------------------- }
 destructor TAbCustomListView.Destroy;
 begin
+  if FHeaderHandle <> 0 then
+    SetWindowLong(FHeaderHandle, GWL_WNDPROC, LongInt(FDefHeaderProc));
+  FreeObjectInstance(FHeaderInstance);
   if FSortUpBmp <> 0 then
     DeleteObject(FSortUpBmp);
   if FSortDownBmp <> 0 then
@@ -511,6 +524,11 @@ end;
 procedure TAbCustomListView.CreateWnd;
 begin
   inherited;
+  FHeaderHandle := ListView_GetHeader(Handle);
+  if FHeaderHandle <> 0 then begin
+    FDefHeaderProc := TWindowProcPtr(GetWindowLong(FHeaderHandle, GWL_WNDPROC));
+    SetWindowLong(FHeaderHandle, GWL_WNDPROC, LongInt(FHeaderInstance));
+  end;
   Header_SetImageList(ListView_GetHeader(Handle), FHeaderImages.Handle);
   UpdateColumns;
 end;
@@ -532,6 +550,26 @@ end;
 function TAbCustomListView.GetListItems: TAbListItems;
 begin
   Result := inherited Items as TAbListItems;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.HeaderWndProc(var Msg: TMessage);
+const
+  FMT_MASK = HDF_BITMAP or HDF_BITMAP_ON_RIGHT or HDF_SORTDOWN or HDF_SORTUP;
+var
+  Item: THDItem;
+begin
+  if (Msg.Msg = HDM_SETITEM) and not FInUpdateSortArrows then begin
+    Item.Mask := HDI_FORMAT;
+    if Header_GetItem(FHeaderHandle, Msg.WParam, Item) then begin
+      PHDItem(Msg.LParam).Mask := PHDItem(Msg.LParam).Mask and not HDI_BITMAP;
+      PHDItem(Msg.LParam).fmt := PHDItem(Msg.LParam).fmt and not FMT_MASK
+        or (Item.fmt and FMT_MASK);
+    end;
+  end;
+  Msg.Result := CallWindowProc(FDefHeaderProc, FHeaderHandle, Msg.Msg,
+    Msg.WParam, Msg.LParam);
+  if Msg.Msg = WM_DESTROY then
+    FHeaderHandle := 0;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.Notification(aComponent: TComponent;
@@ -736,51 +774,51 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.UpdateSortArrow;
-const
-  HDF_SORTDOWN = $0200;
-  HDF_SORTUP   = $0400;
 var
-  FHeaderHandle: HWND;
   i: Integer;
   Item: THDITEM;
 begin
   if not HandleAllocated then
     Exit;
-  FHeaderHandle := ListView_GetHeader(Handle);
-  for i := 0 to Columns.Count - 1 do begin
-    FillChar(Item, SizeOf(Item), 0);
-    Item.Mask := HDI_FORMAT;
-    if not IsComCtl32Version6 then
-      Item.Mask := Item.Mask or HDI_BITMAP;
-    Header_GetItem(FHeaderHandle, Columns[i].Index, Item);
-    // Add sort arrow to requested column
-    if TAbViewColumn(Columns[i].Tag) = FSortColumn then begin
-      FSortColIndex := i - 1;
-      if IsComCtl32Version6 then begin
-        Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP);
-        if FSortAscending then
-          Item.fmt := Item.fmt or HDF_SORTUP
-        else
-          Item.fmt := Item.fmt or HDF_SORTDOWN;
+  FInUpdateSortArrows := True;
+  try
+    for i := 0 to Columns.Count - 1 do begin
+      FillChar(Item, SizeOf(Item), 0);
+      Item.Mask := HDI_FORMAT;
+      if not IsComCtl32Version6 then
+        Item.Mask := Item.Mask or HDI_BITMAP;
+      Header_GetItem(FHeaderHandle, Columns[i].Index, Item);
+      // Add sort arrow to requested column
+      if TAbViewColumn(Columns[i].Tag) = FSortColumn then begin
+        FSortColIndex := i - 1;
+        if IsComCtl32Version6 then begin
+          Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP);
+          if FSortAscending then
+            Item.fmt := Item.fmt or HDF_SORTUP
+          else
+            Item.fmt := Item.fmt or HDF_SORTDOWN;
+        end
+        else begin
+          Item.fmt := Item.fmt or HDF_BITMAP or HDF_BITMAP_ON_RIGHT;
+          if FSortAscending then
+            Item.hbm := FSortUpBmp
+          else
+            Item.hbm := FSortDownBmp;
+        end;
       end
+      // Remove sort arrow from other columns
       else begin
-        Item.fmt := Item.fmt or HDF_BITMAP or HDF_BITMAP_ON_RIGHT;
-        if FSortAscending then
-          Item.hbm := FSortUpBmp
-        else
-          Item.hbm := FSortDownBmp;
+        if IsComCtl32Version6 then
+          Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP)
+        else begin
+          Item.Mask := Item.Mask and not HDI_BITMAP;
+          Item.fmt := Item.fmt and not (HDF_BITMAP OR HDF_BITMAP_ON_RIGHT);
+        end;
       end;
-    end
-    // Remove sort arrow from other columns
-    else begin
-      if IsComCtl32Version6 then
-        Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP)
-      else begin
-        Item.Mask := Item.Mask and not HDI_BITMAP;
-        Item.fmt := Item.fmt and not (HDF_BITMAP OR HDF_BITMAP_ON_RIGHT);
-      end;
+      Header_SetItem(FHeaderHandle, Columns[i].Index, Item);
     end;
-    Header_SetItem(FHeaderHandle, Columns[i].Index, Item);
+  finally
+    FInUpdateSortArrows := False;
   end;
 end;
 { -------------------------------------------------------------------------- }
