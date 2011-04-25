@@ -32,7 +32,6 @@
 {*   only show items in the selected folder.             *}
 {*********************************************************}
 //TODO: Add to AbbreviaVCL packages
-//TODO: Listview support for implicit folders
 //TODO: Tighten up component cooperation
 unit AbComCtrls;
 
@@ -54,16 +53,15 @@ type
   TAbListItem = class(TListItem)
   protected {private}
     FArchiveItem : TAbArchiveItem;
-    FIsDirectory : Boolean;
   protected {methods}
+    function GetIsDirectory : Boolean;
     function GetIsEncrypted : Boolean;
   public {properties}
     property ArchiveItem : TAbArchiveItem
       read FArchiveItem
       write FArchiveItem;
     property IsDirectory : Boolean
-      read FIsDirectory
-      write FIsDirectory;
+      read GetIsDirectory;
     property IsEncrypted : Boolean
       read GetIsEncrypted;
   end;
@@ -458,6 +456,11 @@ end;
 
 
 { ===== TAbListItem ========================================================= }
+function TAbListItem.GetIsDirectory: Boolean;
+begin
+  Result := (ArchiveItem = nil) or ArchiveItem.IsDirectory;
+end;
+{ -------------------------------------------------------------------------- }
 function TAbListItem.GetIsEncrypted: Boolean;
 begin
   Result := (ArchiveItem <> nil) and ArchiveItem.IsEncrypted;
@@ -667,7 +670,7 @@ end;
 procedure TAbCustomListView.SetPath(aValue: string);
 begin
   if aValue <> FPath then begin
-    FPath := aValue;
+    FPath := ExcludeTrailingPathDelimiter(aValue);
     if Assigned(TreeView) then
       TreeView.Path := aValue;
     if not FlatList then
@@ -878,99 +881,124 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.UpdateView;
 var
+  ArcItem: TAbArchiveItem;
   Col: TAbViewColumn;
-  CurItem: TAbArchiveItem;
-  DOSAttr: Integer;
-  i: Integer;
-  Item: TAbListItem;
-  Filename, ColText: string;
   ColImage: Integer;
+  ColText, Filename, FolderName: string;
+  DOSAttr: Integer;
+  Folders: TStringList;
+  i, j: Integer;
+  ListItem: TAbListItem;
+  ParentDir: string;
   sfi: SHFILEINFO;
 begin
+  ListItem := nil; // Suppress compiler warning
   if (Items.Count = 0) and (FArchive = nil) then
     Exit;
   Items.BeginUpdate;
   try
     Items.Clear;
     if Assigned(FArchive) then begin
-      for i := 0 to FArchive.Count - 1 do
-        if FArchive[i].Action <> aaDelete then begin
-          CurItem := FArchive[i];
-          Filename := AbNormalizeFilename(CurItem.FileName);
-          // Exclude unwanted items
-          if FlatList then begin
-            if CurItem.IsDirectory then
+      Folders := TStringList.Create;
+      try
+        for i := 0 to FArchive.Count - 1 do
+          if FArchive[i].Action <> aaDelete then begin
+            ArcItem := FArchive[i];
+            Filename := AbNormalizeFilename(ArcItem.FileName);
+            // Exclude unwanted items
+            if FlatList and ArcItem.IsDirectory then
               Continue;
-          end
-          else if Path <> ExtractFileDir(Filename) then
-            Continue;
-          // Get file type information from the shell
-          if CurItem.IsDirectory then
-            DOSAttr := FILE_ATTRIBUTE_DIRECTORY
-          else
-            DOSAttr := FILE_ATTRIBUTE_NORMAL;
-          SHGetFileInfo(PChar(ExtractFileName(Filename)), DOSAttr, sfi, sizeof(sfi),
-            SHGFI_TYPENAME or SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
-          // Create new item
-          Item := Items.Add as TAbListItem;
-          Item.ArchiveItem := FArchive[i];
-          Item.IsDirectory := CurItem.IsDirectory;
-          // Fill in columns
-          Item.Caption := ExtractFileName(Filename);
-          Item.ImageIndex := sfi.iIcon;
-          Item.SubItems.Clear;
-          for Col := Succ(Low(Col)) to High(Col) do
-            if Col in FVisibleColumns then begin
-              ColText := '';
-              ColImage := -1;
-              case Col of
-                vcFileType:
-                  ColText := sfi.szTypeName;
-                vcLastModified:
-                  ColText := FormatDateTime(ShortDateFormat + ' ' + LongTimeFormat,
-                    CurItem.LastModTimeAsDateTime);
-                vcSize:
-                  if not CurItem.IsDirectory then
-                    ColText := FormatFloat('#,##0', CurItem.UncompressedSize);
-                vcRatio:
-                  if not CurItem.IsDirectory then
-                    if CurItem.UncompressedSize > 0 then
-                      ColText := Format('%d%%',
-                        [100 - Round(CurItem.CompressedSize * 100 / CurItem.UncompressedSize)])
-                    else
-                      ColText := '0%';
-                vcPacked:
-                  if not CurItem.IsDirectory then
-                    ColText := FormatFloat('#,##0', CurItem.CompressedSize);
-                vcCRC:
-                  if not CurItem.IsDirectory then
-                    ColText := IntToHex(CurItem.CRC32, 8);
-                vcAttributes:
-                  begin
-                    {$WARN SYMBOL_PLATFORM OFF}
-                    if (faReadOnly and CurItem.ExternalFileAttributes) = faReadOnly then
-                      ColText := ColText + AbReadOnlyS;
-                    if (faHidden and CurItem.ExternalFileAttributes) = faHidden then
-                      ColText := ColText + AbHiddenS;
-                    if (faSysFile and CurItem.ExternalFileAttributes) = faSysFile then
-                      ColText := ColText + AbSystemS;
-                    if (faArchive and CurItem.ExternalFileAttributes) = faArchive then
-                      ColText := ColText + AbArchivedS;
-                    {$WARN SYMBOL_PLATFORM ON}
-                  end;
-                vcEncrypted:
-                  if CurItem.IsEncrypted then
-                    ColText := '+';
-                vcMethod:
-                  if CurItem is TAbZipItem then
-                    ColText := ZipCompressionMethodToString(
-                      TAbZipItem(CurItem).CompressionMethod);
-                vcPath:
-                  ColText := ExtractFileDir(FileName);
+            // Create new ListItem
+            ParentDir := ExtractFileDir(FileName);
+            if FlatList or (ParentDir = Path) then begin
+              // If an ListItem has already been created for a folder, use it
+              if ArcItem.IsDirectory and Folders.Find(ExtractFileName(FileName), j) then
+                ListItem := Folders.Objects[j] as TAbListItem
+              else
+                ListItem := Items.Add as TAbListItem;
+              ListItem.ArchiveItem := FArchive[i];
+            end
+            else if (Path = '') or StartsText(Path + PathDelim, ParentDir) then begin
+              // Create folder for implicitly stored directories,
+              // if one hasn't been created already
+              while ParentDir <> Path do begin
+                FileName := ParentDir;
+                ParentDir := ExtractFileDir(FileName);
               end;
-              Item.SubItems.Add(ColText);
-              Item.SubItemImages[Item.SubItems.Count - 1] := ColImage;
-            end;
+              FolderName := ExtractFileName(FileName);
+              if Folders.IndexOf(FolderName) <> -1 then
+                Continue;
+              ListItem := Items.Add as TAbListItem;
+              Folders.AddObject(FolderName, ListItem);
+              ArcItem := nil;
+            end
+            else
+              // ListItem isn't below Path
+              Continue;
+            // Get file type information from the shell
+            if ListItem.IsDirectory then
+              DOSAttr := FILE_ATTRIBUTE_DIRECTORY
+            else
+              DOSAttr := FILE_ATTRIBUTE_NORMAL;
+            SHGetFileInfo(PChar(ExtractFileName(Filename)), DOSAttr, sfi, sizeof(sfi),
+              SHGFI_TYPENAME or SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
+            // Fill in columns
+            ListItem.Caption := ExtractFileName(Filename);
+            ListItem.ImageIndex := sfi.iIcon;
+            ListItem.SubItems.Clear;
+            for Col := Succ(Low(Col)) to High(Col) do
+              if Col in FVisibleColumns then begin
+                ColText := '';
+                ColImage := -1;
+                case Col of
+                  vcFileType:
+                    ColText := sfi.szTypeName;
+                  vcLastModified:
+                    if ArcItem <> nil then
+                      ColText := FormatDateTime(ShortDateFormat + ' ' + LongTimeFormat,
+                        ArcItem.LastModTimeAsDateTime);
+                  vcSize:
+                    if not ListItem.IsDirectory then
+                      ColText := FormatFloat('#,##0', ArcItem.UncompressedSize);
+                  vcRatio:
+                    if not ListItem.IsDirectory then
+                      if ArcItem.UncompressedSize > 0 then
+                        ColText := Format('%d%%',
+                          [100 - Round(ArcItem.CompressedSize * 100 / ArcItem.UncompressedSize)])
+                      else
+                        ColText := '0%';
+                  vcPacked:
+                    if not ListItem.IsDirectory then
+                      ColText := FormatFloat('#,##0', ArcItem.CompressedSize);
+                  vcCRC:
+                    if not ListItem.IsDirectory then
+                      ColText := IntToHex(ArcItem.CRC32, 8);
+                  vcAttributes:
+                    if ArcItem <> nil then begin
+                      {$WARN SYMBOL_PLATFORM OFF}
+                      if (faReadOnly and ArcItem.ExternalFileAttributes) = faReadOnly then
+                        ColText := ColText + AbReadOnlyS;
+                      if (faHidden and ArcItem.ExternalFileAttributes) = faHidden then
+                        ColText := ColText + AbHiddenS;
+                      if (faSysFile and ArcItem.ExternalFileAttributes) = faSysFile then
+                        ColText := ColText + AbSystemS;
+                      if (faArchive and ArcItem.ExternalFileAttributes) = faArchive then
+                        ColText := ColText + AbArchivedS;
+                      {$WARN SYMBOL_PLATFORM ON}
+                    end;
+                  vcMethod:
+                    if ArcItem is TAbZipItem then
+                      ColText := ZipCompressionMethodToString(
+                        TAbZipItem(ArcItem).CompressionMethod);
+                  vcPath:
+                    ColText := ExtractFileDir(FileName);
+                end;
+                ListItem.SubItems.Add(ColText);
+                ListItem.SubItemImages[ListItem.SubItems.Count - 1] := ColImage;
+              end;
+          end;
+        finally
+          Folders.Free;
         end;
       CustomSort(TLVCompare(@TAbCustomListView.SortProc), LPARAM(Self));
     end;
@@ -1159,7 +1187,7 @@ var
   Node: TTreeNode;
 begin
   if FPath <> aValue then begin
-    FPath := aValue;
+    FPath := ExcludeTrailingPathDelimiter(aValue);
     // Find selected node, expanding parents along the way
     Node := Items.GetFirstNode;
     Remaining := FPath;
