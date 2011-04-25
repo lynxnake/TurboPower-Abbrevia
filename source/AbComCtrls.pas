@@ -31,12 +31,11 @@
 {*   listview associated, in which case the listview will*}
 {*   only show items in the selected folder.             *}
 {*********************************************************}
-//TODO: Finish up listview w/o treeview mode
-//TODO: Clean up published properties
-//TODO: Figure out how to show encrypted correctly
-//TODO: Tighten up component cooperation
-//TODO: Fix sorting by columns other than the name
 //TODO: Add to AbbreviaVCL packages
+//TODO: Listview encrypted column
+//TODO: Listview column sorting
+//TODO: Listview support for implicit folders
+//TODO: Tighten up component cooperation
 unit AbComCtrls;
 
 interface
@@ -52,90 +51,277 @@ const
   AbTreeFolderExpandedImage = 2;
 
 type
-  TAbTreeView = class;
+  TAbCustomTreeView = class;
 
   TAbViewColumn =
     (vcName, vcFileType, vcLastModified, vcSize, vcRatio,
      vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath);
   TAbViewColumns = set of TAbViewColumn;
 
-{ ===== TAbListView ========================================================= }
-  TAbListView = class(TListView)
+{ ===== TAbCustomListView =================================================== }
+  TAbCustomListView = class(TCustomListView)
   protected {private}
     FArchive : TAbBaseBrowser;
-    FColumns : TAbViewColumns;
-    FHeaderImages: TImageList;
+    FFlatList: Boolean;
+    FHeaderImages : TImageList;
     FPath : string;
-    FTreeView : TAbTreeView;
+    FTreeView : TAbCustomTreeView;
+    FVisibleColumns : TAbViewColumns;
 
   protected {methods}
     procedure CreateWnd;
+      override;
+    procedure DblClick;
       override;
     procedure DoChange(Sender : TObject);
       virtual;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SetArchive(aValue : TAbBaseBrowser);
-    procedure SetColumns(aValue : TAbViewColumns);
+    procedure SetFlatList(aValue : Boolean);
     procedure SetPath(aValue : string);
+    procedure SetVisibleColumns(aValue : TAbViewColumns);
     procedure UpdateView;
 
   protected {properties}
     property HeaderImages : TImageList
       read FHeaderImages;
-    property TreeView : TAbTreeView
+    property TreeView : TAbCustomTreeView
       read FTreeView
       write FTreeView;
 
   public {methods}
     constructor Create(aOwner: TComponent);
       override;
+    destructor Destroy;
+      override;
 
-  published
+  public {properties}
     property Archive : TAbBaseBrowser
       read FArchive
       write SetArchive;
-    property ColumnsX : TAbViewColumns
-      read FColumns
-      write SetColumns;
+    // Show only items in the current path
+    property FlatList : Boolean
+      read FFlatList
+      write SetFlatList;
     property Path : string
       read FPath
       write SetPath;
+    property VisibleColumns : TAbViewColumns
+      read FVisibleColumns
+      write SetVisibleColumns;
   end;
 
 
-{ ===== TAbTreeView ========================================================= }
-  TAbTreeView = class(TTreeView)
+{ ===== TAbListView ========================================================= }
+  TAbListView = class(TAbCustomListView)
+  published
+    property Action;
+    property Align;
+    property AllocBy;
+    property Anchors;
+    property Archive;
+    property BevelEdges;
+    property BevelInner;
+    property BevelOuter;
+    property BevelKind default bkNone;
+    property BevelWidth;
+    property BiDiMode;
+    property BorderStyle;
+    property BorderWidth;
+    property Checkboxes;
+    property Color;
+    property Columns;
+    property ColumnClick;
+    property Constraints;
+    property Ctl3D;
+    property DoubleBuffered;
+    property DragCursor;
+    property DragKind;
+    property DragMode;
+    property Enabled;
+    property Font;
+    property FlatScrollBars;
+    property FullDrag;
+    property GridLines;
+    property Groups;
+    property HideSelection;
+    property HotTrack;
+    property HotTrackStyles;
+    property HoverTime;
+    property IconOptions;
+    property Items;
+    property LargeImages;
+    property MultiSelect;
+    property GroupHeaderImages;
+    property GroupView default False;
+    property ReadOnly default False;
+    property RowSelect;
+    property ParentBiDiMode;
+    property ParentColor default False;
+    property ParentDoubleBuffered;
+    property ParentFont;
+    property ParentShowHint;
+    property Path;
+    property PopupMenu;
+    property ShowColumnHeaders;
+    property ShowWorkAreas;
+    property ShowHint;
+    property TabOrder;
+    property TabStop default True;
+    property ViewStyle;
+    property Visible;
+    property VisibleColumns;
+    property OnClick;
+    property OnColumnClick;
+    property OnColumnDragged;
+    property OnColumnRightClick;
+    property OnContextPopup;
+    property OnDblClick;
+    property OnEdited;
+    property OnEditing;
+    property OnEndDock;
+    property OnEndDrag;
+    property OnEnter;
+    property OnExit;
+    property OnDragDrop;
+    property OnDragOver;
+    property OnInfoTip;
+    property OnKeyDown;
+    property OnKeyPress;
+    property OnKeyUp;
+    property OnMouseActivate;
+    property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
+    property OnMouseMove;
+    property OnMouseUp;
+    property OnResize;
+    property OnSelectItem;
+    property OnItemChecked;
+    property OnStartDock;
+    property OnStartDrag;
+  end;
+
+
+{ ===== TAbCustomTreeView =================================================== }
+  TAbCustomTreeView = class(TTreeView)
   protected {private}
     FArchive: TAbBaseBrowser;
-    FListView: TAbListView;
+    FListView: TAbCustomListView;
+    FPath: string;
 
   protected {methods}
     procedure Change(aNode: TTreeNode);
       override;
     procedure DoChange(Sender : TObject);
       virtual;
-    procedure DoLoad(Sender : TObject);
-      virtual;
     procedure GetSelectedIndex(aNode: TTreeNode);
       override;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SetArchive(aValue: TAbBaseBrowser);
-    procedure SetListView(aValue: TAbListView);
+    procedure SetListView(aValue: TAbCustomListView);
+    procedure SetPath(const aValue: string);
 
   public {methods}
     constructor Create(aOwner: TComponent);
       override;
 
-  published {properties}
+  public {properties}
     property Archive: TAbBaseBrowser
       read FArchive
       write SetArchive;
-    property ListView: TAbListView
+    property HideSelection
+      default False;
+    property ListView: TAbCustomListView
       read FListView
       write SetListView;
+    property Path: string
+      read FPath
+      write SetPath;
   end;
+
+
+{ ===== TAbTreeView ========================================================= }
+  TAbTreeView = class(TAbCustomTreeView)
+  published
+    property Align;
+    property Anchors;
+    property Archive;
+    property AutoExpand;
+    property BevelEdges;
+    property BevelInner;
+    property BevelOuter;
+    property BevelKind default bkNone;
+    property BevelWidth;
+    property BiDiMode;
+    property BorderStyle;
+    property BorderWidth;
+    property ChangeDelay;
+    property Color;
+    property Ctl3D;
+    property Constraints;
+    property DoubleBuffered;
+    property DragKind;
+    property DragCursor;
+    property DragMode;
+    property Enabled;
+    property Font;
+    property HideSelection;
+    property HotTrack;
+    property Indent;
+    property Items;
+    property ListView;
+    property ParentBiDiMode;
+    property ParentColor default False;
+    property ParentCtl3D;
+    property ParentDoubleBuffered;
+    property ParentFont;
+    property ParentShowHint;
+    property Path;
+    property PopupMenu;
+    property ReadOnly;
+    property RightClickSelect;
+    property RowSelect;
+    property ShowButtons;
+    property ShowHint;
+    property ShowLines;
+    property ShowRoot;
+    property TabOrder;
+    property TabStop default True;
+    property ToolTips;
+    property Visible;
+    property OnChanging;
+    property OnClick;
+    property OnCollapsed;
+    property OnCollapsing;
+    property OnContextPopup;
+    property OnDblClick;
+    property OnDeletion;
+    property OnDragDrop;
+    property OnDragOver;
+    property OnEdited;
+    property OnEditing;
+    property OnEndDock;
+    property OnEndDrag;
+    property OnEnter;
+    property OnExit;
+    property OnExpanding;
+    property OnExpanded;
+    property OnKeyDown;
+    property OnKeyPress;
+    property OnKeyUp;
+    property OnMouseActivate;
+    property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
+    property OnMouseMove;
+    property OnMouseUp;
+    property OnStartDock;
+    property OnStartDrag;
+  end;
+
 
 implementation
 
@@ -157,6 +343,12 @@ begin
     SetLength(Result, Length(Result) - 1);
 end;
 { -------------------------------------------------------------------------- }
+function SameEvent(const aEvent1, aEvent2: TNotifyEvent): Boolean;
+begin
+  Result := (TMethod(aEvent1).Code = TMethod(aEvent2).Code) and
+    (TMethod(aEvent1).Data = TMethod(aEvent2).Data);
+end;
+{ -------------------------------------------------------------------------- }
 function SortProc(aItem1, aItem2: TListItem; alParam: Integer): Integer;
   stdcall;
 begin
@@ -170,8 +362,8 @@ begin
     Result := CompareText(aItem1.Caption, aItem2.Caption)
 end;
 
-{ ===== TAbListView ========================================================= }
-constructor TAbListView.Create(aOwner: TComponent);
+{ ===== TAbCustomListView =================================================== }
+constructor TAbCustomListView.Create(aOwner: TComponent);
 var
   Bmp : TBitmap;
   sfi: SHFILEINFO;
@@ -197,24 +389,38 @@ begin
   SmallImages.Handle := SHGetFileInfo('', 0, sfi, SizeOf(sfi),
     SHGFI_SMALLICON or SHGFI_SYSICONINDEX);
 
-  ColumnsX := [vcName, vcFileType, vcLastModified, vcSize, vcRatio,
+  VisibleColumns := [vcName, vcFileType, vcLastModified, vcSize, vcRatio,
      vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath];
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.CreateWnd;
+destructor TAbCustomListView.Destroy;
+begin
+
+  inherited;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.CreateWnd;
 begin
   inherited;
   Header_SetImageList(ListView_GetHeader(Handle), FHeaderImages.Handle);
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.DoChange(Sender: TObject);
+procedure TAbCustomListView.DblClick;
+begin
+  inherited;
+  if TAbArchiveItem(Selected.Data).IsDirectory then begin
+    Path := Path + PathDelim + Selected.Caption;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.DoChange(Sender: TObject);
 begin
   UpdateView;
   if (Sender = FArchive) and Assigned(FTreeView) then
     FTreeView.DoChange(Self);
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.Notification(aComponent: TComponent;
+procedure TAbCustomListView.Notification(aComponent: TComponent;
   aOperation: TOperation);
 begin
   inherited;
@@ -225,17 +431,45 @@ begin
     end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.SetArchive(aValue: TAbBaseBrowser);
+procedure TAbCustomListView.SetArchive(aValue: TAbBaseBrowser);
 begin
-  if Assigned(FArchive) then
+  if Assigned(FArchive) then begin
     FArchive.RemoveFreeNotification(Self);
+    if SameEvent(FArchive.OnChange, DoChange) then
+      if Assigned(TreeView) then
+        FArchive.OnChange := TreeView.DoChange
+      else
+        FArchive.OnChange := nil;
+  end;
   FArchive := aValue;
-  if Assigned(FArchive) then
+  if Assigned(FArchive) then begin
     FArchive.FreeNotification(Self);
+    FArchive.OnChange := DoChange;
+    DoChange(Self);
+  end;
   UpdateView;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.SetColumns(aValue : TAbViewColumns);
+procedure TAbCustomListView.SetFlatList(aValue : Boolean);
+begin
+  if aValue <> FFlatList then begin
+    FFlatList := aValue;
+    UpdateView;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.SetPath(aValue: string);
+begin
+  if aValue <> FPath then begin
+    FPath := aValue;
+    if Assigned(TreeView) then
+      TreeView.Path := aValue;
+    if not FlatList then
+      UpdateView;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.SetVisibleColumns(aValue : TAbViewColumns);
 const
   ColWidths: array[TAbViewColumn] of Integer = (
     180{vcName}, 110{vcFileType}, 130{vcLastModified}, 80{vcSize}, 50{vcRatio},
@@ -245,13 +479,13 @@ var
   Col: TAbViewColumn;
   Column: TListColumn;
 begin
-  if aValue <> FColumns then begin
-    inherited Columns.Clear;
-    FColumns := aValue;
+  if aValue <> FVisibleColumns then begin
+    Columns.Clear;
+    FVisibleColumns := aValue;
     for Col := Low(Col) to High(Col) do begin
-      if not (Col in FColumns) then
+      if not (Col in FVisibleColumns) then
         Continue;
-      Column := inherited Columns.Add;
+      Column := Columns.Add;
       case Col of
         vcName: Column.Caption := AbItemNameHeadingS;
         vcFileType: Column.Caption := AbFileTypeHeadingS;
@@ -270,16 +504,11 @@ begin
       if Col in [vcSize, vcRatio, vcPacked] then
         Column.Alignment := taRightJustify;
     end;
+    UpdateView;
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbListView.SetPath(aValue: string);
-begin
-  FPath := aValue;
-  UpdateView;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbListView.UpdateView;
+procedure TAbCustomListView.UpdateView;
 var
   Col: TAbViewColumn;
   CurItem: TAbArchiveItem;
@@ -297,9 +526,13 @@ begin
       for i := 0 to FArchive.Count - 1 do
         if FArchive[i].Action <> aaDelete then begin
           CurItem := FArchive[i];
-          // Only include items that match the current path
           Filename := AbNormalizeFilename(CurItem.FileName);
-          if Path <> ExtractFileDir(Filename) then
+          // Exclude unwanted items
+          if FlatList then begin
+            if CurItem.IsDirectory then
+              Continue;
+          end
+          else if Path <> ExtractFileDir(Filename) then
             Continue;
           // Get file type information from the shell
           if CurItem.IsDirectory then
@@ -316,7 +549,7 @@ begin
           Item.ImageIndex := sfi.iIcon;
           Item.SubItems.Clear;
           for Col := Succ(Low(Col)) to High(Col) do
-            if Col in FColumns then begin
+            if Col in FVisibleColumns then begin
               ColText := '';
               ColImage := -1;
               case Col of
@@ -359,7 +592,8 @@ begin
                     ColText := '+';
                 vcMethod:
                   if CurItem is TAbZipItem then
-                    ColText := ZipCompressionMethodToString(TAbZipItem(CurItem).CompressionMethod);
+                    ColText := ZipCompressionMethodToString(
+                      TAbZipItem(CurItem).CompressionMethod);
                 vcPath:
                   ColText := ExtractFileDir(FileName);
               end;
@@ -375,14 +609,15 @@ begin
 end;
 
 
-{ ===== TAbTreeView ========================================================= }
-constructor TAbTreeView.Create(aOwner: TComponent);
+{ ===== TAbCustomTreeView =================================================== }
+constructor TAbCustomTreeView.Create(aOwner: TComponent);
 var
   Bmp : TBitmap;
   Icon : TIcon;
   sfi: SHFILEINFO;
 begin
   inherited;
+  HideSelection := False;
   Images := TImageList.Create(Self);
   Bmp := TBitmap.Create;
   try
@@ -412,26 +647,26 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.Change(aNode: TTreeNode);
+procedure TAbCustomTreeView.Change(aNode: TTreeNode);
 var
-  Path: string;
+  Filename: string;
 begin
   inherited;
-  if aNode.Selected and Assigned(ListView) then begin
-    Path := '';
+  if aNode.Selected then begin
+    Filename := '';
     if aNode <> Items.GetFirstNode then begin
-      Path := aNode.Text;
+      Filename := aNode.Text;
       aNode := aNode.Parent;
       while aNode <> Items.GetFirstNode do begin
-        Path := aNode.Text + PathDelim + Path;
+        Filename := aNode.Text + PathDelim + Filename;
         aNode := aNode.Parent;
       end;
     end;
-    ListView.Path := Path;
+    Path := Filename;
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.DoChange(Sender: TObject);
+procedure TAbCustomTreeView.DoChange(Sender: TObject);
 var
   Nodes: TStringList;
   ZipNode: TTreeNode;
@@ -482,6 +717,7 @@ begin
         Nodes.Free;
       end;
       Items.AlphaSort(True);
+      ZipNode.Expand(False);
     end;
   finally
     Items.EndUpdate;
@@ -490,12 +726,7 @@ begin
     FListView.DoChange(Self);
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.DoLoad(Sender: TObject);
-begin
-
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbTreeView.GetSelectedIndex(aNode: TTreeNode);
+procedure TAbCustomTreeView.GetSelectedIndex(aNode: TTreeNode);
 begin
   if aNode.Expanded then
     aNode.SelectedIndex := aNode.ExpandedImageIndex
@@ -503,7 +734,7 @@ begin
     aNode.SelectedIndex := aNode.ImageIndex;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.Notification(aComponent: TComponent;
+procedure TAbCustomTreeView.Notification(aComponent: TComponent;
   aOperation: TOperation);
 begin
   inherited Notification(aComponent, aOperation);
@@ -517,25 +748,27 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.SetArchive(aValue: TAbBaseBrowser);
+procedure TAbCustomTreeView.SetArchive(aValue: TAbBaseBrowser);
 begin
   if Assigned(FArchive) then begin
     FArchive.RemoveFreeNotification(Self);
-    FArchive.OnChange := nil;
-    FArchive.OnLoad := nil;
+    if SameEvent(FArchive.OnChange, DoChange) then
+      if Assigned(ListView) then
+        FArchive.OnChange := ListView.DoChange
+      else
+        FArchive.OnChange := nil;
   end;
   FArchive := aValue;
   if Assigned(FArchive) then begin
     FArchive.FreeNotification(Self);
     FArchive.OnChange := DoChange;
-    FArchive.OnLoad := DoLoad;
     DoChange(Self);
   end
   else
     Items.Clear;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbTreeView.SetListView(aValue: TAbListView);
+procedure TAbCustomTreeView.SetListView(aValue: TAbCustomListView);
 begin
   if Assigned(FListView) then begin
     FListView.RemoveFreeNotification(Self);
@@ -545,6 +778,43 @@ begin
   if Assigned(FListView) then begin
     FListView.FreeNotification(Self);
     FListView.TreeView := Self;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomTreeView.SetPath(const aValue: string);
+var
+  Filename, Remaining: string;
+  i: Integer;
+  Node: TTreeNode;
+begin
+  if FPath <> aValue then begin
+    FPath := aValue;
+    // Find selected node, expanding parents along the way
+    Node := Items.GetFirstNode;
+    Remaining := FPath;
+    if StartsText(PathDelim, Remaining) then
+      System.Delete(Remaining, 1, 1);
+    while Remaining <> '' do begin
+      Node.Expand(False);
+      i := Pos(PathDelim, Remaining);
+      if i = 0 then
+        i := Length(Remaining) + 1;
+      Filename := Copy(Remaining, 1, i - 1);
+      Remaining := Copy(Remaining, i + 1, MaxInt);
+      if Filename = '' then
+        Continue;
+      Node := Node.getFirstChild;
+      while (Node <> nil) and not SameText(Filename, Node.Text) do
+        Node := Node.getNextSibling;
+      if Node = nil then begin
+        Node := Items.GetFirstNode;
+        Break;
+      end;
+    end;
+    Selected := Node;
+    // Update listview
+    if Assigned(FListView) then
+      FListView.Path := aValue;
   end;
 end;
 
