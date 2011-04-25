@@ -32,7 +32,6 @@
 {*   only show items in the selected folder.             *}
 {*********************************************************}
 //TODO: Add to AbbreviaVCL packages
-//TODO: Listview encrypted column
 //TODO: Listview support for implicit folders
 //TODO: Tighten up component cooperation
 unit AbComCtrls;
@@ -51,18 +50,13 @@ const
   AbTreeFolderExpandedImage = 2;
 
 type
-  TAbCustomTreeView = class;
-
-  TAbViewColumn =
-    (vcName, vcFileType, vcLastModified, vcSize, vcRatio,
-     vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath);
-  TAbViewColumns = set of TAbViewColumn;
-
 { ===== TAbListItem ========================================================= }
   TAbListItem = class(TListItem)
   protected {private}
     FArchiveItem : TAbArchiveItem;
     FIsDirectory : Boolean;
+  protected {methods}
+    function GetIsEncrypted : Boolean;
   public {properties}
     property ArchiveItem : TAbArchiveItem
       read FArchiveItem
@@ -70,6 +64,8 @@ type
     property IsDirectory : Boolean
       read FIsDirectory
       write FIsDirectory;
+    property IsEncrypted : Boolean
+      read GetIsEncrypted;
   end;
 
 
@@ -84,7 +80,20 @@ type
       write SetItem; default;
   end;
 
+
 { ===== TAbCustomListView =================================================== }
+type
+  TAbViewColumn =
+    (vcName, vcFileType, vcLastModified, vcSize, vcRatio,
+     vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath);
+  TAbViewColumns = set of TAbViewColumn;
+
+const
+  AbDefVisibleColumns = [Low(TAbViewColumn)..High(TAbViewColumn)];
+
+type
+  TAbCustomTreeView = class;
+
   TAbCustomListView = class(TCustomListView)
   protected {private}
     FArchive : TAbBaseBrowser;
@@ -112,6 +121,9 @@ type
       override;
     procedure CreateWnd;
       override;
+    function CustomDrawSubItem(Item: TListItem; SubItem: Integer;
+      State: TCustomDrawState; Stage: TCustomDrawStage): Boolean;
+      override;
     procedure DblClick;
       override;
     procedure DoChange(Sender : TObject);
@@ -119,6 +131,8 @@ type
     function GetListItems: TAbListItems;
     procedure HeaderWndProc(var Msg: TMessage);
       virtual;
+    function IsCustomDrawn(Target: TCustomDrawTarget; Stage: TCustomDrawStage): Boolean;
+      override;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SetArchive(aValue : TAbBaseBrowser);
@@ -163,7 +177,8 @@ type
       write SetPath;
     property VisibleColumns : TAbViewColumns
       read FVisibleColumns
-      write SetVisibleColumns;
+      write SetVisibleColumns
+      default AbDefVisibleColumns;
   end;
 
 
@@ -440,7 +455,16 @@ begin
     (TMethod(aEvent1).Data = TMethod(aEvent2).Data);
 end;
 
-{ ===== TAbCustomListView =================================================== }
+
+
+{ ===== TAbListItem ========================================================= }
+function TAbListItem.GetIsEncrypted: Boolean;
+begin
+  Result := (ArchiveItem <> nil) and ArchiveItem.IsEncrypted;
+end;
+
+
+{ ===== TAbListItems ======================================================== }
 function TAbListItems.GetItem(aIndex: Integer): TAbListItem;
 begin
   Result := inherited Item[aIndex] as TAbListItem;
@@ -486,8 +510,7 @@ begin
     FSortDownBmp := LoadImage(HInstance, 'AbComCtrls_SortDown', IMAGE_BITMAP, 0, 0, LR_LOADMAP3DColors);
   end;
   // Set default column visibility
-  VisibleColumns := [vcName, vcFileType, vcLastModified, vcSize, vcRatio,
-     vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath];
+  VisibleColumns := AbDefVisibleColumns;
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbCustomListView.Destroy;
@@ -533,6 +556,30 @@ begin
   UpdateColumns;
 end;
 { -------------------------------------------------------------------------- }
+function TAbCustomListView.CustomDrawSubItem(Item: TListItem; SubItem: Integer;
+  State: TCustomDrawState; Stage: TCustomDrawStage): Boolean;
+var
+  i: Integer;
+  R: TRect;
+begin
+  Result := True;
+  if (Stage = cdPrePaint) and TAbListItem(Item).IsEncrypted then
+    if TAbViewColumn(Columns[SubItem].Tag) = vcEncrypted then begin
+      Result := False;
+      R := Item.DisplayRect(drBounds);
+      Inc(R.Left, 6);
+      for i := 0 to SubItem - 1 do
+        Inc(R.Left, Columns[i].Width);
+      HeaderImages.Draw(Canvas, R.Left, R.Top, 0);
+    end
+    else begin
+      Result := True;
+      // Fixed other columns drawing with wrong font after using TImageList.Draw
+      Canvas.Brush.Color := ColorToRGB(Color);
+      SetBkMode(Canvas.Handle, TRANSPARENT);
+    end;
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbCustomListView.DblClick;
 begin
   inherited;
@@ -570,6 +617,13 @@ begin
     Msg.WParam, Msg.LParam);
   if Msg.Msg = WM_DESTROY then
     FHeaderHandle := 0;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbCustomListView.IsCustomDrawn(Target: TCustomDrawTarget;
+  Stage: TCustomDrawStage): Boolean;
+begin
+  Result := (vcEncrypted in VisibleColumns) and (Stage = cdPrePaint) and
+    (Target = dtSubItem);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.Notification(aComponent: TComponent;
