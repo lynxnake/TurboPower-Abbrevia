@@ -374,7 +374,7 @@ begin
   FHeaderImages := TImageList.Create(Self);
   Bmp := TBitmap.Create;
   try
-    Bmp.LoadFromResourceName(0, 'AbComCtrls_Lock');
+    Bmp.LoadFromResourceName(HInstance, 'AbComCtrls_Lock');
     FHeaderImages.AddMasked(Bmp, clBlack)
   finally
     Bmp.Free;
@@ -519,6 +519,8 @@ var
   ColImage: Integer;
   sfi: SHFILEINFO;
 begin
+  if (Items.Count = 0) and (FArchive = nil) then
+    Exit;
   Items.BeginUpdate;
   try
     Items.Clear;
@@ -621,7 +623,7 @@ begin
   Images := TImageList.Create(Self);
   Bmp := TBitmap.Create;
   try
-    Bmp.LoadFromResourceName(0, 'AbComCtrls_Zip');
+    Bmp.LoadFromResourceName(HInstance, 'AbComCtrls_Zip');
     Images.AddMasked(Bmp, clBlack);
     Icon := TIcon.Create;
     try
