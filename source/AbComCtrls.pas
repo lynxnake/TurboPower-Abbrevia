@@ -32,7 +32,6 @@
 {*   only show items in the selected folder.             *}
 {*********************************************************}
 //TODO: Add to AbbreviaVCL packages
-//TODO: Tighten up component cooperation
 unit AbComCtrls;
 
 interface
@@ -136,6 +135,7 @@ type
     procedure SetArchive(aValue : TAbBaseBrowser);
     procedure SetFlatList(aValue : Boolean);
     procedure SetPath(aValue : string);
+    procedure SetTreeView(aValue : TAbCustomTreeView);
     procedure SetVisibleColumns(aValue : TAbViewColumns);
     procedure UpdateColumns;
     procedure UpdateSortArrow;
@@ -144,9 +144,6 @@ type
   protected {properties}
     property HeaderImages : TImageList
       read FHeaderImages;
-    property TreeView : TAbCustomTreeView
-      read FTreeView
-      write FTreeView;
 
   public {methods}
     constructor Create(aOwner: TComponent);
@@ -170,6 +167,9 @@ type
     property Items: TAbListItems
       read GetListItems
       stored False;
+    property TreeView : TAbCustomTreeView
+      read FTreeView
+      write SetTreeView;
     property Path : string
       read FPath
       write SetPath;
@@ -235,6 +235,7 @@ type
     property ShowHint;
     property TabOrder;
     property TabStop default True;
+    property TreeView;
     property ViewStyle;
     property Visible;
     property VisibleColumns;
@@ -286,6 +287,7 @@ type
       override;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
+    procedure SelectPathNode;
     procedure SetArchive(aValue: TAbBaseBrowser);
     procedure SetListView(aValue: TAbCustomListView);
     procedure SetPath(const aValue: string);
@@ -636,30 +638,41 @@ procedure TAbCustomListView.Notification(aComponent: TComponent;
   aOperation: TOperation);
 begin
   inherited;
-  if aOperation = opRemove then
+  if aOperation = opRemove then begin
     if aComponent = FArchive then begin
       FArchive := nil;
       Clear;
     end;
+    if aComponent = FTreeView then begin
+      if Assigned(FArchive) and SameEvent(FArchive.OnChange, FTreeView.DoChange) then
+        FArchive.OnChange := DoChange;
+      FTreeView := nil;
+    end;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.SetArchive(aValue: TAbBaseBrowser);
 begin
-  if Assigned(FArchive) then begin
-    FArchive.RemoveFreeNotification(Self);
-    if SameEvent(FArchive.OnChange, DoChange) then
-      if Assigned(TreeView) then
-        FArchive.OnChange := TreeView.DoChange
-      else
-        FArchive.OnChange := nil;
+  if aValue <> FArchive then begin
+    if Assigned(FArchive) then begin
+      FArchive.RemoveFreeNotification(Self);
+      if SameEvent(FArchive.OnChange, DoChange) then
+        if Assigned(TreeView) and (TreeView.Archive = FArchive) then
+          FArchive.OnChange := TreeView.DoChange
+        else
+          FArchive.OnChange := nil;
+    end;
+    FArchive := aValue;
+    if Assigned(FArchive) then begin
+      FArchive.FreeNotification(Self);
+      FArchive.OnChange := DoChange;
+      DoChange(Self);
+    end
+    else
+      Items.Clear;
+    if Assigned(TreeView) then
+      TreeView.Archive := aValue;
   end;
-  FArchive := aValue;
-  if Assigned(FArchive) then begin
-    FArchive.FreeNotification(Self);
-    FArchive.OnChange := DoChange;
-    DoChange(Self);
-  end;
-  UpdateView;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.SetFlatList(aValue : Boolean);
@@ -678,6 +691,25 @@ begin
       TreeView.Path := aValue;
     if not FlatList then
       UpdateView;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.SetTreeView(aValue: TAbCustomTreeView);
+begin
+  if aValue <> FTreeView then begin
+    if Assigned(FTreeView) then begin
+      FTreeView.RemoveFreeNotification(Self);
+      FTreeView.ListView := nil;
+    end;
+    FTreeView := aValue;
+    if Assigned(FTreeView) then begin
+      FTreeView.FreeNotification(Self);
+      if Assigned(FArchive) then
+        FTreeView.Archive := FArchive
+      else if Assigned(FTreeView.Archive) then
+        Archive := FTreeView.Archive;
+      FTreeView.ListView := Self;
+    end;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1128,6 +1160,7 @@ begin
       end;
       Items.AlphaSort(True);
       ZipNode.Expand(False);
+      SelectPathNode;
     end;
   finally
     Items.EndUpdate;
@@ -1147,82 +1180,100 @@ end;
 procedure TAbCustomTreeView.Notification(aComponent: TComponent;
   aOperation: TOperation);
 begin
-  inherited Notification(aComponent, aOperation);
+  inherited;
   if aOperation = opRemove then begin
     if aComponent = FArchive then begin
       FArchive := nil;
       Items.Clear;
     end;
-    if aComponent = FListView then
+    if aComponent = FListView then begin
+      if Assigned(FArchive) and SameEvent(FArchive.OnChange, FListView.DoChange) then
+        FArchive.OnChange := DoChange;
       FListView := nil;
+    end;
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomTreeView.SetArchive(aValue: TAbBaseBrowser);
-begin
-  if Assigned(FArchive) then begin
-    FArchive.RemoveFreeNotification(Self);
-    if SameEvent(FArchive.OnChange, DoChange) then
-      if Assigned(ListView) then
-        FArchive.OnChange := ListView.DoChange
-      else
-        FArchive.OnChange := nil;
-  end;
-  FArchive := aValue;
-  if Assigned(FArchive) then begin
-    FArchive.FreeNotification(Self);
-    FArchive.OnChange := DoChange;
-    DoChange(Self);
-  end
-  else
-    Items.Clear;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbCustomTreeView.SetListView(aValue: TAbCustomListView);
-begin
-  if Assigned(FListView) then begin
-    FListView.RemoveFreeNotification(Self);
-    FListView.TreeView := nil;
-  end;
-  FListView := aValue;
-  if Assigned(FListView) then begin
-    FListView.FreeNotification(Self);
-    FListView.TreeView := Self;
-  end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbCustomTreeView.SetPath(const aValue: string);
+procedure TAbCustomTreeView.SelectPathNode;
 var
   Filename, Remaining: string;
   i: Integer;
   Node: TTreeNode;
 begin
+  // Find selected node, expanding parents along the way
+  Node := Items.GetFirstNode;
+  Remaining := FPath;
+  if StartsText(PathDelim, Remaining) then
+    System.Delete(Remaining, 1, 1);
+  while Remaining <> '' do begin
+    Node.Expand(False);
+    i := Pos(PathDelim, Remaining);
+    if i = 0 then
+      i := Length(Remaining) + 1;
+    Filename := Copy(Remaining, 1, i - 1);
+    Remaining := Copy(Remaining, i + 1, MaxInt);
+    if Filename = '' then
+      Continue;
+    Node := Node.getFirstChild;
+    while (Node <> nil) and not SameText(Filename, Node.Text) do
+      Node := Node.getNextSibling;
+    if Node = nil then begin
+      Node := Items.GetFirstNode;
+      Break;
+    end;
+  end;
+  Selected := Node;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomTreeView.SetArchive(aValue: TAbBaseBrowser);
+begin
+  if aValue <> FArchive then begin
+    if Assigned(FArchive) then begin
+      FArchive.RemoveFreeNotification(Self);
+      if SameEvent(FArchive.OnChange, DoChange) then
+        if Assigned(ListView) and (ListView.Archive = FArchive) then
+          FArchive.OnChange := ListView.DoChange
+        else
+          FArchive.OnChange := nil;
+    end;
+    FArchive := aValue;
+    if Assigned(FArchive) then begin
+      FArchive.FreeNotification(Self);
+      FArchive.OnChange := DoChange;
+      DoChange(Self);
+    end
+    else
+      Items.Clear;
+    if Assigned(ListView) then
+      ListView.Archive := aValue;
+    SelectPathNode;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomTreeView.SetListView(aValue: TAbCustomListView);
+begin
+  if aValue <> FListView then begin
+    if Assigned(FListView) then begin
+      FListView.RemoveFreeNotification(Self);
+      FListView.TreeView := nil;
+    end;
+    FListView := aValue;
+    if Assigned(FListView) then begin
+      FListView.FreeNotification(Self);
+      if Assigned(FArchive) then
+        FListView.Archive := FArchive
+      else if Assigned(FListView.Archive) then
+        Archive := FListView.Archive;
+      FListView.TreeView := Self;
+    end;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomTreeView.SetPath(const aValue: string);
+begin
   if FPath <> aValue then begin
     FPath := ExcludeTrailingPathDelimiter(aValue);
-    // Find selected node, expanding parents along the way
-    Node := Items.GetFirstNode;
-    Remaining := FPath;
-    if StartsText(PathDelim, Remaining) then
-      System.Delete(Remaining, 1, 1);
-    while Remaining <> '' do begin
-      Node.Expand(False);
-      i := Pos(PathDelim, Remaining);
-      if i = 0 then
-        i := Length(Remaining) + 1;
-      Filename := Copy(Remaining, 1, i - 1);
-      Remaining := Copy(Remaining, i + 1, MaxInt);
-      if Filename = '' then
-        Continue;
-      Node := Node.getFirstChild;
-      while (Node <> nil) and not SameText(Filename, Node.Text) do
-        Node := Node.getNextSibling;
-      if Node = nil then begin
-        Node := Items.GetFirstNode;
-        Break;
-      end;
-    end;
-    Selected := Node;
-    // Update listview
+    SelectPathNode;
     if Assigned(FListView) then
       FListView.Path := aValue;
   end;
