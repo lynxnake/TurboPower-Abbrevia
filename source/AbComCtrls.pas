@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is Craig Peterson
  *
- * Portions created by the Initial Developer are Copyright (C) 1997-2002
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -31,7 +31,12 @@
 {*   listview associated, in which case the listview will*}
 {*   only show items in the selected folder.             *}
 {*********************************************************}
-
+//TODO: Finish up listview w/o treeview mode
+//TODO: Clean up published properties
+//TODO: Figure out how to show encrypted correctly
+//TODO: Tighten up component cooperation
+//TODO: Fix sorting by columns other than the name
+//TODO: Add to AbbreviaVCL packages
 unit AbComCtrls;
 
 interface
@@ -40,6 +45,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Controls, ComCtrls, Graphics, AbBrowse;
+
+const
+  AbTreeArchiveImage        = 0;
+  AbTreeFolderImage         = 1;
+  AbTreeFolderExpandedImage = 2;
 
 type
   TAbTreeView = class;
@@ -93,14 +103,12 @@ type
       write SetPath;
   end;
 
+
 { ===== TAbTreeView ========================================================= }
   TAbTreeView = class(TTreeView)
   protected {private}
     FArchive: TAbBaseBrowser;
-    FExpandedImageIndex: Integer;
-    FFolderImageIndex: Integer;
     FListView: TAbListView;
-    FZipImageIndex: Integer;
 
   protected {methods}
     procedure Change(aNode: TTreeNode);
@@ -134,7 +142,8 @@ implementation
 {$R AbComCtrls.res}
 
 uses
-  CommCtrl, Contnrs, ShellAPI, StrUtils, AbArcTyp, AbResString, AbUtils;
+  CommCtrl, Contnrs, ShellAPI, StrUtils, AbArcTyp, AbResString, AbUtils,
+  AbZipTyp;
 
 function AbNormalizeFilename(const aFilename: string): string;
 var
@@ -227,6 +236,11 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbListView.SetColumns(aValue : TAbViewColumns);
+const
+  ColWidths: array[TAbViewColumn] of Integer = (
+    180{vcName}, 110{vcFileType}, 130{vcLastModified}, 80{vcSize}, 50{vcRatio},
+    80{vcPacked}, 70{vcCRC}, 30{vcAttributes}, 28{vcEncrypted}, 60{vcMethod},
+    300{vcPath});
 var
   Col: TAbViewColumn;
   Column: TListColumn;
@@ -251,13 +265,10 @@ begin
         vcMethod: Column.Caption := AbMethodHeadingS;
         vcPath: Column.Caption := AbPathHeadingS;
       end;
+      Column.Width := ColWidths[Col];
       Column.Tag := Ord(Col);
       if Col in [vcSize, vcRatio, vcPacked] then
         Column.Alignment := taRightJustify;
-//    property AutoSize: Boolean read FAutoSize write SetAutoSize default False;
-//    property MaxWidth: TWidth read FMaxWidth write SetMaxWidth default 0;
-//    property MinWidth: TWidth read FMinWidth write SetMinWidth default 0;
-//    property Width: TWidth read GetWidth write SetWidth stored IsWidthStored default 50;
     end;
   end;
 end;
@@ -270,10 +281,13 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbListView.UpdateView;
 var
+  Col: TAbViewColumn;
+  CurItem: TAbArchiveItem;
   DOSAttr: Integer;
   i: Integer;
   Item: TListItem;
-  Filename: string;
+  Filename, ColText: string;
+  ColImage: Integer;
   sfi: SHFILEINFO;
 begin
   Items.BeginUpdate;
@@ -282,19 +296,76 @@ begin
     if Assigned(FArchive) then begin
       for i := 0 to FArchive.Count - 1 do
         if FArchive[i].Action <> aaDelete then begin
-          Filename := AbNormalizeFilename(FArchive[i].FileName);
+          CurItem := FArchive[i];
+          // Only include items that match the current path
+          Filename := AbNormalizeFilename(CurItem.FileName);
           if Path <> ExtractFileDir(Filename) then
             Continue;
-          Item := Items.Add;
-          Item.Caption := ExtractFileName(Filename);
-          Item.Data := FArchive[i];
-          if FArchive[i].IsDirectory then
+          // Get file type information from the shell
+          if CurItem.IsDirectory then
             DOSAttr := FILE_ATTRIBUTE_DIRECTORY
           else
             DOSAttr := FILE_ATTRIBUTE_NORMAL;
-          SHGetFileInfo(PChar(Item.Caption), DOSAttr, sfi, sizeof(sfi),
-            SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
+          SHGetFileInfo(PChar(ExtractFileName(Filename)), DOSAttr, sfi, sizeof(sfi),
+            SHGFI_TYPENAME or SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
+          // Create new item
+          Item := Items.Add;
+          Item.Data := FArchive[i];
+          // Fill in columns
+          Item.Caption := ExtractFileName(Filename);
           Item.ImageIndex := sfi.iIcon;
+          Item.SubItems.Clear;
+          for Col := Succ(Low(Col)) to High(Col) do
+            if Col in FColumns then begin
+              ColText := '';
+              ColImage := -1;
+              case Col of
+                vcFileType:
+                  ColText := sfi.szTypeName;
+                vcLastModified:
+                  ColText := FormatDateTime(ShortDateFormat + ' ' + LongTimeFormat,
+                    CurItem.LastModTimeAsDateTime);
+                vcSize:
+                  if not CurItem.IsDirectory then
+                    ColText := FormatFloat('#,##0', CurItem.UncompressedSize);
+                vcRatio:
+                  if not CurItem.IsDirectory then
+                    if CurItem.UncompressedSize > 0 then
+                      ColText := Format('%d%%',
+                        [CurItem.CompressedSize * 100 div CurItem.UncompressedSize])
+                    else
+                      ColText := '0%';
+                vcPacked:
+                  if not CurItem.IsDirectory then
+                    ColText := FormatFloat('#,##0', CurItem.CompressedSize);
+                vcCRC:
+                  if not CurItem.IsDirectory then
+                    ColText := IntToHex(CurItem.CRC32, 8);
+                vcAttributes:
+                  begin
+                    {$WARN SYMBOL_PLATFORM OFF}
+                    if (faReadOnly and CurItem.ExternalFileAttributes) = faReadOnly then
+                      ColText := ColText + AbReadOnlyS;
+                    if (faHidden and CurItem.ExternalFileAttributes) = faHidden then
+                      ColText := ColText + AbHiddenS;
+                    if (faSysFile and CurItem.ExternalFileAttributes) = faSysFile then
+                      ColText := ColText + AbSystemS;
+                    if (faArchive and CurItem.ExternalFileAttributes) = faArchive then
+                      ColText := ColText + AbArchivedS;
+                    {$WARN SYMBOL_PLATFORM ON}
+                  end;
+                vcEncrypted:
+                  if CurItem.IsEncrypted then
+                    ColText := '+';
+                vcMethod:
+                  if CurItem is TAbZipItem then
+                    ColText := ZipCompressionMethodToString(TAbZipItem(CurItem).CompressionMethod);
+                vcPath:
+                  ColText := ExtractFileDir(FileName);
+              end;
+              Item.SubItems.Add(ColText);
+              Item.SubItemImages[Item.SubItems.Count - 1] := ColImage;
+            end;
         end;
       CustomSort(TLVCompare(@SortProc), 0);
     end;
@@ -307,22 +378,38 @@ end;
 { ===== TAbTreeView ========================================================= }
 constructor TAbTreeView.Create(aOwner: TComponent);
 var
+  Bmp : TBitmap;
+  Icon : TIcon;
   sfi: SHFILEINFO;
 begin
   inherited;
   Images := TImageList.Create(Self);
-  Images.ShareImages := True;
-  Images.Handle := SHGetFileInfo('', 0, sfi, SizeOf(sfi),
-    SHGFI_SMALLICON or SHGFI_SYSICONINDEX);
-  SHGetFileInfo(nil, FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
-    SHGFI_OPENICON or SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
-  FExpandedImageIndex := sfi.iIcon;
-  SHGetFileInfo(nil, FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
-    SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
-  FFolderImageIndex := sfi.iIcon;
-  SHGetFileInfo('.zip', FILE_ATTRIBUTE_NORMAL, sfi, sizeof(sfi),
-    SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
-  FZipImageIndex := sfi.iIcon;
+  Bmp := TBitmap.Create;
+  try
+    Bmp.LoadFromResourceName(0, 'AbComCtrls_Zip');
+    Images.AddMasked(Bmp, clBlack);
+    Icon := TIcon.Create;
+    try
+      SHGetFileInfo('', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
+        SHGFI_ICON or SHGFI_SMALLICON or SHGFI_USEFILEATTRIBUTES);
+      Icon.Handle := sfi.hIcon;
+      Bmp.PixelFormat := pf24bit;
+      Bmp.Canvas.Brush.Color := clWindow;
+      Bmp.Canvas.FillRect(Rect(0, 0, 16, 16));
+      Bmp.Canvas.Draw(0, 0, Icon);
+      Images.AddMasked(Bmp, clWindow);
+      SHGetFileInfo('', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
+        SHGFI_ICON or SHGFI_OPENICON or SHGFI_SMALLICON or SHGFI_USEFILEATTRIBUTES);
+      Icon.Handle := sfi.hIcon;
+      Bmp.Canvas.FillRect(Rect(0, 0, 16, 16));
+      Bmp.Canvas.Draw(0, 0, Icon);
+      Images.AddMasked(Bmp, clWindow);
+    finally
+      Icon.Free;
+    end;
+  finally
+    Bmp.Free;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbTreeView.Change(aNode: TTreeNode);
@@ -360,8 +447,8 @@ var
     else begin
       Result := Items.AddChild(GetNode(ExtractFileDir(aFilename)),
                                ExtractFileName(aFilename));
-      Result.ExpandedImageIndex := FExpandedImageIndex;
-      Result.ImageIndex := FFolderImageIndex;
+      Result.ExpandedImageIndex := AbTreeFolderExpandedImage;
+      Result.ImageIndex := AbTreeFolderImage;
       Nodes.AddObject(aFilename, Result);
     end;
   end;
@@ -382,8 +469,8 @@ begin
         else
           Filename := PathDelim;
         ZipNode := Items.AddChild(nil, Filename);
-        ZipNode.ExpandedImageIndex := FZipImageIndex;
-        ZipNode.ImageIndex := FZipImageIndex;
+        ZipNode.ExpandedImageIndex := AbTreeArchiveImage;
+        ZipNode.ImageIndex := AbTreeArchiveImage;
         for i := 0 to FArchive.Count - 1 do
           if FArchive[i].Action <> aaDelete then begin
             Filename := AbNormalizeFilename(FArchive[i].FileName);
