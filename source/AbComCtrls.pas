@@ -587,7 +587,10 @@ procedure TAbCustomListView.DblClick;
 begin
   inherited;
   if TAbListItem(Selected).IsDirectory then
-    Path := Path + PathDelim + Selected.Caption;
+    if Path = '' then
+      Path := Selected.Caption
+    else
+      Path := Path + PathDelim + Selected.Caption;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.DoChange(Sender: TObject);
