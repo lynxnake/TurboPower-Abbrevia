@@ -42,7 +42,7 @@ uses
   Classes,
   AbCBrows, AbCabExt, AbCabMak, AbCabKit, AbCView,
   AbCompnd, AbHexVw,  AbZBrows, AbUnzper, AbZipper, AbZipKit, AbZipOut, 
-  AbView, AbZView, AbMeter, AbSelfEx, AbZipExt;
+  AbView, AbComCtrls, AbZView, AbMeter, AbSelfEx, AbZipExt;
 
 procedure Register;
 
@@ -188,6 +188,8 @@ begin
                         TAbZipKit,
                         TAbZipView,
                         TAbZipOutline,
+                        TAbTreeView,
+                        TAbListView,
                         TAbCabBrowser,
                         TAbCabExtractor,
                         TAbMakeCab,

@@ -85,6 +85,9 @@
 			<DelphiCompile Include="..\..\source\AbBseVCL.pas">
 				<BuildOrder>8</BuildOrder>
 			</DelphiCompile>
+			<DelphiCompile Include="..\..\source\AbComCtrls.pas">
+				<BuildOrder>9</BuildOrder>
+			</DelphiCompile>
 			<DelphiCompile Include="..\..\source\AbCompnd.pas">
 				<BuildOrder>9</BuildOrder>
 			</DelphiCompile>

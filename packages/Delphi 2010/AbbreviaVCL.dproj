@@ -52,14 +52,15 @@
 			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="vclx.dcp"/>
 			<DCCReference Include="Abbrevia.dcp"/>
-			<DCCReference Include="..\source\AbBseVCL.pas"/>
-			<DCCReference Include="..\source\AbMeter.pas"/>
-			<DCCReference Include="..\source\AbView.pas"/>
-			<DCCReference Include="..\source\AbZipOut.pas"/>
-			<DCCReference Include="..\source\AbCView.pas"/>
-			<DCCReference Include="..\source\AbZView.pas"/>
-			<DCCReference Include="..\source\AbCompnd.pas"/>
-			<DCCReference Include="..\source\AbHexVw.pas"/>
+			<DCCReference Include="..\..\source\AbBseVCL.pas"/>
+			<DCCReference Include="..\..\source\AbMeter.pas"/>
+			<DCCReference Include="..\..\source\AbView.pas"/>
+			<DCCReference Include="..\..\source\AbZipOut.pas"/>
+			<DCCReference Include="..\..\source\AbCView.pas"/>
+			<DCCReference Include="..\..\source\AbZView.pas"/>
+			<DCCReference Include="..\..\source\AbCompnd.pas"/>
+			<DCCReference Include="..\..\source\AbHexVw.pas"/>
+			<DCCReference Include="..\..\source\AbComCtrls.pas"/>
 			<BuildConfiguration Include="Basis">
 				<Key>Base</Key>
 			</BuildConfiguration>

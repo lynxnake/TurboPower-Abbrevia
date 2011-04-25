@@ -52,14 +52,15 @@
 			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="vclx.dcp"/>
 			<DCCReference Include="Abbrevia.dcp"/>
-			<DCCReference Include="..\source\AbBseVCL.pas"/>
-			<DCCReference Include="..\source\AbMeter.pas"/>
-			<DCCReference Include="..\source\AbView.pas"/>
-			<DCCReference Include="..\source\AbZipOut.pas"/>
-			<DCCReference Include="..\source\AbCView.pas"/>
-			<DCCReference Include="..\source\AbZView.pas"/>
-			<DCCReference Include="..\source\AbCompnd.pas"/>
-			<DCCReference Include="..\source\AbHexVw.pas"/>
+			<DCCReference Include="..\..\source\AbBseVCL.pas"/>
+			<DCCReference Include="..\..\source\AbMeter.pas"/>
+			<DCCReference Include="..\..\source\AbView.pas"/>
+			<DCCReference Include="..\..\source\AbZipOut.pas"/>
+			<DCCReference Include="..\..\source\AbCView.pas"/>
+			<DCCReference Include="..\..\source\AbZView.pas"/>
+			<DCCReference Include="..\..\source\AbCompnd.pas"/>
+			<DCCReference Include="..\..\source\AbHexVw.pas"/>
+			<DCCReference Include="..\..\source\AbComCtrls.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
@@ -106,7 +107,7 @@
 						<VersionInfoKeys Name="FileDescription">Abbrevia Components</VersionInfoKeys>
 						<VersionInfoKeys Name="FileVersion">4.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
-						<VersionInfoKeys Name="LegalCopyright">Copyright (c) Abbrevia Group</VersionInfoKeys>
+						<VersionInfoKeys Name="LegalCopyright">Copyright (c) Abbrevia Group 2011</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks"/>
 						<VersionInfoKeys Name="OriginalFilename"/>
 						<VersionInfoKeys Name="ProductName">Abbrevia</VersionInfoKeys>

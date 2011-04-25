@@ -66,6 +66,7 @@ contains
   AbCView in '..\..\source\AbCView.pas',
   AbZView in '..\..\source\AbZView.pas',
   AbCompnd in '..\..\source\AbCompnd.pas',
-  AbHexVw in '..\..\source\AbHexVw.pas';
+  AbHexVw in '..\..\source\AbHexVw.pas',
+  AbComCtrls in '..\..\source\AbComCtrls.pas';
 
 end.
