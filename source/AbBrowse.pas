@@ -74,6 +74,7 @@ type
 
   protected {private methods}
     function  GetCount : Integer;
+    function  GetItem(Value : Longint) : TAbArchiveItem;
     function  GetSpanned : Boolean;
     function  GetStatus : TAbArchiveStatus;
     procedure ResetMeters; virtual;                                    {!!.04}
@@ -187,6 +188,8 @@ type
   public {properties}
     property Count : Integer
       read GetCount;
+    property Items[Index : Integer] : TAbArchiveItem
+      read GetItem; default;
     property Status : TAbArchiveStatus
       read GetStatus;
 
@@ -358,6 +361,14 @@ begin
     Result := FArchive.Count
   else
     Result := 0;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbBaseBrowser.GetItem(Value : Longint) : TAbArchiveItem;
+begin
+  if Assigned(FArchive) then
+    Result := FArchive.ItemList[Value]
+  else
+    raise EAbNoArchive.Create;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseBrowser.InitArchive;
