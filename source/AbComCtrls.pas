@@ -33,7 +33,7 @@
 {*********************************************************}
 //TODO: Add to AbbreviaVCL packages
 //TODO: Listview encrypted column
-//TODO: Listview column sorting
+//TODO: Listview sort arrows are cleared when resizing
 //TODO: Listview support for implicit folders
 //TODO: Tighten up component cooperation
 unit AbComCtrls;
@@ -43,7 +43,8 @@ interface
 {$I AbDefine.inc}
 
 uses
-  Windows, Messages, SysUtils, Classes, Controls, ComCtrls, Graphics, AbBrowse;
+  Windows, Messages, SysUtils, Classes, Controls, ComCtrls, Graphics, AbBrowse,
+  AbArcTyp;
 
 const
   AbTreeArchiveImage        = 0;
@@ -58,6 +59,32 @@ type
      vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath);
   TAbViewColumns = set of TAbViewColumn;
 
+{ ===== TAbListItem ========================================================= }
+  TAbListItem = class(TListItem)
+  protected {private}
+    FArchiveItem : TAbArchiveItem;
+    FIsDirectory : Boolean;
+  public {properties}
+    property ArchiveItem : TAbArchiveItem
+      read FArchiveItem
+      write FArchiveItem;
+    property IsDirectory : Boolean
+      read FIsDirectory
+      write FIsDirectory;
+  end;
+
+
+{ ===== TAbListItems ======================================================== }
+  TAbListItems = class(TListItems)
+  protected {methods}
+    function GetItem(aIndex: Integer): TAbListItem;
+    procedure SetItem(aIndex: Integer; aValue: TAbListItem);
+  public {properties}
+    property Item[Index: Integer]: TAbListItem
+      read GetItem
+      write SetItem; default;
+  end;
+
 { ===== TAbCustomListView =================================================== }
   TAbCustomListView = class(TCustomListView)
   protected {private}
@@ -65,22 +92,36 @@ type
     FFlatList: Boolean;
     FHeaderImages : TImageList;
     FPath : string;
+    FSortAscending : Boolean;
+    FSortColIndex : Integer;
+    FSortColumn : TAbViewColumn;
+    FSortUpBmp : HBITMAP;
+    FSortDownBmp : HBITMAP;
     FTreeView : TAbCustomTreeView;
     FVisibleColumns : TAbViewColumns;
 
   protected {methods}
+    procedure ColClick(aColumn: TListColumn);
+      override;
+    function CreateListItem: TListItem;
+      override;
+    function CreateListItems: TListItems;
+      override;
     procedure CreateWnd;
       override;
     procedure DblClick;
       override;
     procedure DoChange(Sender : TObject);
       virtual;
+    function GetListItems: TAbListItems;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SetArchive(aValue : TAbBaseBrowser);
     procedure SetFlatList(aValue : Boolean);
     procedure SetPath(aValue : string);
     procedure SetVisibleColumns(aValue : TAbViewColumns);
+    procedure UpdateColumns;
+    procedure UpdateSortArrow;
     procedure UpdateView;
 
   protected {properties}
@@ -95,15 +136,23 @@ type
       override;
     destructor Destroy;
       override;
+    procedure Sort(aColumn: TAbViewColumn; aAscending: Boolean);
+    class function SortProc(aItem1, aItem2: TAbListItem;
+      aListView: TAbCustomListView): Integer;
+      static; stdcall;
 
   public {properties}
     property Archive : TAbBaseBrowser
       read FArchive
       write SetArchive;
+    property Columns;
     // Show only items in the current path
     property FlatList : Boolean
       read FFlatList
       write SetFlatList;
+    property Items: TAbListItems
+      read GetListItems
+      stored False;
     property Path : string
       read FPath
       write SetPath;
@@ -131,7 +180,6 @@ type
     property BorderWidth;
     property Checkboxes;
     property Color;
-    property Columns;
     property ColumnClick;
     property Constraints;
     property Ctl3D;
@@ -328,9 +376,9 @@ implementation
 {$R AbComCtrls.res}
 
 uses
-  CommCtrl, Contnrs, ShellAPI, StrUtils, AbArcTyp, AbResString, AbUtils,
-  AbZipTyp;
+  CommCtrl, Contnrs, ShellAPI, StrUtils, AbResString, AbUtils, AbZipTyp;
 
+{ -------------------------------------------------------------------------- }
 function AbNormalizeFilename(const aFilename: string): string;
 var
   i: Integer;
@@ -343,23 +391,55 @@ begin
     SetLength(Result, Length(Result) - 1);
 end;
 { -------------------------------------------------------------------------- }
+var
+  ComCtl32MajorVer: Integer = -1;
+
+function IsComCtl32Version6: Boolean;
+type
+  PDllVersionInfo = ^TDllVersionInfo;
+  TDllVersionInfo = packed record
+    cbSize: DWORD;
+    dwMajorVersion: DWORD;
+    dwMinorVersion: DWORD;
+    dwBuildNumber: DWORD;
+    dwPlatformId: DWORD;
+  end;
+var
+  DllGetVersion: function(pdvi: PDllVersionInfo): HRESULT; stdcall;
+  dvi: TDllVersionInfo;
+  hComCtl32: HMODULE;
+begin
+  if ComCtl32MajorVer = -1 then begin
+    ComCtl32MajorVer := 0;
+    hComCtl32 := LoadLibrary(comctl32);
+    if hComCtl32 <> 0 then begin
+      DllGetVersion := GetProcAddress(hComCtl32, 'DllGetVersion');
+      if Assigned(DllGetVersion) then begin
+        dvi.cbSize := SizeOf(dvi);
+        if Succeeded(DllGetVersion(@dvi)) then
+          ComCtl32MajorVer := dvi.dwMajorVersion;
+      end;
+      FreeLibrary(hComCtl32);
+    end;
+  end;
+  Result := ComCtl32MajorVer >= 6;
+end;
+{ -------------------------------------------------------------------------- }
 function SameEvent(const aEvent1, aEvent2: TNotifyEvent): Boolean;
 begin
   Result := (TMethod(aEvent1).Code = TMethod(aEvent2).Code) and
     (TMethod(aEvent1).Data = TMethod(aEvent2).Data);
 end;
-{ -------------------------------------------------------------------------- }
-function SortProc(aItem1, aItem2: TListItem; alParam: Integer): Integer;
-  stdcall;
+
+{ ===== TAbCustomListView =================================================== }
+function TAbListItems.GetItem(aIndex: Integer): TAbListItem;
 begin
-  if TAbArchiveItem(aItem1.Data).IsDirectory <>
-     TAbArchiveItem(aItem2.Data).IsDirectory then
-    if TAbArchiveItem(aItem1.Data).IsDirectory then
-      Result := -1
-    else
-      Result := 1
-  else
-    Result := CompareText(aItem1.Caption, aItem2.Caption)
+  Result := inherited Item[aIndex] as TAbListItem;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbListItems.SetItem(aIndex: Integer; aValue: TAbListItem);
+begin
+  inherited Item[aIndex] := aValue;
 end;
 
 { ===== TAbCustomListView =================================================== }
@@ -388,29 +468,58 @@ begin
   SmallImages.ShareImages := True;
   SmallImages.Handle := SHGetFileInfo('', 0, sfi, SizeOf(sfi),
     SHGFI_SMALLICON or SHGFI_SYSICONINDEX);
-
+  // Load sort arrow bitmaps for older comctrl32.dll versions
+  FSortAscending := True;
+  FSortColumn := vcName;
+  if not IsComCtl32Version6 then begin
+    FSortUpBmp := LoadImage(HInstance, 'AbComCtrls_SortUp', IMAGE_BITMAP, 0, 0, LR_LOADMAP3DCOLORS);
+    FSortDownBmp := LoadImage(HInstance, 'AbComCtrls_SortDown', IMAGE_BITMAP, 0, 0, LR_LOADMAP3DColors);
+  end;
+  // Set default column visibility
   VisibleColumns := [vcName, vcFileType, vcLastModified, vcSize, vcRatio,
      vcPacked, vcCRC, vcAttributes, vcEncrypted, vcMethod, vcPath];
 end;
 { -------------------------------------------------------------------------- }
 destructor TAbCustomListView.Destroy;
 begin
-
+  if FSortUpBmp <> 0 then
+    DeleteObject(FSortUpBmp);
+  if FSortDownBmp <> 0 then
+    DeleteObject(FSortDownBmp);
   inherited;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.ColClick(aColumn: TListColumn);
+var
+  Col: TAbViewColumn;
+begin
+  inherited;
+  Col := TAbViewColumn(aColumn.Tag);
+  Sort(Col, (Col <> FSortColumn) or not FSortAscending);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbCustomListView.CreateListItem: TListItem;
+begin
+  Result := TAbListItem.Create(Items);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbCustomListView.CreateListItems: TListItems;
+begin
+  Result := TAbListItems.Create(Self);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.CreateWnd;
 begin
   inherited;
   Header_SetImageList(ListView_GetHeader(Handle), FHeaderImages.Handle);
+  UpdateColumns;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.DblClick;
 begin
   inherited;
-  if TAbArchiveItem(Selected.Data).IsDirectory then begin
+  if TAbListItem(Selected).IsDirectory then
     Path := Path + PathDelim + Selected.Caption;
-  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.DoChange(Sender: TObject);
@@ -418,6 +527,11 @@ begin
   UpdateView;
   if (Sender = FArchive) and Assigned(FTreeView) then
     FTreeView.DoChange(Self);
+end;
+{ -------------------------------------------------------------------------- }
+function TAbCustomListView.GetListItems: TAbListItems;
+begin
+  Result := inherited Items as TAbListItems;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.Notification(aComponent: TComponent;
@@ -470,6 +584,113 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.SetVisibleColumns(aValue : TAbViewColumns);
+begin
+  if aValue <> FVisibleColumns then begin
+    FVisibleColumns := aValue;
+    UpdateColumns;
+    UpdateView;
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.Sort(aColumn: TAbViewColumn; aAscending: Boolean);
+begin
+  if (aColumn <> FSortColumn) or (aAscending <> FSortAscending) then begin
+    FSortColumn := aColumn;
+    FSortAscending := aAscending;
+    UpdateSortArrow;
+    CustomSort(TLVCompare(@TAbCustomListView.SortProc), LPARAM(Self));
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbCustomListView.SortProc(aItem1, aItem2: TAbListItem;
+  aListView: TAbCustomListView): Integer;
+var
+  Item1, Item2: TAbArchiveItem;
+  Ratio1, Ratio2: Single;
+begin
+  if aItem1.IsDirectory <> aItem2.IsDirectory then
+    if aItem1.IsDirectory then
+      Result := -1
+    else
+      Result := 1
+  else begin
+    Result := 0;
+    if aListView.FSortColumn in [vcFileType, vcPath] then begin
+      Result := CompareText(aItem1.SubItems[aListView.FSortColIndex],
+                            aItem2.SubItems[aListView.FSortColIndex]);
+    end
+    else if not aItem1.IsDirectory then begin
+      // Don't do more advanced sorts for directories, since they may be
+      // implicitly stored and won't have corresponding archive items
+      Item1 := aItem1.ArchiveItem;
+      Item2 := aItem2.ArchiveItem;
+      case aListView.FSortColumn of
+        vcLastModified:
+          begin
+            if Item1.LastModTimeAsDateTime < Item2.LastModTimeAsDateTime then
+              Result := -1
+            else if Item1.LastModTimeAsDateTime > Item2.LastModTimeAsDateTime then
+              Result := 1;
+          end;
+        vcSize:
+          begin
+            if Item1.UncompressedSize < Item2.UncompressedSize then
+              Result := -1
+            else if Item1.UncompressedSize > Item2.UncompressedSize then
+              Result := 1;
+          end;
+        vcRatio:
+          begin
+            if Item1.UncompressedSize > 0 then
+              Ratio1 := Item1.CompressedSize / Item1.UncompressedSize
+            else
+              Ratio1 := 1;
+            if Item2.UncompressedSize > 0 then
+              Ratio2 := Item2.CompressedSize / Item2.UncompressedSize
+            else
+              Ratio2 := 1;
+            if Ratio1 > Ratio2 then
+              Result := -1
+            else if Ratio1 < Ratio2 then
+              Result := 1
+          end;
+        vcPacked:
+          begin
+            if Item1.CompressedSize < Item2.CompressedSize then
+              Result := -1
+            else if Item1.CompressedSize > Item2.CompressedSize then
+              Result := 1;
+          end;
+        vcCRC:
+          begin
+            if Longword(Item1.CRC32) < Longword(Item2.CRC32) then
+              Result := -1
+            else if Longword(Item1.CRC32) > Longword(Item2.CRC32) then
+              Result := 1;
+          end;
+        vcAttributes,
+        vcMethod:
+          begin
+            Result := CompareText(aItem1.SubItems[aListView.FSortColIndex],
+                                  aItem2.SubItems[aListView.FSortColIndex]);
+          end;
+        vcEncrypted:
+          begin
+            if not Item1.IsEncrypted and Item2.IsEncrypted then
+              Result := -1
+            else if Item1.IsEncrypted and not Item2.IsEncrypted then
+              Result := 1
+          end;
+      end;
+    end;
+    if Result = 0 then
+      Result := AnsiCompareText(aItem1.Caption, aItem2.Caption);
+  end;
+  if not aListView.FSortAscending then
+    Result := -Result;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.UpdateColumns;
 const
   ColWidths: array[TAbViewColumn] of Integer = (
     180{vcName}, 110{vcFileType}, 130{vcLastModified}, 80{vcSize}, 50{vcRatio},
@@ -479,9 +700,11 @@ var
   Col: TAbViewColumn;
   Column: TListColumn;
 begin
-  if aValue <> FVisibleColumns then begin
+  if HandleAllocated then
+    Items.BeginUpdate;
+  Columns.BeginUpdate;
+  try
     Columns.Clear;
-    FVisibleColumns := aValue;
     for Col := Low(Col) to High(Col) do begin
       if not (Col in FVisibleColumns) then
         Continue;
@@ -504,7 +727,60 @@ begin
       if Col in [vcSize, vcRatio, vcPacked] then
         Column.Alignment := taRightJustify;
     end;
-    UpdateView;
+  finally
+    Columns.EndUpdate;
+    if HandleAllocated then
+      Items.EndUpdate;
+  end;
+  UpdateSortArrow;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.UpdateSortArrow;
+const
+  HDF_SORTDOWN = $0200;
+  HDF_SORTUP   = $0400;
+var
+  FHeaderHandle: HWND;
+  i: Integer;
+  Item: THDITEM;
+begin
+  if not HandleAllocated then
+    Exit;
+  FHeaderHandle := ListView_GetHeader(Handle);
+  for i := 0 to Columns.Count - 1 do begin
+    FillChar(Item, SizeOf(Item), 0);
+    Item.Mask := HDI_FORMAT;
+    if not IsComCtl32Version6 then
+      Item.Mask := Item.Mask or HDI_BITMAP;
+    Header_GetItem(FHeaderHandle, Columns[i].Index, Item);
+    // Add sort arrow to requested column
+    if TAbViewColumn(Columns[i].Tag) = FSortColumn then begin
+      FSortColIndex := i - 1;
+      if IsComCtl32Version6 then begin
+        Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP);
+        if FSortAscending then
+          Item.fmt := Item.fmt or HDF_SORTUP
+        else
+          Item.fmt := Item.fmt or HDF_SORTDOWN;
+      end
+      else begin
+        Item.fmt := Item.fmt or HDF_BITMAP or HDF_BITMAP_ON_RIGHT;
+        if FSortAscending then
+          Item.hbm := FSortUpBmp
+        else
+          Item.hbm := FSortDownBmp;
+      end;
+    end
+    // Remove sort arrow from other columns
+    else begin
+      if IsComCtl32Version6 then
+        Item.fmt := Item.fmt and not (HDF_SORTDOWN or HDF_SORTUP)
+      else begin
+        Item.Mask := Item.Mask and not HDI_BITMAP;
+        Item.fmt := Item.fmt and not (HDF_BITMAP OR HDF_BITMAP_ON_RIGHT);
+      end;
+    end;
+    Header_SetItem(FHeaderHandle, Columns[i].Index, Item);
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -514,7 +790,7 @@ var
   CurItem: TAbArchiveItem;
   DOSAttr: Integer;
   i: Integer;
-  Item: TListItem;
+  Item: TAbListItem;
   Filename, ColText: string;
   ColImage: Integer;
   sfi: SHFILEINFO;
@@ -544,8 +820,9 @@ begin
           SHGetFileInfo(PChar(ExtractFileName(Filename)), DOSAttr, sfi, sizeof(sfi),
             SHGFI_TYPENAME or SHGFI_SYSICONINDEX or SHGFI_USEFILEATTRIBUTES);
           // Create new item
-          Item := Items.Add;
-          Item.Data := FArchive[i];
+          Item := Items.Add as TAbListItem;
+          Item.ArchiveItem := FArchive[i];
+          Item.IsDirectory := CurItem.IsDirectory;
           // Fill in columns
           Item.Caption := ExtractFileName(Filename);
           Item.ImageIndex := sfi.iIcon;
@@ -567,7 +844,7 @@ begin
                   if not CurItem.IsDirectory then
                     if CurItem.UncompressedSize > 0 then
                       ColText := Format('%d%%',
-                        [CurItem.CompressedSize * 100 div CurItem.UncompressedSize])
+                        [100 - Round(CurItem.CompressedSize * 100 / CurItem.UncompressedSize)])
                     else
                       ColText := '0%';
                 vcPacked:
@@ -603,7 +880,7 @@ begin
               Item.SubItemImages[Item.SubItems.Count - 1] := ColImage;
             end;
         end;
-      CustomSort(TLVCompare(@SortProc), 0);
+      CustomSort(TLVCompare(@TAbCustomListView.SortProc), LPARAM(Self));
     end;
   finally
     Items.EndUpdate;
