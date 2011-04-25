@@ -965,8 +965,8 @@ begin
                     ColText := sfi.szTypeName;
                   vcLastModified:
                     if ArcItem <> nil then
-                      ColText := FormatDateTime(ShortDateFormat + ' ' + LongTimeFormat,
-                        ArcItem.LastModTimeAsDateTime);
+                      ColText := DateToStr(ArcItem.LastModTimeAsDateTime) + ' ' +
+                        TimeToStr(ArcItem.LastModTimeAsDateTime);
                   vcSize:
                     if not ListItem.IsDirectory then
                       ColText := FormatFloat('#,##0', ArcItem.UncompressedSize);
