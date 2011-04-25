@@ -41,7 +41,8 @@ const
 
 procedure __llshl; cdecl;
 procedure __llushr; cdecl;
-procedure __ftol; cdecl; external 'msvcrt.dll';
+procedure __ftol; cdecl;
+  external 'msvcrt.dll' {$IFNDEF BCB}name '_ftol'{$ENDIF};
 
 { ctype.h declarations ===================================================== }
 function _isdigit(ch: Integer): Integer; cdecl;
@@ -55,9 +56,9 @@ function _strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
 function _strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
 
 function _memcmp(s1,s2: Pointer; numBytes: LongWord): integer; cdecl;
-  external 'msvcrt.dll';
+  external 'msvcrt.dll' {$IFNDEF BCB}name 'memcmp'{$ENDIF};
 function _wcscpy(strDestination, strSource: PWideChar): PWideChar; cdecl;
-  external 'msvcrt.dll';
+  external 'msvcrt.dll' {$IFNDEF BCB}name 'wcscpy'{$ENDIF};
 
 { stdlib.h declarations ==================================================== }
 function _malloc(Size: Integer): Pointer; cdecl;
@@ -69,7 +70,7 @@ procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
 
 { stdio.h declarations ===================================================== }
 function _sprintf(S: PChar; const Format: PChar): Integer;
-  cdecl; varargs; external 'msvcrt.dll';
+  cdecl; varargs; external 'msvcrt.dll' {$IFNDEF BCB}name 'sprintf'{$ENDIF};
 
 implementation
 
@@ -109,9 +110,17 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function _strlen(P: PAnsiChar): Integer; cdecl;
+{$IF RTLVersion > 15}
 asm
   jmp System.@PCharLen
 end;
+{$ELSE}
+begin
+  Result := 0;
+  while P^ <> #0 do
+    Inc(P);
+end;
+{$IFEND}
 { -------------------------------------------------------------------------- }
 function _strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
 begin

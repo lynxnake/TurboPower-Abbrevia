@@ -85,13 +85,14 @@ type
 
 {$IF NOT DECLARED(PtrInt)}
 type
-  {$IF DECLARED(NativeInt)}
-  PtrInt = NativeInt;
-  PtrUInt = NativeUInt;
-  {$ELSE}
+  // Delphi 7-2007 declared NativeInt incorrectly
+  {$IFDEF CPU386}
   PtrInt = LongInt;
   PtrUInt = LongWord;
-  {$IFEND}
+  {$ELSE}
+  PtrInt = NativeInt;
+  PtrUInt = NativeUInt;
+  {$ENDIF}
 {$IFEND}
 
 {$IFNDEF UNICODE}
