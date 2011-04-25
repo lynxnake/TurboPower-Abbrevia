@@ -1024,7 +1024,8 @@ begin
     Images.AddMasked(Bmp, clBlack);
     Icon := TIcon.Create;
     try
-      SHGetFileInfo('', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
+      // On Windows 7 an empty filename returns the drive icon instead of a folder
+      SHGetFileInfo('Folder', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
         SHGFI_ICON or SHGFI_SMALLICON or SHGFI_USEFILEATTRIBUTES);
       Icon.Handle := sfi.hIcon;
       Bmp.PixelFormat := pf24bit;
@@ -1032,7 +1033,7 @@ begin
       Bmp.Canvas.FillRect(Rect(0, 0, 16, 16));
       Bmp.Canvas.Draw(0, 0, Icon);
       Images.AddMasked(Bmp, clWindow);
-      SHGetFileInfo('', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
+      SHGetFileInfo('Folder', FILE_ATTRIBUTE_DIRECTORY, sfi, sizeof(sfi),
         SHGFI_ICON or SHGFI_OPENICON or SHGFI_SMALLICON or SHGFI_USEFILEATTRIBUTES);
       Icon.Handle := sfi.hIcon;
       Bmp.Canvas.FillRect(Rect(0, 0, 16, 16));
