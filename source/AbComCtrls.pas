@@ -91,6 +91,10 @@ const
 type
   TAbCustomTreeView = class;
 
+  {$IF NOT DECLARED(TWindowProcPtr)}
+  TWindowProcPtr = Pointer;
+  {$IFEND}
+
   TAbCustomListView = class(TCustomListView)
   protected {private}
     FArchive : TAbBaseBrowser;
@@ -151,9 +155,6 @@ type
     destructor Destroy;
       override;
     procedure Sort(aColumn: TAbViewColumn; aAscending: Boolean);
-    class function SortProc(aItem1, aItem2: TAbListItem;
-      aListView: TAbCustomListView): Integer;
-      static; stdcall;
 
   public {properties}
     property Archive : TAbBaseBrowser
@@ -210,7 +211,9 @@ type
     property FlatScrollBars;
     property FullDrag;
     property GridLines;
+{$IFDEF HasListViewGroups}
     property Groups;
+{$ENDIF}
     property HideSelection;
     property HotTrack;
     property HotTrackStyles;
@@ -219,13 +222,17 @@ type
     property Items;
     property LargeImages;
     property MultiSelect;
+{$IFDEF HasListViewGroups}
     property GroupHeaderImages;
     property GroupView default False;
+{$ENDIF}
     property ReadOnly default False;
     property RowSelect;
     property ParentBiDiMode;
     property ParentColor default False;
+{$IFDEF HasParentDoubleBuffered}
     property ParentDoubleBuffered;
+{$ENDIF}
     property ParentFont;
     property ParentShowHint;
     property Path;
@@ -257,15 +264,21 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+{$IFDEF HasOnMouseActivate}
     property OnMouseActivate;
+{$ENDIF}
     property OnMouseDown;
+{$IFDEF HasOnMouseEnter}
     property OnMouseEnter;
     property OnMouseLeave;
+{$ENDIF}
     property OnMouseMove;
     property OnMouseUp;
     property OnResize;
     property OnSelectItem;
+{$IFDEF HasListViewOnItemChecked}
     property OnItemChecked;
+{$ENDIF}
     property OnStartDock;
     property OnStartDrag;
   end;
@@ -344,7 +357,9 @@ type
     property ParentBiDiMode;
     property ParentColor default False;
     property ParentCtl3D;
+{$IFDEF HasParentDoubleBuffered}
     property ParentDoubleBuffered;
+{$ENDIF}
     property ParentFont;
     property ParentShowHint;
     property Path;
@@ -380,10 +395,14 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+{$IFDEF HasOnMouseActivate}
     property OnMouseActivate;
+{$ENDIF}
     property OnMouseDown;
+{$IFDEF HasOnMouseEnter}
     property OnMouseEnter;
     property OnMouseLeave;
+{$ENDIF}
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
@@ -402,6 +421,14 @@ const
   HDF_SORTDOWN = $0200;
   HDF_SORTUP   = $0400;
 
+{ -------------------------------------------------------------------------- }
+{$IF NOT DECLARED(StartsText)}
+function StartsText(const aSubText, aText: string): Boolean;
+begin
+  Result := (Length(aText) > Length(aSubText)) and
+    SameText(aSubText, Copy(aText, 1, Length(aSubText)));
+end;
+{$IFEND}
 { -------------------------------------------------------------------------- }
 function AbNormalizeFilename(const aFilename: string): string;
 var
@@ -722,18 +749,8 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-procedure TAbCustomListView.Sort(aColumn: TAbViewColumn; aAscending: Boolean);
-begin
-  if (aColumn <> FSortColumn) or (aAscending <> FSortAscending) then begin
-    FSortColumn := aColumn;
-    FSortAscending := aAscending;
-    UpdateSortArrow;
-    CustomSort(TLVCompare(@TAbCustomListView.SortProc), LPARAM(Self));
-  end;
-end;
-{ -------------------------------------------------------------------------- }
-class function TAbCustomListView.SortProc(aItem1, aItem2: TAbListItem;
-  aListView: TAbCustomListView): Integer;
+function TAbCustomListView_SortProc(aItem1, aItem2: TAbListItem;
+  aListView: TAbCustomListView): Integer; cdecl;
 var
   Item1, Item2: TAbArchiveItem;
   Ratio1, Ratio2: Single;
@@ -818,6 +835,16 @@ begin
   end;
   if not aListView.FSortAscending then
     Result := -Result;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomListView.Sort(aColumn: TAbViewColumn; aAscending: Boolean);
+begin
+  if (aColumn <> FSortColumn) or (aAscending <> FSortAscending) then begin
+    FSortColumn := aColumn;
+    FSortAscending := aAscending;
+    UpdateSortArrow;
+    CustomSort(TLVCompare(@TAbCustomListView_SortProc), LPARAM(Self));
+  end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.UpdateColumns;
@@ -1042,7 +1069,7 @@ begin
         finally
           Folders.Free;
         end;
-      CustomSort(TLVCompare(@TAbCustomListView.SortProc), LPARAM(Self));
+      CustomSort(TLVCompare(@TAbCustomListView_SortProc), LPARAM(Self));
     end;
   finally
     Items.EndUpdate;
@@ -1124,7 +1151,9 @@ var
     else begin
       Result := Items.AddChild(GetNode(ExtractFileDir(aFilename)),
                                ExtractFileName(aFilename));
+      {$IFDEF HasTreeViewExpandedImageIndex}
       Result.ExpandedImageIndex := AbTreeFolderExpandedImage;
+      {$ENDIF}
       Result.ImageIndex := AbTreeFolderImage;
       Nodes.AddObject(aFilename, Result);
     end;
@@ -1146,7 +1175,9 @@ begin
         else
           Filename := PathDelim;
         ZipNode := Items.AddChild(nil, Filename);
+        {$IFDEF HasTreeViewExpandedImageIndex}
         ZipNode.ExpandedImageIndex := AbTreeArchiveImage;
+        {$ENDIF}
         ZipNode.ImageIndex := AbTreeArchiveImage;
         for i := 0 to FArchive.Count - 1 do
           if FArchive[i].Action <> aaDelete then begin
@@ -1171,9 +1202,11 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomTreeView.GetSelectedIndex(aNode: TTreeNode);
 begin
+  {$IFDEF HasTreeViewExpandedImageIndex}
   if aNode.Expanded then
     aNode.SelectedIndex := aNode.ExpandedImageIndex
   else
+  {$ENDIF}
     aNode.SelectedIndex := aNode.ImageIndex;
 end;
 { -------------------------------------------------------------------------- }

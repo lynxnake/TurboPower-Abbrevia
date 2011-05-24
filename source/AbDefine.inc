@@ -99,6 +99,12 @@
   {$IF RTLVersion >= 18} // Delphi 2006
     {$DEFINE HasOnMouseEnter}
   {$IFEND}
+  {$IF RTLVersion >= 20} // Delphi 2009
+    {$DEFINE HasListViewGroups}
+    {$DEFINE HasListViewOnItemChecked}
+    {$DEFINE HasParentDoubleBuffered}
+    {$DEFINE HasTreeViewExpandedImageIndex}
+  {$IFEND}
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasGridDrawingStyle}
     {$DEFINE HasTouch}
