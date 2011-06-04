@@ -32,6 +32,8 @@
 
 {$IFNDEF UsingCLX}
 unit AbDlgPwd;
+
+{$R *.dfm}
 {$ENDIF}
 
 {$I AbDefine.inc}
