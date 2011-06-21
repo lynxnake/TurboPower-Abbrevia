@@ -44,7 +44,7 @@ uses
   Windows,
   Messages,
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
   Types,
 {$ENDIF}

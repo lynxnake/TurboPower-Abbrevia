@@ -59,10 +59,12 @@ type
     procedure DecompressSimplePW;
     procedure DecompressPasswordTries;
     procedure CheckBadPWOverwrite;
+    {$IFNDEF DARWIN} // TODO: OS X uses Unicode normalization form D;  the tests need to be adapted
     procedure TestLocale1;
     procedure TestLocale2;
     procedure TestLocale3;
     procedure TestLocale4;
+    {$ENDIF}
     procedure TestFindCentralDirTail;
   end;
 
@@ -247,6 +249,7 @@ begin
   Component.FileName := TestTempDir + 'dummy.zip';
 end;
 
+{$IFNDEF DARWIN}
 procedure TAbUnZipperTests.TestLocale1;
 var
  ltestdir,
@@ -361,6 +364,7 @@ begin
   CheckFileExists(TestTempDir + 'testãëíõú3.lc4');
 
 end;
+{$ENDIF}
 
 procedure TAbUnZipperTests.TestUserAbort;
 var

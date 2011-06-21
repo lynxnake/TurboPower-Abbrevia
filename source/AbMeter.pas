@@ -43,7 +43,7 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  {$IFDEF LINUX}
+  {$IFDEF LibcAPI}
   Libc,
   {$ENDIF}
   {$IFDEF UsingCLX }

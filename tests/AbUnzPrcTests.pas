@@ -37,15 +37,14 @@ type
     FUnCompressedStream : TMemoryStream;
     FCompressedStream   : TMemoryStream;
   protected
-   procedure SetUp; override;
-   procedure TearDown; override;
-
+    procedure SetUp; override;
+    procedure TearDown; override;
+  public
+    function TestStreamDir: string;
   published
-
     procedure InflateStreamSimpleTest1;
     procedure InflateStreamSimpleTest2;
     procedure InflateStreamFileTest;
-
   end;
 
 implementation
@@ -57,27 +56,15 @@ uses
 
 procedure TAbUnzPrcTests.InflateStreamFileTest;
 var
- FS : TFileStream;
+  FS : TFileStream;
 begin
-  {$IFDEF LINUX}
-  FCompressedStream.LoadFromFile(TestFileDir + 'StreamTests/Testdoc1.cmp');
-  {$ELSE}
-  FCompressedStream.LoadFromFile(TestFileDir + 'StreamTests\Testdoc1.cmp');
-  {$ENDIF}
-  FCompressedStream.Seek(0,soFromBeginning);
-
-  InflateStream(FCompressedStream,FUnCompressedStream);
-
-  {$IFDEF LINUX}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests/TestDoc1.txt',fmOpenRead);
-  {$ELSE}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests\TestDoc1.txt',fmOpenRead);
-  {$ENDIF}
+  FS := TFileStream.Create(TestStreamDir + 'Testdoc1.cmp', fmOpenRead);
   try
-  CheckStreamMatch(FUnCompressedStream,FS,'Streamtests\Testdoc1.cmp UnCompressed did not match contents of Streamtests\TestDoc1.txt');
+    InflateStream(FS, FUnCompressedStream);
   finally
-    fs.free;
+    FS.Free;
   end;
+  CheckFileMatchesStream(TestStreamDir + 'TestDoc1.txt', FUnCompressedStream);
 end;
 
 procedure TAbUnzPrcTests.InflateStreamSimpleTest1;
@@ -128,14 +115,18 @@ procedure TAbUnzPrcTests.TearDown;
 begin
   FUnCompressedStream.Free;
   FCompressedStream.Free;
-  inherited;  
+  inherited;
+end;
+
+function TAbUnzPrcTests.TestStreamDir: string;
+begin
+  Result := TestFileDir + 'StreamTests' + PathDelim;
 end;
 
 initialization
 
   TestFramework.RegisterTest('Abbrevia.AbUnzPrc Suite',
     TAbUnzPrcTests.Suite);
- 
+
 end.
 
- 

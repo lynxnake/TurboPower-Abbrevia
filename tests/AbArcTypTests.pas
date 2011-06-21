@@ -26,7 +26,7 @@
  unit AbArcTypTests;
 
 {$I AbDefine.inc}
-{$IF CompilerVersion >= 17.0}
+{$IF NOT DEFINED(FPC) AND (CompilerVersion >= 17.0)}
   {$DEFINE HasEnumerators}    { Test for..in support in D2005+ }
 {$IFEND}
 

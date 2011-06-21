@@ -43,7 +43,7 @@ uses
   Windows,
   ShellAPI,
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
 {$ENDIF}
 {$IFDEF UsingClx}

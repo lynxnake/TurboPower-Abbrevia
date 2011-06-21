@@ -605,7 +605,7 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  {$IFDEF LINUX}
+  {$IFDEF LibcAPI}
   Libc,
   {$IFNDEF NoQt}
   {$IFDEF UsingCLX}
@@ -1553,7 +1553,7 @@ begin
   else
     Result := Byte(ExternalFileAttributes);
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF UNIX}
   if HostOS in [hosDOS, hosNTFS, hosWinNT] then
     Result := AbDOS2UnixFileAttributes(ExternalFileAttributes)
   else

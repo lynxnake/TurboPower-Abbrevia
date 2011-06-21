@@ -77,11 +77,11 @@ type
     property Anchors;
     property Attributes;
 {$IFNDEF UsingCLX}
-	  property BevelEdges;
-	  property BevelInner;
-	  property BevelKind;
-	  property BevelOuter;
-	  property BevelWidth;
+    property BevelEdges;
+    property BevelInner;
+    property BevelKind;
+    property BevelOuter;
+    property BevelWidth;
 {$ENDIF}	
     property BorderStyle;
     property Color;

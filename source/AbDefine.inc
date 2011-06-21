@@ -77,9 +77,32 @@
   {$ENDIF}
 {$ENDIF}
 
-{$IF DEFINED(LINUX) AND NOT DEFINED(FPC)}
-  {$DEFINE KYLIX}
-{$IFEND}
+{====Platform defines================================================}
+
+{ map Delphi platform defines to FreePascal's (MSWINDOWS/UNIX/LINUX/DARWIN) }
+{$IFNDEF FPC}
+  {$IF DEFINED(LINUX) AND (CompilerVersion < 15)}
+    {$DEFINE KYLIX}
+    {$DEFINE UNIX}
+  {$IFEND}
+  {$IFDEF MACOS}
+    {$DEFINE DARWIN}
+  {$ENDIF}
+  {$IFDEF POSIX}
+    {$DEFINE UNIX}
+  {$ENDIF}
+{$ENDIF}
+
+{ Unix API (Kylix/Delphi/FreePascal) }
+{$IFDEF UNIX}
+  {$IF DEFINED(FPC)}
+    {$DEFINE FPCUnixAPI}
+  {$ELSEIF DEFINED(KYLIX)}
+    {$DEFINE LibcAPI}
+  {$ELSE}
+    {$DEFINE PosixAPI}
+  {$IFEND}
+{$ENDIF}
 
 {$IFDEF FPC}
   {$MODE DELPHI}
@@ -90,6 +113,8 @@
 {$IFDEF KYLIX}
   {$DEFINE UsingCLX }
 {$ENDIF KYLIX}
+
+{====Widgetset defines===============================================}
 
 { VCL version specific defines }
 {$IFNDEF FPC}
@@ -260,3 +285,4 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
   {$UNDEF UnzipPPMdSupport}
   {$UNDEF UnzipWavPackSupport}
 {$ENDIF}
+

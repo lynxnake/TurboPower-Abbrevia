@@ -43,6 +43,9 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
 
+  public
+    function TestStreamDir: string;
+
   published
     procedure DeflateStreamSimpleTest1;
     procedure DeflateStreamSimpleTest2;
@@ -111,26 +114,13 @@ procedure TAbZipPrcTests.DeflateStreamFileTest;
 var
   FS : TFileStream;
 begin
-  {$IFDEF LINUX}
-  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests/TestDoc1.txt');
-  {$ELSE}
-  FUnCompressedStream.LoadFromFile(TestFileDir + 'StreamTests\TestDoc1.txt');
-  {$ENDIF}
-  FUnCompressedStream.Seek(0,soFromBeginning);
-  DeflateStream(FUnCompressedStream,FCompressedStream);
-
-//  FCompressedStream.SaveToFile(TestFileDir + 'StreamTests/Testdoc1.cmp');
-  {$IFDEF LINUX}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests/Testdoc1.cmp',fmOpenRead);
-  {$ELSE}
-  FS := TFileStream.Create(TestFileDir + 'StreamTests\Testdoc1.cmp',fmOpenRead);
-  {$ENDIF}
+  FS := TFileStream.Create(TestStreamDir + 'TestDoc1.txt', fmOpenRead);
   try
-    CheckStreamMatch(FCompressedStream,FS,
-      'Streamtests\TestDoc1.txt Compressed did not match contents of Streamtests\Testdoc1.cmp');
+    DeflateStream(FS, FCompressedStream);
   finally
-    fs.free;
+    FS.Free;
   end;
+  CheckFileMatchesStream(TestStreamDir + 'TestDoc1.cmp', FCompressedStream);
 end;
 
 procedure TAbZipPrcTests.DeflateStreamInflateStreamTest;
@@ -159,6 +149,11 @@ begin
   end;
 end;
 
+function TAbZipPrcTests.TestStreamDir: string;
+begin
+  Result := TestFileDir + 'StreamTests' + PathDelim;
+end;
+
 initialization
 
   TestFramework.RegisterTest('Abbrevia.AbZipPrc Suite',
@@ -166,4 +161,3 @@ initialization
 
 end.
 
- 

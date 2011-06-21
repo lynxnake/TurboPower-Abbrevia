@@ -36,9 +36,9 @@ unit AbArcTyp;
 interface
 
 uses
-  {$IFNDEF Linux}
-  Windows,                                                 {!!.03}
-  {$ENDIF Linux}
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF MSWINDOWS}
   Classes,
   Types,
   AbUtils;
@@ -639,7 +639,7 @@ begin
   else
     Result := 0;
   {$ENDIF}
-  {$IFDEF LINUX}
+  {$IFDEF UNIX}
   if IsDirectory then
     Result := AB_FPERMISSION_GENERIC or AB_FPERMISSION_OWNEREXECUTE
   else

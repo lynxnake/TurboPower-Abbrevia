@@ -54,7 +54,7 @@ uses
   Registry,
   ShellAPI,
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
 {$ENDIF}
   AbConst;

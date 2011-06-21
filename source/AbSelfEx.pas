@@ -85,7 +85,7 @@ implementation
 
 uses
   SysUtils,
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
 {$ENDIF}
   AbExcept, AbZipTyp;

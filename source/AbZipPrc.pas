@@ -56,7 +56,7 @@ uses
 {$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
 {$ENDIF}
   SysUtils,
@@ -323,7 +323,7 @@ begin
     ChDir( SaveDir );
   end; {SaveDir}
   try {UncompressedStream}
-    {$IFDEF LINUX}
+    {$IFDEF UNIX}
     Item.ExternalFileAttributes := LongWord(AttrEx.Mode) shl 16 + LongWord(AttrEx.Attr);
     {$ELSE}
     Item.ExternalFileAttributes := AttrEx.Attr;

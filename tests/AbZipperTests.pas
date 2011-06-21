@@ -134,7 +134,7 @@ begin
   try
     AbUnZip.FileName := TestFileName;
     // Clean out old Directory and create a new one.
-    Extractdir := TestTempDir + 'extracttest\';
+    Extractdir := TestTempDir + 'extracttest';
     if DirectoryExists(ExtractDir) then
       DelTree(ExtractDir);
     CreateDir(ExtractDir);
@@ -169,7 +169,7 @@ begin
   try
     AbUnZip.FileName := TestFileName;
     // Clean out old Directory and create a new one.
-    Extractdir := TestTempDir + 'extracttest\';
+    Extractdir := TestTempDir + 'extracttest';
     if DirectoryExists(ExtractDir) then
       DelTree(ExtractDir);
     CreateDir(ExtractDir);
@@ -202,7 +202,7 @@ begin
   try
     AbUnZip.FileName := TestFileName;
     // Clean out old Directory and create a new one.
-    Extractdir := TestTempDir + 'extracttest\';
+    Extractdir := TestTempDir + 'extracttest';
     if DirectoryExists(ExtractDir) then
       DelTree(ExtractDir);
     CreateDir(ExtractDir);
@@ -234,7 +234,7 @@ begin
   try
     AbUnZip.FileName := TestFileName;
     // Clean out old Directory and create a new one.
-    Extractdir := TestTempDir + 'extracttest\';
+    Extractdir := TestTempDir + 'extracttest';
     if DirectoryExists(ExtractDir) then
       DelTree(ExtractDir);
     CreateDir(ExtractDir);
@@ -440,9 +440,9 @@ begin
   // 236 changes into a ? on my machine in the delphi editor
   // so I thought it would be a good character to test with
 
-  ltestdir := TestTempDir  + chr(236) + 'ãëíõú\';
+  ltestdir := TestTempDir  + chr(236) + 'ãëíõú';
   ForceDirectories(ltestDir);
-  ltestFile := lTestdir + 'locale1.zip';
+  ltestFile := lTestdir + PathDelim + 'locale1.zip';
 
   if FileExists(lTestFile) then
     DeleteFile(lTestFile);
@@ -494,7 +494,7 @@ begin
 
   // 236 changes into a ? on my machine in the delphi editor
   // so I thought it would be a good character to test with
-  lBaseDir := TestTempDir + chr(236) + 'ãëíõú\';
+  lBaseDir := TestTempDir + chr(236) + 'ãëíõú' + PathDelim;
   ForceDirectories(lBaseDir);
   CreateDummyFile(lBaseDir + 'test1.lc3', 4000);
   CreateDummyFile(lBaseDir + 'test2.lc3', 6000);
@@ -525,7 +525,7 @@ begin
 
   //236 changes into a ? on my machine in the delphi editor
   // so I thought it would be a good character to test with
-  lBaseDir := TestTempDir + chr(236) + 'ãëíõú\';
+  lBaseDir := TestTempDir + chr(236) + 'ãëíõú' + PathDelim;
   ForceDirectories(lBaseDir);
   CreateDummyFile(lBaseDir + 'testãëíõú1.lc4',4000);
   CreateDummyFile(lBaseDir + 'testãëíõú2.lc4',6000);

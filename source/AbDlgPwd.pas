@@ -45,7 +45,7 @@ uses
 {$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF}
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
 {$ENDIF}
 {$IFDEF UsingClx}
@@ -93,8 +93,7 @@ begin
 {$IFDEF MSWINDOWS}
   Edit2.Text := '';
   OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
-{$ENDIF}
-{$IFDEF LINUX}
+{$ELSE}
   OKBtn.Enabled := true;
 {$ENDIF}
 end;
@@ -103,8 +102,7 @@ procedure TPassWordDlg.Edit2Change(Sender: TObject);
 begin
 {$IFDEF MSWINDOWS}
   OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
-{$ENDIF}
-{$IFDEF LINUX}
+{$ELSE}
   OKBtn.Enabled := true;
 {$ENDIF}
 end;
@@ -113,8 +111,7 @@ procedure TPassWordDlg.FormActivate(Sender: TObject);
 begin
 {$IFDEF MSWINDOWS}
   OKBtn.Enabled := ( CompareStr( Edit1.Text, Edit2.Text ) = 0);
-{$ENDIF}
-{$IFDEF LINUX}
+{$ELSE}
   OKBtn.Enabled := true;
 {$ENDIF}
 end;

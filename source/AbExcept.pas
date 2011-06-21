@@ -229,14 +229,9 @@ type
     constructor Create;
   end;
 
-  EAbVMSReadTooManyBytes = class( EAbZipException )
-  public
-    constructor Create( Count : Integer; Dummy : Word );
-  end;
-
   EAbVMSInvalidOrigin = class( EAbZipException )
   public
-    constructor Create( Value : Integer; Dummy : Word );
+    constructor Create( Value : Integer );
   end;
 
   EAbVMSErrorOpenSwap = class( EAbZipException )
@@ -261,12 +256,12 @@ type
 
   EAbVMSWriteTooManyBytes = class( EAbZipException )
   public
-    constructor Create( Count : Integer; Dummy : Word );
+    constructor Create( Count : Integer );
   end;
 
   EAbBBSReadTooManyBytes = class( EAbZipException )
   public
-    constructor Create(Count : Integer; Dummy : Word);
+    constructor Create(Count : Integer );
   end;
 
   EAbBBSSeekOutsideBuffer = class( EAbZipException )
@@ -281,7 +276,7 @@ type
 
   EAbBBSWriteTooManyBytes = class( EAbZipException )
   public
-    constructor Create(Count : Integer ; Dummy : Word);
+    constructor Create(Count : Integer );
   end;
 
   EAbSWSNotEndofStream = class( EAbZipException )
@@ -566,21 +561,13 @@ begin
   ErrorCode := AbReadError;
 end;
 
-constructor EAbVMSReadTooManyBytes.Create( Count : Integer;
-                                           Dummy : Word );
-begin
-  inherited Create(Format(AbVMSReadTooManyBytesS, [Count]));
-  ErrorCode := AbVMSReadTooManyBytes;
-end;
-
-constructor EAbVMSInvalidOrigin.Create( Value : Integer;
-                                        Dummy : Word );
+constructor EAbVMSInvalidOrigin.Create( Value : Integer );
 begin
   inherited Create(Format(AbVMSInvalidOriginS, [Value]));
   ErrorCode := AbVMSInvalidOrigin;
 end;
 
-constructor EAbBBSReadTooManyBytes.Create(Count : Integer; Dummy : Word);
+constructor EAbBBSReadTooManyBytes.Create(Count : Integer );
 begin
   inherited Create(Format(AbBBSReadTooManyBytesS, [Count]));
   ErrorCode := AbBBSReadTooManyBytes;
@@ -598,7 +585,7 @@ begin
   ErrorCode := AbBBSInvalidOrigin;
 end;
 
-constructor EAbBBSWriteTooManyBytes.Create(Count : Integer; Dummy : Word);
+constructor EAbBBSWriteTooManyBytes.Create(Count : Integer);
 begin
   inherited Create(Format(AbBBSWriteTooManyBytesS, [Count]));
   ErrorCode := AbBBSWriteTooManyBytes;
@@ -628,8 +615,7 @@ begin
   ErrorCode := AbVMSWriteFail;
 end;
 
-constructor EAbVMSWriteTooManyBytes.Create( Count : Integer;
-                                            Dummy : Word );
+constructor EAbVMSWriteTooManyBytes.Create( Count : Integer );
 begin
   inherited Create(Format(AbVMSWriteTooManyBytesS, [Count]));
   ErrorCode := AbVMSWriteTooManyBytes;

@@ -115,7 +115,7 @@ begin
   OutBuffer := @Buffer;
   {we cannot read more bytes than there is buffer}
   if (Count > FBufSize) then
-    raise EAbBBSReadTooManyBytes.Create(Count, 0);
+    raise EAbBBSReadTooManyBytes.Create(Count);
   {calculate the size of the chunks}
   if (FBufPosn <= FTail) then begin
     Chunk1Size := FTail - FBufPosn;
@@ -137,7 +137,7 @@ begin
   end;
   {we cannot read more bytes than there are available}
   if (Count > (Chunk1Size + Chunk2Size)) then
-    raise EAbBBSReadTooManyBytes.Create(Count, 0);
+    raise EAbBBSReadTooManyBytes.Create(Count);
   {perform the read}
   if (Chunk1Size > 0) then begin
     Move(FBuffer[FBufPosn], OutBuffer^, Chunk1Size);
@@ -200,13 +200,6 @@ var
   Posn : Int64;
   BytesBack : longint;
 begin
-{$IFDEF LINUX}
-{$IFDEF VER60}
-{Bug in Kylix 1 code analysis? Complains that Posn not initialized.}
-{All the other compilers complain that this assignment to Posn never used. }
-  Posn := 0;                                         {!!.03}
-{$ENDIF}
-{$ENDIF}
   {calculate the new position}
   case Origin of
     soBeginning :

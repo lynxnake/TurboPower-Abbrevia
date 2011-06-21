@@ -132,7 +132,7 @@ uses
   Windows,
   {$ENDIF}
   {$IFNDEF NoQt}
-  {$IFDEF LINUX}
+  {$IFDEF UsingCLX}
   QControls,
   QDialogs,
   {$ENDIF}
@@ -156,7 +156,6 @@ uses
   AbDfCryS,
   AbDfDec,
   AbExcept,
-  AbResString,
   AbSpanSt,
   AbSWStm,
   AbUnzOutStm,
@@ -611,7 +610,7 @@ var
   end;
 
 begin
-  GetMem(Followers, SizeOf(Followers^));
+  GetMem(Followers, SizeOf(TAbFollowerSets));
   try
     Factor := Ord( FCompressionMethod ) - 1;
     FactorMask := FactorMasks[Factor];

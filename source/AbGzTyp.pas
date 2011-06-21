@@ -1222,7 +1222,7 @@ begin
       { need new stream to write }
       FreeAndNil(FStream);
       FGZStream := nil;
-      FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
+      FStream := TFileStream.Create(FArchiveName, fmCreate or fmShareDenyWrite);
       FGZStream := FStream;
       FStream.CopyFrom(NewStream, NewStream.Size);
     end;

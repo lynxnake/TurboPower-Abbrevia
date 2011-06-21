@@ -30,7 +30,7 @@
 interface
 
 uses
-  Classes, AbArcTyp, AbArcTypTests, AbTestFrameWork, AbUtils;
+  Classes, AbArcTypTests, AbTestFrameWork, AbUtils;
 
 type
   TAbTarArchiveTests = class(TAbArchiveMultiFileTests)

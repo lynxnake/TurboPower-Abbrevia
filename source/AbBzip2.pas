@@ -376,7 +376,9 @@ end; { _free }
 {$ENDIF}
 
 const
-  libbz2 = {$IFDEF MSWINDOWS}'libbz2.dll'{$ELSE}'libbz2.so.1'{$ENDIF};
+  libbz2 = {$IF DEFINED(MSWINDOWS)}'libbz2.dll'
+           {$ELSEIF DEFINED(DARWIN)}'libbz2.dylib'
+           {$ELSE}'libbz2.so.1'{$IFEND};
 
 {$IFDEF Bzip2Runtime}
 var

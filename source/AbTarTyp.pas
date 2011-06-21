@@ -2200,7 +2200,7 @@ begin
     else begin
       { need new stream to write }
       FreeAndNil(FStream);
-      FStream := TFileStream.Create(FArchiveName, fmOpenWrite or fmShareDenyWrite);
+      FStream := TFileStream.Create(FArchiveName, fmCreate or fmShareDenyWrite);
       FStream.CopyFrom(NewStream, NewStream.Size);
     end;
 

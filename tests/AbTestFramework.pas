@@ -35,8 +35,11 @@ interface
 
 uses
   TestFramework,
-{$IFDEF LINUX}
+{$IFDEF LibcAPI}
   Libc,
+{$ENDIF}
+{$IFDEF FPCUnixAPI}
+  Unix,
 {$ENDIF}
 {$IFDEF MSWINDOWS}
   Windows,
@@ -78,7 +81,9 @@ type
     procedure CheckDirMatch(aDir1, aDir2 : string);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
-  {$IFDEF DUNIT2}
+  {$IFNDEF DUNIT2}
+    procedure OnCheckCalled;
+  {$ELSE}
     property FTestName: string read FDisplayedName write FDisplayedName;
   {$ENDIF}
 
@@ -275,11 +280,12 @@ begin
         end
         else
           Files.Add(aDir + SR.Name);
+        // Make sure we can delete files and traverse directories
         {$IFDEF MSWINDOWS}
         if (SR.Attr and faReadOnly) <> 0 then
           FileSetAttr(aDir + SR.Name, SR.Attr and not faReadOnly);
         {$ENDIF}
-        {$IFDEF LINUX}
+        {$IFDEF UNIX}
         if S_ISDIR(SR.Mode) and (SR.Mode and (S_IWUSR or S_IXUSR) <> S_IWUSR or S_IXUSR) then
           chmod(PChar(aDir + SR.Name), SR.Mode or S_IWUSR or S_IXUSR);
         {$ENDIF}
@@ -373,7 +379,7 @@ var
 {$ENDIF}
 begin
 // Windows Directory is used to find
- {$IFDEF LINUX}
+ {$IFDEF UNIX}
    result := '/etc/'
  {$ELSE}
    GetWindowsDirectory(aDirBuf,SizeOf(aDirBuf));
@@ -400,6 +406,13 @@ begin
     FTempDirCreated := False;
   end;
 end;
+{ -------------------------------------------------------------------------- }
+{$IFNDEF DUNIT2}
+procedure TAbTestCase.OnCheckCalled;
+begin
+  FCheckCalled := True;
+end;
+{$ENDIF}
 
 { ===== TAbCompTestCase ==================================================== }
 function TAbCompTestCase.StreamComponent(aComp : TComponent) : string;

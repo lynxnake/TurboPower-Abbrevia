@@ -212,7 +212,7 @@ begin
     soCurrent   : inc(vmsPosition, Offset);
     soEnd       : vmsPosition := vmsSize + Offset;
   else
-    raise EAbVMSInvalidOrigin.Create( Integer(Origin), 0 );
+    raise EAbVMSInvalidOrigin.Create( Integer(Origin));
   end;
   Result := vmsPosition;
 end;

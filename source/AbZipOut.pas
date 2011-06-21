@@ -44,9 +44,7 @@ uses
   Windows,
   Messages,
 {$ENDIF}
-{$IFDEF LINUX}
   Types,
-{$ENDIF}
 {$IFDEF UsingCLX}
   QGraphics,
   QComCtrls,
