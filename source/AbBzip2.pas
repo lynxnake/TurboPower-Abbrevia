@@ -443,7 +443,7 @@ begin
   if hBzip2 <> 0 then
     Exit;
   hBzip2 := LoadLibrary(libbz2);
-  if hBzip2 <> 0 then
+  if hBzip2 = 0 then
     raise EBZip2Error.Create('Bzip2 shared library not found');
   @BZ2_bzCompressInit := GetProcAddress(hBzip2, 'BZ2_bzCompressInit');
   @BZ2_bzCompress := GetProcAddress(hBzip2, 'BZ2_bzCompress');
