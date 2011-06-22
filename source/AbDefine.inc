@@ -169,11 +169,11 @@
 {Pick an appropriate linking method if none of the above are activate}
 {$IF NOT DEFINED(Bzip2Static) AND NOT DEFINED(Bzip2Dynamic) AND NOT DEFINED(Bzip2Runtime)}
   {$IFDEF MSWINDOWS}
-     {$IFDEF FPC}
-       {$DEFINE Bzip2Runtime}
-     {$ELSE}
+     {$IF DEFINED(WIN32) AND NOT DEFINED(FPC)}
        {$DEFINE Bzip2Static}
-     {$ENDIF}
+     {$ELSE}
+       {$DEFINE Bzip2Runtime}
+     {$IFEND}
   {$ELSE}
     {$DEFINE Bzip2Dynamic}
   {$ENDIF}
@@ -279,10 +279,10 @@ all newer (zipx) compatible methods (Bzip2, Lzma, PPMd, WavPack)}
   {$DEFINE UnzipWavPackSupport}
 {$ENDIF}
 
-{ Linking .obj files isn't currently supported in Kylix }
-{$IFNDEF MSWINDOWS}
+{ Linking .obj files isn't currently supported in Kylix or FPC }
+{$IF DEFINED(FPC) OR NOT DEFINED(WIN32)}
   {$UNDEF UnzipLzmaSupport}
   {$UNDEF UnzipPPMdSupport}
   {$UNDEF UnzipWavPackSupport}
-{$ENDIF}
+{$IFEND}
 
