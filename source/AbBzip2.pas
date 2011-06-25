@@ -55,7 +55,7 @@ type
   TFree = procedure(opaque, Block: Pointer); cdecl;
 
   // Internal structure.  Ignore.
-  TBZStreamRec = packed record
+  TBZStreamRec = record
     next_in: PByte; // next input byte
     avail_in: Integer; // number of bytes available at next_in
     total_in_lo32: Integer; // total nb of input bytes read so far

@@ -547,7 +547,9 @@ begin
   begin
     GetMem(PropList, Result * SizeOf(Pointer));
     GetPropInfos(TypeInfo, PropList);
-  end;
+  end
+  else
+    PropList := nil;
 end;
 { -------------------------------------------------------------------------- }
 function TAbCompTestCase.AbGetPropValue(Instance: TObject;
