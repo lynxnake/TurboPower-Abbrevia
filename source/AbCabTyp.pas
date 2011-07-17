@@ -378,11 +378,16 @@ begin
   Result := TStream(hFile).Write(lpBuffer^, uBytes);
 end;
 { -------------------------------------------------------------------------- }
-procedure FDI_FileClose(hFile : PtrInt);
+function FDI_FileClose(hFile : PtrInt) : Longint;
   cdecl;
   {close a file}
 begin
-  TStream(hFile).Free;
+  try
+    TStream(hFile).Free;
+    Result := 0;
+  except
+    Result := -1;
+  end;
 end;
 { -------------------------------------------------------------------------- }
 function FDI_FileSeek(hFile : PtrInt; Offset : Longint; Origin : Integer) : Longint;
@@ -456,8 +461,8 @@ begin
       end;
     FDINT_Next_Cabinet :
       begin
-        Result := 1;
         NextCabName := string(pfdin^.psz3) + string(pfdin^.psz1);
+        Result := 1;
       end;
     FDINT_Close_File_Info :
       begin
@@ -468,6 +473,7 @@ begin
           FileSetAttr(Archive.FIIPName, pfdin^.attribs);
         end;
         Archive.DoCabItemProcessed;
+        Result := 1;
       end;
   end;
 end;

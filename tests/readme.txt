@@ -42,10 +42,6 @@ Known Failues:
 TAbUnZipperTests/TestGZipDecompress
     This is a failure in the deflate engine (bug 822243).
 
-TAbCabArchiveTests/Decompress Canterbury
-    This is something related to error handling.  The files are extracted 
-    correctly, but OnProcessItemFailure is called anyway.
-
 
 Known Non-Bugs:
 
