@@ -30,21 +30,31 @@
 interface
 
 uses
-  Classes, AbArcTyp, AbUtils, AbArcTypTests, AbTestFrameWork;
+  Classes, TestFrameWork, AbArcTyp, AbUtils, AbArcTypTests, AbTestFrameWork;
 
 type
   TAbCabArchiveTests = class(TAbArchiveMultiFileTests)
+  private
+    FItemFailed: Boolean;
+
+    procedure IncompleteItemFailure(Sender : TObject; Item : TAbArchiveItem;
+      ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
+      ErrorCode : Integer);
+
   protected
     class function ArchiveClass: TAbArchiveClass; override;
     class function ArchiveExt: string; override;
     class function ArchiveType: TAbArchiveType; override;
     class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
+
+  published
+    procedure TestIncompleteSpan;
   end;
 
 implementation
 
 uses
-  SysUtils, TestFrameWork, AbCabTyp;
+  SysUtils, AbCabTyp, AbFciFdi;
 
 {----------------------------------------------------------------------------}
 { TAbCabArchiveTests }
@@ -67,6 +77,36 @@ end;
 class function TAbCabArchiveTests.VerifyArchive(aStream: TStream): TAbArchiveType;
 begin
   Result := VerifyCab(aStream);
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.IncompleteItemFailure(Sender : TObject;
+  Item : TAbArchiveItem; ProcessType : TAbProcessType;
+  ErrorClass : TAbErrorClass; ErrorCode : Integer);
+begin
+  FItemFailed := True;
+  CheckEquals('kennedy.xls', Item.FileName);
+  Check(ProcessType = ptExtract, 'ItemFailure: ProcessType was not ptExtract');
+  Check(ErrorClass = ecCabError, 'ItemFailure: ErrorClass was not ecCabError');
+  Check(ErrorCode = Ord(FDIError_User_Abort), 'ItemFailure: ErrorCode was not user abort');
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestIncompleteSpan;
+var
+  Arc: TAbArchive;
+begin
+  // [3370538] Check that extracting a file spanned across two cabinets fails
+  // if the second cab isn't available .
+  AbCopyFile(CanterburyDir + 'Split\Split.cab', TestTempDir + 'Split.cab', True);
+  Arc := CreateArchive(TestTempDir + 'Split.cab', fmOpenRead);
+  try
+    Arc.OnProcessItemFailure := IncompleteItemFailure;
+    Arc.BaseDirectory := TestTempDir;
+    Arc.Load;
+    Arc.ExtractFiles('kennedy.xls');
+    Check(FItemFailed, 'ItemFailure was not called');
+  finally
+    Arc.Free;
+  end;
 end;
 {----------------------------------------------------------------------------}
 

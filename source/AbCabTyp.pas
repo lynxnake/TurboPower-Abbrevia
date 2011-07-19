@@ -405,7 +405,7 @@ var
   Item : TAbCabItem;
   Archive : TAbCabArchive;
 begin
-  Result := 1;
+  Result := 0;
   Archive := pfdin^.pv;
   with Archive do case fdint of
     FDINT_Cabinet_Info :
@@ -444,7 +444,6 @@ function FDI_ExtractFiles(fdint : FDINOTIFICATIONTYPE;
   {extract file from cabinet}
 var
   Archive : TAbCabArchive;
-  NextCabName : string;
 begin
   Result := 0;
   Archive := pfdin^.pv;
@@ -461,8 +460,10 @@ begin
       end;
     FDINT_Next_Cabinet :
       begin
-        NextCabName := string(pfdin^.psz3) + string(pfdin^.psz1);
-        Result := 1;
+        if pfdin^.fdie = FDIError_None then
+          Result := 0
+        else
+          Result := -1;
       end;
     FDINT_Close_File_Info :
       begin

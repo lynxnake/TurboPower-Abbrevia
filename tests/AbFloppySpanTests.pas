@@ -211,7 +211,6 @@ end;
 procedure TAbFloppySpanTests.DoRequestLastDisk(Sender: TObject;
   var Abort: Boolean);
 begin
-
   CheckRequest(rdLast);
   InsertDisk(3);
   FExpectedRequest := rdDisk1;
