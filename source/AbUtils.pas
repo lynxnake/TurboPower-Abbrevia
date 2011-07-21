@@ -624,7 +624,7 @@ begin
     NewFile := NewFile + AbPathDelim;
   NewFile := NewFile + AbAnyFile;
 
-  Found := FindFirst( NewFile, faDirectory, SR );
+  Found := FindFirst( NewFile, faDirectory or SearchAttr, SR );
   if Found = 0 then begin
     try
       while ( Found = 0 ) do begin
