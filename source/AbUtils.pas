@@ -1026,7 +1026,7 @@ case GetTimeZoneInformation(TZI) of
 	else
     Result := 0
 	end;
-Result := Result * SecsPerMin;
+Result := Result * SecondsInMinute;
 end;
 {$ENDIF}
 { -------------------------------------------------------------------------- }
@@ -1217,15 +1217,13 @@ begin
     AB_FMODE_FILE, AB_FMODE_FILE2: { standard file }
       Result := 0;
 
-    AB_FMODE_FILELINK:
-      Result := Result or faSymLink;
-
     AB_FMODE_DIR: { directory }
       Result := Result or faDirectory;
 
     AB_FMODE_FIFO,
     AB_FMODE_CHARSPECFILE,
     AB_FMODE_BLOCKSPECFILE,
+    AB_FMODE_FILELINK,
     AB_FMODE_SOCKET:
       Result := Result or faSysFile;
   end;
