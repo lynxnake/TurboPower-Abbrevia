@@ -49,6 +49,7 @@ type
 
   published
     procedure TestIncompleteSpan;
+    procedure TestNoSpan;
   end;
 
 implementation
@@ -104,6 +105,30 @@ begin
     Arc.Load;
     Arc.ExtractFiles('kennedy.xls');
     Check(FItemFailed, 'ItemFailure was not called');
+  finally
+    Arc.Free;
+  end;
+end;
+{----------------------------------------------------------------------------}
+procedure TAbCabArchiveTests.TestNoSpan;
+var
+  Arc: TAbCabArchive;
+begin
+  // Check that creating a single cabinet archive doesn't flag the cab as having
+  // a second volume (issue with D2007->D2009 conversion and Boolean vs BOOL in AbFciFdi)
+  Arc := TAbCabArchive.Create(TestTempDir + 'test.cab', fmCreate);
+  try
+    Arc.Load;
+    Arc.BaseDirectory := MPLDir;
+    Arc.AddFiles('MPL-1_1.txt', faAnyFile);
+    Arc.Save;
+  finally
+    Arc.Free;
+  end;
+  Arc := TAbCabArchive.Create(TestTempDir + 'test.cab', fmOpenRead);
+  try
+    Arc.Load;
+    Check(not Arc.HasNext and not Arc.HasPrev, 'Archive is part of a multi-cab set');
   finally
     Arc.Free;
   end;

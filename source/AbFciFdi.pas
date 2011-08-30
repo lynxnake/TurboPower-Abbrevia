@@ -77,7 +77,7 @@ type
   CabErrorRecord  = record
     ErrorCode     : Integer;
     ErrorType     : Integer;
-    ErrorPresent  : Boolean;
+    ErrorPresent  : BOOL;
   end;
 
   {FDI cabinet information structure}
@@ -142,16 +142,16 @@ type
       cdecl;
 {----------------------------------------------------------------------------}
   TFDIIsCabinet =
-    function(hfdi : HFDI; hf : PtrInt; pfdici : PFDICabInfo) : Boolean;
+    function(hfdi : HFDI; hf : PtrInt; pfdici : PFDICabInfo) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFDICopy =
     function(hfdi : HFDI; pszCabinet, pszCabPath : PAnsiChar;
-      flags : Integer; pfnfdin, pfnfdid : FARPROC; Archive : Pointer) : Boolean;
+      flags : Integer; pfnfdin, pfnfdid : FARPROC; Archive : Pointer) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFDIDestroy =
-    function(hfdi : HFDI) : Boolean;
+    function(hfdi : HFDI) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFCICreate =
@@ -162,21 +162,21 @@ type
 {----------------------------------------------------------------------------}
   TFCIAddFile =
     function(hfci : HFCI; pszFilePath, pszFileName : PAnsiChar;
-      fExecute : Boolean; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
-      typeCompress : Word) : Boolean;
+	  fExecute : BOOL; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
+      typeCompress : Word) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFCIFlushCabinet =
-    function(hfci : HFCI; fGetNextCab : Boolean;
-      pfnfcignc, pfnfcis : FARPROC) : Boolean;
+	function(hfci : HFCI; fGetNextCab : BOOL;
+      pfnfcignc, pfnfcis : FARPROC) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFCIFlushFolder =
-    function(hfci : HFCI; pfnfcignc, pfnfcis : FARPROC) : Boolean;
+	function(hfci : HFCI; pfnfcignc, pfnfcis : FARPROC) : BOOL;
       cdecl;
 {----------------------------------------------------------------------------}
   TFCIDestroy =
-    function(hfci : HFCI) : Boolean;
+    function(hfci : HFCI) : BOOL;
       cdecl;
 
 
@@ -195,7 +195,7 @@ function FDICreate(pfnalloc, pfnfree, pfnopen, pfnread,
   {  pError   -  pointer to error record }
 {----------------------------------------------------------------------------}
 function FDIIsCabinet(hfdi : HFDI; hf : PtrInt;
-  pfdici : PFDICabInfo) : Boolean;
+  pfdici : PFDICabInfo) : BOOL;
   {checks cabinet file for validity}
   {  hfdi   - FDI context }
   {  hf     - cabinet file handle }
@@ -203,7 +203,7 @@ function FDIIsCabinet(hfdi : HFDI; hf : PtrInt;
 {----------------------------------------------------------------------------}
 function FDICopy(hfdi : HFDI; pszCabinet, pszCabPath : PAnsiChar;
   flags : Integer; pfnfdin, pfnfdid : FARPROC;
-  Archive : Pointer) : Boolean;
+  Archive : Pointer) : BOOL;
   {enumerates every file in the cabinet.  The callback function }
   {should indicate whether or not to extract a given file}
   {  hfdi       - FDI context }
@@ -214,7 +214,7 @@ function FDICopy(hfdi : HFDI; pszCabinet, pszCabPath : PAnsiChar;
   {  pfnfdid    - decryption callback (currently not used)}
   {  Archive    - the calling TAbCabArchive instance }
 {----------------------------------------------------------------------------}
-function FDIDestroy(hfdi : HFDI) : Boolean;
+function FDIDestroy(hfdi : HFDI) : BOOL;
   {releases FDI context and frees resources}
   {  hfdi - FDI context }
 {----------------------------------------------------------------------------}
@@ -237,8 +237,8 @@ function FCICreate(pError : PCabErrorRecord;
   {  Archive   - the calling TAbCabArchive instance }
 {----------------------------------------------------------------------------}
 function FCIAddFile(hfci : HFCI; pszFilePath, pszFileName : PAnsiChar;
-  fExecute : Boolean; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
-  typeCompress : Word) : Boolean;
+  fExecute : BOOL; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
+  typeCompress : Word) : BOOL;
   {adds a file to the cabinet}
   {  hfci         - FCI context }
   {  pszFilePath  - full pathname of file being added }
@@ -249,8 +249,8 @@ function FCIAddFile(hfci : HFCI; pszFilePath, pszFileName : PAnsiChar;
   {  pfnfcigoi    - callback function to open file and get attributes }
   {  typeCompress - compression type to use }
 {----------------------------------------------------------------------------}
-function FCIFlushCabinet(hfci : HFCI; fGetNextCab : Boolean;
-  pfnfcignc, pfnfcis : FARPROC) : Boolean;
+function FCIFlushCabinet(hfci : HFCI; fGetNextCab : BOOL;
+  pfnfcignc, pfnfcis : FARPROC) : BOOL;
   {writes current cabinet file out to disk and optionally starts a new one}
   {  hfci        - FCI context }
   {  fGetNextCab - flag indicating whether to start a new cabinet }
@@ -258,13 +258,13 @@ function FCIFlushCabinet(hfci : HFCI; fGetNextCab : Boolean;
   {  pfnfcis     - callback function to relay progress }
 {----------------------------------------------------------------------------}
 function FCIFlushFolder(hfci : HFCI;
-  pfnfcignc, pfnfcis : FARPROC) : Boolean;
+  pfnfcignc, pfnfcis : FARPROC) : BOOL;
   {close current compression block and start a new one}
   {  hfci      - FCI context }
   {  pfnfcignc - callback function to obtain next cabinet info }
   {  pfnfcis   - callback function to relay progress }
 {----------------------------------------------------------------------------}
-function FCIDestroy(hfci : HFCI) : Boolean;
+function FCIDestroy(hfci : HFCI) : BOOL;
   {releases FCI context and frees resources}
   {  hfdi - FDI context }
 {----------------------------------------------------------------------------}
@@ -323,7 +323,7 @@ begin
 end;
 {----------------------------------------------------------------------------}
 function FDIIsCabinet(hfdi : HFDI; hf : PtrInt;
-  pfdici : PFDICabInfo) : Boolean;
+  pfdici : PFDICabInfo) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FDIIsCabinetProc) then
@@ -334,7 +334,7 @@ end;
 {----------------------------------------------------------------------------}
 function FDICopy(hfdi : HFDI; pszCabinet, pszCabPath : PAnsiChar;
   flags : Integer; pfnfdin, pfnfdid : FARPROC;
-  Archive : Pointer) : Boolean;
+  Archive : Pointer) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FDICopyProc) then
@@ -344,7 +344,7 @@ begin
     Result := False;
 end;
 {----------------------------------------------------------------------------}
-function FDIDestroy(hfdi : HFDI) : Boolean;
+function FDIDestroy(hfdi : HFDI) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FDIDestroyProc) then
@@ -368,8 +368,8 @@ begin
 end;
 {----------------------------------------------------------------------------}
 function FCIAddFile(hfci : HFCI; pszFilePath, pszFileName : PAnsiChar;
-  fExecute : Boolean; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
-  typeCompress : Word) : Boolean;
+  fExecute : BOOL; pfnfcignc, pfnfcis, pfnfcigoi : FARPROC;
+  typeCompress : Word) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FCIAddFileProc) then
@@ -379,8 +379,8 @@ begin
     Result := False;
 end;
 {----------------------------------------------------------------------------}
-function FCIFlushCabinet(hfci : HFCI; fGetNextCab : Boolean;
-  pfnfcignc, pfnfcis : FARPROC) : Boolean;
+function FCIFlushCabinet(hfci : HFCI; fGetNextCab : BOOL;
+  pfnfcignc, pfnfcis : FARPROC) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FCIFlushCabinetProc) then
@@ -390,7 +390,7 @@ begin
 end;
 {----------------------------------------------------------------------------}
 function FCIFlushFolder(hfci : HFCI;
-  pfnfcignc, pfnfcis : FARPROC) : Boolean;
+  pfnfcignc, pfnfcis : FARPROC) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FCIFlushFolderProc) then
@@ -399,7 +399,7 @@ begin
     Result := False;
 end;
 {----------------------------------------------------------------------------}
-function FCIDestroy(hfci : HFCI) : Boolean;
+function FCIDestroy(hfci : HFCI) : BOOL;
 begin
   LoadCabinetDLL;
   if Assigned(FCIDestroyProc) then
