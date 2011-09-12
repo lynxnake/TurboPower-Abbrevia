@@ -6,8 +6,8 @@ The Objective-C code is available from The Unarchiver's Google Code page at http
 Retrieved Jan 2011.  Converted to plain C, added InStream to CarrylessRangeCoder.h and removed CSInputBuffer dependency.  Added CreatePPMdModelVariantI/FreePPMdModelVariantI routines to simplify Pascal usage & header translation.
 
 Compile with:
-  Release: bcc32 -q -c *.c
-  Debug:   bcc32 -q -c -v -y *.c
+  Release: bcc32 -q -c -u- *.c
+  Debug:   bcc32 -q -c -u- -v -y *.c
 
 
 Dag's original posts in the Info-ZIP forums: http://www.info-zip.org/phpBB3/viewtopic.php?f=4&t=113 ("PPMd support?", Oct 4, 2008).

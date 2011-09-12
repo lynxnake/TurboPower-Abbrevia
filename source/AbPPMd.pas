@@ -43,11 +43,7 @@ procedure DecompressPPMd(aSrc, aDes: TStream);
 implementation
 
 uses
-  {$IFDEF HasCrtl}
-  crtl, //__assert, _malloc, _free, _memmove, _memset, _memcpy
-  {$ELSE}
   AbCrtl,
-  {$ENDIF}
   SysUtils,
   AbExcept;
 
@@ -60,10 +56,17 @@ uses
 { Linker derectives ======================================================== }
 
 // Don't re-order these;  it will cause linker errors
-{$L PPMdVariantI.obj}
-{$L PPMdContext.obj}
-{$L PPMdSubAllocatorVariantI.obj}
-{$L CarrylessRangeCoder.obj}
+{$IF DEFINED(WIN32)}
+  {$L Win32\PPMdVariantI.obj}
+  {$L Win32\PPMdContext.obj}
+  {$L Win32\PPMdSubAllocatorVariantI.obj}
+  {$L Win32\CarrylessRangeCoder.obj}
+{$ELSEIF DEFINED(WIN64)}
+  {$L Win64\PPMdVariantI.obj}
+  {$L Win64\PPMdContext.obj}
+  {$L Win64\PPMdSubAllocatorVariantI.obj}
+  {$L Win64\CarrylessRangeCoder.obj}
+{$IFEND}
 
 
 { CarrylessRangeCoder.h ==================================================== }
@@ -106,11 +109,11 @@ end;
 type
   PPMdModelVariantI = Pointer;
 
-function _CreatePPMdModelVariantI(const input: TInStream;
+function CreatePPMdModelVariantI(const input: TInStream;
   suballocsize, maxorder, restoration: Integer): PPMdModelVariantI; cdecl; external;
-procedure _FreePPMdModelVariantI(Self: PPMdModelVariantI); cdecl; external;
+procedure FreePPMdModelVariantI(Self: PPMdModelVariantI); cdecl; external;
 
-function _NextPPMdVariantIByte(Self: PPMdModelVariantI): Integer; cdecl; external;
+function NextPPMdVariantIByte(Self: PPMdModelVariantI): Integer; cdecl; external;
 
 
 { Decompression routines =================================================== }
@@ -133,13 +136,13 @@ begin
       OutPos := 0;
 
       ASrc.ReadBuffer(Params, SizeOf(Params));// Pkzip stream header
-      ppmd := _CreatePPMdModelVariantI(Src^,
+      ppmd := CreatePPMdModelVariantI(Src^,
         (((Params shr 4) and $FF) + 1) shl 20,// sub-allocator size
         (Params and $0F) + 1,                 // model order
         Params shr 12);                       // model restoration method
       try
           while True do begin
-            nextByte := _NextPPMdVariantIByte(ppmd);
+            nextByte := NextPPMdVariantIByte(ppmd);
             if nextByte < 0 then Break;
             OutBuf[OutPos] := Byte(nextByte);
             Inc(OutPos);
@@ -151,7 +154,7 @@ begin
           if OutPos > 0 then
             aDes.WriteBuffer(OutBuf^, OutPos);
       finally
-        _FreePPMdModelVariantI(ppmd);
+        FreePPMdModelVariantI(ppmd);
       end;
     finally
       FreeMem(OutBuf);

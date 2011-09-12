@@ -5,4 +5,4 @@ Original download available from http://downloads.sourceforge.net/sevenzip/lzma9
 Added #pragma pack(push, 1) / #pragma pack(pop) to LzmaDec.h, LzmaEnc.h, Types.h
 
 Compile with
-  bcc32 -q -c -w-8004 -w-8065 *.c
+  bcc32 -q -c -u- -w-8004 -w-8065 *.c

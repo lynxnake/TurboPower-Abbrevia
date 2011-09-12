@@ -39,6 +39,9 @@
  *
  * Pascal wrapper created by Edison Mera, version 1.04
  * http://edisonlife.homelinux.com/
+ *
+ * Dynamic and runtime linking and Win64/OS X/Linux support by Craig Peterson
+ * http://tpabbrevia.sourceforge.net/
  * ***** END LICENSE BLOCK ***** *)
 
 unit AbBzip2;
@@ -181,6 +184,10 @@ type
 
 implementation
 
+// Compile for Win64 using MSVC
+//   <Path To MSVC>\bin\x86_amd64\cl.exe -c -nologo -GS- -Z7 -wd4086 -Gs32768
+//      -DBZ_NO_STDIO blocksort.c huffman.c compress.c decompress.c bzlib.c
+
 uses
 {$IFDEF Bzip2Runtime}
 {$IF DEFINED(FPC)}
@@ -192,18 +199,26 @@ uses
   AbUtils;
 
 {$IFDEF Bzip2Static}
-{$L bz2_blocksort.obj}
-{$L bz2_huffman.obj}
-{$L bz2_compress.obj}
-{$L bz2_decompress.obj}
-{$L bz2_bzlib.obj}
+{$IF DEFINED(WIN32)}
+  {$L Win32\blocksort.obj}
+  {$L Win32\huffman.obj}
+  {$L Win32\compress.obj}
+  {$L Win32\decompress.obj}
+  {$L Win32\bzlib.obj}
+{$ELSEIF DEFINED(WIN64)}
+  {$L Win64\blocksort.obj}
+  {$L Win64\huffman.obj}
+  {$L Win64\compress.obj}
+  {$L Win64\decompress.obj}
+  {$L Win64\bzlib.obj}
+{$IFEND}
 
-procedure _BZ2_hbMakeCodeLengths; external;
-procedure _BZ2_blockSort; external;
-procedure _BZ2_hbCreateDecodeTables; external;
-procedure _BZ2_hbAssignCodes; external;
-procedure _BZ2_compressBlock; external;
-procedure _BZ2_decompress; external;
+procedure BZ2_hbMakeCodeLengths; external;
+procedure BZ2_blockSort; external;
+procedure BZ2_hbCreateDecodeTables; external;
+procedure BZ2_hbAssignCodes; external;
+procedure BZ2_compressBlock; external;
+procedure BZ2_decompress; external;
 {$ENDIF}
 
 type
@@ -237,7 +252,7 @@ const
   BZ_BLOCK_SIZE_100K = 9;
 
 {$IFDEF Bzip2Static}
-  _BZ2_rNums: array[0..511] of Longint = (
+  BZ2_rNums: array[0..511] of Longint = (
     619, 720, 127, 481, 931, 816, 813, 233, 566, 247,
     985, 724, 205, 454, 863, 491, 741, 242, 949, 214,
     733, 859, 335, 708, 621, 574, 73, 654, 730, 472,
@@ -292,7 +307,7 @@ const
     936, 638
     );
 
-  _BZ2_crc32Table: array[0..255] of Longint = (
+  BZ2_crc32Table: array[0..255] of Longint = (
     $00000000, $04C11DB7, $09823B6E, $0D4326D9,
     $130476DC, $17C56B6B, $1A864DB2, $1E475005,
     $2608EDB8, $22C9F00F, $2F8AD6D6, $2B4BCB61,
@@ -359,17 +374,17 @@ const
     -$434B9993, -$478A8426, -$4AC9A2FD, -$4E08BF4C
     );
 
-procedure _bz_internal_error(errcode: Integer); cdecl;
+procedure bz_internal_error(errcode: Integer); cdecl;
 begin
   raise EBZip2Error.CreateFmt('Compression Error %d', [errcode]);
 end; { _bz_internal_error }
 
-function _malloc(size: Integer): Pointer; cdecl;
+function malloc(size: Integer): Pointer; cdecl;
 begin
   GetMem(Result, Size);
 end; { _malloc }
 
-procedure _free(block: Pointer); cdecl;
+procedure free(block: Pointer); cdecl;
 begin
   FreeMem(block);
 end; { _free }
@@ -409,32 +424,40 @@ var
 // deflate compresses data
 function BZ2_bzCompressInit(var strm: TBZStreamRec; blockSize100k: Integer;
   verbosity: Integer; workFactor: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzCompressInit'{$ENDIF};
 
 function BZ2_bzCompress(var strm: TBZStreamRec; action: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzCompress'{$ENDIF};
 
 function BZ2_bzCompressEnd(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzCompressEnd'{$ENDIF};
 
 function BZ2_bzBuffToBuffCompress(dest: Pointer; var destLen: Integer; source: Pointer;
   sourceLen, blockSize100k, verbosity, workFactor: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzBuffToBuffCompress'{$ENDIF};
 
 // inflate decompresses data
 function BZ2_bzDecompressInit(var strm: TBZStreamRec; verbosity: Integer;
   small: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzDecompressInit'{$ENDIF};
 
 function BZ2_bzDecompress(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzDecompress'{$ENDIF};
 
 function BZ2_bzDecompressEnd(var strm: TBZStreamRec): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzDecompressEnd'{$ENDIF};
 
 function BZ2_bzBuffToBuffDecompress(dest: Pointer; var destLen: Integer; source: Pointer;
   sourceLen, small, verbosity: Integer): Integer;
-  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF};
+  {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF} external {$IFDEF Bzip2Dynamic}libbz2{$ENDIF}
+  {$IFDEF DARWIN}name '_BZ2_bzBuffToBuffDecompress'{$ENDIF};
 {$ENDIF}
 
 procedure LoadBzip2DLL;

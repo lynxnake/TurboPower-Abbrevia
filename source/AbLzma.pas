@@ -50,11 +50,7 @@ procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
 implementation
 
 uses
-  {$IFDEF HasCrtl}
-  crtl,
-  {$ELSE}
   AbCrtl,
-  {$ENDIF}
   Windows,
   SysUtils;
 
@@ -66,7 +62,7 @@ type
   PUInt32 = ^UInt32;
   size_t = {$IF defined(CPUX64)}Int64{$ELSE}Integer{$IFEND}; // NativeInt is 8 bytes in Delphi 2007
 
-function __beginthreadex(security: Pointer; stack_size: Cardinal;
+function _beginthreadex(security: Pointer; stack_size: Cardinal;
   start_address: Pointer; arglist: Pointer; initflag: Cardinal;
   thrdaddr: Pointer): PUInt; cdecl;
   external 'msvcrt.dll' {$IFNDEF BCB}name '_beginthreadex'{$ENDIF};
@@ -196,21 +192,21 @@ const
   LZMA_STATUS_NEEDS_MORE_INPUT = 4;            // you must provide more input bytes
   LZMA_STATUS_MAYBE_FINISHED_WITHOUT_MARK = 5; // there is probability that stream was finished without end mark
 
-procedure _LzmaDec_Construct(var p: CLzmaDec); cdecl;
+procedure LzmaDec_Construct(var p: CLzmaDec); cdecl;
 begin
   p.dic := nil;
   p.probs := nil;
 end;
 
-procedure _LzmaDec_Init(var p: CLzmaDec); cdecl; external;
+procedure LzmaDec_Init(var p: CLzmaDec); cdecl; external;
 
-function _LzmaDec_DecodeToBuf(var p: CLzmaDec; var dest: Byte; var destLen: size_t;
+function LzmaDec_DecodeToBuf(var p: CLzmaDec; var dest: Byte; var destLen: size_t;
   var src: Byte; var srcLen: size_t; finishMode: ELzmaFinishMode;
   var status: ELzmaStatus): SRes; cdecl; external;
 
-function _LzmaDec_Allocate(var state: CLzmaDec; prop: PByte;
+function LzmaDec_Allocate(var state: CLzmaDec; prop: PByte;
   propsSize: Integer; const alloc: ISzAlloc): SRes; cdecl; external;
-procedure _LzmaDec_Free(var state: CLzmaDec; const alloc: ISzAlloc); cdecl; external;
+procedure LzmaDec_Free(var state: CLzmaDec; const alloc: ISzAlloc); cdecl; external;
 
 
 { LzmaEnc.h declarations =================================================== }
@@ -239,55 +235,63 @@ type
 { Forward declarations ===================================================== }
 
 // LzFind
-procedure _MatchFinder_NeedMove; external;
-procedure _MatchFinder_GetPointerToCurrentPos; external;
-procedure _MatchFinder_MoveBlock; external;
-procedure _MatchFinder_ReadIfRequired; external;
+procedure MatchFinder_NeedMove; external;
+procedure MatchFinder_GetPointerToCurrentPos; external;
+procedure MatchFinder_MoveBlock; external;
+procedure MatchFinder_ReadIfRequired; external;
 
-procedure _MatchFinder_Construct; external;
+procedure MatchFinder_Construct; external;
 
-procedure _MatchFinder_Create; external;
-procedure _MatchFinder_Free; external;
-procedure _MatchFinder_Normalize3; external;
-procedure _MatchFinder_ReduceOffsets; external;
+procedure MatchFinder_Create; external;
+procedure MatchFinder_Free; external;
+procedure MatchFinder_Normalize3; external;
+procedure MatchFinder_ReduceOffsets; external;
 
-procedure _GetMatchesSpec1; external;
+procedure GetMatchesSpec1; external;
 
-procedure _MatchFinder_Init; external;
-procedure _MatchFinder_CreateVTable; external;
+procedure MatchFinder_Init; external;
+procedure MatchFinder_CreateVTable; external;
 
 // LzFindMt
-procedure _MatchFinderMt_Construct; external;
-procedure _MatchFinderMt_Destruct; external;
-procedure _MatchFinderMt_Create; external;
-procedure _MatchFinderMt_CreateVTable; external;
-procedure _MatchFinderMt_ReleaseStream; external;
+procedure MatchFinderMt_Construct; external;
+procedure MatchFinderMt_Destruct; external;
+procedure MatchFinderMt_Create; external;
+procedure MatchFinderMt_CreateVTable; external;
+procedure MatchFinderMt_ReleaseStream; external;
 
 // LzmaEnc
-procedure _LzmaEncProps_Init(var p: CLzmaEncProps); cdecl; external;
+procedure LzmaEncProps_Init(var p: CLzmaEncProps); cdecl; external;
 
 // LzmaEnc - CLzmaEncHandle interface
-function _LzmaEnc_Create(const alloc: ISzAlloc): CLzmaEncHandle; cdecl; external;
-procedure _LzmaEnc_Destroy(p: CLzmaEncHandle; const alloc, allocBig: ISzAlloc); cdecl; external;
-function _LzmaEnc_SetProps(p: CLzmaEncHandle; var props: CLzmaEncProps): SRes; cdecl; external;
-function _LzmaEnc_WriteProperties(p: CLzmaEncHandle; properties: PByte;
+function LzmaEnc_Create(const alloc: ISzAlloc): CLzmaEncHandle; cdecl; external;
+procedure LzmaEnc_Destroy(p: CLzmaEncHandle; const alloc, allocBig: ISzAlloc); cdecl; external;
+function LzmaEnc_SetProps(p: CLzmaEncHandle; var props: CLzmaEncProps): SRes; cdecl; external;
+function LzmaEnc_WriteProperties(p: CLzmaEncHandle; properties: PByte;
   var size: size_t): SRes; cdecl; external;
-function _LzmaEnc_Encode(p: CLzmaEncHandle; var outStream: ISeqOutStream;
+function LzmaEnc_Encode(p: CLzmaEncHandle; var outStream: ISeqOutStream;
   var inStream: ISeqInStream; var progress: ICompressProgress;
   const alloc, allocBig: ISzAlloc): SRes; cdecl; external;
-function _LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
+function LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
   src: PByte; srcLen: size_t; writeEndMark: Integer;
   const progress: ICompressProgress; const alloc, allocBig: ISzAlloc): SRes; cdecl; external;
 
 
 { Linker directives ======================================================== }
 
-{$L LzFind.obj}
-{$L LzFindMt.obj}
-{$L LzmaDec.obj}
-{$L LzmaEnc.obj}
-{$L Threads.obj}
-
+{$WARN BAD_GLOBAL_SYMBOL OFF}
+{$IF DEFINED(WIN32)}
+  {$L Win32\LzFind.obj}
+  {$L Win32\LzFindMt.obj}
+  {$L Win32\LzmaDec.obj}
+  {$L Win32\LzmaEnc.obj}
+  {$L Win32\Threads.obj}
+{$ELSEIF DEFINED(WIN64)}
+  {$L Win64\LzFind.obj}
+  {$L Win64\LzFindMt.obj}
+  {$L Win64\LzmaDec.obj}
+  {$L Win64\LzmaEnc.obj}
+  {$L Win64\Threads.obj}
+{$IFEND}
 
 { Helper Routines ========================================================== }
 
@@ -363,7 +367,7 @@ begin
   inPos := 0;
   inSize := 0;
   outPos := 0;
-  _LzmaDec_Init(aState);
+  LzmaDec_Init(aState);
   while True do
   begin
     if inPos = inSize then
@@ -382,7 +386,7 @@ begin
         finishMode := LZMA_FINISH_END;
       end;
 
-      Result := _LzmaDec_DecodeToBuf(aState, outBuf[outPos], outProcessed,
+      Result := LzmaDec_DecodeToBuf(aState, outBuf[outPos], outProcessed,
         inBuf[inPos], inProcessed, finishMode, status);
       Inc(inPos, inProcessed);
       Inc(outPos, outProcessed);
@@ -415,12 +419,12 @@ procedure LzmaDecode(aProperties: PByte; aPropSize: Integer; aSrc, aDes: TStream
 var
   LzmaState: CLzmaDec;
 begin
-  _LzmaDec_Construct(LzmaState);
+  LzmaDec_Construct(LzmaState);
   try
-    RINOK(_LzmaDec_Allocate(LzmaState, aProperties, aPropSize, g_Alloc));
+    RINOK(LzmaDec_Allocate(LzmaState, aProperties, aPropSize, g_Alloc));
     RINOK(LzmaDecode2(LzmaState, aDes, aSrc, aUncompressedSize));
   finally
-    _LzmaDec_Free(LzmaState, g_Alloc);
+    LzmaDec_Free(LzmaState, g_Alloc);
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -456,16 +460,16 @@ begin
   outStreamRec.Intf.Write := ISeqOutStream_Write;
   outStreamRec.Stream := outStream;
 
-  enc := _LzmaEnc_Create(g_Alloc);
+  enc := LzmaEnc_Create(g_Alloc);
   if enc = nil then
     RINOK(SZ_ERROR_MEM);
   try
-    _LzmaEncProps_Init(props);
-    RINOK(_LzmaEnc_SetProps(enc, props));
+    LzmaEncProps_Init(props);
+    RINOK(LzmaEnc_SetProps(enc, props));
 
     headerSize := LZMA_PROPS_SIZE;
 
-    RINOK(_LzmaEnc_WriteProperties(enc, @header[0], headerSize));
+    RINOK(LzmaEnc_WriteProperties(enc, @header[0], headerSize));
 
     PInt64(@header[headerSize])^ := fileSize;
     Inc(HeaderSize, SizeOf(Int64));
@@ -473,10 +477,10 @@ begin
     if outStream.Write(header, headerSize) <> headerSize then
       RINOK(SZ_ERROR_WRITE)
     else
-      RINOK(_LzmaEnc_Encode(enc, outStreamRec.Intf, inStreamRec.Intf,
+      RINOK(LzmaEnc_Encode(enc, outStreamRec.Intf, inStreamRec.Intf,
         ICompressProgress(nil^), g_Alloc, g_Alloc));
   finally
-    _LzmaEnc_Destroy(enc, g_Alloc, g_Alloc);
+    LzmaEnc_Destroy(enc, g_Alloc, g_Alloc);
   end;
 end;
 

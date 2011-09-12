@@ -31,10 +31,10 @@ static uint32_t ExpandUnitsVariantI(PPMdSubAllocatorVariantI *self,uint32_t oldo
 static uint32_t ShrinkUnitsVariantI(PPMdSubAllocatorVariantI *self,uint32_t oldoffs,int oldnum,int newnum);
 static void FreeUnitsVariantI(PPMdSubAllocatorVariantI *self,uint32_t offs,int num);
 
-static inline void GlueFreeBlocks(PPMdSubAllocatorVariantI *self);
+static void GlueFreeBlocks(PPMdSubAllocatorVariantI *self);
 
-static inline void *_OffsetToPointer(PPMdSubAllocatorVariantI *self,uint32_t offset) { return ((uint8_t *)self)+offset; }
-static inline uint32_t _PointerToOffset(PPMdSubAllocatorVariantI *self,void *pointer) { return ((uintptr_t)pointer)-(uintptr_t)self; }
+static void *_OffsetToPointer(PPMdSubAllocatorVariantI *self,uint32_t offset) { return ((uint8_t *)self)+offset; }
+static uint32_t _PointerToOffset(PPMdSubAllocatorVariantI *self,void *pointer) { return ((uintptr_t)pointer)-(uintptr_t)self; }
 
 
 
@@ -263,7 +263,7 @@ void ExpandTextAreaVariantI(PPMdSubAllocatorVariantI *self)
 
 
 
-static inline void GlueFreeBlocks(PPMdSubAllocatorVariantI *self)
+static void GlueFreeBlocks(PPMdSubAllocatorVariantI *self)
 {
 	int i;
 	PPMdMemoryBlockVariantI s0,*p0;
@@ -361,7 +361,7 @@ static void InsertBlockAfter(PPMdMemoryBlockVariantI *self,void *pv,int NU,PPMdS
 	self->Stamp++;
 }
 
-static inline unsigned int I2B(PPMdSubAllocatorVariantI *self,int index) { return UNIT_SIZE*self->Index2Units[index]; }
+static unsigned int I2B(PPMdSubAllocatorVariantI *self,int index) { return UNIT_SIZE*self->Index2Units[index]; }
 
 static void SplitBlock(PPMdSubAllocatorVariantI *self,void *pv,int oldindex,int newindex)
 {

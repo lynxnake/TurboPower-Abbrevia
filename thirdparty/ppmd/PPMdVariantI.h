@@ -6,6 +6,10 @@
 
 // PPMd Variant I. Used by WinZip.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MRM_RESTART 0
 #define MRM_CUT_OFF 1
 #define MRM_FREEZE 2
@@ -31,5 +35,9 @@ void FreePPMdModelVariantI(PPMdModelVariantI *self);
 void StartPPMdModelVariantI(PPMdModelVariantI *self,InStream *input,
 PPMdSubAllocatorVariantI *alloc,int maxorder,int restoration);
 int NextPPMdVariantIByte(PPMdModelVariantI *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

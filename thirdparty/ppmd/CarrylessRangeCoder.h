@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct InStream InStream;
 
 typedef struct InStream
@@ -11,7 +15,7 @@ typedef struct InStream
 	uint8_t (*nextByte)(InStream *self);
 };
 
-static inline uint8_t InStreamNextByte(InStream *self) { return self->nextByte(self); }
+static uint8_t InStreamNextByte(InStream *self) { return self->nextByte(self); }
 
 typedef struct CarrylessRangeCoder
 {
@@ -32,5 +36,9 @@ int NextWeightedBitFromRangeCoder(CarrylessRangeCoder *self,int weight,int size)
 int NextWeightedBitFromRangeCoder2(CarrylessRangeCoder *self,int weight,int shift);
 
 void NormalizeRangeCoder(CarrylessRangeCoder *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

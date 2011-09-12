@@ -46,11 +46,7 @@ procedure DecompressWavPack(aSrc, aDes: TStream);
 implementation
 
 uses
-  {$IFDEF HasCrtl}
-  crtl,
-  {$ELSE}
   AbCrtl,
-  {$ENDIF}
   Math,
   SysUtils;
 
@@ -61,118 +57,131 @@ uses
 
 { C runtime library ======================================================== }
 
-function _fabs(x: Double): Double; cdecl;
+function fabs(x: Double): Double; cdecl;
 begin
   if x < 0 then Result := -1
   else Result := x
 end;
 
-function _floor(x: Double): Integer; cdecl;
+function floor(x: Double): Integer; cdecl;
 begin
   Result := Floor(x);
 end;
 
-function _labs(n: Integer): Integer; cdecl;
+function labs(n: Integer): Integer; cdecl;
 begin
   if n < 0 then Result := -n
   else Result := n;
 end;
 
-function __stricmp(str1, str2: PAnsiChar): Integer; cdecl;
+function _stricmp(str1, str2: PAnsiChar): Integer; cdecl;
   external 'msvcrt.dll' name '_stricmp';
 
-function _strncmp(str1, str2: PAnsiChar; num: Integer): Integer; cdecl;
+function strncmp(str1, str2: PAnsiChar; num: Integer): Integer; cdecl;
   external 'msvcrt.dll' {$IFNDEF BCB}name 'strncmp'{$ENDIF};
 
 
 { Forward declarations ===================================================== }
 
 // bits.c
-procedure _bs_open_read; external;
-procedure _bs_close_read; external;
-procedure _bs_open_write; external;
-procedure _bs_close_write; external;
-procedure _little_endian_to_native; external;
-procedure _native_to_little_endian; external;
+procedure bs_open_read; external;
+procedure bs_close_read; external;
+procedure bs_open_write; external;
+procedure bs_close_write; external;
+procedure little_endian_to_native; external;
+procedure native_to_little_endian; external;
 
 // extra1.c
-procedure _execute_mono; external;
+procedure execute_mono; external;
 
 // extra2.c
-procedure _execute_stereo; external;
+procedure execute_stereo; external;
 
 // float.c
-procedure _float_values; external;
-procedure _read_float_info; external;
-procedure _scan_float_data; external;
-procedure _send_float_data; external;
-procedure _WavpackFloatNormalize; external;
-procedure _write_float_info; external;
+procedure float_values; external;
+procedure read_float_info; external;
+procedure scan_float_data; external;
+procedure send_float_data; external;
+procedure WavpackFloatNormalize; external;
+procedure write_float_info; external;
 
 // metadata.c
-procedure _add_to_metadata; external;
-procedure _copy_metadata; external;
-procedure _free_metadata; external;
-procedure _process_metadata; external;
-procedure _read_metadata_buff; external;
-procedure _write_metadata_block; external;
+procedure add_to_metadata; external;
+procedure copy_metadata; external;
+procedure free_metadata; external;
+procedure process_metadata; external;
+procedure read_metadata_buff; external;
+procedure write_metadata_block; external;
 
 // pack.c
-procedure _pack_block; external;
-procedure _pack_init; external;
+procedure pack_block; external;
+procedure pack_init; external;
 
 // tags.c
-procedure _load_tag; external;
-procedure _valid_tag; external;
+procedure load_tag; external;
+procedure valid_tag; external;
 
 // unpack.c
-procedure _check_crc_error; external;
-procedure _free_tag; external;
-procedure _unpack_init; external;
-procedure _unpack_samples; external;
+procedure check_crc_error; external;
+procedure free_tag; external;
+procedure unpack_init; external;
+procedure unpack_samples; external;
 
 // unpack3.c
-procedure _free_stream3; external;
-procedure _get_version3; external;
-procedure _get_sample_index3; external;
-procedure _open_file3; external;
-procedure _seek_sample3; external;
-procedure _unpack_samples3; external;
+procedure free_stream3; external;
+procedure get_version3; external;
+procedure get_sample_index3; external;
+procedure open_file3; external;
+procedure seek_sample3; external;
+procedure unpack_samples3; external;
 
 // words.c
-procedure _exp2s; external;
-procedure _flush_word; external;
-procedure _get_word; external;
-procedure _get_words_lossless; external;
-procedure _init_words; external;
-procedure _log2s; external;
-procedure _log2buffer; external;
-procedure _nosend_word; external;
-procedure _read_hybrid_profile; external;
-procedure _read_entropy_vars; external;
-procedure _restore_weight; external;
-procedure _scan_word; external;
-procedure _send_word; external;
-procedure _send_words_lossless; external;
-procedure _store_weight; external;
-procedure _write_entropy_vars; external;
-procedure _write_hybrid_profile; external;
+procedure exp2s; external;
+procedure flush_word; external;
+procedure get_word; external;
+procedure get_words_lossless; external;
+procedure init_words; external;
+procedure log2s; external;
+procedure log2buffer; external;
+procedure nosend_word; external;
+procedure read_hybrid_profile; external;
+procedure read_entropy_vars; external;
+procedure restore_weight; external;
+procedure scan_word; external;
+procedure send_word; external;
+procedure send_words_lossless; external;
+procedure store_weight; external;
+procedure write_entropy_vars; external;
+procedure write_hybrid_profile; external;
 
 
 { Linker derectives ======================================================== }
 
-{$L wv_bits.obj}
-{$L wv_extra1.obj}
-{$L wv_extra2.obj}
-{$L wv_float.obj}
-{$L wv_metadata.obj}
-{$L wv_pack.obj}
-{$L wv_tags.obj}
-{$L wv_unpack.obj}
-{$L wv_unpack3.obj}
-{$L wv_words.obj}
-{$L wv_wputils.obj}
-
+{$IF DEFINED(WIN32)}
+  {$L Win32\wv_bits.obj}
+  {$L Win32\wv_extra1.obj}
+  {$L Win32\wv_extra2.obj}
+  {$L Win32\wv_float.obj}
+  {$L Win32\wv_metadata.obj}
+  {$L Win32\wv_pack.obj}
+  {$L Win32\wv_tags.obj}
+  {$L Win32\wv_unpack.obj}
+  {$L Win32\wv_unpack3.obj}
+  {$L Win32\wv_words.obj}
+  {$L Win32\wv_wputils.obj}
+{$ELSEIF DEFINED(WIN64)}
+  {$L Win64\wv_bits.obj}
+  {$L Win64\wv_extra1.obj}
+  {$L Win64\wv_extra2.obj}
+  {$L Win64\wv_float.obj}
+  {$L Win64\wv_metadata.obj}
+  {$L Win64\wv_pack.obj}
+  {$L Win64\wv_tags.obj}
+  {$L Win64\wv_unpack.obj}
+  {$L Win64\wv_unpack3.obj}
+  {$L Win64\wv_words.obj}
+  {$L Win64\wv_wputils.obj}
+{$IFEND}
 
 { wavpack_local.h ========================================================== }
 
@@ -206,24 +215,24 @@ type
 
 { wputils.c ================================================================ }
 
-function _WavpackOpenFileInputEx(const reader: WavpackStreamReader;
+function WavpackOpenFileInputEx(const reader: WavpackStreamReader;
   wv_id, wvc_id: Pointer; error: PAnsiChar; flags, norm_offset: Integer): WavpackContext;
   cdecl; external;
 
-function _WavpackGetWrapperBytes(wpc: WavpackContext): uint32_t; cdecl; external;
-function _WavpackGetWrapperData(wpc: WavpackContext): PByte; cdecl; external;
-procedure _WavpackFreeWrapper (wpc: WavpackContext); cdecl; external;
+function WavpackGetWrapperBytes(wpc: WavpackContext): uint32_t; cdecl; external;
+function WavpackGetWrapperData(wpc: WavpackContext): PByte; cdecl; external;
+procedure WavpackFreeWrapper (wpc: WavpackContext); cdecl; external;
 
-procedure _WavpackSeekTrailingWrapper(wpc: WavpackContext); cdecl; external;
+procedure WavpackSeekTrailingWrapper(wpc: WavpackContext); cdecl; external;
 
-function _WavpackGetNumSamples(wpc: WavpackContext): uint32_t; cdecl; external;
-function _WavpackGetNumChannels(wpc: WavpackContext): Integer; cdecl; external;
-function _WavpackGetBytesPerSample (wpc: WavpackContext): Integer; cdecl; external;
+function WavpackGetNumSamples(wpc: WavpackContext): uint32_t; cdecl; external;
+function WavpackGetNumChannels(wpc: WavpackContext): Integer; cdecl; external;
+function WavpackGetBytesPerSample (wpc: WavpackContext): Integer; cdecl; external;
 
-function _WavpackUnpackSamples(wpc: WavpackContext; buffer: Pointer;
+function WavpackUnpackSamples(wpc: WavpackContext; buffer: Pointer;
   samples: uint32_t): uint32_t; cdecl; external;
 
-function _WavpackCloseFile(wpc: WavpackContext): WavpackContext; cdecl; external;
+function WavpackCloseFile(wpc: WavpackContext): WavpackContext; cdecl; external;
 
 
 { TWavPackStream implementation ============================================ }
@@ -368,18 +377,18 @@ begin
   FillChar(Src, SizeOf(Src), 0);
   Src.Stream := aSrc;
 
-  Context := _WavpackOpenFileInputEx(StreamReader, @Src, nil, Error, OPEN_WRAPPER, 0);
+  Context := WavpackOpenFileInputEx(StreamReader, @Src, nil, Error, OPEN_WRAPPER, 0);
   if Context = nil then
     raise Exception.Create('WavPack decompression failed: ' + Error);
   try
     // Write .wav header
-    if _WavpackGetWrapperBytes(Context) > 0 then begin
-      aDes.WriteBuffer(_WavpackGetWrapperData(Context)^, _WavpackGetWrapperBytes(Context));
-      _WavpackFreeWrapper(Context);
+    if WavpackGetWrapperBytes(Context) > 0 then begin
+      aDes.WriteBuffer(WavpackGetWrapperData(Context)^, WavpackGetWrapperBytes(Context));
+      WavpackFreeWrapper(Context);
     end;
 
-    NumChannels := _WavpackGetNumChannels(Context);
-    bps := _WavpackGetBytesPerSample(Context);
+    NumChannels := WavpackGetNumChannels(Context);
+    bps := WavpackGetBytesPerSample(Context);
     BytesPerSample := NumChannels * bps;
 
     GetMem(OutputBuf, OutputBufSize);
@@ -391,7 +400,7 @@ begin
       SamplesToUnpack := (OutputBufSize - (PtrInt(OutputPtr) - PtrInt(OutputBuf))) div BytesPerSample;
       if (SamplesToUnpack > 4096) then
         SamplesToUnpack := 4096;
-      SamplesUnpacked := _WavpackUnpackSamples(Context, DecodeBuf, SamplesToUnpack);
+      SamplesUnpacked := WavpackUnpackSamples(Context, DecodeBuf, SamplesToUnpack);
 
       // Convert from 32-bit integers down to appriopriate bit depth
       // and copy to output buffer.
@@ -408,22 +417,22 @@ begin
     until (SamplesUnpacked = 0);
 
     // Write .wav footer
-    while _WavpackGetWrapperBytes(Context) > 0 do begin
+    while WavpackGetWrapperBytes(Context) > 0 do begin
       try
-        aDes.WriteBuffer(_WavpackGetWrapperData(Context)^,
-          _WavpackGetWrapperBytes(Context));
+        aDes.WriteBuffer(WavpackGetWrapperData(Context)^,
+          WavpackGetWrapperBytes(Context));
       finally
-        _WavpackFreeWrapper(Context);
+        WavpackFreeWrapper(Context);
       end;
       // Check for more RIFF data
-      _WavpackUnpackSamples (Context, DecodeBuf, 1);
+      WavpackUnpackSamples (Context, DecodeBuf, 1);
     end;
   finally
     if DecodeBuf <> nil then
       FreeMemory(DecodeBuf);
     if OutputBuf <> nil then
       FreeMemory(OutputBuf);
-    _WavpackCloseFile(Context);
+    WavpackCloseFile(Context);
   end;
 end;
 

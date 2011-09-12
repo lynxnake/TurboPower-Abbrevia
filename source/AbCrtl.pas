@@ -38,78 +38,89 @@ interface
 
 const
   __turboFloat: LongInt = 0;
+  _fltused: LongInt = 0;
 
-procedure __llshl; cdecl;
-procedure __llushr; cdecl;
-procedure __ftol; cdecl;
-  external 'msvcrt.dll' {$IFNDEF BCB}name '_ftol'{$ENDIF};
+procedure abs; cdecl;
+  external 'msvcrt.dll';
+procedure _llshl; cdecl;
+  external 'msvcrt.dll';
+procedure _llushr; cdecl;
+  external 'msvcrt.dll';
+procedure _ftol; cdecl;
+  external 'msvcrt.dll';
 
 { ctype.h declarations ===================================================== }
-function _isdigit(ch: Integer): Integer; cdecl;
+function isdigit(ch: Integer): Integer; cdecl;
 
 { string.h declarations ==================================================== }
-procedure _memcpy(var Dest; const Src; Count: Integer); cdecl;
-procedure _memmove(var Dest; const Src; Count: Integer); cdecl;
-procedure _memset(var Dest; Value: Byte; Count: Integer); cdecl;
-function _strlen(P: PAnsiChar): Integer; cdecl;
-function _strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
-function _strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
+procedure memcpy(var Dest; const Src; Count: Integer); cdecl;
+procedure memmove(var Dest; const Src; Count: Integer); cdecl;
+procedure memset(var Dest; Value: Byte; Count: Integer); cdecl;
+function strlen(P: PAnsiChar): Integer; cdecl;
+function strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
+function strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
 
-function _memcmp(s1,s2: Pointer; numBytes: LongWord): integer; cdecl;
-  external 'msvcrt.dll' {$IFNDEF BCB}name 'memcmp'{$ENDIF};
-function _wcscpy(strDestination, strSource: PWideChar): PWideChar; cdecl;
-  external 'msvcrt.dll' {$IFNDEF BCB}name 'wcscpy'{$ENDIF};
+function memcmp(s1,s2: Pointer; numBytes: LongWord): integer; cdecl;
+  external 'msvcrt.dll';
+function wcscpy(strDestination, strSource: PWideChar): PWideChar; cdecl;
+  external 'msvcrt.dll';
 
 { stdlib.h declarations ==================================================== }
-function _malloc(Size: Integer): Pointer; cdecl;
-procedure _free(Ptr: Pointer); cdecl;
-function _realloc(Ptr: Pointer; Size: Integer): Pointer; cdecl;
+function malloc(Size: Integer): Pointer; cdecl;
+procedure free(Ptr: Pointer); cdecl;
+function realloc(Ptr: Pointer; Size: Integer): Pointer; cdecl;
 
 { intrin.h declarations ==================================================== }
 procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
+  external 'msvcrt.dll';
 
 { stdio.h declarations ===================================================== }
-function _sprintf(S: PChar; const Format: PChar): Integer;
-  cdecl; varargs; external 'msvcrt.dll' {$IFNDEF BCB}name 'sprintf'{$ENDIF};
+function sprintf(S: PChar; const Format: PChar): Integer;
+  cdecl; varargs; external 'msvcrt.dll';
+
+{ MSVC/Win64 declarations ================================================== }
+procedure __C_specific_handler; cdecl; external 'msvcrt.dll';
+procedure __imp_CloseHandle; cdecl; external 'msvcrt.dll';
+procedure __imp_CreateEventA; cdecl; external 'msvcrt.dll';
+procedure __imp_CreateSemaphoreA; cdecl; external 'msvcrt.dll';
+procedure __imp_DeleteCriticalSection; cdecl; external 'msvcrt.dll';
+procedure __imp_EnterCriticalSection; cdecl; external 'msvcrt.dll';
+procedure __imp_GetLastError; cdecl; external 'msvcrt.dll';
+procedure __imp_InitializeCriticalSection; cdecl; external 'msvcrt.dll';
+procedure __imp_LeaveCriticalSection; cdecl; external 'msvcrt.dll';
+procedure __imp_ReleaseSemaphore; cdecl; external 'msvcrt.dll';
+procedure __imp_ResetEvent; cdecl; external 'msvcrt.dll';
+procedure __imp_SetEvent; cdecl; external 'msvcrt.dll';
+procedure __imp_WaitForSingleObject; cdecl; external 'msvcrt.dll';
 
 implementation
 
 { ctype.h declarations ===================================================== }
-function _isdigit(ch: Integer): Integer; cdecl;
+function isdigit(ch: Integer): Integer; cdecl;
 begin
   if AnsiChar(ch) in ['0'..'9'] then
     Result := 1
   else
     Result := 0;
 end;
-{ -------------------------------------------------------------------------- }
-procedure __llshl; cdecl;
-asm
-  jmp System.@_llshl
-end;
-{ -------------------------------------------------------------------------- }
-procedure __llushr; cdecl;
-asm
-  jmp System.@_llushr
-end;
 
 { string.h declarations ==================================================== }
-procedure _memcpy(var Dest; const Src; Count: Integer); cdecl;
+procedure memcpy(var Dest; const Src; Count: Integer); cdecl;
 begin
   Move(Src, Dest, Count);
 end;
 { -------------------------------------------------------------------------- }
-procedure _memmove(var Dest; const Src; Count: Integer); cdecl;
+procedure memmove(var Dest; const Src; Count: Integer); cdecl;
 begin
   Move(Src, Dest, Count);
 end;
 { -------------------------------------------------------------------------- }
-procedure _memset(var Dest; Value: Byte; Count: Integer); cdecl;
+procedure memset(var Dest; Value: Byte; Count: Integer); cdecl;
 begin
   FillChar(Dest, Count, Value);
 end;
 { -------------------------------------------------------------------------- }
-function _strlen(P: PAnsiChar): Integer; cdecl;
+function strlen(P: PAnsiChar): Integer; cdecl;
 {$IF RTLVersion > 15}
 asm
   jmp System.@PCharLen
@@ -122,17 +133,17 @@ begin
 end;
 {$IFEND}
 { -------------------------------------------------------------------------- }
-function _strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
+function strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
 begin
   Result := Des;
-  Move(Src^, Des^, _strlen(Src) + 1);
+  Move(Src^, Des^, strlen(Src) + 1);
 end;
 { -------------------------------------------------------------------------- }
-function _strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
+function strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
 var
   Len: Integer;
 begin
-  Len := _strlen(Src);
+  Len := strlen(Src);
   if Len > MaxLen then
     Len := MaxLen;
   Move(Src^, Des^, Len);
@@ -142,35 +153,19 @@ begin
 end;
 
 { stdlib.h declarations ==================================================== }
-function _malloc(Size: Integer): Pointer; cdecl;
+function malloc(Size: Integer): Pointer; cdecl;
 begin
   GetMem(Result, Size);
 end;
 { -------------------------------------------------------------------------- }
-procedure _free(Ptr: Pointer); cdecl;
+procedure free(Ptr: Pointer); cdecl;
 begin
   FreeMem(Ptr)
 end;
 { -------------------------------------------------------------------------- }
-function _realloc(Ptr: Pointer; Size: Integer): Pointer; cdecl;
+function realloc(Ptr: Pointer; Size: Integer): Pointer; cdecl;
 begin
   Result := ReallocMemory(Ptr, Size);
-end;
-
-{ intrin.h declarations ==================================================== }
-procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
-asm
-	push ebx
-	push esi
-	mov eax, InfoType
-	cpuid
-	mov esi, CPUInfo
-	mov [esi], eax
-	mov [esi + 4], ebx
-	mov [esi + 8], ecx
-	mov [esi + 12], edx
-	pop esi
-	pop ebx
 end;
 { -------------------------------------------------------------------------- }
 

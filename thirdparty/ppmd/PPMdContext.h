@@ -4,6 +4,10 @@
 #include "CarrylessRangeCoder.h"
 #include "PPMdSubAllocator.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_O 255
 #define INT_BITS 7
 #define PERIOD_BITS 7
@@ -76,5 +80,9 @@ void UpdatePPMdContext2(PPMdContext *self,PPMdCoreModel *model,PPMdState *state)
 void RescalePPMdContext(PPMdContext *self,PPMdCoreModel *model);
 
 void ClearPPMdModelMask(PPMdCoreModel *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

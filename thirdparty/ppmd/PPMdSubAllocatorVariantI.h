@@ -3,6 +3,10 @@
 
 #include "PPMdSubAllocator.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma pack(push, 1)
 typedef struct PPMdMemoryBlockVariantI
 {
@@ -30,5 +34,9 @@ uint32_t GetUsedMemoryVariantI(PPMdSubAllocatorVariantI *self);
 void SpecialFreeUnitVariantI(PPMdSubAllocatorVariantI *self,uint32_t offs);
 uint32_t MoveUnitsUpVariantI(PPMdSubAllocatorVariantI *self,uint32_t oldoffs,int num);
 void ExpandTextAreaVariantI(PPMdSubAllocatorVariantI *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
