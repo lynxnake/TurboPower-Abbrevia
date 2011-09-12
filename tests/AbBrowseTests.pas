@@ -95,6 +95,10 @@ begin
     [ExtractFileName(aFilename), ArcTypeToStr(aExpectedType)]);
   FFilename := aFilename;
   FExpectedType := aExpectedType;
+  {$IFNDEF MSWINDOWS}
+  if FExpectedType = atCab then
+    FExpectedType := atUnknown;
+  {$ENDIF}
 end;
 
 procedure TAbDetermineArcTypeTest.CheckEquals(expected, actual: TAbArchiveType;

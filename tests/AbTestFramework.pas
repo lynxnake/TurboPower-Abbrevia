@@ -124,6 +124,9 @@ implementation
 {$WARN SYMBOL_PLATFORM OFF}
 
 uses
+{$IFDEF PosixAPI}
+  Posix.SysStat,
+{$ENDIF}
   Math, SysUtils, Variants,
   AbUtils;
 
@@ -287,7 +290,7 @@ begin
         {$ENDIF}
         {$IFDEF UNIX}
         if S_ISDIR(SR.Mode) and (SR.Mode and (S_IWUSR or S_IXUSR) <> S_IWUSR or S_IXUSR) then
-          chmod(PChar(aDir + SR.Name), SR.Mode or S_IWUSR or S_IXUSR);
+          chmod(PAnsiChar(AbSysString(aDir + SR.Name)), SR.Mode or S_IWUSR or S_IXUSR);
         {$ENDIF}
       until FindNext(SR) <> 0;
       // Close search to free locks on files/directories

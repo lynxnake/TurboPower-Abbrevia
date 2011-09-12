@@ -151,6 +151,11 @@
   {$WARN EXPLICIT_STRING_CAST_LOSS OFF}
 {$ENDIF}
 
+{ Disable hints on Delphi XE2/Mac to prevent unexpanded inline messages }
+{$IFDEF POSIX}
+  {$HINTS OFF}
+{$ENDIF}
+
 {====Bzip2 defines===================================================}
 
 {Activate this define to statically link bzip2 .obj files into the application.
