@@ -56,7 +56,6 @@ requires
   rtl;
 
 contains
-  crtl,
   AbArcTyp in '..\..\source\AbArcTyp.pas',
   AbBase in '..\..\source\AbBase.pas',
   AbBitBkt in '..\..\source\AbBitBkt.pas',
@@ -69,6 +68,7 @@ contains
   AbCabTyp in '..\..\source\AbCabTyp.pas',
   AbCBrows in '..\..\source\AbCBrows.pas',
   AbConst in '..\..\source\AbConst.pas',
+  AbCrtl in '..\..\source\AbCrtl.pas',
   AbDfBase in '..\..\source\AbDfBase.pas',
   AbDfCryS in '..\..\source\AbDfCryS.pas',
   AbDfDec in '..\..\source\AbDfDec.pas',
