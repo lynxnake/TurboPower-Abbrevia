@@ -31,7 +31,7 @@
 {*   listview associated, in which case the listview will*}
 {*   only show items in the selected folder.             *}
 {*********************************************************}
-//TODO: Add to AbbreviaVCL packages
+
 unit AbComCtrls;
 
 interface
@@ -750,7 +750,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function TAbCustomListView_SortProc(aItem1, aItem2: TAbListItem;
-  aListView: TAbCustomListView): Integer; cdecl;
+  aListView: TAbCustomListView): Integer; stdcall;
 var
   Item1, Item2: TAbArchiveItem;
   Ratio1, Ratio2: Single;
