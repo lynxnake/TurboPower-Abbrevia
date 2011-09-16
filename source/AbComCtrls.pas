@@ -586,6 +586,7 @@ begin
   end;
   Header_SetImageList(ListView_GetHeader(Handle), FHeaderImages.Handle);
   UpdateColumns;
+  UpdateView;
 end;
 { -------------------------------------------------------------------------- }
 function TAbCustomListView.CustomDrawSubItem(Item: TListItem; SubItem: Integer;
