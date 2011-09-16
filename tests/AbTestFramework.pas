@@ -39,7 +39,7 @@ uses
   Libc,
 {$ENDIF}
 {$IFDEF FPCUnixAPI}
-  Unix,
+  BaseUnix, Unix,
 {$ENDIF}
 {$IFDEF MSWINDOWS}
   Windows,
@@ -289,9 +289,14 @@ begin
           FileSetAttr(aDir + SR.Name, SR.Attr and not faReadOnly);
         {$ENDIF}
         {$IFDEF UNIX}
+        if fpS_ISDIR(SR.Mode) and (SR.Mode and (S_IWUSR or S_IXUSR) <> S_IWUSR or S_IXUSR) then
+          FpChmod(PAnsiChar(AbSysString(aDir + SR.Name)), SR.Mode or S_IWUSR or S_IXUSR);
+        {$IFDEF FPCUnixAPI}
+        {$ELSE}
         if S_ISDIR(SR.Mode) and (SR.Mode and (S_IWUSR or S_IXUSR) <> S_IWUSR or S_IXUSR) then
           chmod(PAnsiChar(AbSysString(aDir + SR.Name)), SR.Mode or S_IWUSR or S_IXUSR);
-        {$ENDIF}
+        {$ENDIF !FPCUnixAPI}
+        {$ENDIF UNIX}
       until FindNext(SR) <> 0;
       // Close search to free locks on files/directories
       FindClose(SR);
