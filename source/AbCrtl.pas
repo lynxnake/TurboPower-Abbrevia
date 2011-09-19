@@ -47,7 +47,7 @@ procedure _llshl; cdecl;
 procedure _llushr; cdecl;
   external 'msvcrt.dll';
 procedure _ftol; cdecl;
-  external 'msvcrt.dll';
+  external 'msvcrt.dll' {$IFDEF BCB}name '__ftol'{$ENDIF};
 
 { ctype.h declarations ===================================================== }
 function isdigit(ch: Integer): Integer; cdecl;
@@ -76,7 +76,7 @@ procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
 
 { stdio.h declarations ===================================================== }
 function sprintf(S: PChar; const Format: PChar): Integer;
-  cdecl; varargs; external 'msvcrt.dll';
+  cdecl; varargs; external 'msvcrt.dll' {$IFDEF BCB}name '_sprintf'{$ENDIF};
 
 { MSVC/Win64 declarations ================================================== }
 procedure __C_specific_handler; cdecl; external 'msvcrt.dll';

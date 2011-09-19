@@ -78,7 +78,7 @@ function _stricmp(str1, str2: PAnsiChar): Integer; cdecl;
   external 'msvcrt.dll' name '_stricmp';
 
 function strncmp(str1, str2: PAnsiChar; num: Integer): Integer; cdecl;
-  external 'msvcrt.dll' {$IFNDEF BCB}name 'strncmp'{$ENDIF};
+  external 'msvcrt.dll' {$IFDEF BCB}name '_strncmp'{$ENDIF};
 
 
 { Forward declarations ===================================================== }
