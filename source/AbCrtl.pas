@@ -121,7 +121,7 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function strlen(P: PAnsiChar): Integer; cdecl;
-{$IF RTLVersion > 15}
+{$IF RTLVersion >= 20}
 asm
   jmp System.@PCharLen
 end;
