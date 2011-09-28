@@ -44,6 +44,9 @@ uses
 {$ENDIF}
 {$IFDEF FPCUnixAPI}
   baseunix,
+  {$IFDEF Linux}
+  initc,
+  {$ENDIF}
   unix,
 {$ENDIF}
 {$IFDEF PosixAPI}
@@ -110,11 +113,15 @@ type
   {$ENDIF}
 {$IFEND}
 
-{$IFNDEF UNICODE}
+{$IF NOT DECLARED(RawByteString)}
 type
   RawByteString = AnsiString;
+{$IFEND}
+
+{$IF NOT DECLARED(UnicodeString)}
+type
   UnicodeString = WideString;
-{$ENDIF}
+{$IFEND}
 
 { System-encoded SBCS string (formerly AnsiString) }
   AbSysString = {$IFDEF Posix}UTF8String{$ELSE}AnsiString{$ENDIF};
@@ -384,6 +391,20 @@ function mktemp(template: PAnsiChar): PAnsiChar; cdecl;
 {$ELSEIF DEFINED(PosixAPI)}
 function mktemp(template: PAnsiChar): PAnsiChar; cdecl;
   external libc name _PU + 'mktemp';
+{$IFEND}
+
+{$IF DEFINED(FPCUnixAPI) AND DEFINED(Linux)}
+// FreePascal libc definitions
+type
+  nl_item = cint;
+
+const
+  __LC_CTYPE = 0;
+  _NL_CTYPE_CLASS = (__LC_CTYPE shl 16);
+  _NL_CTYPE_CODESET_NAME = (_NL_CTYPE_CLASS)+14;
+
+function nl_langinfo(__item: nl_item): PAnsiChar; cdecl;
+  external clib name 'nl_langinfo';
 {$IFEND}
 
 {===platform independent routines for platform dependent stuff=======}
@@ -1172,7 +1193,7 @@ begin
   DecodeTime(Value, Hr, Mn, S, MS);
 
   LongRec(Result).Lo := (S shr 1) or (Mn shl 5) or (Hr shl 11);
-  LongRec(Result).Hi := Dy or (Mo shl 5) or ((Yr - 1980) shl 9);
+  LongRec(Result).Hi := Dy or (Mo shl 5) or (Word(Yr - 1980) shl 9);
 {$ENDIF UNIX}
 end;
 

@@ -111,7 +111,9 @@
 
 { determine whether CLX is used, should always be on Linux }
 {$IFDEF KYLIX}
-  {$DEFINE UsingCLX }
+  {$DEFINE UsingCLX}
+{$ELSE}
+  {$DEFINE NoQt}
 {$ENDIF KYLIX}
 
 {====Widgetset defines===============================================}
