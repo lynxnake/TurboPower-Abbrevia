@@ -997,16 +997,9 @@ end;
 destructor TAbArchive.Destroy;
 begin
   FItemList.Free;
-  FItemList := nil;
-  if FOwnsStream then begin
-   if Assigned(FStream) then {!!.05 avoid A/V if Nil (Only occurs if exception is raised)}
-     FStream.Free;
-    FStream := nil;
-  end;
-  if Assigned(FLogStream) then begin
-    FLogStream.Free;
-    FLogStream := nil;
-  end;
+  if FOwnsStream then
+    FStream.Free;
+  FLogStream.Free;
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
