@@ -50,8 +50,8 @@ package AbbreviaVCLDesign;
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Abbrevia Design-time package - VCLXE'}
-{$LIBSUFFIX '150'}
+{$DESCRIPTION 'Abbrevia Design-time package - VCL XE2'}
+{$LIBSUFFIX '160'}
 {$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 

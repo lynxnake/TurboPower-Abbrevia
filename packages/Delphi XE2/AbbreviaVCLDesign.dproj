@@ -45,7 +45,7 @@
 			<DCC_Description>Abbrevia Design-time package - VCLXE</DCC_Description>
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
 			<DCC_WriteableConstants>true</DCC_WriteableConstants>
-			<DllSuffix>150</DllSuffix>
+			<DllSuffix>160</DllSuffix>
 			<GenPackage>true</GenPackage>
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<GenDll>true</GenDll>
