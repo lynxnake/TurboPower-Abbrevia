@@ -382,6 +382,7 @@ function UTF8ToString(const S: RawByteString): string;
 implementation
 
 uses
+  StrUtils,
   AbConst,
   AbExcept;
 
@@ -549,32 +550,23 @@ begin
 end;
 { -------------------------------------------------------------------------- }
 function AbDriveIsRemovable(const ArchiveName : string) : Boolean;
-var
 {$IFDEF MSWINDOWS}
-  DType : Integer;
-  iPos  : Integer;
-  Drive : array[0..4] of Char;
-{$ENDIF}
-  Path : string;
-{$IFDEF LINUX}
-  Path2: string;
+var
+  Path: string;
 {$ENDIF}
 begin
-  Path := ExpandFileName(ArchiveName);
 {$IFDEF MSWINDOWS}
-  Result := False;
-  iPos := Pos(':', Path);
-  if (iPos <= 0) then
-    Exit;
-  System.Delete(Path, iPos+1, Length(Path) - iPos);
-  StrPLCopy(Drive, Path, Length(Path));
-  DType := GetDriveType(Drive);
-  Result := (DType = DRIVE_REMOVABLE);
+  Path := ExpandFileName(ArchiveName);
+  if StartsText('\\?\UNC\', Path) then
+    Delete(Path, 1, 8)
+  else if StartsText('\\?\', Path) then
+    Delete(Path, 1, 4);
+  Path := IncludeTrailingPathDelimiter(ExtractFileDrive(Path));
+  Result := GetDriveType(PChar(Path)) = DRIVE_REMOVABLE;
 {$ENDIF}
 {$IFDEF LINUX}
-  Path2 := LowerCase(ExtractFilePath(Path));
   {LINUX -- Following may not cover all the bases}
-  Result := Path2 = '/mnt/floppy';
+  Result := StartsText('/mnt/floppy', ExtractFilePath(ExpandFileName(ArchiveName)));
 {$ENDIF}
 {$IFDEF DARWIN}
   Result := False;
