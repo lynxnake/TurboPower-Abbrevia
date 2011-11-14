@@ -950,7 +950,7 @@ begin
   InStream.ReadBuffer(Header, SizeOf(Header));
   SetLength(Properties, Header.PropSize);
   InStream.ReadBuffer(Properties[0], Header.PropSize);
-  LzmaDecode(PByte(Properties), Header.PropSize, InStream, OutStream,
+  LzmaDecodeStream(PByte(Properties), Header.PropSize, InStream, OutStream,
     Item.UncompressedSize);
 end;
 {$ENDIF}

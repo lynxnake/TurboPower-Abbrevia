@@ -90,10 +90,12 @@ uses
   AbGzTypTests in 'AbGzTypTests.pas',
   AbArchiveSplitTests in 'AbArchiveSplitTests.pas',
   AbZipTypTests in 'AbZipTypTests.pas',
+  AbBzip2Tests in 'AbBzip2Tests.pas',
   AbBzip2TypTests in 'AbBzip2TypTests.pas',
   AbBrowseTests in 'AbBrowseTests.pas',
   AbTarTypTests in 'AbTarTypTests.pas',
-  AbVMStrmTests in 'AbVMStrmTests.pas';
+  AbVMStrmTests in 'AbVMStrmTests.pas',
+  AbLZMATests in 'AbLZMATests.pas';
 
 {$R *.res}
 

@@ -10,6 +10,24 @@
 extern "C" {
 #endif
 
+/* Delphi x64 compatibility */
+#if !defined(__BORLANDC__)
+#pragma warning( disable : 4005 4273 ) /* Disable warnings about incompatible redefinitions */
+#define WINBASEAPI extern
+WINBASEAPI VOID   WINAPI EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+WINBASEAPI VOID   WINAPI LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+WINBASEAPI VOID   WINAPI DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+WINBASEAPI DWORD  WINAPI GetLastError(void);
+WINBASEAPI BOOL   WINAPI CloseHandle(HANDLE hObject);
+WINBASEAPI DWORD  WINAPI WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+WINBASEAPI HANDLE WINAPI CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
+WINBASEAPI BOOL   WINAPI SetEvent(HANDLE hEvent);
+WINBASEAPI BOOL   WINAPI ResetEvent(HANDLE hEvent);
+WINBASEAPI HANDLE WINAPI CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName);
+WINBASEAPI BOOL   WINAPI ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount);
+WINBASEAPI VOID   WINAPI InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+#endif
+
 WRes HandlePtr_Close(HANDLE *h);
 WRes Handle_WaitObject(HANDLE h);
 

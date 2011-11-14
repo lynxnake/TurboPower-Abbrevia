@@ -118,7 +118,7 @@
 
 {====Widgetset defines===============================================}
 
-{ VCL version specific defines }
+{ VCL/RTL version specific defines }
 {$IFNDEF FPC}
   {$IF RTLVersion >= 17} // Delphi 2005
     {$DEFINE HasOnMouseActivate}
@@ -135,6 +135,7 @@
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasGridDrawingStyle}
     {$DEFINE HasTouch}
+    {$DEFINE HasThreadStart}
   {$IFEND}
 {$ENDIF}
 

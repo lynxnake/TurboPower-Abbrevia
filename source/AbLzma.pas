@@ -20,79 +20,68 @@
  *
  * Contributor(s):
  * Craig Peterson <capeterson@users.sourceforge.net>
+ * Pierre le Riche <pierre_le_riche@users.sourceforge.net>
  *
  * ***** END LICENSE BLOCK ***** *)
 
 {*********************************************************}
-{* ABBREVIA: AbLzma.pas                                  *}
+{* ABBREVIA: AbLZMA.pas                                  *}
 {*********************************************************}
 {* ABBREVIA: Lzma compression/decompression procedures.  *}
 {*********************************************************}
 
-unit AbLzma;
+unit AbLZMA;
 
 {$I AbDefine.inc}
 
 interface
 
 uses
-  Classes;
+  Classes, Windows, SysUtils, AbCrtl;
 
-// Raw Lzma routines
-procedure LzmaDecode(aProperties: PByte; aPropSize: Integer; aSrc, aDes: TStream;
-  aUncompressedSize: Int64 = -1);
+{ Raw LZMA decompression =================================================== }
 
-// LzmaUtil stream routines
-procedure LzDecode(inStream, outStream: TStream);
-procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
+{ Decompresses the LZMA compressed data in ASrc to ADes.  ASrc should not have
+  the header used by the other compression/decompression routines, and
+  AProperties should contain any necessary data. }
+procedure LzmaDecodeStream(AProperties: PByte; APropSize: Integer; ASrc, ADes: TStream;
+  AUncompressedSize: Int64 = -1); overload;
 
 
-implementation
+{ Stream compression and decompression (taken from LzmaUtil.c) ============= }
 
-uses
-  AbCrtl,
-  Windows,
-  SysUtils;
+procedure LzmaDecodeStream(ASourceStream, ATargetStream: TStream); overload;
+procedure LzmaEncodeStream(ASourceStream, ATargetStream: TStream; ASourceSize: Int64);
 
-{ C runtime library ======================================================== }
 
-type
-  UInt16 = Word;
-  UInt32 = LongWord;
-  PUInt32 = ^UInt32;
-  size_t = {$IF defined(CPUX64)}Int64{$ELSE}Integer{$IFEND}; // NativeInt is 8 bytes in Delphi 2007
+{ In-memory compression and decompression ================================== }
 
-function _beginthreadex(security: Pointer; stack_size: Cardinal;
-  start_address: Pointer; arglist: Pointer; initflag: Cardinal;
-  thrdaddr: Pointer): PUInt; cdecl;
-  external 'msvcrt.dll' {$IFDEF BCB}name '__beginthreadex'{$ENDIF};
+{ Given a pointer to the compressed data, this will return the size of the
+  decompressed data. }
+function LzmaGetUncompressedSize(APCompressedData: Pointer; ACompressedSize: Integer): Integer;
 
-function _BigAlloc(size: size_t): Pointer; cdecl;
-begin
-  Result := GetMemory(size);
-end;
+{ Decompresses the LZMA compressed data at APCompressedData to the buffer
+  pointed to by APUncompressedData.  The buffer at APUncompressedData should be
+  large enough to hold the number of bytes as returned by LzmaGetDecompressedSize. }
+procedure LzmaDecodeBuffer(APCompressedData: Pointer; ACompressedSize: Integer;
+  APUncompressedData: Pointer);
 
-procedure _BigFree(address: Pointer); cdecl;
-begin
-  FreeMemory(address);
-end;
-
-function _MyAlloc(size: size_t): Pointer; cdecl;
-begin
-  Result := GetMemory(size);
-end;
-
-procedure _MyFree(address: Pointer); cdecl;
-begin
-  FreeMemory(address);
-end;
+{ Compresses the data at APUncompressedData to the buffer at APCompressedData,
+  and returns the number of bytes written. If ACompressedDataBufferCapacity is
+  less than the number of bytes required to store the entire compressed stream,
+  or any other error occurs, then an exception is raised. (A safe number for
+  ACompressedDataBufferCapacity is slightly more than AUncompressedDataBufferSize.)
+  Leave ACompressionLevel and ADictionarySize at -1 in order to use the default
+  values (5 and 16MB respectively). }
+function LzmaEncodeBuffer(APUncompressedData: Pointer; AUncompressedSize: Integer;
+  APCompressedData: Pointer; ACompressedDataBufferCapacity: Integer;
+  ACompressionLevel: Integer = -1; ADictionarySize: Integer = -1): Integer;
 
 
 { Types.h declarations ===================================================== }
 
 const
   SZ_OK = 0;
-
   SZ_ERROR_DATA = 1;
   SZ_ERROR_MEM = 2;
   SZ_ERROR_CRC = 3;
@@ -105,7 +94,6 @@ const
   SZ_ERROR_PROGRESS = 10;
   SZ_ERROR_FAIL = 11;
   SZ_ERROR_THREAD = 12;
-
   SZ_ERROR_ARCHIVE = 16;
   SZ_ERROR_NO_ARCHIVE = 17;
 
@@ -115,27 +103,26 @@ type
   ISeqInStream = packed record
     Read: function(p: Pointer; var buf; var size: size_t): SRes; cdecl;
   end;
+  PISeqInStream = ^ISeqInStream;
 
   ISeqOutStream = packed record
     Write: function(p: Pointer; const buf; size: size_t): size_t; cdecl;
   end;
+  PISeqOutStream = ^ISeqOutStream;
 
   ICompressProgress = packed record
     Progress: function(p: Pointer; inSize, outSize: Int64): SRes; cdecl;
   end;
+  PICompressProgress = ^ICompressProgress;
 
   ISzAlloc = packed record
     Alloc: function(p: Pointer; size: size_t): Pointer; cdecl;
     Free: procedure(p: Pointer; address: Pointer); cdecl;
   end;
-
-procedure RINOK(x: SRes);
-begin
-  if x <> 0 then raise Exception.CreateFmt('RINOK(%d)', [x]);
-end;
+  PISzAlloc = ^ISzAlloc;
 
 
-{ LzmaDec.h declarations ==================================================== }
+{ LzmaDec.h declarations =================================================== }
 
 type
   CLzmaProb = Word;
@@ -164,7 +151,7 @@ type
     dicPos: size_t;
     dicBufSize: size_t;
     processedPos: UInt32;
-    checkDicSize: UInt32 ;
+    checkDicSize: UInt32;
     state: Cardinal;
     reps: array[0..3] of UInt32;
     remainLen: Cardinal;
@@ -193,20 +180,19 @@ const
   LZMA_STATUS_MAYBE_FINISHED_WITHOUT_MARK = 5; // there is probability that stream was finished without end mark
 
 procedure LzmaDec_Construct(var p: CLzmaDec); cdecl;
-begin
-  p.dic := nil;
-  p.probs := nil;
-end;
-
 procedure LzmaDec_Init(var p: CLzmaDec); cdecl; external;
-
-function LzmaDec_DecodeToBuf(var p: CLzmaDec; var dest: Byte; var destLen: size_t;
-  var src: Byte; var srcLen: size_t; finishMode: ELzmaFinishMode;
+function LzmaDec_DecodeToBuf(var p: CLzmaDec; dest: PByte; var destLen: size_t;
+  src: PByte; var srcLen: size_t; finishMode: ELzmaFinishMode;
   var status: ELzmaStatus): SRes; cdecl; external;
+function LzmaDec_Allocate(var state: CLzmaDec; prop: PByte; propsSize: Integer;
+  alloc: PISzAlloc): SRes; cdecl; external;
+procedure LzmaDec_Free(var state: CLzmaDec; alloc: PISzAlloc); cdecl; external;
 
-function LzmaDec_Allocate(var state: CLzmaDec; prop: PByte;
-  propsSize: Integer; const alloc: ISzAlloc): SRes; cdecl; external;
-procedure LzmaDec_Free(var state: CLzmaDec; const alloc: ISzAlloc); cdecl; external;
+// One call decoding interface
+function LzmaDecode(dest: PByte; var destLen: size_t; src: PByte;
+  var srcLen: size_t; propData: PByte; propSize: Integer;
+  finishMode: ELzmaFinishMode; var status: ELzmaStatus; 
+  alloc: PISzAlloc): SRes; cdecl; external;
 
 
 { LzmaEnc.h declarations =================================================== }
@@ -231,49 +217,72 @@ type
     numThreads: Integer;    // 1 or 2, default = 2
   end;
 
+procedure LzmaEncProps_Init(var p: CLzmaEncProps); cdecl; external;
+function LzmaEnc_Create(Alloc: PISzAlloc): CLzmaEncHandle; cdecl; external;
+procedure LzmaEnc_Destroy(p: CLzmaEncHandle; Alloc, allocBig: PISzAlloc); cdecl; external;
+function LzmaEnc_SetProps(p: CLzmaEncHandle; var props: CLzmaEncProps): SRes; cdecl; external;
+function LzmaEnc_WriteProperties(p: CLzmaEncHandle; properties: PByte;
+  var size: size_t): SRes; cdecl; external;
+function LzmaEnc_Encode(p: CLzmaEncHandle; outStream: PISeqOutStream;
+  inStream: PISeqInStream; Progress: PICompressProgress;
+  Alloc, allocBig: PISzAlloc): SRes; cdecl; external;
+function LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
+  src: PByte; srcLen: size_t; writeEndMark: Integer; Progress: PICompressProgress;
+  Alloc, allocBig: PISzAlloc): SRes; cdecl; external;
 
-{ Forward declarations ===================================================== }
+// One call encoding interface
+function LzmaEncode(dest: PByte; var destLen: size_t; src: PByte;
+  srcLen: size_t; var props: CLzmaEncProps; propsEncoded: PByte;
+  var propsSize: size_t; writeEndMark: Integer; progress: PICompressProgress;
+  alloc: pISzAlloc; allocBig: PISzAlloc): SRes; cdecl; external;
 
-// LzFind
+
+{ LzFind.h declarations ==================================================== }
+
 procedure MatchFinder_NeedMove; external;
 procedure MatchFinder_GetPointerToCurrentPos; external;
 procedure MatchFinder_MoveBlock; external;
 procedure MatchFinder_ReadIfRequired; external;
-
 procedure MatchFinder_Construct; external;
-
 procedure MatchFinder_Create; external;
 procedure MatchFinder_Free; external;
 procedure MatchFinder_Normalize3; external;
 procedure MatchFinder_ReduceOffsets; external;
-
 procedure GetMatchesSpec1; external;
-
 procedure MatchFinder_Init; external;
 procedure MatchFinder_CreateVTable; external;
 
-// LzFindMt
+
+{ LzFindMt.h declarations ================================================== }
+
 procedure MatchFinderMt_Construct; external;
 procedure MatchFinderMt_Destruct; external;
 procedure MatchFinderMt_Create; external;
 procedure MatchFinderMt_CreateVTable; external;
 procedure MatchFinderMt_ReleaseStream; external;
 
-// LzmaEnc
-procedure LzmaEncProps_Init(var p: CLzmaEncProps); cdecl; external;
 
-// LzmaEnc - CLzmaEncHandle interface
-function LzmaEnc_Create(const alloc: ISzAlloc): CLzmaEncHandle; cdecl; external;
-procedure LzmaEnc_Destroy(p: CLzmaEncHandle; const alloc, allocBig: ISzAlloc); cdecl; external;
-function LzmaEnc_SetProps(p: CLzmaEncHandle; var props: CLzmaEncProps): SRes; cdecl; external;
-function LzmaEnc_WriteProperties(p: CLzmaEncHandle; properties: PByte;
-  var size: size_t): SRes; cdecl; external;
-function LzmaEnc_Encode(p: CLzmaEncHandle; var outStream: ISeqOutStream;
-  var inStream: ISeqInStream; var progress: ICompressProgress;
-  const alloc, allocBig: ISzAlloc): SRes; cdecl; external;
-function LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
-  src: PByte; srcLen: size_t; writeEndMark: Integer;
-  const progress: ICompressProgress; const alloc, allocBig: ISzAlloc): SRes; cdecl; external;
+{ Lzma header fields ======================================================= }
+
+type
+  // The condensed compression properties
+  TLZMAPropertyData = array[0..LZMA_PROPS_SIZE - 1] of Byte;
+
+  // The header usually stored in front of LZMA compressed data
+  TLZMAHeader = packed record
+    PropertyData: TLZMAPropertyData;
+    UncompressedSize: Int64;
+  end;
+  PLZMAHeader = ^TLZMAHeader;
+
+
+{ Error handling =========================================================== }
+
+type
+  EAbLZMAException = class(Exception);
+
+procedure LzmaCheck(AResultCode: SRes);
+procedure RaiseLzmaException(AResultCode: SRes);
 
 
 { Linker directives ======================================================== }
@@ -293,119 +302,158 @@ function LzmaEnc_MemEncode(p: CLzmaEncHandle; dest: PByte; var destLen: size_t;
   {$L Win64\Threads.obj}
 {$IFEND}
 
+
+implementation
+
+{ Error handling =========================================================== }
+
+procedure LzmaCheck(AResultCode: SRes);
+begin
+  if AResultCode <> SZ_OK then
+    RaiseLzmaException(AResultCode);
+end;
+{ -------------------------------------------------------------------------- }
+procedure RaiseLzmaException(AResultCode: SRes);
+begin
+  case AResultCode of
+    SZ_ERROR_DATA: raise EAbLZMAException.Create('LZMA Data Error.');
+    SZ_ERROR_MEM: raise EAbLZMAException.Create('LZMA Memory Error.');
+    SZ_ERROR_CRC: raise EAbLZMAException.Create('LZMA CRC Error.');
+    SZ_ERROR_UNSUPPORTED: raise EAbLZMAException.Create('LZMA "Unsupported" Error.');
+    SZ_ERROR_PARAM: raise EAbLZMAException.Create('LZMA Parameter Error.');
+    SZ_ERROR_INPUT_EOF: raise EAbLZMAException.Create('LZMA Input EOF Error.');
+    SZ_ERROR_OUTPUT_EOF: raise EAbLZMAException.Create('LZMA Output EOF Error.');
+    SZ_ERROR_READ: raise EAbLZMAException.Create('LZMA Read Error.');
+    SZ_ERROR_WRITE: raise EAbLZMAException.Create('LZMA Write Error.');
+    SZ_ERROR_PROGRESS: raise EAbLZMAException.Create('LZMA Progress Error.');
+    SZ_ERROR_FAIL: raise EAbLZMAException.Create('LZMA "Fail" Error.');
+    SZ_ERROR_THREAD: raise EAbLZMAException.Create('LZMA Thread Error.');
+    SZ_ERROR_ARCHIVE: raise EAbLZMAException.Create('LZMA Archive Error.');
+    SZ_ERROR_NO_ARCHIVE: raise EAbLZMAException.Create('LZMA "No Archive" Error.');
+  else
+    raise EAbLZMAException.CreateFmt('Unknown LZMA error (%d)', [AResultCode]);
+  end;
+end;
+
+
 { Helper Routines ========================================================== }
 
+procedure LzmaDec_Construct(var p: CLzmaDec); cdecl;
+begin
+  p.dic := nil;
+  p.probs := nil;
+end;
+{ -------------------------------------------------------------------------- }
 function SzAlloc(p: Pointer; size: size_t): Pointer; cdecl;
 begin
   Result := GetMemory(size);
 end;
-
+{ -------------------------------------------------------------------------- }
 procedure SzFree(p, address: Pointer); cdecl;
 begin
   FreeMemory(address);
 end;
 
 var
-  g_Alloc: ISzAlloc = (
-    Alloc: SzAlloc;
-    Free: SzFree);
+  DelphiMMInterface: ISzAlloc = (Alloc: SzAlloc; Free: SzFree);
 
 
 { CSeq*Stream implementation =============================================== }
 
 type
   CSeqInStream = packed record
-	  Intf: ISeqInStream;
-	  Stream: TStream;
+    Intf: ISeqInStream;
+    Stream: TStream;
   end;
 
   CSeqOutStream = packed record
-	  Intf: ISeqOutStream;
-	  Stream: TStream;
+    Intf: ISeqOutStream;
+    Stream: TStream;
   end;
 { -------------------------------------------------------------------------- }
 function ISeqInStream_Read(p: Pointer; var buf; var size: size_t): SRes; cdecl;
 begin
   try
-  	size := CSeqInStream(p^).Stream.Read(buf, size);
-  	Result := SZ_OK;
+    size := CSeqInStream(p^).Stream.Read(buf, size);
+    Result := SZ_OK;
   except
-	  Result := SZ_ERROR_DATA;
+    Result := SZ_ERROR_DATA;
   end;
 end;
 { -------------------------------------------------------------------------- }
 function ISeqOutStream_Write(p: Pointer; const buf; size: size_t): size_t; cdecl;
 begin
   try
-	  Result := CSeqOutStream(p^).Stream.Write(buf, size);
+    Result := CSeqOutStream(p^).Stream.Write(buf, size);
   except
-	  Result := 0;
+    Result := 0;
   end;
 end;
 
 
-{ Linker derectives ======================================================== }
+{ Raw LZMA decompression =================================================== }
 
-// Decompress an Lzma compressed stream.
-// Based on LzmaUtil.c::Decode2
+{ Decompress an Lzma compressed stream. Based on LzmaUtil.c::Decode2 }
 function LzmaDecode2(var aState: CLzmaDec; aOutStream, aInStream: TStream;
   aUncompressedSize: Int64 = -1): SRes;
 const
   IN_BUF_SIZE = 1 shl 16;
   OUT_BUF_SIZE = 1 shl 16;
 var
-  hasSize: Boolean;
-  inBuf: array[0..IN_BUF_SIZE - 1] of Byte;
-  outBuf: array[0..OUT_BUF_SIZE - 1] of Byte;
-  inPos, inSize, outPos: size_t;
-  inProcessed, outProcessed: size_t;
-  finishMode: ELzmaFinishMode;
-  status: ELzmaStatus;
+  LHasSize: Boolean;
+  LInBuf: array [0..IN_BUF_SIZE - 1] of Byte;
+  LOutBuf: array [0..OUT_BUF_SIZE - 1] of Byte;
+  LInPos, LInSize, LOutPos: size_t;
+  LInProcessed, LOutProcessed: size_t;
+  LFinishMode: ELzmaFinishMode;
+  LStatus: ELzmaStatus;
 begin
   Result := 0;
-  hasSize := aUncompressedSize <> -1;
-  inPos := 0;
-  inSize := 0;
-  outPos := 0;
+  LHasSize := aUncompressedSize <> -1;
+  LInPos := 0;
+  LInSize := 0;
+  LOutPos := 0;
+
   LzmaDec_Init(aState);
   while True do
   begin
-    if inPos = inSize then
+    if LInPos = LInSize then
     begin
-      inSize := aInStream.Read(inBuf, IN_BUF_SIZE);
-      inPos := 0;
-      if inSize = 0 then Break;
+      LInSize := aInStream.Read(LInBuf, IN_BUF_SIZE);
+      LInPos := 0;
+      if LInSize = 0 then
+        Break;
     end
     else
     begin
-      inProcessed := inSize - inPos;
-      outProcessed := OUT_BUF_SIZE - outPos;
-      finishMode := LZMA_FINISH_ANY;
-      if hasSize and (outProcessed > aUncompressedSize) then begin
-        outProcessed := size_t(aUncompressedSize);
-        finishMode := LZMA_FINISH_END;
+      LInProcessed := LInSize - LInPos;
+      LOutProcessed := OUT_BUF_SIZE - LOutPos;
+      LFinishMode := LZMA_FINISH_ANY;
+      if LHasSize and (LOutProcessed > aUncompressedSize) then
+      begin
+        LOutProcessed := size_t(aUncompressedSize);
+        LFinishMode := LZMA_FINISH_END;
+      end;
+      Result := LzmaDec_DecodeToBuf(aState, @LOutBuf[LOutPos], LOutProcessed,
+        @LInBuf[LInPos], LInProcessed, LFinishMode, LStatus);
+      Inc(LInPos, LInProcessed);
+      Inc(LOutPos, LOutProcessed);
+      Dec(aUncompressedSize, LOutProcessed);
+
+      if (aOutStream <> nil) and (aOutStream.Write(LOutBuf, LOutPos) <> LOutPos) then
+      begin
+        Result := SZ_ERROR_WRITE;
+        Exit;
       end;
 
-      Result := LzmaDec_DecodeToBuf(aState, outBuf[outPos], outProcessed,
-        inBuf[inPos], inProcessed, finishMode, status);
-      Inc(inPos, inProcessed);
-      Inc(outPos, outProcessed);
-      Dec(aUncompressedSize, outProcessed);
+      LOutPos := 0;
 
-      if aOutStream <> nil then
-        if aOutStream.Write(outBuf, outPos) <> outPos then begin
-          Result := SZ_ERROR_WRITE;
-          Exit;
-        end;
-
-      outPos := 0;
-
-      if (Result <> SZ_OK) or (hasSize and (aUncompressedSize = 0)) then
+      if (Result <> SZ_OK) or (LHasSize and (aUncompressedSize = 0)) then
         Exit;
 
-      if (inProcessed = 0) and (outProcessed = 0) then
+      if (LInProcessed = 0) and (LOutProcessed = 0) then
       begin
-        if hasSize or (status <> LZMA_STATUS_FINISHED_WITH_MARK) then
+        if LHasSize or (LStatus <> LZMA_STATUS_FINISHED_WITH_MARK) then
           Result := SZ_ERROR_DATA;
         Exit;
       end;
@@ -413,79 +461,170 @@ begin
   end;
 end;
 { -------------------------------------------------------------------------- }
-// Decompress an LZMA compressed stream.
-procedure LzmaDecode(aProperties: PByte; aPropSize: Integer; aSrc, aDes: TStream;
-  aUncompressedSize: Int64 = -1);
+{ Decompress an LZMA compressed stream. Pass AUncompressedSize = -1 if the
+  uncompressed size is not known. }
+procedure LzmaDecodeStream(AProperties: PByte; APropSize: Integer;
+  ASrc, ADes: TStream; AUncompressedSize: Int64);
 var
-  LzmaState: CLzmaDec;
+  LLZMADecState: CLzmaDec;
 begin
-  LzmaDec_Construct(LzmaState);
+  LzmaDec_Construct(LLZMADecState);
   try
-    RINOK(LzmaDec_Allocate(LzmaState, aProperties, aPropSize, g_Alloc));
-    RINOK(LzmaDecode2(LzmaState, aDes, aSrc, aUncompressedSize));
+    LzmaCheck(LzmaDec_Allocate(LLZMADecState, AProperties, APropSize, @DelphiMMInterface));
+    LzmaCheck(LzmaDecode2(LLZMADecState, ADes, ASrc, AUncompressedSize));
   finally
-    LzmaDec_Free(LzmaState, g_Alloc);
+    LzmaDec_Free(LLZMADecState, @DelphiMMInterface);
   end;
 end;
-{ -------------------------------------------------------------------------- }
-// Decompresses streams compressed with the LZMA SDK's LzmaUtil.exe.
-// Based on LzmaUtil.c::Decode
-procedure LzDecode(inStream, outStream: TStream);
+
+
+{ Stream to stream compression and decompression =========================== }
+
+{ Decompresses streams compressed with the LZMA SDK's LzmaUtil.exe.
+  Based on LzmaUtil.c::Decode }
+procedure LzmaDecodeStream(ASourceStream, ATargetStream: TStream);
 var
-  UncompressedSize: Int64;
-  // header: 5 bytes of LZMA properties and 8 bytes of uncompressed size
-  header: array [0..LZMA_PROPS_SIZE + 7] of Byte;
+  LUncompressedSize: Int64;
+  // Header: 5 bytes of LZMA properties and 8 bytes of uncompressed size
+  LHeader: TLZMAHeader;
 begin
   // Read and parse header
-  inStream.ReadBuffer(header, SizeOf(Header));
+  ASourceStream.ReadBuffer(LHeader, SizeOf(LHeader));
+  LUncompressedSize := LHeader.UncompressedSize;
 
-  UncompressedSize := PInt64(@header[LZMA_PROPS_SIZE])^;
-
-  LzmaDecode(@header[0], LZMA_PROPS_SIZE, inStream, outStream, UncompressedSize);
+  LzmaDecodeStream(PByte(@LHeader.PropertyData), LZMA_PROPS_SIZE, ASourceStream,
+    ATargetStream, LUncompressedSize);
 end;
 { -------------------------------------------------------------------------- }
-// Compresses a stream so it's compatible with the LZMA SDK's LzmaUtil.exe.
-// Based on LzmaUtil.c::Encode
-procedure LzEncode(inStream, outStream: TStream; fileSize: Int64);
+{ Compresses a stream so it's compatible with the LZMA SDK's LzmaUtil.exe.
+  Based on LzmaUtil.c::Encode }
+procedure LzmaEncodeStream(ASourceStream, ATargetStream: TStream; ASourceSize: Int64);
 var
-  enc: CLzmaEncHandle;
-  props: CLzmaEncProps;
-  header: array[0..LZMA_PROPS_SIZE + 7] of Byte;
-  headerSize: size_t;
-  inStreamRec: CSeqInStream;
-  outStreamRec: CSeqOutStream;
+  LEncHandle: CLzmaEncHandle;
+  LEncProps: CLzmaEncProps;
+  LHeader: TLZMAHeader;
+  LPropDataSize: size_t;
+  LInStreamRec: CSeqInStream;
+  LOutStreamRec: CSeqOutStream;
 begin
-  inStreamRec.Intf.Read := ISeqInStream_Read;
-  inStreamRec.Stream := inStream;
-  outStreamRec.Intf.Write := ISeqOutStream_Write;
-  outStreamRec.Stream := outStream;
+  LInStreamRec.Intf.Read := ISeqInStream_Read;
+  LInStreamRec.Stream := ASourceStream;
+  LOutStreamRec.Intf.Write := ISeqOutStream_Write;
+  LOutStreamRec.Stream := ATargetStream;
 
-  enc := LzmaEnc_Create(g_Alloc);
-  if enc = nil then
-    RINOK(SZ_ERROR_MEM);
+  LEncHandle := LzmaEnc_Create(@DelphiMMInterface);
+  if LEncHandle = nil then
+    LzmaCheck(SZ_ERROR_MEM);
+
   try
-    LzmaEncProps_Init(props);
-    RINOK(LzmaEnc_SetProps(enc, props));
+    LzmaEncProps_Init(LEncProps);
 
-    headerSize := LZMA_PROPS_SIZE;
+    LzmaCheck(LzmaEnc_SetProps(LEncHandle, LEncProps));
 
-    RINOK(LzmaEnc_WriteProperties(enc, @header[0], headerSize));
+    LPropDataSize := LZMA_PROPS_SIZE;
 
-    PInt64(@header[headerSize])^ := fileSize;
-    Inc(HeaderSize, SizeOf(Int64));
+    LzmaCheck(LzmaEnc_WriteProperties(LEncHandle, PByte(@LHeader.PropertyData),
+      LPropDataSize));
 
-    if outStream.Write(header, headerSize) <> headerSize then
-      RINOK(SZ_ERROR_WRITE)
-    else
-      RINOK(LzmaEnc_Encode(enc, outStreamRec.Intf, inStreamRec.Intf,
-        ICompressProgress(nil^), g_Alloc, g_Alloc));
+    LHeader.UncompressedSize := ASourceSize;
+
+    ATargetStream.WriteBuffer(LHeader, SizeOf(LHeader));
+
+    LzmaCheck(LzmaEnc_Encode(LEncHandle, @LOutStreamRec.Intf,
+      @LInStreamRec.Intf, nil, @DelphiMMInterface, @DelphiMMInterface));
+
   finally
-    LzmaEnc_Destroy(enc, g_Alloc, g_Alloc);
+    LzmaEnc_Destroy(LEncHandle, @DelphiMMInterface, @DelphiMMInterface);
   end;
+end;
+
+
+{ In-memory compression and decompression ================================== }
+
+{ Given a pointer to the compressed data, this will return the size of the
+  decompressed data. }
+function LzmaGetUncompressedSize(APCompressedData: Pointer; ACompressedSize: Integer): Integer;
+begin
+  if ACompressedSize <= SizeOf(TLZMAHeader) then
+    raise EAbLZMAException.Create('The LZMA compressed data is invalid (not enough bytes)');
+
+  Result := PLZMAHeader(APCompressedData).UncompressedSize;
+end;
+{ -------------------------------------------------------------------------- }
+{ Decompresses the LZMA compressed data at APCompressedData to the buffer
+  pointed to by APUncompressedData.  The buffer at APUncompressedData should be
+  large enough to hold the number of bytes as returned by LzGetDecompressedSize. }
+procedure LzmaDecodeBuffer(APCompressedData: Pointer; ACompressedSize: Integer;
+  APUncompressedData: Pointer);
+var
+  LPropertyData: TLZMAPropertyData;
+  LUncompressedSize: Int64;
+  LInputByteCount, LOutputByteCount: size_t;
+  LStatus: ELzmaStatus;
+begin
+  if ACompressedSize <= SizeOf(TLZMAHeader) then
+    raise EAbLZMAException.Create('The LZMA compressed data is invalid (not enough bytes)');
+
+  // Read the header from the compressed data.
+  LPropertyData := PLZMAHeader(APCompressedData).PropertyData;
+  LUncompressedSize := PLZMAHeader(APCompressedData).UncompressedSize;
+  Inc(PAnsiChar(APCompressedData), SizeOf(TLZMAHeader));
+  Dec(ACompressedSize, SizeOf(TLZMAHeader));
+
+  // Decompress from the input to the output buffer. This will change the byte
+  // count variables to the actual number of bytes consumed/written.
+  LInputByteCount := ACompressedSize;
+  LOutputByteCount := LUncompressedSize;
+  LzmaCheck(LzmaDecode(APUncompressedData, LOutputByteCount,
+    APCompressedData, LInputByteCount, PByte(@LPropertyData), LZMA_PROPS_SIZE,
+    LZMA_FINISH_END, LStatus, @DelphiMMInterface));
+
+  // Check that the input buffer was fully consumed and the output buffer was filled up.
+  if (LOutputByteCount <> LUncompressedSize) or (LInputByteCount <> ACompressedSize) then
+    raise EAbLZMAException.Create('LZMA decompression data error');
+end;
+{ -------------------------------------------------------------------------- }
+{ Compresses the data at APUncompressedData to the buffer at APCompressedData,
+  and returns the number of bytes written. If ACompressedDataBufferCapacity is
+  less than the number of bytes required to store the entire compressed stream,
+  or any other error occurs, then an exception is raised. (A safe number for
+  ACompressedDataBufferCapacity is slightly more than AUncompressedDataBufferSize.) 
+  Leave ACompressionLevel and ADictionarySize at -1 in order to use the default
+  values (5 and 16MB respectively). }
+function LzmaEncodeBuffer(APUncompressedData: Pointer; AUncompressedSize: Integer;
+  APCompressedData: Pointer;
+  ACompressedDataBufferCapacity, ACompressionLevel, ADictionarySize: Integer): Integer;
+var
+  LEncProps: CLzmaEncProps;
+  LPropsSize: size_t;
+  LPOutBuf: PByte;
+  LOutputBytes: size_t;
+begin
+  if ACompressedDataBufferCapacity <= SizeOf(TLZMAHeader) then
+    raise EAbLZMAException.Create('LZMA output buffer too small');
+
+  // Set the uncompressed size in the header
+  PLZMAHeader(APCompressedData).UncompressedSize := AUncompressedSize;
+
+  // Set the properties
+  LzmaEncProps_Init(LEncProps);
+  if ACompressionLevel >= 0 then
+    LEncProps.level := ACompressionLevel;
+  if ADictionarySize >= 0 then
+    LEncProps.dictSize := ADictionarySize;
+
+  LPOutBuf := @PByte(APCompressedData)[SizeOf(TLZMAHeader)];
+  LOutputBytes := ACompressedDataBufferCapacity - SizeOf(TLZMAHeader);
+  LPropsSize := LZMA_PROPS_SIZE;
+  LzmaCheck(LzmaEncode(LPOutBuf, LOutputBytes, APUncompressedData,
+    AUncompressedSize, LEncProps, APCompressedData, LPropsSize, 0, nil,
+    @DelphiMMInterface, @DelphiMMInterface));
+
+  Result := LOutputBytes + SizeOf(TLZMAHeader);
 end;
 
 initialization
-  {The LZMA routines are multithreaded and use the Delphi memory manager.}
+  // The LZMA routines are multithreaded and use the Delphi memory manager.
   IsMultiThread := True;
 
 end.

@@ -36,6 +36,13 @@ unit AbCrtl;
 
 interface
 
+uses
+  Windows;
+
+type
+  UInt32 = LongWord;
+  size_t = {$IF defined(CPUX64)}Int64{$ELSE}Integer{$IFEND}; // NativeInt is 8 bytes in Delphi 2007
+
 const
   __turboFloat: LongInt = 0;
   _fltused: LongInt = 0;
@@ -53,9 +60,9 @@ procedure _ftol; cdecl;
 function isdigit(ch: Integer): Integer; cdecl;
 
 { string.h declarations ==================================================== }
-procedure memcpy(var Dest; const Src; Count: Integer); cdecl;
-procedure memmove(var Dest; const Src; Count: Integer); cdecl;
-procedure memset(var Dest; Value: Byte; Count: Integer); cdecl;
+function memcpy(Dest, Src: Pointer; Count: size_t): Pointer; cdecl;
+function memmove(Dest, Src: Pointer; Count: size_t): Pointer; cdecl;
+function memset(Dest: Pointer; Value: Byte; Count: size_t): Pointer; cdecl;
 function strlen(P: PAnsiChar): Integer; cdecl;
 function strcpy(Des, Src: PAnsiChar): PAnsiChar; cdecl;
 function strncpy(Des, Src: PAnsiChar; MaxLen: Integer): PAnsiChar; cdecl;
@@ -78,20 +85,13 @@ procedure ___cpuid(CPUInfo: PInteger; InfoType: Integer); cdecl;
 function sprintf(S: PChar; const Format: PChar): Integer;
   cdecl; varargs; external 'msvcrt.dll' {$IFDEF BCB}name '_sprintf'{$ENDIF};
 
+{ process.h declarations =================================================== }
+function _beginthreadex(security: Pointer; stack_size: Cardinal;
+  start_address: Pointer; arglist: Pointer; initflag: Cardinal;
+  var thrdaddr: Cardinal): THandle; cdecl;
+
 { MSVC/Win64 declarations ================================================== }
 procedure __C_specific_handler; cdecl; external 'msvcrt.dll';
-procedure __imp_CloseHandle; cdecl; external 'msvcrt.dll';
-procedure __imp_CreateEventA; cdecl; external 'msvcrt.dll';
-procedure __imp_CreateSemaphoreA; cdecl; external 'msvcrt.dll';
-procedure __imp_DeleteCriticalSection; cdecl; external 'msvcrt.dll';
-procedure __imp_EnterCriticalSection; cdecl; external 'msvcrt.dll';
-procedure __imp_GetLastError; cdecl; external 'msvcrt.dll';
-procedure __imp_InitializeCriticalSection; cdecl; external 'msvcrt.dll';
-procedure __imp_LeaveCriticalSection; cdecl; external 'msvcrt.dll';
-procedure __imp_ReleaseSemaphore; cdecl; external 'msvcrt.dll';
-procedure __imp_ResetEvent; cdecl; external 'msvcrt.dll';
-procedure __imp_SetEvent; cdecl; external 'msvcrt.dll';
-procedure __imp_WaitForSingleObject; cdecl; external 'msvcrt.dll';
 
 implementation
 
@@ -105,19 +105,22 @@ begin
 end;
 
 { string.h declarations ==================================================== }
-procedure memcpy(var Dest; const Src; Count: Integer); cdecl;
+function memcpy(Dest, Src: Pointer; Count: size_t): Pointer; cdecl;
 begin
-  Move(Src, Dest, Count);
+  System.Move(Src^, Dest^, Count);
+  Result := Dest;
 end;
 { -------------------------------------------------------------------------- }
-procedure memmove(var Dest; const Src; Count: Integer); cdecl;
+function memmove(Dest, Src: Pointer; Count: size_t): Pointer; cdecl;
 begin
-  Move(Src, Dest, Count);
+  System.Move(Src^, Dest^, Count);
+  Result := Dest;
 end;
 { -------------------------------------------------------------------------- }
-procedure memset(var Dest; Value: Byte; Count: Integer); cdecl;
+function memset(Dest: Pointer; Value: Byte; Count: size_t): Pointer; cdecl;
 begin
-  FillChar(Dest, Count, Value);
+  FillChar(Dest^, Count, Value);
+  Result := Dest;
 end;
 { -------------------------------------------------------------------------- }
 function strlen(P: PAnsiChar): Integer; cdecl;
@@ -166,6 +169,15 @@ end;
 function realloc(Ptr: Pointer; Size: Integer): Pointer; cdecl;
 begin
   Result := ReallocMemory(Ptr, Size);
+end;
+
+{ process.h declarations =================================================== }
+function _beginthreadex(security: Pointer; stack_size: Cardinal;
+  start_address: Pointer; arglist: Pointer; initflag: Cardinal;
+  var thrdaddr: Cardinal): THandle; cdecl;
+begin
+  Result := CreateThread(security, stack_size, start_address, arglist,
+    initflag, thrdaddr);
 end;
 { -------------------------------------------------------------------------- }
 
