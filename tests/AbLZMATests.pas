@@ -41,14 +41,17 @@ type
   published
     procedure TestDecodeStream;
     procedure TestEncodeStream;
+    {$IFDEF HasAdvancedRecords}
     procedure TestDecompressionStream;
     procedure TestCompressionStream;
+    {$ENDIF}
   end;
 
 implementation
 
 uses
-  Classes, SysUtils, TestFrameWork, AbLZMA, AbLZMAStream;
+  Classes, SysUtils, TestFrameWork,
+  {$IFDEF HasAdvancedRecords}AbLZMAStream,{$ENDIF} AbLZMA;
 
 { TAbVMStrmTests }
 
@@ -105,6 +108,7 @@ begin
   end;
 end;
 
+{$IFDEF HasAdvancedRecords}
 procedure TAbLZMATests.TestDecompressionStream;
 var
   InStream, LZDStream: TStream;
@@ -150,6 +154,7 @@ begin
     CompressedStream.Free;
   end;
 end;
+{$ENDIF}
 
 initialization
 

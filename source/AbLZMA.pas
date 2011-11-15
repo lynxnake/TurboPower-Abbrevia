@@ -37,7 +37,7 @@ unit AbLZMA;
 interface
 
 uses
-  Classes, Windows, SysUtils, AbCrtl;
+  Classes, Windows, SysUtils, AbCrtl, AbUtils;
 
 { Raw LZMA decompression =================================================== }
 
@@ -613,7 +613,7 @@ begin
   if ADictionarySize >= 0 then
     LEncProps.dictSize := ADictionarySize;
 
-  LPOutBuf := @PByte(APCompressedData)[SizeOf(TLZMAHeader)];
+  LPOutBuf := PByte(PtrUInt(APCompressedData) + SizeOf(TLZMAHeader));
   LOutputBytes := ACompressedDataBufferCapacity - SizeOf(TLZMAHeader);
   LPropsSize := LZMA_PROPS_SIZE;
   LzmaCheck(LzmaEncode(LPOutBuf, LOutputBytes, APUncompressedData,

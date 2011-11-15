@@ -53,30 +53,6 @@
 {$X+ Extended syntax}
 {$Z1 Enumerations are byte sized}
 
-{===========!! DO NOT ALTER ANYTHING BEYOND THIS POINT !!==================}
-{===========!! DO NOT ALTER ANYTHING BEYOND THIS POINT !!==================}
-
-{$IFDEF VER110} {C++Builder 3}
-  {$DEFINE CBuilder}
-  {$ObjExportAll On}
-{$ENDIF}
-{$IFDEF VER125} {C++Builder 4}
-  {$DEFINE CBuilder}
-  {$ObjExportAll On}
-{$ENDIF}
-{$IFDEF VER130} {C++Builder 5}
-  {$IFDEF BCB}
-    {$DEFINE CBuilder}
-    {$ObjExportAll On}
-  {$ENDIF}
-{$ENDIF}
-{$IFDEF VER140} {C++Builder 6}
-  {$IFDEF BCB}
-    {$DEFINE CBuilder}
-    {$ObjExportAll On}
-  {$ENDIF}
-{$ENDIF}
-
 {====Platform defines================================================}
 
 { map Delphi platform defines to FreePascal's (MSWINDOWS/UNIX/LINUX/DARWIN) }
@@ -116,6 +92,17 @@
   {$DEFINE NoQt}
 {$ENDIF KYLIX}
 
+{====RTL defines=====================================================}
+
+{$IFNDEF FPC}
+  {$IF RTLVersion >= 18} // Delphi 2006
+    {$DEFINE HasAdvancedRecords}
+  {$IFEND}
+  {$IF RTLVersion >= 21} // Delphi 2010
+    {$DEFINE HasThreadStart}
+  {$IFEND}
+{$ENDIF}
+
 {====Widgetset defines===============================================}
 
 { VCL/RTL version specific defines }
@@ -135,7 +122,6 @@
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasGridDrawingStyle}
     {$DEFINE HasTouch}
-    {$DEFINE HasThreadStart}
   {$IFEND}
 {$ENDIF}
 

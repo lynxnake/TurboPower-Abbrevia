@@ -557,16 +557,16 @@ var
 begin
 {$IFDEF MSWINDOWS}
   Path := ExpandFileName(ArchiveName);
-  if StartsText('\\?\UNC\', Path) then
+  if AnsiStartsText('\\?\UNC\', Path) then
     Delete(Path, 1, 8)
-  else if StartsText('\\?\', Path) then
+  else if AnsiStartsText('\\?\', Path) then
     Delete(Path, 1, 4);
   Path := IncludeTrailingPathDelimiter(ExtractFileDrive(Path));
   Result := GetDriveType(PChar(Path)) = DRIVE_REMOVABLE;
 {$ENDIF}
 {$IFDEF LINUX}
   {LINUX -- Following may not cover all the bases}
-  Result := StartsText('/mnt/floppy', ExtractFilePath(ExpandFileName(ArchiveName)));
+  Result := AnsiStartsText('/mnt/floppy', ExtractFilePath(ExpandFileName(ArchiveName)));
 {$ENDIF}
 {$IFDEF DARWIN}
   Result := False;
