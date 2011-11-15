@@ -98,6 +98,9 @@
   {$IF RTLVersion >= 18} // Delphi 2006
     {$DEFINE HasAdvancedRecords}
   {$IFEND}
+  {$IF RTLVersion >= 20} // Delphi 2009
+    {$DEFINE HasThreadFinished}
+  {$IFEND}
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasThreadStart}
   {$IFEND}
@@ -105,7 +108,7 @@
 
 {====Widgetset defines===============================================}
 
-{ VCL/RTL version specific defines }
+{ VCL version specific defines }
 {$IFNDEF FPC}
   {$IF RTLVersion >= 17} // Delphi 2005
     {$DEFINE HasOnMouseActivate}

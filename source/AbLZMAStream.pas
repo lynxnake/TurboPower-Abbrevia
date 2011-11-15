@@ -52,7 +52,7 @@ unit AbLZMAStream;
 interface
 
 uses
-  Windows, Classes, SysUtils, AbLZMA;
+  Windows, Classes, SysUtils, AbLZMA, AbUtils;
 
 const
   {The size of the intermediate buffers for compressed and decompressed data.}
@@ -75,6 +75,11 @@ type
   TAbLZMACompressionThread = class(TThread)
   protected
     FCompressionStream: TAbLZMACompressionStream;
+    {$IFNDEF HasThreadFinished}
+    FFinished: Boolean;
+    procedure DoTerminate; override;
+    property Finished: Boolean read FFinished;
+    {$ENDIF}
   public
     procedure Execute; override;
   end;
@@ -91,7 +96,7 @@ type
     {Removes this buffer from the compression queue}
     procedure UnQueueBuffer;
     {Returns a pointer to the data the given offset into the buffer}
-    function GetDataPointer(AOffset: Integer): Pointer; inline;
+    function GetDataPointer(AOffset: Integer): Pointer;
   end;
 
   TAbLZMACompressionStream = class(TStream)
@@ -319,7 +324,7 @@ end;
 
 function TAbQueuedBuffer.GetDataPointer(AOffset: Integer): Pointer;
 begin
-  Result := @PAnsiChar(@Self)[SizeOf(TAbQueuedBuffer) + AOffset];
+  Result := Pointer(PtrUInt(@Self) + SizeOf(TAbQueuedBuffer) + PtrUInt(AOffset));
 end;
 
 procedure TAbQueuedBuffer.QueueBuffer(ACompressionStream: TAbLZMACompressionStream);
@@ -525,7 +530,10 @@ begin
     raise Exception.Create('Write may not be called after NoMoreDataToCompress.');
 
   if ACount <= 0 then
-    Exit(0);
+  begin
+    Result := 0;
+    Exit;
+  end;
 
   LPSource := @ABuffer;
   {Get a pointer to the position in the intermediate buffer to be written.}
@@ -587,6 +595,14 @@ begin
 end;
 
 { TAbLZMACompressionThread }
+
+{$IFNDEF HasThreadFinished}
+procedure TAbLZMACompressionThread.DoTerminate;
+begin
+  inherited DoTerminate;
+  FFinished := True;
+end;
+{$ENDIF}
 
 procedure TAbLZMACompressionThread.Execute;
 var
@@ -754,8 +770,10 @@ begin
         FReadBufferSize := InternalDecompressToBuffer(@FUncompressedDataBuffer, UncompressedDataBufferSize);
         FReadBufferAvailableBytes := FReadBufferSize;
         {No more data available? If so we're done.}
-        if FReadBufferAvailableBytes = 0 then
-          Exit(LBytesAlreadyRead);
+        if FReadBufferAvailableBytes = 0 then begin
+          Result := LBytesAlreadyRead;
+          Exit;
+        end;
         {Is enough data now available?}
         if FReadBufferAvailableBytes >= ACount then
         begin
