@@ -36,8 +36,8 @@ unit AbConst;
 interface
 
 const
-  AbVersion = 4.0;
-  AbVersionS = '4.0';
+  AbVersion = 5.0;
+  AbVersionS = '5.0';
   Ab_MessageLen = 255;
   Ab_CaptionLen = 80;
   AB_ZIPPATHDELIM = '/';

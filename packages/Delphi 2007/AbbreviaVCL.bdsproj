@@ -169,13 +169,13 @@
     <VersionInfoKeys>
       <VersionInfoKeys Name="CompanyName"></VersionInfoKeys>
       <VersionInfoKeys Name="FileDescription"></VersionInfoKeys>
-      <VersionInfoKeys Name="FileVersion">4.0.0.0</VersionInfoKeys>
+      <VersionInfoKeys Name="FileVersion">5.0.0.0</VersionInfoKeys>
       <VersionInfoKeys Name="InternalName"></VersionInfoKeys>
       <VersionInfoKeys Name="LegalCopyright">Copyright (c) Abbrevia Group 2011</VersionInfoKeys>
       <VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>
       <VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
       <VersionInfoKeys Name="ProductName">Abbrevia</VersionInfoKeys>
-      <VersionInfoKeys Name="ProductVersion">4.0</VersionInfoKeys>
+      <VersionInfoKeys Name="ProductVersion">5.0</VersionInfoKeys>
       <VersionInfoKeys Name="Comments"></VersionInfoKeys>
     </VersionInfoKeys>
     <Excluded_Packages>
