@@ -49,6 +49,7 @@ procedure Register;
 implementation
 
 uses
+  AbConst,
   AbUtils,
   AbPeDir,
   AbPeFn,
@@ -57,7 +58,10 @@ uses
   AbPeCol,
   DesignIntf,
   DesignEditors,
-  SysUtils;
+  Graphics,
+  ToolsAPI,
+  SysUtils,
+  Windows;
 
 procedure Register;
 begin
@@ -198,5 +202,39 @@ begin
                         TAbMeter,
                         TAbMakeSelfExe ]);
 end;
+
+{$IF DECLARED(IOTAAboutBoxServices)}
+var
+  AboutBoxIndex: Integer = -1;
+
+procedure RegisterAboutBox;
+begin
+  SplashScreenServices.AddPluginBitmap(
+    'Abbrevia: Advanced data compression toolkit, v' + AbVersionS,
+    LoadBitmap(HInstance, 'SPLASH'));
+  AboutBoxIndex := (BorlandIDEServices as IOTAAboutBoxServices).AddPluginInfo(
+    'Abbrevia ' + AbVersionS,
+    'Abbrevia: Advanced data compression toolkit, v' + AbVersionS + sLineBreak +
+    'http://tpabbrevia.sourceforge.net/' + sLineBreak +
+    sLineBreak +
+    'Copyright (c) 1997-2011 Abbrevia development team' + sLineBreak +
+    'Covered under the Mozilla Public License (MPL) v1.1' + sLineBreak +
+    'Abbrevia includes source code from bzip2, the LZMA SDK,' + sLineBreak +
+    'Dag Ågren''s version of PPMd, and the WavPack SDK.',
+    LoadBitmap(HInstance, 'SPLASH'));
+end;
+
+procedure UnregisterAboutBox;
+begin
+  if AboutBoxIndex <> -1 then
+    (BorlandIDEServices as IOTAAboutBoxServices).RemovePluginInfo(AboutBoxIndex);
+end;
+
+initialization
+  RegisterAboutBox;
+
+finalization
+  UnRegisterAboutBox;
+{$IFEND}
 
 end.
