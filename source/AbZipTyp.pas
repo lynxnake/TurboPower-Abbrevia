@@ -1587,7 +1587,7 @@ var
   FieldStream: TStream;
   InfoZipField: PInfoZipUnicodePathRec;
   UnicodeName: UnicodeString;
-  UTF8Name: UTF8String;
+  UTF8Name: AnsiString;
   XceedField: PXceedUnicodePathRec;
 begin
   FItemInfo.LoadFromStream( Stream );
@@ -1745,7 +1745,7 @@ var
   {$IFDEF MSWINDOWS}
   AnsiName : AnsiString;
   {$ENDIF}
-  UTF8Name : UTF8String;
+  UTF8Name : AnsiString;
   FieldSize : Word;
   I : Integer;
   InfoZipField : PInfoZipUnicodePathRec;
