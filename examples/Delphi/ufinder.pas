@@ -48,12 +48,12 @@ type
     Memo1: TMemo;
     DriveComboBox1: TDriveComboBox;
     DirectoryListBox1: TDirectoryListBox;
-    FileListBox1: TFileListBox;
     AbZipBrowser1: TAbZipBrowser;
     Memo2: TMemo;
     Label2: TLabel;
     Button1: TButton;
     Button2: TButton;
+    FileListBox1: TFileListBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Edit1Change(Sender: TObject);
     procedure Button1Click(Sender: TObject);
@@ -84,7 +84,7 @@ end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 var
-  i : Integer;
+  i, j : Integer;
   CurFile : string;
 begin
   Button1.Enabled := False;
@@ -96,21 +96,16 @@ begin
     for i := 0 to pred( FileListBox1.Items.Count ) do begin
       Application.ProcessMessages;
       if Aborted then
-        break;
-      if CompareText( Edit1.Text, FileListBox1.Items[i] ) = 0 then begin
-        Memo1.Lines.Add( 'Found in ' + FileListBox1.Directory );
-        break;
-      end;
+        Break;
       {now add search of zip and self extracting files}
-      CurFile := UpperCase( FileListBox1.Items[i] );
-      if ( Pos( '.ZIP', CurFile ) > 0 ) or
-         ( Pos( '.EXE', CurFile ) > 0 ) then begin
-        try
-          AbZipBrowser1.FileName := FileListBox1.Items[i];
-          if AbZipBrowser1.FindFile(Edit1.Text) >= 0 then
+      try
+        AbZipBrowser1.FileName := FileListBox1.Directory + '\' + FileListBox1.Items[i];
+        for j := 0 to AbZipBrowser1.Count - 1 do
+          if AbZipBrowser1[j].MatchesStoredName(Edit1.Text) then begin
             Memo1.Lines.Add( 'Found in ' + FileListBox1.Items[i] );
-        except
-        end;
+            Break;
+          end;
+      except
       end;
     end;
   finally

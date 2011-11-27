@@ -1086,7 +1086,7 @@ begin
         AbZipOutline1.BaseDirectory := ReadString( 'Preferences',
                                        'BaseDirectory',
                                        ExtractFilePath( Application.ExeName ) );
-        if not AbDirectoryExists( AbZipOutline1.BaseDirectory ) then
+        if not DirectoryExists( AbZipOutline1.BaseDirectory ) then
           AbZipOutline1.BaseDirectory := ExtractFilePath( Application.ExeName );
         Confirmations1.Checked := ReadBool( 'Preferences',
                                             'Confirmations', False );

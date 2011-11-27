@@ -75,7 +75,7 @@ uses
 
 procedure TdlgAboutBox.FormCreate(Sender: TObject);
 begin
-  Version.Caption := 'Abbrevia ' + AbVersion;
+  Version.Caption := 'Abbrevia ' + AbVersionS;
 end;
 
 

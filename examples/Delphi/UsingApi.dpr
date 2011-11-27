@@ -54,23 +54,28 @@ type
 procedure THelper.ArchiveItemProgress( Sender: TObject;
   Item: TAbArchiveItem; Progress: Byte; var Abort: Boolean);
 type
-  TMethodStrings = array [ TAbZipCompressionMethod ] of string;
+  TMethodStrings = array [ cmStored..cmDCLImploded ] of string;
 const
   MethodStrings : TMethodStrings = ('UnStoring', 'UnShrinking', 'UnReducing',
                                     'UnReducing', 'UnReducing', 'UnReducing',
                                     'Exploding', 'DeTokenizing', 'Inflating',
-                                    'Enhanced Inflating', 'DCL Exploding',
-                                    'Extracting');
+                                    'Enhanced Inflating', 'DCL Exploding');
 var
   ActionString : string;
+  CompMethod: TAbZipCompressionMethod;
 begin
   case Item.Action of
 
     aaAdd : ActionString := 'Adding  ';
     aaFreshen : ActionString := 'Freshening  ';
-  else
-    ActionString := MethodStrings[(Item as TAbZipItem).CompressionMethod] +
-                    '  ';
+    else begin
+      CompMethod := (Item as TAbZipItem).CompressionMethod;
+      if CompMethod in [cmStored..cmDCLImploded] then
+        ActionString := MethodStrings[(Item as TAbZipItem).CompressionMethod] +
+          '  '
+      else
+        ActionString := 'Decompressing  ';
+    end;
   end;
   WriteLn( ActionString + Item.FileName );
 end;
