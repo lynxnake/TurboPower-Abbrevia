@@ -135,9 +135,9 @@ type
       read GetUncompressedSize
       write SetUncompressedSize;
 
-    property LastModTimeAsDateTime : TDateTime                           {!!.01}
-      read GetLastModTimeAsDateTime                                      {!!.01}
-      write SetLastModTimeAsDateTime;                                    {!!.01}
+    property LastModTimeAsDateTime : TDateTime
+      read GetLastModTimeAsDateTime
+      write SetLastModTimeAsDateTime;
   end;
 
 
@@ -296,7 +296,7 @@ type
   protected {event variables}
     FOnProcessItemFailure  : TAbArchiveItemFailureEvent;
     FOnArchiveProgress     : TAbArchiveProgressEvent;
-    FOnArchiveSaveProgress : TAbArchiveProgressEvent;                  {!!.04}
+    FOnArchiveSaveProgress : TAbArchiveProgressEvent;
     FOnArchiveItemProgress : TAbArchiveItemProgressEvent;
     FOnConfirmProcessItem  : TAbArchiveItemConfirmEvent;
     FOnConfirmOverwrite    : TAbConfirmOverwriteEvent;
@@ -341,8 +341,8 @@ type
       ProcessType : TAbProcessType; ErrorClass : TAbErrorClass;
       ErrorCode : Integer);
       virtual;
-    procedure DoArchiveSaveProgress(Progress : Byte; var Abort : Boolean); {!!.04}
-      virtual;                                                             {!!.04}
+    procedure DoArchiveSaveProgress(Progress : Byte; var Abort : Boolean);
+      virtual;
     procedure DoArchiveProgress(Progress : Byte; var Abort : Boolean);
       virtual;
     procedure DoArchiveItemProgress(Item : TAbArchiveItem; Progress : Byte;
@@ -478,9 +478,9 @@ type
     property OnArchiveProgress : TAbArchiveProgressEvent
       read FOnArchiveProgress
       write FOnArchiveProgress;
-    property OnArchiveSaveProgress : TAbArchiveProgressEvent           {!!.04}
-      read FOnArchiveSaveProgress                                      {!!.04}
-      write FOnArchiveSaveProgress;                                    {!!.04}
+    property OnArchiveSaveProgress : TAbArchiveProgressEvent
+      read FOnArchiveSaveProgress
+      write FOnArchiveSaveProgress;
     property OnArchiveItemProgress : TAbArchiveItemProgressEvent
       read FOnArchiveItemProgress
       write FOnArchiveItemProgress;
@@ -742,7 +742,6 @@ begin
   FUnCompressedSize := Value;
 end;
 { -------------------------------------------------------------------------- }
-{!!.01 -- Added }
 function TAbArchiveItem.GetLastModTimeAsDateTime: TDateTime;
 begin
   Result := AbDosFileDateToDateTime(LastModFileDate, LastModFileTime);
@@ -757,7 +756,6 @@ begin
   LastModFileDate := LongRec(FileDate).Hi;
 end;
 { -------------------------------------------------------------------------- }
-{!!.01 -- End Added }
 
 { TAbArchiveEnumeratorList implementation ================================== }
 { TAbArchiveEnumeratorList }
@@ -1282,14 +1280,12 @@ begin
     FOnProcessItemFailure(Self, Item, ProcessType, ErrorClass, ErrorCode);
 end;
 { -------------------------------------------------------------------------- }
-{!!.04 - Added }
 procedure TAbArchive.DoArchiveSaveProgress(Progress : Byte; var Abort : Boolean);
 begin
   Abort := False;
   if Assigned(FOnArchiveSaveProgress) then
     FOnArchiveSaveProgress(Self, Progress, Abort);
 end;
-{!!.04 - Added end }
 { -------------------------------------------------------------------------- }
 procedure TAbArchive.DoArchiveProgress(Progress : Byte; var Abort : Boolean);
 begin
@@ -1490,21 +1486,21 @@ procedure TAbArchive.TestTaggedItems;
   {test all tagged items in the archive}
 var
   i : Integer;
-  Abort : Boolean;                                                       
+  Abort : Boolean;
 begin
   CheckValid;
   if Count > 0 then begin
     for i := 0 to pred(Count) do begin
       with TAbArchiveItem(FItemList[i]) do
         if Tagged then begin
-          FCurrentItem := FItemList[i];                              
+          FCurrentItem := FItemList[i];
           TestItemAt(i);
         end;
       DoArchiveProgress(AbPercentage(succ(i), Count), Abort);
       if Abort then
         raise EAbUserAbort.Create;
     end;
-    DoArchiveProgress(100, Abort);                                       
+    DoArchiveProgress(100, Abort);
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -1533,7 +1529,7 @@ begin
       {Does the filename contain a drive or a leading backslash? }
       if not ((Pos(':', lValue) = 2) or (Pos(AbPathDelim, lValue) = 1)) then
         {If not, add the BaseDirectory to the filename.}
-        lValue := AbAddBackSlash(BaseDirectory) + lValue;                {!!.04}
+        lValue := AbAddBackSlash(BaseDirectory) + lValue;
     end;
     lValue := AbGetShortFileSpec(lValue);
   end;
@@ -1621,7 +1617,7 @@ begin
     for i := pred(Count) downto 0 do begin
       with TAbArchiveItem(FItemList[i]) do
         if MatchesStoredNameEx(FileMask) then
-          if not MatchesStoredNameEx(ExclusionMask) then                 
+          if not MatchesStoredNameEx(ExclusionMask) then
             FreshenAt(i);
     end;
   end;
@@ -1695,7 +1691,7 @@ begin
         AbFindFiles(Item.FileName, faAnyFile and not faDirectory, Files,
                      True);
         if Files.Count > 0 then begin
-          DName := AbAddBackSlash(BaseDirectory) + Files[0];           {!!.04}
+          DName := AbAddBackSlash(BaseDirectory) + Files[0];
           AbUnfixName(DName);
           Item.DiskFileName := DName;
         end
@@ -1711,7 +1707,7 @@ begin
   end
   else begin
     if (BaseDirectory <> '') then
-      DName := AbAddBackSlash(BaseDirectory) + Item.FileName           {!!.04}
+      DName := AbAddBackSlash(BaseDirectory) + Item.FileName
     else
       if AbGetPathType(Item.DiskFileName) = ptAbsolute then
         DName := Item.DiskFileName
@@ -1897,7 +1893,7 @@ begin
       FLogStream := TFileStream.Create(FLogFile, fmCreate or fmOpenWrite);
       MakeLogEntry(FArchiveName, ltStart);
     except
-      raise EAbException.Create(AbLogCreateErrorS);                      {!!.02}
+      raise EAbException.Create(AbLogCreateErrorS);
     end;
   end;
 end;

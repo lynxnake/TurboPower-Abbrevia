@@ -860,7 +860,7 @@ procedure RequestPassword(Archive : TAbZipArchive; var Abort : Boolean);
 var
   APassPhrase : AnsiString;
 begin
-  APassPhrase := Archive.Password; {!!.05  SF.NET Bug 698162}
+  APassPhrase := Archive.Password;
   Abort := False;
   if Assigned(Archive.OnNeedPassword) then begin
     Archive.OnNeedPassword(Archive, APassPhrase);
@@ -899,7 +899,7 @@ begin
     if Item.CompressionMethod = cmEnhancedDeflated then
       Hlpr.Options := Hlpr.Options or dfc_UseDeflate64;
 
-    Hlpr.StreamSize := Item.CompressedSize;                                {!!.02}
+    Hlpr.StreamSize := Item.CompressedSize;
 
     Inflate(InStream, OutStream, Hlpr);
   finally
@@ -1076,12 +1076,12 @@ begin
     end;
 
     { check CRC }
-    if OutStream.CRC32 <> aItem.CRC32 then                               {!!.01}
-      if Assigned(aZipArchive.OnProcessItemFailure) then                 {!!.01}
-        aZipArchive.OnProcessItemFailure(aZipArchive, aItem, ptExtract,  {!!.01}
-          ecAbbrevia, AbZipBadCRC)                                       {!!.01}
-      else                                                               {!!.01}
-        raise EAbZipBadCRC.Create;                                       {!!.01}
+    if OutStream.CRC32 <> aItem.CRC32 then
+      if Assigned(aZipArchive.OnProcessItemFailure) then
+        aZipArchive.OnProcessItemFailure(aZipArchive, aItem, ptExtract,
+          ecAbbrevia, AbZipBadCRC)
+      else
+        raise EAbZipBadCRC.Create;
   finally
     OutStream.Free;
   end;
@@ -1117,7 +1117,7 @@ begin
   else begin
     InStream := ExtractPrep(ZipArchive, Item);
     try
-      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite); {!!.01}
+      OutStream := TFileStream.Create(UseName, fmCreate or fmShareDenyWrite);
       try
         try    {OutStream}
           DoExtract(ZipArchive, Item, InStream, OutStream);

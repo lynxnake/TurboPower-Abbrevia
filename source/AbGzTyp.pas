@@ -258,8 +258,8 @@ type
     function GetSupportsEmptyFolders : Boolean;
       override;
 
-    function GetItem(Index: Integer): TAbGzipItem;                  {!!.03}
-    procedure PutItem(Index: Integer; const Value: TAbGzipItem);    {!!.03}
+    function GetItem(Index: Integer): TAbGzipItem;
+    procedure PutItem(Index: Integer; const Value: TAbGzipItem);
   public {methods}
     constructor CreateFromStream(aStream : TStream; const aArchiveName : string);
       override;
@@ -275,9 +275,9 @@ type
     property IsGzippedTar : Boolean
       read GetIsGzippedTar write FIsGzippedTar;
 
-    property Items[Index : Integer] : TAbGzipItem                    {!!.03}
-      read GetItem                                                   {!!.03}
-      write PutItem; default;                                        {!!.03}
+    property Items[Index : Integer] : TAbGzipItem
+      read GetItem
+      write PutItem; default;
   end;
 
 function VerifyGZip(Strm : TStream) : TAbArchiveType;
@@ -576,8 +576,7 @@ begin
   Helper := TAbDeflateHelper.Create;
   try
     FItem.CRC32 := Deflate(AStream, FStream, Helper);
-    FItem.UncompressedSize := AStream.Size;                              {!!.02}
-//    FItem.UncompressedSize := FStream.Size{Helper.NormalSize};         {!!.02}
+    FItem.UncompressedSize := AStream.Size;
   finally
     Helper.Free;
   end;
@@ -1046,14 +1045,12 @@ begin
   Result := FIsGzippedTar;
 end;
 
-{!!.03 -- Added }
 function TAbGzipArchive.GetItem(Index: Integer): TAbGzipItem;
 begin
   Result := nil;
   if Index = 0 then
     Result := TAbGzipItem(FItemList.Items[Index]);
 end;
-{!!.03 -- End Added }
 
 function TAbGzipArchive.GetSupportsEmptyFolders : Boolean;
 begin
@@ -1099,13 +1096,11 @@ begin
   end;
 end;
 
-{!!.03 -- Added }
 procedure TAbGzipArchive.PutItem(Index: Integer; const Value: TAbGzipItem);
 begin
   if Index = 0 then
     FItemList.Items[Index] := Value;
 end;
-{!!.03 -- End Added }
 
 procedure TAbGzipArchive.SaveArchive;
 var
@@ -1238,7 +1233,7 @@ begin
     if IsGzippedTar and TarAutoHandle then
       SwapToTar;
 
-    DoArchiveSaveProgress( 100, Abort );                               {!!.04}
+    DoArchiveSaveProgress( 100, Abort );
     DoArchiveProgress( 100, Abort );
   finally {NewStream}
     OutGzHelp.Free;

@@ -92,7 +92,7 @@ const
   AbParentDir     = '..';
 
 type
-  TAbArchiveType = (atUnknown, atZip, atSpannedZip {!!.01}, atSelfExtZip,
+  TAbArchiveType = (atUnknown, atZip, atSpannedZip, atSelfExtZip,
                     atTar, atGzip, atGzippedTar, atCab, atBzip2, atBzippedTar);
 
 
@@ -283,14 +283,12 @@ type
 
   function AbWriteVolumeLabel(const VolName : string;
                                   Drive : Char) : Cardinal;
-{!!.04 - Added }
 const
   AB_SPAN_VOL_LABEL = 'PKBACK# %3.3d';
 
   function AbGetVolumeLabel(Drive : Char) : string;
   procedure AbSetSpanVolumeLabel(Drive: Char; VolNo : Integer);
   function AbTestSpanVolumeLabel(Drive: Char; VolNo : Integer): Boolean;
-{!!.04 - Added End }
 
   procedure AbSetFileAttr(const aFileName : string; aAttr: Integer);
     {-Sets platform-native file attributes (DOS attr or Unix mode)}
@@ -326,8 +324,8 @@ const
   function AbUnixTimeToLocalDateTime(UnixTime : LongInt) : TDateTime;
   function AbLocalDateTimeToUnixTime(DateTime : TDateTime) : LongInt;
 
-  function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;  {!!.01}
-  function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;            {!!.01}
+  function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;
+  function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;
 
   function AbGetFileTime(const aFileName: string): TDateTime;
   function AbSetFileTime(const aFileName: string; aValue: TDateTime): Boolean;
@@ -358,7 +356,6 @@ const
   AB_FPERMISSION_OTHERWRITE   = $0002; { write by other }
   AB_FPERMISSION_OTHEREXECUTE = $0001; { execute/search by other }
 
-{!!.01 more sensible default permissions given Unix predilections:}
   AB_FPERMISSION_GENERIC      =
     AB_FPERMISSION_OWNERREAD or
     AB_FPERMISSION_OWNERWRITE or
@@ -665,7 +662,7 @@ begin
            ( SR.Name <> AbParentDir ) and
            ((SR.Attr and faDirectory) > 0 ) then
           AbFindFiles( ExtractFilePath( NewFile ) + SR.Name + AbPathDelim +
-                       ExtractFileName( FileMask ), SearchAttr,          {!!.04}
+                       ExtractFileName( FileMask ), SearchAttr,
                        FileList, True );
         Found := FindNext( SR );
       end;
@@ -1114,7 +1111,6 @@ begin
 {$ENDIF}
 end;
 { -------------------------------------------------------------------------- }
-{!!.01 -- Added }
 function AbDosFileDateToDateTime(FileDate, FileTime : Word) : TDateTime;
 {$IFDEF MSWINDOWS}
 var
@@ -1125,7 +1121,6 @@ begin
   Result := FileDateToDateTime(Temp);
 {$ENDIF MSWINDOWS}
 {$IFDEF UNIX}
-{!!.02 -- rewritten }
 var
   Yr, Mo, Dy : Word;
   Hr, Mn, S  : Word;
@@ -1153,20 +1148,7 @@ begin
   Result :=
     EncodeDate(Yr, Mo, Dy) +
     EncodeTime(Hr, Mn, S, 0);
-
-{
-  Result :=
-    EncodeDate(
-      FileDate shr 9 + 1980,
-      FileDate shr 5 and 15,
-      FileDate and 31) +
-    EncodeTime(
-      FileTime shr 11,
-      FileTime shr 5 and 63,
-      FileTime and 31 shl 1, 0);
-}
 {$ENDIF UNIX}
-{!!.02 -- end rewritten }
 end;
 
 function AbDateTimeToDosFileDate(Value : TDateTime) : LongInt;
@@ -1210,9 +1192,6 @@ begin
 end;
 
 { -------------------------------------------------------------------------- }
-
-
-{!!.01 -- End Added }
 function AbSwapLongEndianness(Value : LongInt): LongInt;
 { convert BigEndian <-> LittleEndian 32-bit value }
 type
@@ -1280,7 +1259,6 @@ begin
   {$WARN SYMBOL_PLATFORM ON}
 end;
 { -------------------------------------------------------------------------- }
-{!!.01 -- Added }
 function AbFileGetSize(const aFileName : string) : Int64;
 var
   SR: TAbAttrExRec;
@@ -1290,7 +1268,6 @@ begin
   else
     Result := -1;
 end;
-{!!.01 -- End Added }
 { -------------------------------------------------------------------------- }
 function AbFileGetAttrEx(const aFileName: string; out aAttr: TAbAttrExRec) : Boolean;
 var
@@ -1346,7 +1323,6 @@ begin
 end;
 
 
-{!!.04 - Added }
 const
   MAX_VOL_LABEL = 16;
 
@@ -1390,7 +1366,6 @@ begin
   VolLabel := UpperCase(AbGetVolumeLabel(Drive));
   Result := VolLabel = TestLabel;
 end;
-{!!.04 - Added End }
 
 function AbDetectCharSet(const aValue: RawByteString): TAbCharSet;
 var

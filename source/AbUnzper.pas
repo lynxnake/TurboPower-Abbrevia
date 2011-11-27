@@ -269,9 +269,9 @@ procedure TAbCustomUnZipper.SetFileName(const aFileName: string);
 begin
   if aFileName <> '' then
   begin
-    if not FileExists(aFileName) then  {!!.05}
+    if not FileExists(aFileName) then
       raise EAbFileNotFound.Create;
-    if AbFileGetSize(aFileName) <= 0 then {!!.05}
+    if AbFileGetSize(aFileName) <= 0 then
       raise EAbBadStream.Create;
   end;
 

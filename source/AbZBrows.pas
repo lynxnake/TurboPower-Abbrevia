@@ -211,7 +211,7 @@ begin
          ArcType := AbDetermineArcType(FileName, atUnknown);
 
       case ArcType of
-        atZip, atSpannedZip, atSelfExtZip : begin                        {!!.03}
+        atZip, atSpannedZip, atSelfExtZip : begin
           FArchive := TAbZipArchive.Create(FileName, fmOpenRead or fmShareDenyNone);
           InitArchive;
         end;

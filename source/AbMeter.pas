@@ -199,9 +199,9 @@ begin
     BlockWidth := ((ClHeight - LSpace - RSpace - (9 * HSpace)) div FTickMarks) + 1;
   BlockCount  := FPercent div FTickMarks;
 
-  if not Assigned((Canvas as TControlCanvas).Control) then begin         {!!.04}
-    TControlCanvas(Canvas).Control := self;                              {!!.04}
-  end;                                                                   {!!.04}
+  if not Assigned((Canvas as TControlCanvas).Control) then begin
+    TControlCanvas(Canvas).Control := self;
+  end;
   with Canvas do begin
     Brush.Color := FUnusedColor;
     FillRect(Rect(ClRect.Left, ClRect.Top, ClRect.Left + ClWidth - 1,

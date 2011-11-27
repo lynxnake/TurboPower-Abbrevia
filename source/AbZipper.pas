@@ -48,7 +48,7 @@ type
     FDOSMode : Boolean;
     FOnConfirmSave          : TAbArchiveConfirmEvent;
     FOnSave                 : TAbArchiveEvent;
-    FOnArchiveSaveProgress  : TAbArchiveProgressEvent;                 {!!.04}
+    FOnArchiveSaveProgress  : TAbArchiveProgressEvent;
     FArchiveSaveProgressMeter : IAbProgressMeter;
 
     FStoreOptions           : TAbStoreOptions;
@@ -58,8 +58,8 @@ type
       virtual;
     procedure DoSave(Sender : TObject);
       virtual;
-    procedure DoArchiveSaveProgress(Sender : TObject; Progress : Byte;{!!.04}
-                                    var Abort : Boolean);             {!!.04}
+    procedure DoArchiveSaveProgress(Sender : TObject; Progress : Byte;
+                                    var Abort : Boolean);
 
     procedure InitArchive;
       override;
@@ -77,9 +77,9 @@ type
                       OutStream : TStream);
     procedure ZipFromStreamProc(Sender : TObject; Item : TAbArchiveItem;
                                 OutStream, InStream : TStream );
-    procedure Notification(Component: TComponent;                      {!!.04}
-      Operation: TOperation); override;                                {!!.04}
-    procedure ResetMeters; override;                                   {!!.04}
+    procedure Notification(Component: TComponent;
+      Operation: TOperation); override;
+    procedure ResetMeters; override;
 
   protected {properties}
     property AutoSave : Boolean
@@ -100,9 +100,9 @@ type
       read  FStoreOptions
       write SetStoreOptions
       default AbDefStoreOptions;
-    property ArchiveSaveProgressMeter : IAbProgressMeter               {!!.04}
-      read  FArchiveSaveProgressMeter                                  {!!.04}
-      write SetArchiveSaveProgressMeter;                               {!!.04}
+    property ArchiveSaveProgressMeter : IAbProgressMeter
+      read  FArchiveSaveProgressMeter
+      write SetArchiveSaveProgressMeter;
 
 
   protected {events}
@@ -112,9 +112,9 @@ type
     property OnSave : TAbArchiveEvent
       read  FOnSave
       write FOnSave;
-    property OnArchiveSaveProgress : TAbArchiveProgressEvent           {!!.04}
-      read FOnArchiveSaveProgress                                      {!!.04}
-      write FOnArchiveSaveProgress;                                    {!!.04}
+    property OnArchiveSaveProgress : TAbArchiveProgressEvent
+      read FOnArchiveSaveProgress
+      write FOnArchiveSaveProgress;
 
   public {methods}
     constructor Create(AOwner : TComponent);
@@ -140,7 +140,7 @@ type
   TAbZipper = class(TAbCustomZipper)
   published
     property ArchiveProgressMeter;
-    property ArchiveSaveProgressMeter;                                 {!!.04}
+    property ArchiveSaveProgressMeter;
     property ItemProgressMeter;
     property AutoSave;
     property BaseDirectory;
@@ -151,7 +151,7 @@ type
     property LogFile;
     property Logging;
     property OnArchiveProgress;
-    property OnArchiveSaveProgress;                                    {!!.04}
+    property OnArchiveSaveProgress;
     property OnArchiveItemProgress;
     property OnChange;
     property OnConfirmProcessItem;
@@ -316,7 +316,7 @@ begin
     FArchive.DOSMode                                 := FDOSMode;
     ZipArchive.StoreOptions                          := FStoreOptions;
     {events}
-    ZipArchive.OnArchiveSaveProgress                 := DoArchiveSaveProgress; {!!.04}
+    ZipArchive.OnArchiveSaveProgress                 := DoArchiveSaveProgress;
     ZipArchive.OnConfirmSave                         := DoConfirmSave;
     TAbZipArchive(ZipArchive).OnRequestBlankDisk     := OnRequestBlankDisk;
     ZipArchive.OnSave                                := DoSave;
@@ -405,7 +405,7 @@ begin
       ArcType := AbDetermineArcType(FileName, atUnknown);
 
       case ArcType of
-        atZip, atSpannedZip, atSelfExtZip : begin                        {!!.02}
+        atZip, atSpannedZip, atSelfExtZip : begin
          FArchive := TAbZipArchive.Create(FileName, fmOpenRead or fmShareDenyNone);
          InitArchive;
         end;
@@ -450,10 +450,10 @@ begin
       FArchiveType := ArcType;
 
     end else begin  { file doesn't exist, so create a new one }
-      if not ForceType then                                              {!!.01}
-        ArcType := AbDetermineArcType(FileName, atUnknown);              {!!.01}
+      if not ForceType then
+        ArcType := AbDetermineArcType(FileName, atUnknown);
 
-      case ArcType of                                                    {!!.01}
+      case ArcType of
         atZip : begin                                                    
           FArchive := TAbZipArchive.Create(FileName, fmCreate);
           InitArchive;
@@ -539,7 +539,6 @@ begin
     raise EAbZipNoInsertion.Create;
 end;
 { -------------------------------------------------------------------------- }
-{!!.04 - Added}
 procedure TAbCustomZipper.DoArchiveSaveProgress(Sender : TObject;
                                                 Progress : Byte;
                                                 var Abort : Boolean);
@@ -566,7 +565,6 @@ begin
   if Assigned(FArchiveSaveProgressMeter) then
     FArchiveSaveProgressMeter.Reset;
 end;
-{!!.04 - Added end}
 { -------------------------------------------------------------------------- }
 
 end.

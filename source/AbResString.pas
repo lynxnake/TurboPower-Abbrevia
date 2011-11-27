@@ -234,7 +234,6 @@ resourcestring
   AbGzOsunknown     = 'unknown';
   AbGzOsUndefined   = 'ID undefined by gzip';
 
-{!!.03 - Moved from AbCompnd.inc }
 { Compound File specific error messages }
 resourcestring
   AbCmpndIndexOutOfBounds   = 'Index out of bounds';
@@ -243,7 +242,6 @@ resourcestring
   AbCmpndFileNotFound       = 'File/Directory not found';
   AbCmpndFolderNotEmpty     = 'Folder not empty';
   AbCmpndExceedsMaxFileSize = 'File size exceeds maximum allowable';
-{!!.03 - End Moved }
 
 
 

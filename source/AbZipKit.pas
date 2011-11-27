@@ -102,7 +102,7 @@ type
 
   TAbZipKit = class(TAbCustomZipKit)
   published
-    property ArchiveProgressMeter;                                     {!!.04}
+    property ArchiveProgressMeter;
     property ArchiveSaveProgressMeter;
     property AutoSave;
     property BaseDirectory;
@@ -117,7 +117,7 @@ type
     property LogFile;
     property Logging;
     property OnArchiveProgress;
-    property OnArchiveSaveProgress;                                    {!!.04}
+    property OnArchiveSaveProgress;
     property OnArchiveItemProgress;
     property OnChange;
     property OnConfirmOverwrite;

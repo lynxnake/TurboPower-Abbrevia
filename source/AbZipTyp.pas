@@ -567,9 +567,9 @@ type
       read GetZipfileComment
       write SetZipfileComment;
 
-    property Items[Index : Integer] : TAbZipItem                      {!!.03}
-      read GetItem                                                    {!!.03}
-      write PutItem; default;                                         {!!.03}
+    property Items[Index : Integer] : TAbZipItem
+      read GetItem
+      write PutItem; default;
 
   public {events}
     property OnNeedPassword : TAbNeedPasswordEvent
@@ -2386,9 +2386,9 @@ begin
             begin
               { Exception was caused by a User Abort and Item Failure should not be called
                 Question:  Do we want an New Event when this occurs or should the
-                exception just be re-raised }
-              if (E is EAbUserAbort) then {!!.05 [ 783614 ]}
-                 raise;
+                exception just be re-raised [783614] }
+              if (E is EAbUserAbort) then
+                raise;
               CurrItem.Action := aaDelete;
               DoProcessItemFailure(CurrItem, ptAdd, ecFileOpenError, 0);
             end;

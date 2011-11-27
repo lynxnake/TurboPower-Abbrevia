@@ -109,7 +109,6 @@ type
     procedure CreateCabFile;
     function  CreateItem( const FileSpec : string ): TAbArchiveItem;
       override;
-    procedure DoCabItemProcessed;
     procedure DoCabItemProgress(BytesCompressed : DWord;
       var Abort : Boolean);
     procedure DoGetNextCabinet(CabIndex : Integer; var CabName : string;
@@ -276,11 +275,11 @@ var
 begin
   Abort := False;
   with lpCCab^ do begin
-    CabName := string(szCab);                                            {!!.02}
+    CabName := string(szCab);
     {obtain next cabinet.  Make index zero-based}
     Archive.DoGetNextCabinet(Pred(iCab), CabName, Abort);
     if not Abort then
-      StrPLCopy(szCab, AnsiString(CabName), Length(szCab));              {!!.02}
+      StrPLCopy(szCab, AnsiString(CabName), Length(szCab));
   end;
   Result := not Abort;
 end;
@@ -345,10 +344,10 @@ var
 begin
   Archive.FTempFileID := Archive.FTempFileID + 1;
   if (Archive.TempDirectory <> '') then
-    StrPLCopy(TempPath, AnsiString(Archive.TempDirectory), Length(TempPath)){!!.02}
+    StrPLCopy(TempPath, AnsiString(Archive.TempDirectory), Length(TempPath))
   else
-    GetTempPathA(255, TempPath);                                         {!!.02}
-  GetTempFileNameA(TempPath, 'VMS', Archive.FTempFileID, lpTempName);    {!!.02}
+    GetTempPathA(255, TempPath);
+  GetTempFileNameA(TempPath, 'VMS', Archive.FTempFileID, lpTempName);
   Result := 1;
 end;
 
@@ -473,7 +472,6 @@ begin
           TFileStream(pfdin^.hf).Free;
           FileSetAttr(Archive.FIIPName, pfdin^.attribs);
         end;
-        Archive.DoCabItemProcessed;
         Result := 1;
       end;
   end;
@@ -647,12 +645,6 @@ begin
     DiskFileName := ExpandFileName(FileSpec);
     FileName := FixName(FileSpec);
   end;
-end;
-{ -------------------------------------------------------------------------- }
-procedure TAbCabArchive.DoCabItemProcessed;
-  {allow messages to be processed}
-begin
-//  Application.ProcessMessages;                                       {!!.04}
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCabArchive.DoCabItemProgress(BytesCompressed : DWord;

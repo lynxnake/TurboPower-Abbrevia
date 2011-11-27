@@ -203,7 +203,7 @@ type
     FSortAttributes : TAbSortAttributes;
     FColMap : array[TAbViewAttribute] of Integer;
     FColSizing : Boolean;
-    FColMoving : Boolean;                                             {!!.02}
+    FColMoving : Boolean;
     FHeadings : TAbColHeadings;
     FItemList : TAbArchiveList;
     FRowMap : TAbRowMap;
@@ -1469,8 +1469,7 @@ begin
         ACol := ViewMouseCoord.X;
         if (ARow = abHeaderRow) then begin
           Attr := TAbViewAttribute(ColMap(ACol));
-          if not FColMoving and                                       {!!.02}
-            {not (doColMove in FDisplayOptions) and}                  {!!.02}
+          if not FColMoving and
             AttrToSortAttribute(Attr, SortAttribute) and
             (SortAttribute in FSortAttributes) then begin
             FSortCol := ACol;
@@ -1490,15 +1489,15 @@ begin
           Paint;
       end;
 
-  FColMoving := False;                                                {!!.02}
+  FColMoving := False;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
   inherited MouseMove(Shift, X, Y);
 
-  if (FGridState = gsColMoving) then                                  {!!.02}
-    FColMoving := True;                                               {!!.02}
+  if (FGridState = gsColMoving) then
+    FColMoving := True;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbBaseViewer.MoveColumn(FromCol, ToCol : Integer);

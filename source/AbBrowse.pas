@@ -77,7 +77,7 @@ type
     function  GetItem(Value : Longint) : TAbArchiveItem;
     function  GetSpanned : Boolean;
     function  GetStatus : TAbArchiveStatus;
-    procedure ResetMeters; virtual;                                    {!!.04}
+    procedure ResetMeters; virtual;
     procedure SetArchiveProgressMeter(const Value: IAbProgressMeter);
     procedure SetCompressionType(const Value: TAbArchiveType);
     procedure SetBaseDirectory(const Value : string);

@@ -48,7 +48,7 @@ uses
   AbBase, AbResString, AbDfDec, AbDfEnc, AbDfBase;
 
 const
-  AbCompoundFileVersion = '3.1';                                {!!.03}
+  AbCompoundFileVersion = '3.1';
 
 const
   {SystemBlock constants}
@@ -153,7 +153,7 @@ type
     procedure VisitSubNodesPost(Node : TMultiNode; ID : Integer);
     procedure VisitSubNodesPre(Node : TMultiNode; Strm : TStream);
     procedure VisitNode(Node : TMultiNode; Strm : TStream);
-    procedure ParseDirStr(const Key : AnsiString; Lst : TStringList);      {!!.01}
+    procedure ParseDirStr(const Key : AnsiString; Lst : TStringList);
     procedure PopulateSubNodes(ParentNode : TMultiNode;
                                TreeView : TTreeView; TreeNode : TTreeNode);
     procedure TraversePost(ID : Integer);
@@ -310,15 +310,15 @@ type
     procedure BuildRootDir;
     procedure AddDirEntriesFromList(Lst : TStringList);
 
-    procedure Defrag;                   {!!.03} {not implemented}
+    procedure Defrag;                   {not implemented}
   public
     constructor Create(const FileName : string; const VolLabel : AnsiString;
                        AllocSize : Integer); overload;
     constructor Create(const FileName : string; const VolLabel : AnsiString;
                        AllocSize : Integer; const Signature: AnsiString); overload;
     destructor Destroy; override;
-    procedure EnumerateFiles(Lst : TStringList);                       {!!.01}
-    procedure EnumerateFolders(Lst : TStringList);                     {!!.01}
+    procedure EnumerateFiles(Lst : TStringList);
+    procedure EnumerateFolders(Lst : TStringList);
     procedure AddFile(FName : AnsiString; FileData : TStream; FileSize : Integer);
     function AddFolder(FName : AnsiString) : Boolean;
     procedure UpdateFile(FName : AnsiString; FData : TStream);
@@ -527,18 +527,18 @@ begin
     Node := CurrentNode;
     for i := 0 to Lst.Count - 1 do begin
 
-      if Lst.Strings[i] = '\' then begin                               {!!.01}
-        Node := Root;                                                  {!!.01}
-        Continue;                                                      {!!.01}
-      end                                                              {!!.01}
+      if Lst.Strings[i] = '\' then begin
+        Node := Root;
+        Continue;
+      end
 
-      else if Lst.Strings[i] = '.' then                                {!!.01}
-        Continue                                                       {!!.01}
+      else if Lst.Strings[i] = '.' then
+        Continue
 
-      else if Lst.Strings[i] = '..' then begin                         {!!.01}
-        if Node <> Root then                                           {!!.01}
-          Node := TMultiNode(Node.Parent);                             {!!.01}
-      end else begin                                                   {!!.01}
+      else if Lst.Strings[i] = '..' then begin
+        if Node <> Root then
+          Node := TMultiNode(Node.Parent);
+      end else begin
         Ndx := Node.FChildren.IndexOf(Lst.Strings[i]);
         if Ndx >= 0 then
           Node := Node.GetChild(Ndx)
@@ -597,7 +597,6 @@ begin
   Inc(FCount);
 end;
 {-----------------------------------------------------------------------------}
-{!!.01 - Complete rewrite}
 procedure TMultiTree.ParseDirStr(const Key : AnsiString; Lst : TStringList);
   {- parses Key into individual dir commands adding each to Lst}
 var
@@ -765,7 +764,7 @@ begin
   FSignature      := 'AbCompoundFile';
   FVolumeLabel    := VolLabel;
   FAllocationSize := AllocationSz;
-  FVersion        := AbCompoundFileVersion;                            {!!.03}
+  FVersion        := AbCompoundFileVersion;
   FUpdating       := False;
 end;
 {-----------------------------------------------------------------------------}
@@ -1411,19 +1410,19 @@ end;
 {-----------------------------------------------------------------------------}
 procedure TAbCompoundFile.AddFile(FName : AnsiString; FileData : TStream;
                                   FileSize : Integer);
-   function JustFilename(const PathName : AnsiString) : AnsiString;    {!!.01}
-     {-Return just the filename and extension of a pathname.}          {!!.01}
-   var                                                                 {!!.01}
-     I : Cardinal;                                                     {!!.01}
-   begin                                                               {!!.01}
-     Result := '';                                                     {!!.01}
-     if PathName = '' then Exit;                                       {!!.01}
-     I := Succ(Word(Length(PathName)));                                {!!.01}
-     repeat                                                            {!!.01}
-       Dec(I);                                                         {!!.01}
-     until (PathName[I] in ['\',':']) or (I = 0);                      {!!.01}
-     Result := System.Copy(PathName, Succ(I), rdEntryNameSize);        {!!.01}
-   end;                                                                {!!.01}
+   function JustFilename(const PathName : AnsiString) : AnsiString;
+     {-Return just the filename and extension of a pathname.}
+   var
+     I : Cardinal;
+   begin
+     Result := '';
+     if PathName = '' then Exit;
+     I := Succ(Word(Length(PathName)));
+     repeat
+       Dec(I);
+     until (PathName[I] in ['\',':']) or (I = 0);
+     Result := System.Copy(PathName, Succ(I), rdEntryNameSize);
+   end;
 
   {- Compresses, adds & persists the data (FileData)}
 var
@@ -1432,7 +1431,7 @@ var
   CompHelper : TAbDeflateHelper;
   ChainArray : TFATChainArray;
 begin
-  FName := JustFileName(FName);                                        {!!.01}
+  FName := JustFileName(FName);
   if ((FStream.Size + FileData.Size +
       (4 * FSystemBlock.AllocationSize)) >= MaxLongInt) then
     raise ECompoundFileError.Create(AbCmpndExceedsMaxFileSize);
@@ -1754,7 +1753,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.EnumerateFiles(Lst : TStringList);           {!!.01}
+procedure TAbCompoundFile.EnumerateFiles(Lst : TStringList);
 var
   i : Integer;
 begin
@@ -1765,7 +1764,7 @@ begin
   end;
 end;
 {-----------------------------------------------------------------------------}
-procedure TAbCompoundFile.EnumerateFolders(Lst : TStringList);         {!!.01}
+procedure TAbCompoundFile.EnumerateFolders(Lst : TStringList);
 var
   i : Integer;
 begin
@@ -1887,7 +1886,7 @@ begin
                                 as TAbDirectoryEntry).StartBlock, ChainArray);
     SetLength(Buff, FSystemBlock.AllocationSize);
     for i := 0 to high(ChainArray) do begin
-      for j := 0 to Pred(FSystemBlock.AllocationSize) do                {!!.02}
+      for j := 0 to Pred(FSystemBlock.AllocationSize) do
         Buff[j] := Byte(chr(0));
       FStream.Seek((ChainArray[i]) * FSystemBlock.AllocationSize, soFromBeginning);
       if i <> High(ChainArray) then begin

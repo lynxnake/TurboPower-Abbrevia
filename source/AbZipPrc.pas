@@ -64,7 +64,7 @@ uses
   AbExcept,
   AbUtils,
   AbDfCryS,
-  AbVMStrm,                                                              {!!.01}
+  AbVMStrm,
   AbDfBase,
   AbDfEnc,
   AbSpanSt;
@@ -72,13 +72,11 @@ uses
 
 { ========================================================================== }
 procedure DoDeflate(Archive : TAbZipArchive; Item : TAbZipItem; OutStream, InStream : TStream);
-{!!.02 Added }
 const
   DEFLATE_NORMAL_MASK    = $00;
   DEFLATE_MAXIMUM_MASK   = $02;
   DEFLATE_FAST_MASK      = $04;
   DEFLATE_SUPERFAST_MASK = $06;
-{!!.02 End Added }
 var
   Hlpr : TAbDeflateHelper;
 begin
@@ -94,7 +92,6 @@ begin
     { set deflation level desired }
     Hlpr.PKZipOption := '0';
 
-{!!.02 Rewritten}
     case Archive.DeflationOption of
       doNormal    : begin
         Hlpr.PKZipOption := 'n';
@@ -120,15 +117,6 @@ begin
           Item.GeneralPurposeBitFlag or DEFLATE_SUPERFAST_MASK;
       end;
     end;
-{
-    case Archive.DeflationOption of
-      doNormal    : Hlpr.PKZipOption := 'n';
-      doMaximum   : Hlpr.PKZipOption := 'x';
-      doFast      : Hlpr.PKZipOption := 'f';
-      doSuperFast : Hlpr.PKZipOption := 's';
-    end;
-}
-{!!.02 End Rewritten}
 
     { attach progress notification method }
     Hlpr.OnProgressStep := Archive.DoInflateProgress;
@@ -202,8 +190,8 @@ procedure DoZipFromStream(Sender : TAbZipArchive; Item : TAbZipItem;
   OutStream, InStream : TStream);
 var
   ZipArchive : TAbZipArchive;
-  InStartPos{, OutStartPos} : LongInt;                                   {!!.01}
-  TempOut : TAbVirtualMemoryStream;                                      {!!.01}
+  InStartPos : LongInt;
+  TempOut : TAbVirtualMemoryStream;
   DestStrm : TStream;
 begin
   ZipArchive := TAbZipArchive(Sender);
@@ -219,66 +207,66 @@ begin
   else
     DestStrm := OutStream;
   try
-    if InStream.Size > 0 then begin                                      {!!.01}
+    if InStream.Size > 0 then begin
 
       { determine how to store Item based on specified CompressionMethodToUse }
       case ZipArchive.CompressionMethodToUse of
         smDeflated : begin
         { Item is to be deflated regarless }
           { deflate item }
-          DoDeflate(ZipArchive, Item, DestStrm, InStream);               {!!.01}
+          DoDeflate(ZipArchive, Item, DestStrm, InStream);
         end;
 
         smStored : begin
         { Item is to be stored regardless }
           { store item }
-          DoStore(ZipArchive, Item, DestStrm, InStream);                 {!!.01}
+          DoStore(ZipArchive, Item, DestStrm, InStream);
         end;
 
         smBestMethod : begin
         { Item is to be archived using method producing best compression }
-          TempOut := TAbVirtualMemoryStream.Create;                      {!!.01}
+          TempOut := TAbVirtualMemoryStream.Create;
           try
-            TempOut.SwapFileDirectory := Sender.TempDirectory;           {!!.01}
+            TempOut.SwapFileDirectory := Sender.TempDirectory;
 
             { save starting points }
             InStartPos  := InStream.Position;
 
             { try deflating item }
-            DoDeflate(ZipArchive, Item, TempOut, InStream);              {!!.01}
+            DoDeflate(ZipArchive, Item, TempOut, InStream);
             { if deflated size > input size then got negative compression }
             { so storing the item is more efficient }
 
             if TempOut.Size > InStream.Size then begin { store item instead }
               { reset streams to original positions }
               InStream.Position  := InStartPos;
-              TempOut.Free;                                              {!!.01}
-              TempOut := TAbVirtualMemoryStream.Create;                  {!!.01}
-              TempOut.SwapFileDirectory := Sender.TempDirectory;         {!!.01}
+              TempOut.Free;
+              TempOut := TAbVirtualMemoryStream.Create;
+              TempOut.SwapFileDirectory := Sender.TempDirectory;
 
               { store item }
-              DoStore(ZipArchive, Item, TempOut, InStream);              {!!.01}
+              DoStore(ZipArchive, Item, TempOut, InStream);
             end {if};
 
-            TempOut.Seek(0, soBeginning);                                {!!.01}
+            TempOut.Seek(0, soBeginning);
             DestStrm.CopyFrom(TempOut, TempOut.Size);
           finally
-            TempOut.Free;                                                {!!.01}
+            TempOut.Free;
           end;
         end;
       end; { case }
 
-    end                                                                  {!!.01}
-    else begin                                                           {!!.01}
-      { InStream is zero length}                                         {!!.01}
-      Item.CRC32 := 0;                                                   {!!.01}
-      { ignore any storage indicator and treat as stored }               {!!.01}
-      DoStore(ZipArchive, Item, DestStrm, InStream);                     {!!.01}
-    end;                                                                 {!!.01}
-  finally                                                                {!!.01}
+    end
+    else begin
+      { InStream is zero length}
+      Item.CRC32 := 0;
+      { ignore any storage indicator and treat as stored }
+      DoStore(ZipArchive, Item, DestStrm, InStream);
+    end;
+  finally
     if DestStrm <> OutStream then
       DestStrm.Free;
-  end;                                                                   {!!.01}
+  end;
 
   { update item }
   Item.CompressedSize := OutStream.Size;

@@ -2300,9 +2300,8 @@ begin
         SubDir := GetSubDir(ItemString);
       end;
       if ItemString <> '' then begin
-//        oNode := FOutline.Items.AddChild(CurParent, ItemString);     {!!.03}
-        oNode := FOutline.Items.AddChildObject(CurParent, ItemString,  {!!.03}
-          FArchive.ItemList[i]);                                       {!!.03}
+        oNode := FOutline.Items.AddChildObject(CurParent, ItemString,
+          FArchive.ItemList[i]);
 
         if FOutline.Items.Count = 1 then
           RootNode := oNode;
@@ -2316,9 +2315,8 @@ begin
     for i := 0 to pred(FArchive.Count) do begin
       ItemString := FArchive.ItemList[i].FileName;
       AbUnfixName(ItemString);
-//      oNode := FOutline.Items.Add( FOutline.Selected, ItemString );  {!!.03}
-      oNode := FOutline.Items.AddObject(FOutline.Selected, ItemString, {!!.03}
-        FArchive.ItemList[i]);                                         {!!.03}
+      oNode := FOutline.Items.AddObject(FOutline.Selected, ItemString,
+        FArchive.ItemList[i]);
 
       oNode.ImageIndex := FOutline.FFileIndex;
       oNode.SelectedIndex := FOutline.FFileSelectedIndex;
