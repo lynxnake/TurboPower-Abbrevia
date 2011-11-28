@@ -472,43 +472,40 @@ begin
   inherited;
 end;
 
-procedure SeekToStringEndInStream(AStream: TStream);
+function ReadCStringInStream(AStream: TStream): AnsiString;
 {
 locate next instance of a null character in a stream
 leaves stream positioned just past that,
 or at end of stream if not found or null is last byte in stream.
+Result is the entire read string.
 }
 const
   BuffSiz = 1024;
 var
   Buff   : array [0..BuffSiz-1] of AnsiChar;
-  Len, StartPos, DataRead, TotalRead : LongInt;
-  Done : Boolean;
+  Len, DataRead : LongInt;
 begin
 { basically what this is supposed to do is...}
 {
   repeat
     AStream.Read(C, 1);
+    Result := Result + C;
   until (AStream.Position = AStream.Size) or (C = #0);
 }
-  StartPos := AStream.Position;
-  Done := False;
-  TotalRead := 0;
-  while not Done do begin
+  Result := '';
+  repeat
     DataRead := AStream.Read(Buff, BuffSiz - 1);
-
-    if DataRead = 0 then
-      Done := True
-    else begin
-      Buff[DataRead] := #0;
-      Len := StrLen(Buff);
-      if Len < DataRead then begin
-        Done := True;
-        AStream.Seek(StartPos + TotalRead + Len + 1, soFromBeginning);
-      end else
-        TotalRead := TotalRead + DataRead;
+    Buff[DataRead] := #0;
+    Len := StrLen(Buff);
+    if Len > 0 then begin
+      SetLength(Result, Length(Result) + Len);
+      Move(Buff, Result[Length(Result) - Len + 1], Len);
     end;
-  end;
+    if Len < DataRead then begin
+      AStream.Seek(Len - DataRead + 1, soFromCurrent);
+      Break;
+    end;
+  until DataRead = 0;
 end;
 
 procedure TAbGzipStreamHelper.SeekToItemData;
@@ -712,10 +709,8 @@ end;
 
 procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);
 var
-  StartPos : LongInt;
-  Len      : LongInt;
-  LenW     : Word;
-  AnsiName : AnsiString;
+  LenW : Word;
+  RawFileName : AnsiString;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
   if not VerifyHeader(FGzHeader) then
@@ -735,28 +730,15 @@ begin
 
   { Get Filename, if any }
   if HasFileName then begin
-    StartPos := AStream.Position;
-    SeekToStringEndInStream(AStream);
-    Len := AStream.Position - StartPos - 1;
-    AStream.Seek(StartPos, soFromBeginning);
-    SetLength(AnsiName, Len);
-    if Len <> 0 then
-      AStream.Read(AnsiName[1], Len + 1);
-    FFileName := string(AnsiName);
+    RawFileName := ReadCStringInStream(AStream);
+    FFileName := string(RawFileName)
   end
   else
     FFileName := 'unknown';
 
   { any comment present? }
-  if HasFileComment then begin
-    StartPos := AStream.Position;
-    SeekToStringEndInStream(AStream);
-    Len := AStream.Position - StartPos - 1;
-    AStream.Position := StartPos;
-    SetLength(FFileComment, Len);
-    if Len <> 0 then
-      AStream.Read(FFileComment[1], Len + 1);
-  end
+  if HasFileComment then
+    FFileComment := ReadCStringInStream(AStream)
   else
     FFileComment := '';
 
