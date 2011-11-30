@@ -782,7 +782,7 @@ begin
       FoundName := True;
       NameStr := '';
       NameLength := OctalToInt(PHeader.Size, SizeOf(PHeader.Size));
-      NumMHeaders := Floor(NameLength / AB_TAR_RECORDSIZE);
+      NumMHeaders := NameLength div AB_TAR_RECORDSIZE;
       ExtraName := NameLength mod AB_TAR_RECORDSIZE; { Chars in the last Header }
       { NumMHeaders should never be zero }
       { It appears that it is not null terminated in the blocks }
@@ -790,13 +790,13 @@ begin
       begin
         { Copy entire content of Header to String }
         PHeader := FTarHeaderList.Items[I+J];
-        SetString(TempStr, PChar(PHeader), AB_TAR_RECORDSIZE);
+        SetString(TempStr, PAnsiChar(PHeader), AB_TAR_RECORDSIZE);
         NameStr := NameStr + TempStr;
       end;
       if ExtraName <> 0 then
       begin
         PHeader := FTarHeaderList.Items[I+NumMHeaders+1];
-        SetString(TempStr, PChar(PHeader), ExtraName-1);
+        SetString(TempStr, PAnsiChar(PHeader), ExtraName-1);
         NameStr := NameStr + TempStr;
       end
       else { We already copied the entire name, but the string is still null terminated. }
@@ -845,7 +845,7 @@ begin
       FoundName := True;
       NameStr := '';
       NameLength := OctalToInt(PHeader.Size, SizeOf(PHeader.Size));
-      NumMHeaders := Floor(NameLength / AB_TAR_RECORDSIZE);
+      NumMHeaders := NameLength div AB_TAR_RECORDSIZE;
       ExtraName := NameLength mod AB_TAR_RECORDSIZE; { Chars in the last Header }
       { NumMHeaders should never be zero }
       { It appears that it is not null terminated in the blocks }
@@ -853,15 +853,13 @@ begin
       begin
         { Copy entire content of Header to String }
         PHeader := FTarHeaderList.Items[I+J];
-        SetString(TempStr, PChar(PHeader), AB_TAR_RECORDSIZE);
-        {Move(PHeader^, TempStr[1], AB_TAR_RECORDSIZE);}
+        SetString(TempStr, PAnsiChar(PHeader), AB_TAR_RECORDSIZE);
         NameStr := NameStr + TempStr;
       end;
       if ExtraName <> 0 then
       begin
         PHeader := FTarHeaderList.Items[I+NumMHeaders+1];
-        SetString(TempStr, PChar(PHeader), ExtraName-1);
-        {Move(PHeader^, TempStr[1], ExtraName-1); }{ The string is null terminated }
+        SetString(TempStr, PAnsiChar(PHeader), ExtraName-1);
         NameStr := NameStr + TempStr;
       end
       else { We already copied the entire name, but the string is still null terminated. }
@@ -1197,7 +1195,7 @@ begin
     end;
   end;{ end numHeaders while }
   { Yes, GNU Tar adds a Nil filled MD data header if Length(Value) mod AB_TAR_RECORDSIZE = 0 }
-  NumHeaders := Floor((Length(Value)+1) / AB_TAR_RECORDSIZE); { Include Null terminator }
+  NumHeaders := (Length(Value)+1) div AB_TAR_RECORDSIZE; { Include Null terminator }
   ExtraName := (Length(Value)+1) mod AB_TAR_RECORDSIZE; { Chars in the last Header }
   { Now we have the number of headers set up, stuff the name in the Headers }
   TempStr := AnsiString(Value);
