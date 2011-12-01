@@ -46,6 +46,7 @@ type
   protected {private}
     FFolderThreshold     : Longint;
     FCompressionType     : TAbCabCompressionType;
+    FStoreOptions           : TAbStoreOptions;
     FOnSave              : TAbArchiveEvent;
 
  protected {methods}
@@ -54,6 +55,7 @@ type
     procedure SetFolderThreshold(Value : Longint);
     procedure SetCompressionType(Value : TAbCabCompressionType);
     procedure SetFileName(const aFileName : string); override;
+    procedure SetStoreOptions( Value : TAbStoreOptions );
 
   protected {properties}
     property CompressionType : TAbCabCompressionType
@@ -62,6 +64,10 @@ type
     property FolderThreshold : Longint
       read  FFolderThreshold
       write SetFolderThreshold;
+    property StoreOptions : TAbStoreOptions
+      read  FStoreOptions
+      write SetStoreOptions
+      default AbDefStoreOptions;
 
   protected {events}
     property OnSave : TAbArchiveEvent
@@ -86,6 +92,7 @@ type
     property CompressionType;
     property FolderThreshold;
     property ItemProgressMeter;
+    property StoreOptions;
     property OnArchiveProgress;
     property OnArchiveItemProgress;
     property OnChange;
@@ -118,6 +125,7 @@ begin
   FSpanningThreshold := AbDefCabSpanningThreshold;
   FFolderThreshold := AbDefFolderThreshold;
   FSetID := 0;
+  FStoreOptions := AbDefStoreOptions;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomMakeCab.AddFiles(const FileMask : string; SearchAttr : Integer );
@@ -156,6 +164,7 @@ begin
     CabArchive.FolderThreshold   := FFolderThreshold;
     CabArchive.CompressionType   := FCompressionType;
     CabArchive.SetID             := FSetID;
+    CabArchive.StoreOptions      := FStoreOptions;
     {events}
     CabArchive.OnSave            := DoSave;
   end;
@@ -194,6 +203,13 @@ begin
   FFolderThreshold := Value;
   if Assigned(CabArchive) then
     CabArchive.FolderThreshold := Value;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbCustomMakeCab.SetStoreOptions(Value : TAbStoreOptions);
+begin
+  FStoreOptions := Value;
+  if Assigned(CabArchive) then
+    CabArchive.StoreOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomMakeCab.StartNewCabinet;
