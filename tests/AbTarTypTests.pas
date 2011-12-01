@@ -30,7 +30,7 @@
 interface
 
 uses
-  Classes, AbArcTypTests, AbTestFrameWork, AbUtils;
+  Classes, TestFramework, AbArcTypTests, AbTestFrameWork, AbUtils;
 
 type
   TAbTarArchiveTests = class(TAbArchiveMultiFileTests)
@@ -39,12 +39,14 @@ type
     class function ArchiveExt: string; override;
     class function ArchiveType: TAbArchiveType; override;
     class function VerifyArchive(aStream: TStream): TAbArchiveType; override;
+  public
+    class function Suite: ITestSuite; override;
   end;
 
 implementation
 
 uses
-  SysUtils, TestFrameWork, AbTarTyp;
+  SysUtils, AbTarTyp;
 
 {----------------------------------------------------------------------------}
 { TAbTarArchiveTests }
@@ -69,6 +71,13 @@ begin
   Result := VerifyTar(aStream);
 end;
 { -------------------------------------------------------------------------- }
+class function TAbTarArchiveTests.Suite: ITestSuite;
+begin
+  Result := inherited Suite;
+  Result.AddTest(TAbArchiveDecompressTest.Create(Self, 'Decompress Unicode',
+    TestFileDir + 'Unicode' + PathDelim + 'UTF-8.tar'));
+end;
+{----------------------------------------------------------------------------}
 
 initialization
 

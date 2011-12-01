@@ -109,6 +109,9 @@
 			<DelphiCompile Include="..\..\source\AbWavPack.pas">
 				<BuildOrder>47</BuildOrder>
 			</DelphiCompile>
+			<DelphiCompile Include="..\..\source\AbCharset.pas">
+				<BuildOrder>16</BuildOrder>
+			</DelphiCompile>
 			<DelphiCompile Include="..\..\source\AbCabTyp.pas">
 				<BuildOrder>15</BuildOrder>
 			</DelphiCompile>

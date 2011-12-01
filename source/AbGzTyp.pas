@@ -122,6 +122,7 @@ type
     FGZHeader : TAbGzHeader;
     FExtraField : TAbGzipExtraField;
     FFileComment : AnsiString;
+    FRawFileName : AnsiString;
 
   protected
     function GetFileSystem: TAbGzFileSystem;
@@ -290,7 +291,7 @@ uses
   Windows,
   {$ENDIF}
   SysUtils,
-  AbBitBkt, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString, AbVMStrm;
+  AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString, AbVMStrm;
 
 const
   { Header Signature Values}
@@ -710,7 +711,6 @@ end;
 procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);
 var
   LenW : Word;
-  RawFileName : AnsiString;
 begin
   AStream.Read(FGzHeader, SizeOf(TAbGzHeader));
   if not VerifyHeader(FGzHeader) then
@@ -730,8 +730,8 @@ begin
 
   { Get Filename, if any }
   if HasFileName then begin
-    RawFileName := ReadCStringInStream(AStream);
-    FFileName := string(RawFileName)
+    FRawFileName := ReadCStringInStream(AStream);
+    FFileName := AbRawBytesToString(FRawFileName)
   end
   else
     FFileName := 'unknown';
@@ -756,7 +756,6 @@ end;
 procedure TAbGzipItem.SaveGzHeaderToStream(AStream: TStream);
 var
   LenW : Word;
-  AnsiName : AnsiString;
 begin
   { default ID fields }
   FGzHeader.ID1 := AB_GZ_HDR_ID1;
@@ -780,10 +779,8 @@ begin
   end;
 
   { add filename if any (and include final #0 from string) }
-  if HasFileName then begin
-    AnsiName := AnsiString(FileName);
-    AStream.Write(AnsiName[1], Length(AnsiName) + 1);
-  end;
+  if HasFileName then
+    AStream.Write(FRawFileName[1], Length(FRawFileName) + 1);
 
   { add file comment if any (and include final #0 from string) }
   if HasFileComment then
@@ -807,6 +804,7 @@ end;
 procedure TAbGzipItem.SetFileName(const Value: string);
 begin
   FFileName := Value;
+  FRawFileName := AbStringToUnixBytes(Value);
   if Value <> '' then
     FGzHeader.Flags := FGzHeader.Flags or AB_GZ_FLAG_FNAME
   else

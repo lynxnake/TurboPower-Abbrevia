@@ -64,6 +64,7 @@ contains
   AbBseCLX in '../../source/AbBseCLX.pas',
   AbBzip2 in '../../source/AbBzip2.pas',
   AbBzip2Typ in '../../source/AbBzip2Typ.pas',
+  AbCharset in '../../source/AbCharset.pas',
   AbConst in '../../source/AbConst.pas',
   AbDfBase in '../../source/AbDfBase.pas',
   AbDfCryS in '../../source/AbDfCryS.pas',

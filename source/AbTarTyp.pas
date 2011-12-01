@@ -457,7 +457,7 @@ uses
   {$IFDEF MSWINDOWS}
   Windows, // Fix inline warnings
   {$ENDIF MSWINDOWS}
-  Math, RTLConsts, SysUtils, AbVMStrm, AbExcept;
+  Math, RTLConsts, SysUtils, AbCharset, AbVMStrm, AbExcept;
 
 { ****************** Helper functions Not from Classes Above ***************** }
 function OctalToInt(const Oct : PAnsiChar; aLen : integer): Int64;
@@ -769,7 +769,7 @@ var
   NameLength : Int64;
   NumMHeaders: integer;
   ExtraName: integer;
-  NameStr, TempStr: AnsiString;
+  RawFileName, TempStr: AnsiString;
 begin
  {  UNKNOWN_FORMAT, V7_FORMAT, OLDGNU_FORMAT, GNU_FORMAT, USTAR_FORMAT, STAR_FORMAT, POSIX_FORMAT }
   FoundName := False;
@@ -780,7 +780,7 @@ begin
     if PHeader.LinkFlag = AB_TAR_LF_LONGNAME then
     begin
       FoundName := True;
-      NameStr := '';
+      RawFileName := '';
       NameLength := OctalToInt(PHeader.Size, SizeOf(PHeader.Size));
       NumMHeaders := NameLength div AB_TAR_RECORDSIZE;
       ExtraName := NameLength mod AB_TAR_RECORDSIZE; { Chars in the last Header }
@@ -791,20 +791,19 @@ begin
         { Copy entire content of Header to String }
         PHeader := FTarHeaderList.Items[I+J];
         SetString(TempStr, PAnsiChar(PHeader), AB_TAR_RECORDSIZE);
-        NameStr := NameStr + TempStr;
+        RawFileName := RawFileName + TempStr;
       end;
       if ExtraName <> 0 then
       begin
         PHeader := FTarHeaderList.Items[I+NumMHeaders+1];
         SetString(TempStr, PAnsiChar(PHeader), ExtraName-1);
-        NameStr := NameStr + TempStr;
+        RawFileName := RawFileName + TempStr;
       end
       else { We already copied the entire name, but the string is still null terminated. }
       begin
         { Removed the last zero }
-        SetLength(NameStr, (Length(NameStr)-1));
+        SetLength(RawFileName, (Length(RawFileName)-1));
       end;
-      FTarItem.Name := string(NameStr);
     end { end long filename link flag }
     else
       I := I + 1;
@@ -814,11 +813,13 @@ begin
   begin
     if (FTarItem.ArchiveFormat = USTAR_FORMAT) and
        (PTarHeader.ustar.Prefix[0] <> #0) then
-      FTarItem.Name := string(PTarHeader.ustar.Prefix+'/'+PTarHeader.Name)
+      RawFileName := PTarHeader.ustar.Prefix+'/'+PTarHeader.Name
     else
       { V7_FORMAT, OLDGNU_FORMAT }
-      FTarItem.Name := string(PTarHeader.Name);
+      RawFileName := PTarHeader.Name;
   end; { End not FoundName }
+
+  FTarItem.Name := AbRawBytesToString(RawFileName);
 end;
 
 { Extract the file name from the headers }
@@ -830,7 +831,7 @@ var
   NameLength : Int64;
   NumMHeaders: integer;
   ExtraName: integer;
-  NameStr, TempStr: AnsiString;
+  RawLinkName, TempStr: AnsiString;
 begin
  {  UNKNOWN_FORMAT, V7_FORMAT, OLDGNU_FORMAT, GNU_FORMAT, USTAR_FORMAT, STAR_FORMAT, POSIX_FORMAT }
   PHeader := nil;
@@ -843,7 +844,7 @@ begin
     if PHeader.LinkFlag = AB_TAR_LF_LONGLINK then
     begin
       FoundName := True;
-      NameStr := '';
+      RawLinkName := '';
       NameLength := OctalToInt(PHeader.Size, SizeOf(PHeader.Size));
       NumMHeaders := NameLength div AB_TAR_RECORDSIZE;
       ExtraName := NameLength mod AB_TAR_RECORDSIZE; { Chars in the last Header }
@@ -854,27 +855,28 @@ begin
         { Copy entire content of Header to String }
         PHeader := FTarHeaderList.Items[I+J];
         SetString(TempStr, PAnsiChar(PHeader), AB_TAR_RECORDSIZE);
-        NameStr := NameStr + TempStr;
+        RawLinkName := RawLinkName + TempStr;
       end;
       if ExtraName <> 0 then
       begin
         PHeader := FTarHeaderList.Items[I+NumMHeaders+1];
         SetString(TempStr, PAnsiChar(PHeader), ExtraName-1);
-        NameStr := NameStr + TempStr;
+        RawLinkName := RawLinkName + TempStr;
       end
       else { We already copied the entire name, but the string is still null terminated. }
       begin
         { Removed the last zero }
-        SetLength(NameStr, (Length(NameStr)-1));
+        SetLength(RawLinkName, (Length(RawLinkName)-1));
       end;
-      FTarItem.LinkName := string(NameStr);
     end { end long filename link flag }
     else
       I := I + 1;
   end; { End While }
 
   if not FoundName then
-    FTarItem.LinkName := string(PHeader.LinkName);
+    RawLinkName := PHeader.LinkName;
+
+  FTarItem.LinkName := AbRawBytesToString(RawLinkName);
 end;
 
 { Return True if CheckSum passes out. }
@@ -1306,7 +1308,7 @@ var
   PHeader: PAbTarHeaderRec;
   I, J: Integer;
   TotalOldNumHeaders: Integer;
-  SysValue: AnsiString;
+  RawFileName: AnsiString;
 begin
   if FTarItem.ItemReadOnly then { Read Only - Do  Not Save }
     Exit;
@@ -1331,9 +1333,9 @@ begin
          OLD_GNU & GNU: Add N Headers for name, Update name in MD header, update name field in File Headers, min 3 headers
 
       Add headers to length of new Name Length, update name in file header, update name fields }
-  SysValue := AnsiString(Value);
+  RawFileName := AbStringToUnixBytes(Value);
   { In all cases zero out the name fields in the File Header. }
-  if Length(SysValue) > AB_TAR_NAMESIZE then begin { Must be null terminated except at 100 char length }
+  if Length(RawFileName) > AB_TAR_NAMESIZE then begin { Must be null terminated except at 100 char length }
     { Look for long name meta-data headers already in the archive. }
     FoundMetaDataHeader := False;
     I := 0;
@@ -1343,7 +1345,7 @@ begin
       if PHeader.LinkFlag = AB_TAR_LF_LONGNAME then begin
         { We are growing or Shriking the Name MD Data fields.  }
         FoundMetaDataHeader := True;
-        DoGNUExistingLongNameLink(AB_TAR_LF_LONGNAME, I, SysValue);
+        DoGNUExistingLongNameLink(AB_TAR_LF_LONGNAME, I, RawFileName);
         { Need to copy the Name to the header. }
         FTarItem.Name := Value;
       end
@@ -1363,26 +1365,26 @@ begin
             { These two fields are delimted by a '/' char }
             {0123456789012345, Length = 15, NameLength = 5, PrefixLength = 9}
             { AAAA/BBBB/C.txt, Stored as Name := 'C.txt', Prefix := 'AAAA/BBBB' }
-            { That means Theoretical maximum is 256 for Length(SysValue) }
-            if Length(SysValue) > (AB_TAR_NAMESIZE+AB_TAR_USTAR_PREFIX_SIZE+1) then { Check the obvious one. }
+            { That means Theoretical maximum is 256 for Length(RawFileName) }
+            if Length(RawFileName) > (AB_TAR_NAMESIZE+AB_TAR_USTAR_PREFIX_SIZE+1) then { Check the obvious one. }
               raise EAbTarBadFileName.Create; { File Name to Long }
-            for I := Length(SysValue) downto Length(SysValue)-AB_TAR_NAMESIZE-1 do begin
-              if SysValue[I] = '/' then begin
-                if (I <= AB_TAR_USTAR_PREFIX_SIZE+1) and (Length(SysValue)-I <= AB_TAR_NAMESIZE) then begin
+            for I := Length(RawFileName) downto Length(RawFileName)-AB_TAR_NAMESIZE-1 do begin
+              if RawFileName[I] = '/' then begin
+                if (I <= AB_TAR_USTAR_PREFIX_SIZE+1) and (Length(RawFileName)-I <= AB_TAR_NAMESIZE) then begin
                   { We have a successfull parse. }
                   FillChar(PTarHeader.Name, SizeOf(PTarHeader.Name), #0);
                   FillChar(PTarHeader.ustar.Prefix, SizeOf(PTarHeader.ustar.Prefix), #0);
-                  Move(SysValue[I+1], PTarHeader.Name, Length(SysValue)-I);
-                  Move(SysValue[1], PTarHeader.ustar.Prefix, I);
+                  Move(RawFileName[I+1], PTarHeader.Name, Length(RawFileName)-I);
+                  Move(RawFileName[1], PTarHeader.ustar.Prefix, I);
                   break;
                 end
-                else if (Length(SysValue)-I > AB_TAR_NAMESIZE) then
+                else if (Length(RawFileName)-I > AB_TAR_NAMESIZE) then
                   raise EAbTarBadFileName.Create { File Name not splittable }
                 { else continue; }
               end;
             end;{ End for I... }
           end; { End USTAR Format }
-        OLDGNU_FORMAT: DoGNUNewLongNameLink(AB_TAR_LF_LONGNAME, 0, SysValue); {GNU_FORMAT}
+        OLDGNU_FORMAT: DoGNUNewLongNameLink(AB_TAR_LF_LONGNAME, 0, RawFileName); {GNU_FORMAT}
         else begin
           { UNKNOWN_FORMAT, STAR_FORMAT, POSIX_FORMAT }
           raise EAbTarBadOp.Create; { Unknown Archive Format }
@@ -1424,7 +1426,7 @@ begin
     { Save off the new name and store to the Header }
     FTarItem.Name := Value;
     { Must add Null Termination before we store to Header }
-    StrPLCopy(PTarHeader.Name, SysValue, AB_TAR_NAMESIZE);
+    StrPLCopy(PTarHeader.Name, RawFileName, AB_TAR_NAMESIZE);
   end;{ End else Short new name,... }
 
   { Update the inherited file names. }
@@ -1505,7 +1507,7 @@ var
   PHeader: PAbTarHeaderRec;
   I, J: Integer;
   TotalOldNumHeaders: Integer;
-  SysValue: AnsiString;
+  RawLinkName: AnsiString;
 begin
   if FTarItem.ItemReadOnly then { Read Only - Do Not Save }
     Exit;
@@ -1525,8 +1527,8 @@ begin
       if old was Long,
          OLD_GNU & GNU: Add N Headers for name, Update name in MD header, update name field in File Headers, min 3 headers
       STAR & PAX: And should not yet get here.}
-  SysValue := AnsiString(Value);
-  if Length(SysValue) > AB_TAR_NAMESIZE then { Must be null terminated except at 100 char length }
+  RawLinkName := AbStringToUnixBytes(Value);
+  if Length(RawLinkName) > AB_TAR_NAMESIZE then { Must be null terminated except at 100 char length }
   begin
     { Look for long name meta-data headers already in the archive. }
     FoundMetaDataHeader := False;
@@ -1537,7 +1539,7 @@ begin
       if PHeader.LinkFlag = AB_TAR_LF_LONGLINK then
       begin { We are growing or Shriking the Name MD Data fields.  }
         FoundMetaDataHeader := True;
-        DoGNUExistingLongNameLink(AB_TAR_LF_LONGLINK, I, SysValue);
+        DoGNUExistingLongNameLink(AB_TAR_LF_LONGLINK, I, RawLinkName);
         { Need to copy the Name to the header. }
         FTarItem.LinkName := Value;
       end
@@ -1551,7 +1553,7 @@ begin
       case FTarItem.ArchiveFormat of
         V7_FORMAT: raise EAbTarBadLinkName.Create; { Link Name to Long }
         USTAR_FORMAT: raise EAbTarBadLinkName.Create; { Link Name to Long }
-        OLDGNU_FORMAT: DoGNUNewLongNameLink(AB_TAR_LF_LONGLINK, 0, SysValue); {GNU_FORMAT}
+        OLDGNU_FORMAT: DoGNUNewLongNameLink(AB_TAR_LF_LONGLINK, 0, RawLinkName); {GNU_FORMAT}
         else
           begin
           { UNKNOWN_FORMAT, STAR_FORMAT, POSIX_FORMAT }
@@ -1591,7 +1593,7 @@ begin
     end; { End if GNU... }
     { Save off the new name and store to the Header }
     FTarItem.LinkName := Value;
-    StrPLCopy(PTarHeader.LinkName, SysValue, AB_TAR_NAMESIZE);
+    StrPLCopy(PTarHeader.LinkName, RawLinkName, AB_TAR_NAMESIZE);
   end;{ End else Short new name,... }
   FTarItem.Dirty := True;
 end;

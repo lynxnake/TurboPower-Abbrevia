@@ -101,6 +101,7 @@
 			<DCCReference Include="..\..\source\AbCabMak.pas"/>
 			<DCCReference Include="..\..\source\AbCabTyp.pas"/>
 			<DCCReference Include="..\..\source\AbCBrows.pas"/>
+			<DCCReference Include="..\..\source\AbCharset.pas"/>
 			<DCCReference Include="..\..\source\AbConst.pas"/>
 			<DCCReference Include="..\..\source\AbCrtl.pas"/>
 			<DCCReference Include="..\..\source\AbDfBase.pas"/>

@@ -60,6 +60,9 @@ type
     class function ArchiveExt: string; virtual; abstract;
     class function ArchiveType: TAbArchiveType; virtual; abstract;
     class function VerifyArchive(aStream: TStream): TAbArchiveType; virtual; abstract;
+  public
+    class function Suite: ITestSuite; override;
+    procedure TestANSIEncodings;
   published
     procedure TestExtract;
     procedure TestExtractToStream;
@@ -125,6 +128,9 @@ type
 implementation
 
 uses
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
   SysUtils, AbConst;
 
 {----------------------------------------------------------------------------}
@@ -192,6 +198,52 @@ end;
 procedure TAbArchiveTests.TearDown;
 begin
   inherited;
+end;
+{ -------------------------------------------------------------------------- }
+class function TAbArchiveTests.Suite: ITestSuite;
+var
+  Test: TAbArchiveTests;
+begin
+  Result := inherited Suite;
+  // Only add TestANSIEncodings if we have test data for the archive type
+  if FileExists(TestFileDir + 'ANSI' + PathDelim + 'UTF-8' + ArchiveExt) then begin
+    Test := TAbArchiveTestsClass(Self).Create('TestANSIEncodings');
+    Test.fMethod := Test.TestANSIEncodings;
+    Result.AddTest(Test);
+  end;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbArchiveTests.TestANSIEncodings;
+
+  procedure CheckArchive(const aFileName: string);
+  const
+    SItemName = #$00E5#$00EA#$00EC#$00F6#$00FA'.txt';
+  var
+    Arc: TAbArchive;
+    FileName: string;
+  begin
+    FileName := TestFileDir + 'ANSI' + PathDelim + aFileName;
+    if not FileExists(FileName) then
+      Exit;
+    Arc := CreateArchive(FileName, fmOpenRead);
+    try
+      Arc.Load;
+      Check((Arc.Count = 1) and (Arc.ItemList[0].FileName = SItemName));
+    finally
+      Arc.Free;
+    end;
+  end;
+
+begin
+  {$IFDEF MSWINDOWS}
+  // Test is only valid for specifc OEM/ANSI encodings, so each locale requires
+  // new test files.
+  if GetACP = 1252 then
+    CheckArchive('ANSI 1252' + ArchiveExt);
+  if GetOEMCP = 437 then
+    CheckArchive('OEM 437' + ArchiveExt);
+  {$ENDIF}
+  CheckArchive('UTF-8' + ArchiveExt);
 end;
 {----------------------------------------------------------------------------}
 procedure TAbArchiveTests.TestExtractFile(const aArchiveFile, aSourceFile: string);

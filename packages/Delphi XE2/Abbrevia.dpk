@@ -70,6 +70,7 @@ contains
   AbCabMak in '..\..\source\AbCabMak.pas',
   AbCabTyp in '..\..\source\AbCabTyp.pas',
   AbCBrows in '..\..\source\AbCBrows.pas',
+  AbCharset in '..\..\source\AbCharset.pas',
   AbConst in '..\..\source\AbConst.pas',
   AbCrtl in '..\..\source\AbCrtl.pas',
   AbDfBase in '..\..\source\AbDfBase.pas',

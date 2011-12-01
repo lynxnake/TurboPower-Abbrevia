@@ -113,17 +113,8 @@ type
   {$ENDIF}
 {$IFEND}
 
-{$IF NOT DECLARED(RawByteString)}
-type
-  RawByteString = AnsiString;
-{$IFEND}
-
-{$IF NOT DECLARED(UnicodeString)}
-type
-  UnicodeString = WideString;
-{$IFEND}
-
 { System-encoded SBCS string (formerly AnsiString) }
+type
   AbSysString = {$IFDEF Posix}UTF8String{$ELSE}AnsiString{$ENDIF};
 
 const
@@ -362,18 +353,9 @@ const
     AB_FPERMISSION_GROUPREAD or
     AB_FPERMISSION_OTHERREAD;
 
-type
-  TAbCharSet = (csASCII, csANSI, csUTF8);
-
-function AbDetectCharSet(const aValue: RawByteString): TAbCharSet;
-{$IFDEF UNIX}
-function AbSysCharSetIsUTF8: Boolean;
-{$ENDIF}
-
 { Unicode backwards compatibility functions }
 {$IFNDEF UNICODE}
 function CharInSet(C: AnsiChar; CharSet: TSysCharSet): Boolean;
-function UTF8ToString(const S: RawByteString): string;
 {$ENDIF}
 
 implementation
@@ -1367,55 +1349,11 @@ begin
   Result := VolLabel = TestLabel;
 end;
 
-function AbDetectCharSet(const aValue: RawByteString): TAbCharSet;
-var
-  i, TrailCnt: Integer;
-begin
-  Result := csASCII;
-  TrailCnt := 0;
-  for i := 1 to Length(aValue) do begin
-    if Byte(aValue[i]) >= $80 then
-      Result := csANSI;
-    if TrailCnt > 0 then
-      if Byte(aValue[i]) in [$80..$BF] then
-        Dec(TrailCnt)
-      else Exit
-    else if Byte(aValue[i]) in [$80..$BF] then
-      Exit
-    else
-      case Byte(aValue[i]) of
-        $C0..$C1, $F5..$FF: Exit;
-        $C2..$DF: TrailCnt := 1;
-        $E0..$EF: TrailCnt := 2;
-        $F0..$F4: TrailCnt := 3;
-      end;
-  end;
-  if (TrailCnt = 0) and (Result = csANSI) then
-    Result := csUTF8;
-end;
-
-{$IFDEF UNIX}
-function AbSysCharSetIsUTF8: Boolean;
-begin
-  {$IFDEF DARWIN}
-  Result := True;
-  {$ENDIF}
-  {$IFDEF LINUX}
-  Result := StrComp(nl_langinfo(_NL_CTYPE_CODESET_NAME), 'UTF-8') = 0;
-  {$ENDIF}
-end;
-{$ENDIF}
-
 { Unicode backwards compatibility functions }
 {$IFNDEF UNICODE}
 function CharInSet(C: AnsiChar; CharSet: TSysCharSet): Boolean;
 begin
 Result := C in CharSet;
-end;
-
-function UTF8ToString(const S: RawByteString): string;
-begin
-  Result := UTf8ToAnsi(S);
 end;
 {$ENDIF}
 
