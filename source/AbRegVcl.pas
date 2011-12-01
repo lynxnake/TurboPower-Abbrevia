@@ -122,9 +122,15 @@ begin
                           TAbVersionProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbZipOutline, 'Version',
                           TAbVersionProperty );
+  RegisterPropertyEditor( TypeInfo( string ), TAbListView, 'Version',
+                          TAbVersionProperty );
+  RegisterPropertyEditor( TypeInfo( string ), TAbTreeView, 'Version',
+                          TAbVersionProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbZipView, 'Version',
                           TAbVersionProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbMeter, 'Version',
+                          TAbVersionProperty );
+  RegisterPropertyEditor( TypeInfo( string ), TAbProgressBar, 'Version',
                           TAbVersionProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbMakeSelfExe, 'Version',
                           TAbVersionProperty );
@@ -199,6 +205,7 @@ begin
                         TAbMakeCab,
                         TAbCabKit,
                         TAbCabView,
+                        TAbProgressBar,
                         TAbMeter,
                         TAbMakeSelfExe ]);
 end;

@@ -130,6 +130,7 @@ type
     procedure DoChange(Sender : TObject);
       virtual;
     function GetListItems: TAbListItems;
+    function GetVersion: string;
     procedure HeaderWndProc(var Msg: TMessage);
       virtual;
     function IsCustomDrawn(Target: TCustomDrawTarget; Stage: TCustomDrawStage): Boolean;
@@ -174,6 +175,9 @@ type
     property Path : string
       read FPath
       write SetPath;
+    property Version : string
+      read GetVersion
+      stored False;
     property VisibleColumns : TAbViewColumns
       read FVisibleColumns
       write SetVisibleColumns
@@ -243,6 +247,7 @@ type
     property TabOrder;
     property TabStop default True;
     property TreeView;
+    property Version;
     property ViewStyle;
     property Visible;
     property VisibleColumns;
@@ -298,6 +303,7 @@ type
       virtual;
     procedure GetSelectedIndex(aNode: TTreeNode);
       override;
+    function GetVersion: string;
     procedure Notification(aComponent : TComponent; aOperation : TOperation);
       override;
     procedure SelectPathNode;
@@ -321,6 +327,9 @@ type
     property Path: string
       read FPath
       write SetPath;
+    property Version: string
+      read GetVersion
+      stored False;
   end;
 
 
@@ -374,6 +383,7 @@ type
     property TabOrder;
     property TabStop default True;
     property ToolTips;
+    property Version;
     property Visible;
     property OnChanging;
     property OnClick;
@@ -410,12 +420,29 @@ type
   end;
 
 
+{ ===== TAbProgressBar ====================================================== }
+  TAbProgressBar = class(TProgressBar, IAbProgressMeter)
+  protected {private}
+    function  GetVersion : string;
+
+  public {methods}
+    procedure DoProgress(Progress : Byte);
+    procedure Reset;
+
+  published {properties}
+    property Version: string
+      read GetVersion
+      stored False;
+  end;
+
+
 implementation
 
 {$R AbComCtrls.res}
 
 uses
-  CommCtrl, Contnrs, ShellAPI, StrUtils, AbResString, AbUtils, AbZipTyp;
+  CommCtrl, Contnrs, Forms, ShellAPI, StrUtils, AbConst, AbResString, AbUtils,
+  AbZipTyp;
 
 const
   HDF_SORTDOWN = $0200;
@@ -633,6 +660,11 @@ end;
 function TAbCustomListView.GetListItems: TAbListItems;
 begin
   Result := inherited Items as TAbListItems;
+end;
+{ -------------------------------------------------------------------------- }
+function TAbCustomListView.GetVersion: string;
+begin
+  Result := AbVersionS;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomListView.HeaderWndProc(var Msg: TMessage);
@@ -1211,6 +1243,11 @@ begin
     aNode.SelectedIndex := aNode.ImageIndex;
 end;
 { -------------------------------------------------------------------------- }
+function TAbCustomTreeView.GetVersion: string;
+begin
+  Result := AbVersionS;
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbCustomTreeView.Notification(aComponent: TComponent;
   aOperation: TOperation);
 begin
@@ -1311,6 +1348,24 @@ begin
     if Assigned(FListView) then
       FListView.Path := aValue;
   end;
+end;
+
+
+{ ===== TAbProgressBar ====================================================== }
+procedure TAbProgressBar.DoProgress(Progress : Byte);
+begin
+  Position := Progress;
+  Application.ProcessMessages;
+end;
+{ -------------------------------------------------------------------------- }
+function  TAbProgressBar.GetVersion : string;
+begin
+  Result := AbVersionS;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbProgressBar.Reset;
+begin
+  DoProgress(0);
 end;
 
 end.
