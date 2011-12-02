@@ -71,6 +71,7 @@ uses
   AbCabKitTests in 'AbCabKitTests.pas',
   AbCabTypTests in 'AbCabTypTests.pas',
 //  AbWinzipTests in 'AbWinzipTests.pas',
+  AbLZMATests in 'AbLZMATests.pas',
 {$ENDIF}
 {$IFDEF VCL_CLX}
   AbVisualTestBase in 'AbVisualTestBase.pas',
@@ -94,8 +95,7 @@ uses
   AbBzip2TypTests in 'AbBzip2TypTests.pas',
   AbBrowseTests in 'AbBrowseTests.pas',
   AbTarTypTests in 'AbTarTypTests.pas',
-  AbVMStrmTests in 'AbVMStrmTests.pas',
-  AbLZMATests in 'AbLZMATests.pas';
+  AbVMStrmTests in 'AbVMStrmTests.pas';
 
 {$R *.res}
 

@@ -120,7 +120,7 @@ begin
   finally
     FS.Free;
   end;
-  CheckFileMatchesStream(TestStreamDir + 'TestDoc1.cmp', FCompressedStream);
+  CheckFileMatchesStream(TestStreamDir + 'Testdoc1.cmp', FCompressedStream);
 end;
 
 procedure TAbZipPrcTests.DeflateStreamInflateStreamTest;

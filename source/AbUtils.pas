@@ -62,7 +62,8 @@ uses
   DateUtils,
 {$ENDIF}
   SysUtils,
-  Classes;
+  Classes,
+  AbCharset;
 
 
 type
@@ -505,7 +506,7 @@ begin
 {$ENDIF}
 {$IFDEF UNIX}
   FileName := AbSysString(TempPath) + 'VMSXXXXXX';
-  mktemp(PAnsiChar(AbSysString(Result)));
+  mktemp(PAnsiChar(AbSysString(FileName)));
   Result := string(FileName);
   if CreateIt then begin
     hFile := FileCreate(Result);

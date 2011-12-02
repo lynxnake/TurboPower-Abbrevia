@@ -77,6 +77,9 @@ function UTF8ToString(const S: RawByteString): string;
 implementation
 
 uses
+{$IFDEF LibcAPI}
+  Libc,
+{$ENDIF}
   SysUtils;
 
 function AbDetectCharSet(const aValue: RawByteString): TAbCharSet;
