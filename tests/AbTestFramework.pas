@@ -27,9 +27,6 @@
 unit AbTestFramework;
 
 {$I AbDefine.inc}
-{$IFDEF FPC}
-  {$DEFINE DUNIT2}
-{$ENDIF}
 
 interface
 
@@ -44,17 +41,10 @@ uses
 {$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF}
-{$IFDEF DUNIT2}
-  TestFrameworkIfaces,
-{$ENDIF}
   Classes, TypInfo,
   AbBrowse;
 
 type
-{$IFDEF DUNIT2}
-  // DUnit2 has different return value for TTestCase.Suite function
-  ITestSuite = ITestCase; 
-{$ENDIF}
   TAbDirEntry = record
     Name: string;
     Size: Int64;
@@ -81,11 +71,6 @@ type
     procedure CheckDirMatch(aDir1, aDir2 : string);
     // Call this routine with GREAT Caution!!!!
     procedure DelTree(aDir : string);
-  {$IFNDEF DUNIT2}
-    procedure OnCheckCalled;
-  {$ELSE}
-    property FTestName: string read FDisplayedName write FDisplayedName;
-  {$ENDIF}
 
   public
     class function TestFileDir: string;
@@ -414,13 +399,6 @@ begin
     FTempDirCreated := False;
   end;
 end;
-{ -------------------------------------------------------------------------- }
-{$IFNDEF DUNIT2}
-procedure TAbTestCase.OnCheckCalled;
-begin
-  FCheckCalled := True;
-end;
-{$ENDIF}
 
 { ===== TAbCompTestCase ==================================================== }
 function TAbCompTestCase.StreamComponent(aComp : TComponent) : string;

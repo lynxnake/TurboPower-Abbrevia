@@ -46,10 +46,10 @@ program AbbreviaUnitTests;
 {$ENDIF}
 
 uses
-  TestFramework,
 {$IFDEF FPC}
-  Interfaces, // Needed for DUnit2
+  CWString,
 {$ENDIF}
+  TestFramework,
   TextTestRunner,
 {$IFDEF UsingVCL}
   Forms,
