@@ -74,8 +74,10 @@ end;
 class function TAbTarArchiveTests.Suite: ITestSuite;
 begin
   Result := inherited Suite;
+  {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
   Result.AddTest(TAbArchiveDecompressTest.Create(Self, 'Decompress Unicode',
     TestFileDir + 'Unicode' + PathDelim + 'UTF-8.tar'));
+  {$IFEND}
 end;
 {----------------------------------------------------------------------------}
 

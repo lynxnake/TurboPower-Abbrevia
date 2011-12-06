@@ -344,8 +344,10 @@ begin
       TAbArchiveCompressEmptyFoldersTest.Create(Self, 'Compress Empty Folders'));
   end;
   AddCanterburyTests(Result);
+  {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
   Result.AddTest(TAbArchiveCompressTest.Create(Self, 'Compress Unicode',
     TestFileDir + 'Unicode' + PathDelim + 'source'));
+  {$IFEND}
 end;
 {----------------------------------------------------------------------------}
 class procedure TAbArchiveMultiFileTests.AddCanterburyTests(aSuite: ITestSuite);

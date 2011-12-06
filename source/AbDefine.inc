@@ -135,7 +135,7 @@
  that the hint/warning algorithms of the Delphi compilers are
  fooled and report things like variables being used before
  initialisation and so on when in reality the problem does not exist.}
-{$DEFINE DefeatWarnings} {!!.03 -- on by default }
+{$DEFINE DefeatWarnings}
 
 { Disable warnings for explicit string casts }
 {$IFDEF UNICODE}

@@ -172,8 +172,10 @@ end;
 class function TAbZipArchiveTests.Suite: ITestSuite;
 begin
   Result := inherited Suite;
+  {$IF DEFINED(UNICODE) OR NOT DEFINED(MSWINDOWS)}
   // Test decompression of Unicode filenames
   Result.AddSuite(DecompressSuite(TestFileDir + 'Unicode'));
+  {$IFEND}
   // Test ZIP64 extensions
   Result.AddSuite(TAbZip64Tests.Suite);
 

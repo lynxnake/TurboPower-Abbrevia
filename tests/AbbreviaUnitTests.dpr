@@ -46,9 +46,9 @@ program AbbreviaUnitTests;
 {$ENDIF}
 
 uses
-{$IFDEF FPC}
+{$IF DEFINED(FPC) AND DEFINED(UNIX)}
   CWString,
-{$ENDIF}
+{$IFEND}
   TestFramework,
   TextTestRunner,
 {$IFDEF UsingVCL}
@@ -71,7 +71,6 @@ uses
   AbCabKitTests in 'AbCabKitTests.pas',
   AbCabTypTests in 'AbCabTypTests.pas',
 //  AbWinzipTests in 'AbWinzipTests.pas',
-  AbLZMATests in 'AbLZMATests.pas',
 {$ENDIF}
 {$IFDEF VCL_CLX}
   AbVisualTestBase in 'AbVisualTestBase.pas',
@@ -95,6 +94,9 @@ uses
   AbBzip2TypTests in 'AbBzip2TypTests.pas',
   AbBrowseTests in 'AbBrowseTests.pas',
   AbTarTypTests in 'AbTarTypTests.pas',
+{$IF DEFINED(MSWINDOWS) AND NOT DEFINED(FPC)}
+  AbLZMATests in 'AbLZMATests.pas',
+{$IFEND}
   AbVMStrmTests in 'AbVMStrmTests.pas';
 
 {$R *.res}
