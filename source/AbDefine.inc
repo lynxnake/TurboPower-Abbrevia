@@ -82,6 +82,7 @@
 
 {$IFDEF FPC}
   {$MODE DELPHI}
+  {$PACKRECORDS C}
   {$DEFINE UsingLCL}
 {$ENDIF}
 
