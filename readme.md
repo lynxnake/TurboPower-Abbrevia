@@ -1,7 +1,7 @@
 # Abbrevia
 
-Version 5.0
-December 6, 2011
+Version 5.0  
+December 6, 2011  
 [Home Page](http://tpabbrevia.sourceforge.net/)
 
 * * *
