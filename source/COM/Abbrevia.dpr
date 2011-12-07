@@ -37,7 +37,8 @@ exports
   DllGetClassObject,
   DllCanUnloadNow,
   DllRegisterServer,
-  DllUnregisterServer;
+  DllUnregisterServer,
+  DllInstall;
 
 {$R *.TLB}
 

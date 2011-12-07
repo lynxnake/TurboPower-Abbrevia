@@ -66,7 +66,7 @@ uses Windows, ActiveX, Classes, Graphics, StdVCL, Variants;
 // *********************************************************************//
 const
   // TypeLibrary Major and minor versions
-  AbbreviaMajorVersion = 3;
+  AbbreviaMajorVersion = 5;
   AbbreviaMinorVersion = 0;
 
   LIBID_Abbrevia: TGUID = '{AF804E20-4043-499E-BB14-237B9F26F89F}';
@@ -654,12 +654,12 @@ type
   IZipKitDisp = dispinterface
     ['{B7480A7F-4E27-4B45-9FE6-224B60295A0C}']
     procedure Add(const FileMask: WideString; const ExclusionMask: WideString; SearchAttr: Integer); dispid 1;
-    procedure AddFromStream(const FileName: WideString; Stream: OleVariant); dispid 2;
+    procedure AddFromStream(const FileName: WideString; Stream: OleVariant); dispid 7;
     property AutoSave: WordBool dispid 3;
     property BaseDirectory: WideString dispid 4;
     procedure ClearTags; dispid 5;
     property CompressionMethodToUse: TZipSupportMethod dispid 6;
-    property Count: Integer readonly dispid 7;
+    property Count: Integer readonly dispid 2;
     property DeflateOption: TZipDeflateOption dispid 8;
     procedure Delete(const FileMask: WideString; const ExclusionMask: WideString); dispid 9;
     procedure DeleteAt(Index: Integer); dispid 10;
@@ -673,7 +673,7 @@ type
     function Find(const FileName: WideString): Integer; dispid 18;
     procedure Freshen(const FileMask: WideString; const ExclusionMask: WideString); dispid 19;
     procedure FreshenTaggedItems; dispid 20;
-    property Item[Index: Integer]: IDispatch readonly dispid 22;
+    property Item[Index: Integer]: IDispatch readonly dispid 0;
     property LogFile: WideString dispid 23;
     property Logging: WordBool dispid 24;
     property Password: WideString dispid 25;
@@ -690,7 +690,7 @@ type
     procedure UntagItems(const FileMask: WideString); dispid 36;
     property ZipFileComment: WideString dispid 37;
     function License(const Key: WideString): WordBool; dispid 38;
-    property _NewEnum: IUnknown readonly dispid 39;
+    property _NewEnum: IUnknown readonly dispid $FFFFFFFC;
     function ExtractToStream(const FileName: WideString): OleVariant; dispid 21;
     property CompressionType: TArchiveType dispid 40;
     property TarAutoHandle: WordBool dispid 41;
