@@ -48,6 +48,7 @@ procedure Register;
 
 implementation
 
+{$IFNDEF FPC}
 uses
   AbUtils,
   AbPeDir,
@@ -58,10 +59,11 @@ uses
   DesignIntf,
   DesignEditors,
   SysUtils;
+{$ENDIF}
 
 procedure Register;
 begin
-
+{$IFNDEF FPC}
   RegisterPropertyEditor( TypeInfo( string ), TAbZipBrowser, 'FileName',
                           TAbFileNameProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbZipper, 'FileName',
@@ -158,6 +160,7 @@ begin
                           TAbVersionProperty );
   RegisterPropertyEditor( TypeInfo( string ), TAbCabKit, 'Version',
                           TAbVersionProperty );
+{$ENDIF}
 
   RegisterComponents( 'Abbrevia',
                       [ TAbZipBrowser,
