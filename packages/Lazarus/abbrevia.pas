@@ -7,12 +7,11 @@ unit Abbrevia;
 interface
 
 uses
-    AbArcTyp, AbBase, AbBitBkt, AbBrowse, AbBzip2, AbBzip2Typ, AbCabExt, 
-  AbCabKit, AbCabMak, AbCabTyp, AbCBrows, AbCharset, AbConst, AbDfBase, 
-  AbDfCryS, AbDfDec, AbDfEnc, AbDfHufD, AbDfInW, AbDfOutW, AbDfPkMg, AbDfStrm, 
-  AbDfXlat, AbExcept, AbFciFdi, AbGzTyp, AbReg, AbResString, AbSelfEx, 
-  AbSpanSt, AbSWStm, AbTarTyp, AbUnzOutStm, AbUnzper, AbUnzPrc, AbUtils, 
-  AbVMStrm, AbZBrows, AbZipExt, AbZipKit, AbZipper, AbZipPrc, AbZipTyp, 
+  AbArcTyp, AbBase, AbBitBkt, AbBrowse, AbBzip2, AbBzip2Typ, AbCharset, 
+  AbConst, AbDfBase, AbDfCryS, AbDfDec, AbDfEnc, AbDfHufD, AbDfInW, AbDfOutW, 
+  AbDfPkMg, AbDfStrm, AbDfXlat, AbExcept, AbGzTyp, AbReg, AbResString, 
+  AbSelfEx, AbSpanSt, AbSWStm, AbTarTyp, AbUnzOutStm, AbUnzper, AbUnzPrc, 
+  AbUtils, AbVMStrm, AbZBrows, AbZipKit, AbZipper, AbZipPrc, AbZipTyp, 
   AbZLTyp, LazarusPackageIntf;
 
 implementation

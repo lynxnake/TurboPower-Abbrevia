@@ -40,9 +40,13 @@ interface
 
 uses
   Classes,
+  {$IFDEF LCL}
+  LResources,
+  {$ENDIF}
+  {$IFDEF MSWINDOWS}
   AbCBrows, AbCabExt, AbCabMak, AbCabKit,
-  AbZBrows, AbUnzper, AbZipper, AbZipKit,
-  AbSelfEx, AbZipExt, AbZlTyp;
+  {$ENDIF}
+  AbZBrows, AbUnzper, AbZipper, AbZipKit, AbSelfEx;
 
 procedure Register;
 
@@ -167,11 +171,18 @@ begin
                         TAbUnzipper,
                         TAbZipper,
                         TAbZipKit,
+                        {$IFDEF MSWINDOWS}
                         TAbCabBrowser,
                         TAbCabExtractor,
                         TAbMakeCab,
                         TAbCabKit,
+                        {$ENDIF}
                         TAbMakeSelfExe ]);
 end;
+
+{$IFDEF LCL}
+initialization
+  {$I abbrevia.lrs}
+{$ENDIF}
 
 end.

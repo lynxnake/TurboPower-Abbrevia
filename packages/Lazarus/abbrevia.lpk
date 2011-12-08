@@ -8,8 +8,8 @@
       <Version Value="9"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="..\..\source\"/>
-        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\"/>
+        <OtherUnitFiles Value="..\..\source"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
         <CompilerPath Value="$(CompPath)"/>
@@ -46,22 +46,27 @@
       </Item6>
       <Item7>
         <Filename Value="..\..\source\AbCabExt.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbCabExt"/>
       </Item7>
       <Item8>
         <Filename Value="..\..\source\AbCabKit.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbCabKit"/>
       </Item8>
       <Item9>
         <Filename Value="..\..\source\AbCabMak.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbCabMak"/>
       </Item9>
       <Item10>
         <Filename Value="..\..\source\AbCabTyp.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbCabTyp"/>
       </Item10>
       <Item11>
         <Filename Value="..\..\source\AbCBrows.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbCBrows"/>
       </Item11>
       <Item12>
@@ -118,6 +123,7 @@
       </Item24>
       <Item25>
         <Filename Value="..\..\source\AbFciFdi.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="AbFciFdi"/>
       </Item25>
       <Item26>
@@ -174,36 +180,39 @@
         <UnitName Value="AbZBrows"/>
       </Item38>
       <Item39>
-        <Filename Value="..\..\source\AbZipExt.pas"/>
-        <UnitName Value="AbZipExt"/>
-      </Item39>
-      <Item40>
         <Filename Value="..\..\source\AbZipKit.pas"/>
         <UnitName Value="AbZipKit"/>
-      </Item40>
-      <Item41>
+      </Item39>
+      <Item40>
         <Filename Value="..\..\source\AbZipper.pas"/>
         <UnitName Value="AbZipper"/>
-      </Item41>
-      <Item42>
+      </Item40>
+      <Item41>
         <Filename Value="..\..\source\AbZipPrc.pas"/>
         <UnitName Value="AbZipPrc"/>
-      </Item42>
-      <Item43>
+      </Item41>
+      <Item42>
         <Filename Value="..\..\source\AbZipTyp.pas"/>
         <UnitName Value="AbZipTyp"/>
-      </Item43>
-      <Item44>
+      </Item42>
+      <Item43>
         <Filename Value="..\..\source\AbZLTyp.pas"/>
         <UnitName Value="AbZLTyp"/>
+      </Item43>
+      <Item44>
+        <Filename Value="abbrevia.lrs"/>
+        <Type Value="LRS"/>
       </Item44>
     </Files>
     <Type Value="RunAndDesignTime"/>
-    <RequiredPkgs Count="1">
+    <RequiredPkgs Count="2">
       <Item1>
+        <PackageName Value="LCL"/>
+      </Item1>
+      <Item2>
         <PackageName Value="FCL"/>
         <MinVersion Major="1" Valid="True"/>
-      </Item1>
+      </Item2>
     </RequiredPkgs>
     <UsageOptions>
       <UnitPath Value="$(PkgOutDir)"/>
