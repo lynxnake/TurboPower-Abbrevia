@@ -49,7 +49,7 @@ These tests can be disabled and safely ignored.  They show limitations in the li
 
 TAbZipArchiveTests/Decompress Canterbury/DCLImpl
     The "DCL Implode" compression algorithm is an optional algorithm available
-    in PKZip.
+    in PKZip.  Abbrevia doesn't currently support it.
 
 TAbZipArchiveTests/Decompress Unicode/OSX
     OS X stores accented Unicode characters differently than Windows.  For 
@@ -58,8 +58,3 @@ TAbZipArchiveTests/Decompress Unicode/OSX
 TAbCabArchiveTests/TestAddFromStream
     TAbCabArchive.AddFromStream is not supported.  Cabs are solid archives, so 
     adding a single stream will require decompressing the cab and recreating it.
-
-TAbTarArchiveTests/Compress Unicode
-TAbGzippedTarArchiveTests/Compress Unicode
-TAbBzippedTarArchiveTests/Compress Unicode
-    Tar archives don't generically support Unicode filenames.
