@@ -1,0 +1,60 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{0A990E64-0FC2-416A-B2C3-80588553F1D9}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="Abbrevia.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="AbbreviaVCL.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="AbbreviaVCLDesign.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="Abbrevia">
+			<MSBuild Projects="Abbrevia.dproj"/>
+		</Target>
+		<Target Name="Abbrevia:Clean">
+			<MSBuild Projects="Abbrevia.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Abbrevia:Make">
+			<MSBuild Projects="Abbrevia.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="AbbreviaVCL">
+			<MSBuild Projects="AbbreviaVCL.dproj"/>
+		</Target>
+		<Target Name="AbbreviaVCL:Clean">
+			<MSBuild Projects="AbbreviaVCL.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="AbbreviaVCL:Make">
+			<MSBuild Projects="AbbreviaVCL.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="AbbreviaVCLDesign">
+			<MSBuild Projects="AbbreviaVCLDesign.dproj"/>
+		</Target>
+		<Target Name="AbbreviaVCLDesign:Clean">
+			<MSBuild Projects="AbbreviaVCLDesign.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="AbbreviaVCLDesign:Make">
+			<MSBuild Projects="AbbreviaVCLDesign.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="Abbrevia;AbbreviaVCL;AbbreviaVCLDesign"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="Abbrevia:Clean;AbbreviaVCL:Clean;AbbreviaVCLDesign:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="Abbrevia:Make;AbbreviaVCL:Make;AbbreviaVCLDesign:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>
