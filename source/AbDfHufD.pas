@@ -240,7 +240,7 @@ var
   CodeIncr    : integer;
   Decodes     : PAbDfLongintList;
   Encodes     : PAbDfLongintList;
-  DecodesEnd  : pointer;
+{$IFDEF CPU386}DecodesEnd  : pointer;{$ENDIF}
   TablePtr    : pointer;
 begin
   {count the number of instances of each code length and calculate the
@@ -259,10 +259,13 @@ begin
 
   {now we know the maximum code length we can allocate our decoder
    array}
+{$IFNDEF CPU386}DecoderLen := 0;{$ENDIF}
   if (FUsage <> huEncoding) then begin
     DecoderLen := PowerOfTwo[FMaxCodeLen];
     GetMem(FDecodes, DecoderLen * sizeof(longint));
+{$IFDEF CPU386}
     DecodesEnd := PAnsiChar(FDecodes) + (DecoderLen * sizeof(longint));
+{$ENDIF}
     {$IFOPT C+}
     FillChar(FDecodes^, DecoderLen * sizeof(longint), $FF);
     FMask := not (DecoderLen - 1);
