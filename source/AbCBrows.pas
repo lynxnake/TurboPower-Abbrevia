@@ -88,6 +88,9 @@ type
 
 
 type
+  {$IFDEF HasPlatformsAttribute}
+  [ComponentPlatformsAttribute(pidWin32 or pidWin64)]
+  {$ENDIF}
   TAbCabBrowser = class(TAbCustomCabBrowser)
   published
     property ArchiveProgressMeter;

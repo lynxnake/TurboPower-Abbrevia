@@ -105,6 +105,9 @@
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasThreadStart}
   {$IFEND}
+  {$IF RTLVersion >= 23} // Delphi XE2
+    {$DEFINE HasPlatformsAttribute}
+  {$IFEND}
 {$ENDIF}
 
 {====Widgetset defines===============================================}
