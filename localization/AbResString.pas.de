@@ -182,6 +182,8 @@ resourcestring
   AbPathHeadingS = 'Pfad';
   AbPartialHeadingS = 'Teilweise';
   AbExecutableHeadingS = 'Ausführbar';
+  AbFileTypeHeadingS = 'Typ';
+  AbLastModifiedHeadingS = 'Modifiziert';
 
   AbCabMethod0S = 'Keine';
   AbCabMethod1S = 'MSZip';
