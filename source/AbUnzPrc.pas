@@ -131,12 +131,6 @@ uses
   {$IFDEF MSWINDOWS}
   Windows,
   {$ENDIF}
-  {$IFNDEF NoQt}
-  {$IFDEF UsingCLX}
-  QControls,
-  QDialogs,
-  {$ENDIF}
-  {$ENDIF}
   SysUtils,
   {$IFDEF UnzipBzip2Support}
   AbBzip2,

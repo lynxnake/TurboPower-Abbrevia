@@ -83,15 +83,15 @@
 {$IFDEF FPC}
   {$MODE DELPHI}
   {$PACKRECORDS C}
-  {$DEFINE UsingLCL}
 {$ENDIF}
 
-{ determine whether CLX is used, should always be on Linux }
-{$IFDEF KYLIX}
-  {$DEFINE UsingCLX}
-{$ELSE}
-  {$DEFINE NoQt}
-{$ENDIF KYLIX}
+{Activate this define to show CLX/LCL dialogs for spanning media requests.  The
+ default behavior will abort the operation instead.  This define is only safe
+ when using Abbrevia from the foreground thread.  If using it from a background
+ thread override OnRequestLastDisk, OnRequestNthDisk, and OnRequestBlankDisk and
+ synchronize to the foreground yourself.  The Windows version always MessageBox
+ so it's thread-safe.}
+{.$DEFINE UnixDialogs}
 
 {====RTL defines=====================================================}
 

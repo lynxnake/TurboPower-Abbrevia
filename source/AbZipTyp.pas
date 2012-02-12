@@ -494,6 +494,7 @@ type
     function GetItem( Index : Integer ) : TAbZipItem;
     function GetZipfileComment : AnsiString;
     procedure PutItem( Index : Integer; Value : TAbZipItem );
+    procedure DoRequestDisk(const AMessage: string; var Abort : Boolean);
     procedure DoRequestLastDisk( var Abort : Boolean );
       virtual;
     procedure DoRequestNthDisk(Sender: TObject; DiskNumber : Byte; var Abort : Boolean );
@@ -607,11 +608,15 @@ uses
   {$ENDIF}
   {$IFDEF LibcAPI}
   Libc,
-  {$IFNDEF NoQt}
-  {$IFDEF UsingCLX}
+  {$ENDIF}
+  {$IFDEF UnixDialogs}
+  {$IFDEF KYLIX}
   QControls,
   QDialogs,
   {$ENDIF}
+  {$IFDEF LCL}
+  Controls,
+  Dialogs,
   {$ENDIF}
   {$ENDIF}
   Math,
@@ -1818,83 +1823,55 @@ begin
     raise EAbZipNoInsertion.Create;
 end;
 { -------------------------------------------------------------------------- }
+procedure TAbZipArchive.DoRequestDisk(const AMessage: string; var Abort : Boolean);
+begin
+{$IFDEF MSWINDOWS}
+  Abort := Windows.MessageBox( 0, PChar(AMessage), PChar(AbDiskRequestS),
+    MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
+{$ENDIF}
+{$IFDEF UnixDialogs}
+  {$IFDEF KYLIX}
+  Abort := QDialogs.MessageDlg(AbDiskRequestS, AMessage, mtWarning,
+    mbOKCancel, 0) = mrCancel;
+  {$ENDIF}
+  {$IFDEF LCL}
+  Abort := Dialogs.MessageDlg(AbDiskRequestS, AMessage, mtWarning, mbOKCancel,
+    0) = mrCancel;
+  {$ENDIF}
+{$ELSE}
+  Abort := True;
+{$ENDIF}
+end;
+{ -------------------------------------------------------------------------- }
 procedure TAbZipArchive.DoRequestLastDisk( var Abort : Boolean );
-var
-  pMessage : string;
-  pCaption : string;
 begin
   Abort := False;
   if Assigned( FOnRequestLastDisk ) then
     FOnRequestLastDisk( Self, Abort )
-  else begin
-    pMessage := AbLastDiskRequestS;
-    pCaption := AbDiskRequestS;
-{$IFDEF MSWINDOWS}
-    Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
-      MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
-{$ENDIF}
-{$IFDEF LINUX}
-{$IFDEF NoQt}
-    WriteLn(pMessage);
-{$ELSE }
-    Abort := QDialogs.MessageDlg(pCaption, pMessage, mtWarning, mbOKCancel, 0) = mrCancel;
-{$ENDIF}
-{$ENDIF}
-  end;
+  else
+    DoRequestDisk( AbLastDiskRequestS, Abort );
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.DoRequestNthDisk( Sender: TObject;
                                           DiskNumber : Byte;
                                           var Abort : Boolean );
-var
-  pMessage : string;
-  pCaption : string;
 begin
   Abort := False;
   if Assigned( FOnRequestNthDisk ) then
     FOnRequestNthDisk( Self, DiskNumber, Abort )
-  else begin
-    pMessage := Format(AbDiskNumRequestS, [DiskNumber] );
-    pCaption := AbDiskRequestS;
-{$IFDEF MSWINDOWS}
-    Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
-      MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;                      
-{$ENDIF}
-{$IFDEF LINUX}
-{$IFDEF NoQt }
-    WriteLn(pMessage);
-{$ELSE }
-    Abort := QDialogs.MessageDlg(pCaption, pMessage, mtWarning, mbOKCancel, 0) = mrCancel;
-{$ENDIF }
-{$ENDIF}
-  end;
+  else
+    DoRequestDisk( Format(AbDiskNumRequestS, [DiskNumber]), Abort );
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.DoRequestBlankDisk(Sender: TObject; var Abort : Boolean );
-var
-  pMessage : string;
-  pCaption : string;
 begin
   Abort := False;
   FSpanned := True;
 
   if Assigned( FOnRequestBlankDisk ) then
     FOnRequestBlankDisk( Self, Abort )
-  else begin
-    pMessage := AbBlankDiskS;
-    pCaption := AbDiskRequestS;
-{$IFDEF MSWINDOWS}
-    Abort := Windows.MessageBox( 0, PChar(pMessage), PChar(pCaption),
-      MB_TASKMODAL or MB_OKCANCEL ) = IDCANCEL;
-{$ENDIF}
-{$IFDEF LINUX}
-{$IFDEF NoQt}
-    WriteLn(pMessage);
-{$ELSE }
-    Abort := QDialogs.MessageDlg(pCaption, pMessage, mtWarning, mbOKCancel, 0) = mrCancel;
-{$ENDIF}
-{$ENDIF}
-  end;
+  else
+    DoRequestDisk( AbBlankDiskS, Abort );
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbZipArchive.DoRequestImage(Sender: TObject; ImageNumber : Integer;

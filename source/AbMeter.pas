@@ -229,7 +229,7 @@ begin
       end;
     end;
   end;
-  {$IFNDEF UsingLCL}
+  {$IFNDEF LCL}
   if (BorderStyle <> bsNone) then begin
     if Ctl3D then
       Frame3D(Canvas, ClRect, clBtnShadow, clBtnHighlight, 1)
