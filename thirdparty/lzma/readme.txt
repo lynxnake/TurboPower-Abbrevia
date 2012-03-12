@@ -9,4 +9,4 @@ Compile 32-bit with C++Builder:
   bcc32 -q -c -u- -w-8004 -w-8065 *.c
 
 Compile 64-bit with Visual Studio:
-  cl -c -nologo -GS- -Z7 -Gs32768 *.c
+  cl -c -nologo -GS- -Z7 -Gs32768 -Ox *.c
