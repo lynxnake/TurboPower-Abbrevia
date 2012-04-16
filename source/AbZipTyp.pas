@@ -1705,9 +1705,7 @@ begin
    for decompression methods without implementing the entire newer spec. }
   if ExtraField.Has(Ab_Zip64SubfieldID) then
     VersionNeededToExtract := 45
-  else if IsEncrypted then
-    VersionNeededToExtract := 21
-  else if IsDirectory or not (CompressionMethod in [cmStored..cmImploded]) then
+  else if IsDirectory or IsEncrypted or not (CompressionMethod in [cmStored..cmImploded]) then
     VersionNeededToExtract := 20
   else
     VersionNeededToExtract := 10;
