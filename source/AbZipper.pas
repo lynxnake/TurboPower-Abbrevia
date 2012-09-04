@@ -192,8 +192,8 @@ end;
 procedure TAbCustomZipper.AddFiles(const FileMask : string; SearchAttr : Integer);
   {Add files to the archive where the disk filespec matches}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.AddFiles(FileMask, SearchAttr)
+  if (FArchive <> nil) then
+    FArchive.AddFiles(FileMask, SearchAttr)
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -203,8 +203,8 @@ procedure TAbCustomZipper.AddFilesEx(const FileMask, ExclusionMask : string;
   SearchAttr : Integer);
   {Add files that match Filemask except those matching ExclusionMask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.AddFilesEx(FileMask, ExclusionMask, SearchAttr)
+  if (FArchive <> nil) then
+    FArchive.AddFilesEx(FileMask, ExclusionMask, SearchAttr)
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -214,9 +214,9 @@ procedure TAbCustomZipper.AddFromStream(const NewName : string;
                                         FromStream : TStream);
   {Add stream directly to archive}
 begin
-  if (ZipArchive <> nil) then begin
+  if (FArchive <> nil) then begin
     FromStream.Position := 0;
-    ZipArchive.AddFromStream(NewName, FromStream);
+    FArchive.AddFromStream(NewName, FromStream);
   end else
     raise EAbNoArchive.Create;
   DoChange;
@@ -225,8 +225,8 @@ end;
 procedure TAbCustomZipper.DeleteFiles(const FileMask : string);
   {delete all files from the archive that match the file mask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.DeleteFiles( FileMask )
+  if (FArchive <> nil) then
+    FArchive.DeleteFiles( FileMask )
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -235,8 +235,8 @@ end;
 procedure TAbCustomZipper.DeleteAt(Index : Integer);
   {delete item at Index}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.DeleteAt( Index )
+  if (FArchive <> nil) then
+    FArchive.DeleteAt( Index )
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -245,8 +245,8 @@ end;
 procedure TAbCustomZipper.DeleteFilesEx(const FileMask, ExclusionMask : string);
   {Delete files that match Filemask except those matching ExclusionMask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.DeleteFilesEx(FileMask, ExclusionMask)
+  if (FArchive <> nil) then
+    FArchive.DeleteFilesEx(FileMask, ExclusionMask)
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -255,8 +255,8 @@ end;
 procedure TAbCustomZipper.DeleteTaggedItems;
   {delete all tagged items from the archive}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.DeleteTaggedItems
+  if (FArchive <> nil) then
+    FArchive.DeleteTaggedItems
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -278,8 +278,8 @@ end;
 procedure TAbCustomZipper.FreshenFiles(const FileMask : string);
   {freshen all items that match the file mask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.FreshenFiles( FileMask )
+  if (FArchive <> nil) then
+    FArchive.FreshenFiles( FileMask )
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -288,8 +288,8 @@ end;
 procedure TAbCustomZipper.FreshenFilesEx(const FileMask, ExclusionMask : string);
   {freshen all items matching FileMask except those matching ExclusionMask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.FreshenFilesEx( FileMask, ExclusionMask )
+  if (FArchive <> nil) then
+    FArchive.FreshenFilesEx( FileMask, ExclusionMask )
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -298,8 +298,8 @@ end;
 procedure TAbCustomZipper.FreshenTaggedItems;
   {freshen all tagged items}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.FreshenTaggedItems
+  if (FArchive <> nil) then
+    FArchive.FreshenTaggedItems
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -308,28 +308,32 @@ end;
 procedure TAbCustomZipper.InitArchive;
 begin
   inherited InitArchive;
-  if (ZipArchive is TAbZipArchive) then begin
+  if FArchive <> nil then begin
     {properties}
-    ZipArchive.AutoSave                              := FAutoSave;
-    TAbZipArchive(ZipArchive).CompressionMethodToUse := FCompressionMethodToUse;
-    TAbZipArchive(ZipArchive).DeflationOption        := FDeflationOption;
+    FArchive.AutoSave                                := FAutoSave;
     FArchive.DOSMode                                 := FDOSMode;
-    ZipArchive.StoreOptions                          := FStoreOptions;
+    FArchive.StoreOptions                            := FStoreOptions;
     {events}
-    ZipArchive.OnArchiveSaveProgress                 := DoArchiveSaveProgress;
-    ZipArchive.OnConfirmSave                         := DoConfirmSave;
-    TAbZipArchive(ZipArchive).OnRequestBlankDisk     := OnRequestBlankDisk;
-    ZipArchive.OnSave                                := DoSave;
-    TAbZipArchive(ZipArchive).InsertHelper           := ZipProc;
-    TAbZipArchive(ZipArchive).InsertFromStreamHelper := ZipFromStreamProc;
+    FArchive.OnArchiveSaveProgress                   := DoArchiveSaveProgress;
+    FArchive.OnConfirmSave                           := DoConfirmSave;
+    FArchive.OnSave                                  := DoSave;
+  end;
+  if (FArchive is TAbZipArchive) then begin
+    {properties}
+    TAbZipArchive(FArchive).CompressionMethodToUse := FCompressionMethodToUse;
+    TAbZipArchive(FArchive).DeflationOption        := FDeflationOption;
+    {events}
+    TAbZipArchive(FArchive).OnRequestBlankDisk     := OnRequestBlankDisk;
+    TAbZipArchive(FArchive).InsertHelper           := ZipProc;
+    TAbZipArchive(FArchive).InsertFromStreamHelper := ZipFromStreamProc;
   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.Move(aItem : TAbArchiveItem; const NewStoredPath : string);
   {renames the item}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.Move(aItem, NewStoredPath)
+  if (FArchive <> nil) then
+    FArchive.Move(aItem, NewStoredPath)
   else
     raise EAbNoArchive.Create;
   DoChange;
@@ -338,8 +342,8 @@ end;
 procedure TAbCustomZipper.Replace(aItem : TAbArchiveItem);
   {replace the item}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.Replace( aItem )
+  if (FArchive <> nil) then
+    FArchive.Replace( aItem )
   else
     raise EAbNoArchive.Create;
   DoChange;                                                            
@@ -347,8 +351,8 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.Save;
 begin
-  if (ZipArchive <> nil) then begin
-    ZipArchive.Save;
+  if (FArchive <> nil) then begin
+    FArchive.Save;
     DoChange;
   end;
 end;
@@ -356,30 +360,30 @@ end;
 procedure TAbCustomZipper.SetAutoSave(Value : Boolean);
 begin
   FAutoSave := Value;
-  if (ZipArchive <> nil) then
-    ZipArchive.AutoSave := Value;
+  if (FArchive <> nil) then
+    FArchive.AutoSave := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetCompressionMethodToUse(
   Value : TAbZipSupportedMethod);
 begin
   FCompressionMethodToUse := Value;
-  if (ZipArchive is TAbZipArchive) then
-    TAbZipArchive(ZipArchive).CompressionMethodToUse := Value;
+  if (FArchive is TAbZipArchive) then
+    TAbZipArchive(FArchive).CompressionMethodToUse := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetDeflationOption(Value : TAbZipDeflationOption);
 begin
   FDeflationOption := Value;
-  if (ZipArchive is TAbZipArchive) then
-    TAbZipArchive(ZipArchive).DeflationOption := Value;
+  if (FArchive is TAbZipArchive) then
+    TAbZipArchive(FArchive).DeflationOption := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetDOSMode(Value : Boolean);
 begin
   FDOSMode := Value;
-  if (ZipArchive <> nil) then
-    ZipArchive.DOSMode := Value;
+  if (FArchive <> nil) then
+    FArchive.DOSMode := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetFileName(const aFileName : string);
@@ -504,8 +508,8 @@ end;
 procedure TAbCustomZipper.SetStoreOptions(Value : TAbStoreOptions);
 begin
   FStoreOptions := Value;
-  if (ZipArchive <> nil) then
-    ZipArchive.StoreOptions := Value;
+  if (FArchive <> nil) then
+    FArchive.StoreOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetArchiveSaveProgressMeter(const Value: IAbProgressMeter);
@@ -517,8 +521,8 @@ end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipper.SetZipfileComment(const Value : AnsiString);
 begin
-  if (ZipArchive is TAbZipArchive) then
-    TAbZipArchive(ZipArchive).ZipfileComment := Value
+  if (FArchive is TAbZipArchive) then
+    TAbZipArchive(FArchive).ZipfileComment := Value
   else
     raise EAbNoArchive.Create;
 end;

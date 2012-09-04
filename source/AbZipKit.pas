@@ -179,8 +179,8 @@ end;
 procedure TAbCustomZipKit.ExtractAt(Index : Integer; const NewName : string);
   {extract a file from the archive that match the index}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractAt( Index, NewName )
+  if (FArchive <> nil) then
+    FArchive.ExtractAt( Index, NewName )
   else
     raise EAbNoArchive.Create;
 end;
@@ -188,8 +188,8 @@ end;
 procedure TAbCustomZipKit.ExtractFiles(const FileMask : string);
   {extract all files from the archive that match the mask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractFiles( FileMask )
+  if (FArchive <> nil) then
+    FArchive.ExtractFiles( FileMask )
   else
     raise EAbNoArchive.Create;
 end;
@@ -197,8 +197,8 @@ end;
 procedure TAbCustomZipKit.ExtractFilesEx(const FileMask, ExclusionMask : string);
   {extract files matching FileMask except those matching ExclusionMask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractFilesEx( FileMask, ExclusionMask )
+  if (FArchive <> nil) then
+    FArchive.ExtractFilesEx( FileMask, ExclusionMask )
   else
     raise EAbNoArchive.Create;
 end;
@@ -206,8 +206,8 @@ end;
 procedure TAbCustomZipKit.ExtractTaggedItems;
   {extract all tagged items from the archive}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractTaggedItems
+  if (FArchive <> nil) then
+    FArchive.ExtractTaggedItems
   else
     raise EAbNoArchive.Create;
 end;
@@ -215,8 +215,8 @@ end;
 procedure TAbCustomZipKit.ExtractToStream(const aFileName : string;
                                           ToStream : TStream);
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractToStream(aFileName, ToStream)
+  if (FArchive <> nil) then
+    FArchive.ExtractToStream(aFileName, ToStream)
   else
     raise EAbNoArchive.Create;
 end;
@@ -224,40 +224,40 @@ end;
 procedure TAbCustomZipKit.InitArchive;                                 
 begin
   inherited InitArchive;
-  if (ZipArchive <> nil) then begin
-    if ZipArchive is TAbZipArchive then begin
-      {properties}
-      ZipArchive.ExtractOptions  := FExtractOptions;
-      TAbZipArchive(ZipArchive).PasswordRetries := FPasswordRetries;
-      {events}
-      ZipArchive.OnConfirmOverwrite                   := DoConfirmOverwrite;
-      TAbZipArchive(ZipArchive).OnNeedPassword        := DoNeedPassword;
-      TAbZipArchive(ZipArchive).ExtractHelper         := UnzipProc;
-      TAbZipArchive(ZipArchive).ExtractToStreamHelper := UnzipToStreamProc;
-      TAbZipArchive(ZipArchive).TestHelper            := TestItemProc;
-    end;
+  if (FArchive <> nil) then begin
+    FArchive.ExtractOptions                       := FExtractOptions;
+    FArchive.OnConfirmOverwrite                   := DoConfirmOverwrite;
+  end;
+  if FArchive is TAbZipArchive then begin
+    {properties}
+    TAbZipArchive(FArchive).PasswordRetries       := FPasswordRetries;
+    {events}
+    TAbZipArchive(FArchive).OnNeedPassword        := DoNeedPassword;
+    TAbZipArchive(FArchive).ExtractHelper         := UnzipProc;
+    TAbZipArchive(FArchive).ExtractToStreamHelper := UnzipToStreamProc;
+    TAbZipArchive(FArchive).TestHelper            := TestItemProc;
   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipKit.SetExtractOptions( Value : TAbExtractOptions );
 begin
   FExtractOptions := Value;
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractOptions := Value;
+  if (FArchive <> nil) then
+    FArchive.ExtractOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipKit.SetPasswordRetries( Value : Byte );
 begin
   FPasswordRetries := Value;
-  if (ZipArchive <> nil) then
-    (ZipArchive as TAbZipArchive).PasswordRetries := Value;
+  if (FArchive <> nil) then
+    (FArchive as TAbZipArchive).PasswordRetries := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipKit.TestTaggedItems;
   {test all tagged items in the archive}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.TestTaggedItems
+  if (FArchive <> nil) then
+    FArchive.TestTaggedItems
   else
     raise EAbNoArchive.Create;
 end;

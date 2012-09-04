@@ -168,8 +168,8 @@ end;
 { -------------------------------------------------------------------------- }
 function TAbCustomZipBrowser.GetZipfileComment : AnsiString;
 begin
-  if ZipArchive is TAbZipArchive then
-    Result := TAbZipArchive(ZipArchive).ZipfileComment
+  if FArchive is TAbZipArchive then
+    Result := TAbZipArchive(FArchive).ZipfileComment
   else
     Result := '';
 end;
@@ -177,12 +177,12 @@ end;
 procedure TAbCustomZipBrowser.InitArchive;
 begin
   inherited InitArchive;
-  if ZipArchive is TAbZipArchive then begin
+  if FArchive is TAbZipArchive then begin
     {properties}
-    TAbZipArchive(ZipArchive).Password          := FPassword;
+    TAbZipArchive(FArchive).Password          := FPassword;
     {events}
-    TAbZipArchive(ZipArchive).OnRequestLastDisk := FOnRequestLastDisk;
-    TAbZipArchive(ZipArchive).OnRequestNthDisk  := FOnRequestNthDisk;
+    TAbZipArchive(FArchive).OnRequestLastDisk := FOnRequestLastDisk;
+    TAbZipArchive(FArchive).OnRequestNthDisk  := FOnRequestNthDisk;
   end;
 end;
 { -------------------------------------------------------------------------- }
@@ -310,29 +310,29 @@ end;
 procedure TAbCustomZipBrowser.SetOnRequestBlankDisk(Value : TAbRequestDiskEvent);
 begin
   FOnRequestBlankDisk := Value;
-  if ZipArchive is TAbZipArchive then
-    TAbZipArchive(ZipArchive).OnRequestBlankDisk := FOnRequestBlankDisk;
+  if FArchive is TAbZipArchive then
+    TAbZipArchive(FArchive).OnRequestBlankDisk := FOnRequestBlankDisk;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipBrowser.SetOnRequestLastDisk(Value : TAbRequestDiskEvent);
 begin
   FOnRequestLastDisk := Value;
-  if ZipArchive is TAbZipArchive then
-    TAbZipArchive(ZipArchive).OnRequestLastDisk := FOnRequestLastDisk;
+  if FArchive is TAbZipArchive then
+    TAbZipArchive(FArchive).OnRequestLastDisk := FOnRequestLastDisk;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipBrowser.SetOnRequestNthDisk(Value : TAbRequestNthDiskEvent);
 begin
   FOnRequestNthDisk := Value;
-  if ZipArchive is TAbZipArchive then
-    TAbZipArchive(ZipArchive).OnRequestNthDisk := FOnRequestNthDisk;
+  if FArchive is TAbZipArchive then
+    TAbZipArchive(FArchive).OnRequestNthDisk := FOnRequestNthDisk;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipBrowser.SetPassword(const Value : AnsiString);
 begin
   FPassword := Value;
-  if ZipArchive is TAbZipArchive then
-    TAbZipArchive(ZipArchive).Password := Value;
+  if FArchive is TAbZipArchive then
+    TAbZipArchive(FArchive).Password := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomZipBrowser.SetTarAutoHandle(const Value: Boolean);

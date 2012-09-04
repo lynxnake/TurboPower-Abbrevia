@@ -163,8 +163,8 @@ end;
 procedure TAbCustomUnZipper.ExtractAt(Index : Integer; const NewName : string);
   {extract a file from the archive that match the index}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractAt(Index, NewName)
+  if (FArchive <> nil) then
+    FArchive.ExtractAt(Index, NewName)
   else
     raise EAbNoArchive.Create;
 end;
@@ -172,8 +172,8 @@ end;
 procedure TAbCustomUnZipper.ExtractFiles(const FileMask : string);
   {extract all files from the archive that match the mask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractFiles( FileMask )
+  if (FArchive <> nil) then
+    FArchive.ExtractFiles( FileMask )
   else
     raise EAbNoArchive.Create;
 end;
@@ -181,8 +181,8 @@ end;
 procedure TAbCustomUnZipper.ExtractFilesEx(const FileMask, ExclusionMask : string);
   {extract files matching FileMask except those matching ExclusionMask}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractFilesEx(FileMask, ExclusionMask)
+  if (FArchive <> nil) then
+    FArchive.ExtractFilesEx(FileMask, ExclusionMask)
   else
     raise EAbNoArchive.Create;
 end;
@@ -190,8 +190,8 @@ end;
 procedure TAbCustomUnZipper.ExtractToStream(const aFileName : string;
                                             ToStream : TStream);
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractToStream(aFileName, ToStream)
+  if (FArchive <> nil) then
+    FArchive.ExtractToStream(aFileName, ToStream)
   else
     raise EAbNoArchive.Create;
 end;
@@ -199,8 +199,8 @@ end;
 procedure TAbCustomUnZipper.ExtractTaggedItems;
   {extract all tagged items from the archive}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractTaggedItems
+  if (FArchive <> nil) then
+    FArchive.ExtractTaggedItems
   else
     raise EAbNoArchive.Create;
 end;
@@ -208,38 +208,38 @@ end;
 procedure TAbCustomUnZipper.InitArchive;
 begin
   inherited InitArchive;
-  if (ZipArchive <> nil) then begin
-    {properties}
-    ZipArchive.ExtractOptions                       := FExtractOptions;
-    TAbZipArchive(ZipArchive).PasswordRetries       := FPasswordRetries;
-    {events}
-    ZipArchive.OnConfirmOverwrite                   := DoConfirmOverwrite;
-    TAbZipArchive(ZipArchive).OnNeedPassword        := DoNeedPassword;
-    TAbZipArchive(ZipArchive).TestHelper            := TestItemProc;
-    TAbZipArchive(ZipArchive).ExtractHelper         := UnzipProc;
-    TAbZipArchive(ZipArchive).ExtractToStreamHelper := UnzipToStreamProc;
+  if FArchive <> nil then begin
+	FArchive.ExtractOptions                       := FExtractOptions;
+	FArchive.OnConfirmOverwrite                   := DoConfirmOverwrite;
+  end;
+  if FArchive is TAbZipArchive then begin
+	TAbZipArchive(FArchive).PasswordRetries       := FPasswordRetries;
+	TAbZipArchive(FArchive).OnNeedPassword        := DoNeedPassword;
+	TAbZipArchive(FArchive).TestHelper            := TestItemProc;
+	TAbZipArchive(FArchive).ExtractHelper         := UnzipProc;
+	TAbZipArchive(FArchive).ExtractToStreamHelper := UnzipToStreamProc;
   end;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomUnZipper.SetExtractOptions(Value : TAbExtractOptions);
 begin
   FExtractOptions := Value;
-  if (ZipArchive <> nil) then
-    ZipArchive.ExtractOptions := Value;
+  if (FArchive <> nil) then
+	FArchive.ExtractOptions := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomUnZipper.SetPasswordRetries(Value : Byte);
 begin
   FPasswordRetries := Value;
-  if (ZipArchive <> nil) then
-    TAbZipArchive(ZipArchive).PasswordRetries := Value;
+  if FArchive is TAbZipArchive then
+	TAbZipArchive(FArchive).PasswordRetries := Value;
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbCustomUnZipper.TestTaggedItems;
   {Test specified items}
 begin
-  if (ZipArchive <> nil) then
-    ZipArchive.TestTaggedItems
+  if (FArchive <> nil) then
+	FArchive.TestTaggedItems
   else
     raise EAbNoArchive.Create;
 end;
