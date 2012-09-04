@@ -432,7 +432,7 @@ type
       override;
     function FixName(const Value: string): string;
       override;
-   	function GetSupportsEmptyFolders: Boolean;
+    function GetSupportsEmptyFolders: Boolean;
       override;
 
     function GetItem(Index: Integer): TAbTarItem;
@@ -1899,7 +1899,7 @@ var
 begin
   { Check the index is not out of range. }
   if(Index >= ItemList.Count) then
-	  raise EListError.CreateFmt(SListIndexError, [Index]);
+      raise EListError.CreateFmt(SListIndexError, [Index]);
 
   CurItem := TAbTarItem(ItemList[Index]);
 
@@ -1938,7 +1938,7 @@ var
   CurItem : TAbTarItem;
 begin
   if(Index >= ItemList.Count) then
-	  raise EListError.CreateFmt(SListIndexError, [Index]);
+      raise EListError.CreateFmt(SListIndexError, [Index]);
 
   CurItem := TAbTarItem(ItemList[Index]);
 
@@ -2151,7 +2151,8 @@ begin
               if (BaseDirectory <> '') then
                 ChDir(BaseDirectory);
               { update metadata }
-              AbFileGetAttrEx(CurItem.DiskFileName, AttrEx);
+              if not AbFileGetAttrEx(CurItem.DiskFileName, AttrEx) then
+                raise EAbFileNotFound.Create;
               CurItem.ExternalFileAttributes := AttrEx.Mode;
               CurItem.LastModTimeAsDateTime := AttrEx.Time;
               { TODO: uid, gid, uname, gname should be added here }

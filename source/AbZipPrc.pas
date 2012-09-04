@@ -301,7 +301,8 @@ begin
   try {SaveDir}
     if (Sender.BaseDirectory <> '') then
       ChDir(Sender.BaseDirectory);
-    AbFileGetAttrEx(Item.DiskFileName, AttrEx);
+    if not AbFileGetAttrEx(Item.DiskFileName, AttrEx) then
+      raise EAbFileNotFound.Create;
     if ((AttrEx.Attr and faDirectory) <> 0) then
       UncompressedStream := TMemoryStream.Create
     else

@@ -304,7 +304,8 @@ begin
   Result := FileOpen(string(lpPathname), fmOpenRead or fmShareDenyNone);
   if (Result = -1) then
     raise EAbFCIFileOpenError.Create;
-  AbFileGetAttrEx(string(lpPathname), AttrEx);
+  if not AbFileGetAttrEx(string(lpPathname), AttrEx) then
+    raise EAbFileNotFound.Create;
   PAttribs^ := AttrEx.Attr;
   DT := DateTimeToFileDate(AttrEx.Time);
   PDate^ := DT shr 16;
