@@ -53,7 +53,7 @@ uses
   Classes, SysUtils, TestFrameWork,
   {$IFDEF HasAdvancedRecords}AbLZMAStream,{$ENDIF} AbLZMA;
 
-{ TAbVMStrmTests }
+{ TAbLZMATests }
 
 procedure TAbLZMATests.SetUp;
 begin
