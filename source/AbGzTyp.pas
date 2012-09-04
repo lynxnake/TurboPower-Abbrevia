@@ -45,7 +45,7 @@ unit AbGzTyp;
 interface
 
 uses
-  Classes, AbUtils, AbArcTyp, AbTarTyp;
+  Classes, AbUtils, AbArcTyp, AbTarTyp, AbVMStrm;
 
 type
   { pre-defined "operating system" (really more FILE system)
@@ -230,7 +230,7 @@ type
   private
     FGZStream  : TStream;        { stream for GZip file}
     FGZItem    : TAbArchiveList; { item in Gzip (only one, but need polymorphism of class)}
-    FTarStream : TStream;        { stream for possible contained Tar }
+    FTarStream : TAbVirtualMemoryStream; { stream for possible contained Tar }
     FTarList   : TAbArchiveList; { items in possible contained Tar }
     FTarAutoHandle: Boolean;
     FState     : TAbGzipArchiveState;
@@ -291,7 +291,7 @@ uses
   Windows,
   {$ENDIF}
   SysUtils,
-  AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString, AbVMStrm;
+  AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString;
 
 const
   { Header Signature Values}
@@ -1060,6 +1060,7 @@ begin
 
         if IsGzippedTar and TarAutoHandle then begin
           { extract Tar and set stream up }
+          FTarStream.SwapFileDirectory := FTempDir;
           GzHelp.SeekToItemData;
           GzHelp.ExtractItemData(FTarStream);
           SwapToTar;
@@ -1105,7 +1106,7 @@ begin
       OutGzHelp := TAbGzipStreamHelper.Create(NewStream);
 
       { create helper }
-      NewStream.SwapFileDirectory := ExtractFilePath(AbGetTempFile(FTempDir, False));
+      NewStream.SwapFileDirectory := FTempDir;
 
       { save the Tar data }
       if IsGzippedTar and TarAutoHandle then begin

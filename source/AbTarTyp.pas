@@ -2110,7 +2110,7 @@ begin
 
   try {NewStream/OutTarHelp}
     { create helper }
-    NewStream.SwapFileDirectory := AbGetTempDirectory;
+    NewStream.SwapFileDirectory := FTempDir;
 
     {build new archive from existing archive}
     for i := 0 to pred(Count) do begin
