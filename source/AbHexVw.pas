@@ -80,7 +80,7 @@ var
   Str : String;
   StrList : TStringList;
 begin
-  Strm.Seek(0, soFromBeginning);
+  Strm.Seek(0, soBeginning);
   StrList := TStringList.Create;
   Clear;
   while Strm.Position < Strm.Size do begin

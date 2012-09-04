@@ -137,19 +137,19 @@ begin
   Result := atUnknown;
 
   CurPos := Strm.Position;
-  Strm.Seek(0, soFromBeginning);
+  Strm.Seek(0, soBeginning);
 
   try
     if (Strm.Read(Hdr, SizeOf(Hdr)) = SizeOf(Hdr)) and VerifyHeader(Hdr) then begin
       Result := atBzip2;
       { Check for embedded TAR }
-      Strm.Seek(0, soFromBeginning);
+      Strm.Seek(0, soBeginning);
       DecompStream := TBZDecompressionStream.Create(Strm);
       try
         TarStream := TMemoryStream.Create;
         try
           TarStream.CopyFrom(DecompStream, 512 * 2);
-          TarStream.Seek(0, soFromBeginning);
+          TarStream.Seek(0, soBeginning);
           if VerifyTar(TarStream) = atTar then
             Result := atBzippedTar;
         finally

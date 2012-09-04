@@ -160,10 +160,10 @@ function TAbZLStreamHelper.FindFirstItem: Boolean;
 var
   ZLH : TAbZLHeader;
 begin
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
   Result := FStream.Read(ZLH, SizeOf(TAbZLHeader)) = SizeOf(TAbZLHeader);
   FItem.FZLHeader := ZLH;
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
 end;
 
 function TAbZLStreamHelper.FindNextItem: Boolean;

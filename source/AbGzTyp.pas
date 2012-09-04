@@ -379,7 +379,7 @@ begin
   Result := atUnknown;
   CurPos := Strm.Position;
   try
-    Strm.Seek(0, soFromBeginning);
+    Strm.Seek(0, soBeginning);
 
     {prepare for the try..finally}
     Hlpr := nil;
@@ -503,7 +503,7 @@ begin
       Move(Buff, Result[Length(Result) - Len + 1], Len);
     end;
     if Len < DataRead then begin
-      AStream.Seek(Len - DataRead + 1, soFromCurrent);
+      AStream.Seek(Len - DataRead + 1, soCurrent);
       Break;
     end;
   until DataRead = 0;
@@ -513,7 +513,7 @@ procedure TAbGzipStreamHelper.SeekToItemData;
 {find end of header data, including FileName etc.}
 begin
   {** Seek to Compressed Data **}
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
   FItem.LoadGzHeaderFromStream(FStream);
 end;
 
@@ -539,13 +539,13 @@ var
   DataRead : Integer;
 begin
   Result := False;
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
   DataRead := FStream.Read(GZH, SizeOf(TAbGzHeader));
   if (DataRead = SizeOf(TAbGzHeader)) and VerifyHeader(GZH) then begin
     FItem.FGZHeader := GZH;
     Result := True;
   end;
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
 end;
 
 function TAbGzipStreamHelper.FindNextItem: Boolean;
@@ -1050,7 +1050,7 @@ begin
       if GzHelp.FindFirstItem then begin
         Item := TAbGzipItem.Create;
         Item.LoadGzHeaderFromStream(FGzStream);
-        FGzStream.Seek(-SizeOf(TAbGzTailRec), soFromEnd);
+        FGzStream.Seek(-SizeOf(TAbGzTailRec), soEnd);
         GZHelp.ReadTail;
         Item.CRC32 := GZHelp.TailCRC;
         Item.UncompressedSize := GZHelp.TailSize;

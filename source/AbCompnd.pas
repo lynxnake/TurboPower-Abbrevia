@@ -1447,7 +1447,7 @@ begin
       DirEntry.FSize := FileSize;
 
       {compress & update dir entry's compressed size}
-      FileData.Seek(0, soFromBeginning);
+      FileData.Seek(0, soBeginning);
       Deflate(FileData, CompStream, CompHelper);
       DirEntry.FCompressedSize := CompStream.Size;
 
@@ -1538,7 +1538,7 @@ begin
       Buff[i] := ftUnusedBlock;
 
     {read 1st FAT block into Buff -> Write Buff to DestStrm}
-    FStream.Seek(2 * FSystemBlock.AllocationSize, soFromBeginning);
+    FStream.Seek(2 * FSystemBlock.AllocationSize, soBeginning);
     FStream.Read(Buff[0], FSystemBlock.AllocationSize);
     DestStrm.Write(Buff[0], FSystemBlock.AllocationSize);
 
@@ -1547,7 +1547,7 @@ begin
 
     {read remaining FAT blocks if they exist}
     While NextBlock <> ftEndOfBlock do begin
-      FStream.Seek((NextBlock) * FSystemBlock.AllocationSize, soFromBeginning);
+      FStream.Seek((NextBlock) * FSystemBlock.AllocationSize, soBeginning);
 
       {Clear buff}
       for i := Low(Buff) to High(Buff) do
@@ -1558,14 +1558,14 @@ begin
 
       {Determine the next FAT block - we'll return to this position in stream}
       CurrPos := DestStrm.Position;
-      DestStrm.Seek((NextBlock - 1) * SizeOf(Integer), soFromBeginning);
+      DestStrm.Seek((NextBlock - 1) * SizeOf(Integer), soBeginning);
       DestStrm.Read(IntBuff[0], SizeOf(Integer));
       NextBlock := IntBuff[0];
-      DestStrm.Seek(CurrPos, soFromBeginning);
+      DestStrm.Seek(CurrPos, soBeginning);
     end;
 
     {Set length of and populate the FFATTable.fFATArray in mem structure}
-    DestStrm.Seek(0, soFromBeginning);
+    DestStrm.Seek(0, soBeginning);
     SetLength(FFATTable.fFATArray, DestStrm.Size div SizeOf(Integer));
     for i := 1 to DestStrm.Size div SizeOf(Integer) do begin
       DestStrm.Read(IntBuff[0], SizeOf(Integer));
@@ -1608,13 +1608,13 @@ begin
   try
     {Read entire RotDir block to DestStrm}
     for i := 0 to High(ChainArray) do begin
-      FStream.Seek(FSystemBlock.AllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.AllocationSize * ChainArray[i], soBeginning);
       FStream.Read(Buff[0], FSystemBlock.AllocationSize);
       DestStrm.Write(Buff[0], FSystemBlock.AllocationSize);
     end;
 
     {Reset DestStrm}
-    DestStrm.Seek(0, soFromBeginning);
+    DestStrm.Seek(0, soBeginning);
 
     {For all directory entries, read entry, create object, & add to Lst}
     for i := 0 to (DestStrm.Size div rdSizeOfDirEntry) - 1 do begin
@@ -1678,7 +1678,7 @@ var
   Version      : Array[0..sbVersionSize - 1] of AnsiChar;
   AllocationSz : Array[0..0] of Integer;
 begin
-  FStream.Seek(0, soFromBeginning);
+  FStream.Seek(0, soBeginning);
   FStream.Read(Sig[0], sbSignatureSize);
   FStream.Read(VolLabel[0], sbVolumeLabelSize);
   FStream.Read(AllocationSz[0], sbAllocationSizeSize);
@@ -1888,7 +1888,7 @@ begin
     for i := 0 to high(ChainArray) do begin
       for j := 0 to Pred(FSystemBlock.AllocationSize) do
         Buff[j] := Byte(chr(0));
-      FStream.Seek((ChainArray[i]) * FSystemBlock.AllocationSize, soFromBeginning);
+      FStream.Seek((ChainArray[i]) * FSystemBlock.AllocationSize, soBeginning);
       if i <> High(ChainArray) then begin
         FStream.Read(buff[0], FSystemBlock.AllocationSize);
         CompStream.Write(Buff[0], FSystemBlock.AllocationSize);
@@ -1902,7 +1902,7 @@ begin
     end;
 
     {CompStream now contains the entire compressed file stream}
-    CompStream.Seek(0, soFromBeginning);
+    CompStream.Seek(0, soBeginning);
     Inflate(CompStream, Strm, CompHelper);
   finally
     CompStream.Free;
@@ -1932,17 +1932,17 @@ begin
     fFATTable.ClearFATChain;
     fFATTable.GetNewFATChain(FATStrm.Size, ChainArray);
 
-    FATStrm.Seek(0, soFromBeginning);
+    FATStrm.Seek(0, soBeginning);
     for i := 0 to High(ChainArray) do begin
 
       {Clear block contents}
       FillChar(Buff[0], FSystemBlock.AllocationSize, #0);
-      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soBeginning);
       FStream.Write(Buff[0], FSystemBlock.AllocationSize);
 
       {write new contents}
       FATStrm.Read(Buff[0], FSystemBlock.AllocationSize);
-      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soBeginning);
       FStream.Write(Buff[0], FSystemBlock.AllocationSize);
     end;
   finally
@@ -1959,13 +1959,13 @@ var
   j    : Integer;
 begin
   if FileData <> nil then begin
-    FileData.Seek(0, soFromBeginning);
+    FileData.Seek(0, soBeginning);
     SetLength(Buff, FSystemBlock.AllocationSize);
     for i := 0 to High(ChainArray) do begin
       for j := 0 to FSystemBlock.AllocationSize - 1 do
         Buff[j] := Byte(chr(0));
       FileData.Read(Buff[0], FSystemBlock.AllocationSize);
-      FStream.Seek(FSystemBlock.AllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.AllocationSize * ChainArray[i], soBeginning);
 
       FStream.Write(Buff[0],FSystemBlock.AllocationSize);
     end;
@@ -1992,16 +1992,16 @@ begin
     fFATTable.ClearRootDirChain;
     fFATTable.GetNewRootDirChain(RdStrm.Size, ChainArray);
 
-    RdStrm.Seek(0, soFromBeginning);
+    RdStrm.Seek(0, soBeginning);
     for i := 0 to High(ChainArray) do begin
       {Clear block contents}
       FillChar(Buff[0], FSystemBlock.AllocationSize, #0);
-      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soBeginning);
       FStream.Write(Buff[0], FSystemBlock.AllocationSize);
 
       {write new contents}
       RdStrm.Read(Buff[0], FSystemBlock.AllocationSize);
-      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soFromBeginning);
+      FStream.Seek(FSystemBlock.FAllocationSize * ChainArray[i], soBeginning);
       FStream.Write(Buff[0], FSystemBlock.AllocationSize);
     end;
   finally
@@ -2019,9 +2019,9 @@ begin
   Strm := TMemoryStream.Create;
   try
     FSystemBlock.WriteToStream(Strm);
-    Strm.Seek(0, soFromBeginning);
+    Strm.Seek(0, soBeginning);
     Strm.Read(Buff[0], Strm.Size);
-    FStream.Seek(0, soFromBeginning);
+    FStream.Seek(0, soBeginning);
     FStream.Write(Buff[0], FSystemBlock.AllocationSize);
   finally
     Strm.Free;
@@ -2080,7 +2080,7 @@ begin
       SetLength(ChainArray, 0);
 
       {Deflate data}
-      FData.Seek(0, soFromBeginning);
+      FData.Seek(0, soBeginning);
       Deflate(FData, CompStream, CompHelper);
 
       {Commit new FAT chain}
