@@ -1194,12 +1194,17 @@ begin
     NewStream.Position := 0;
     if (FStream is TMemoryStream) then
       TMemoryStream(FStream).LoadFromStream(NewStream)
-    else begin
+    else if FOwnsStream then begin
       { need new stream to write }
       FreeAndNil(FStream);
       FGZStream := nil;
       FStream := TFileStream.Create(FArchiveName, fmCreate or fmShareDenyWrite);
       FGZStream := FStream;
+      FStream.CopyFrom(NewStream, NewStream.Size);
+    end
+    else begin
+      FStream.Size := 0;
+      FStream.Position := 0;
       FStream.CopyFrom(NewStream, NewStream.Size);
     end;
 
