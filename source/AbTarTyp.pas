@@ -2193,15 +2193,15 @@ begin
     NewStream.Position := 0;
     if (FStream is TMemoryStream) then
       TMemoryStream(FStream).LoadFromStream(NewStream)
-    else if FOwnsStream then begin
-      { write to a new stream }
-      FreeAndNil(FStream);
-      FStream := TFileStream.Create(FArchiveName, fmCreate or fmShareDenyWrite);
+    else if (FStream is TAbVirtualMemoryStream) or not FOwnsStream then begin
+      FStream.Size := 0;
+      FStream.Position := 0;
       FStream.CopyFrom(NewStream, NewStream.Size);
     end
     else begin
-      FStream.Size := 0;
-      FStream.Position := 0;
+      { write to a new stream }
+      FreeAndNil(FStream);
+      FStream := TFileStream.Create(FArchiveName, fmCreate or fmShareDenyWrite);
       FStream.CopyFrom(NewStream, NewStream.Size);
     end;
 
