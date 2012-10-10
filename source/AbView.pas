@@ -40,13 +40,13 @@ interface
 
 uses
   Classes,
+  Types,
 {$IFDEF MSWINDOWS}
   Windows,
   Messages,
 {$ENDIF}
 {$IFDEF LibcAPI}
   Libc,
-  Types,
 {$ENDIF}
 {$IFDEF UsingCLX }
   Qt,
@@ -384,6 +384,9 @@ implementation
 uses
 {$IFDEF MSWINDOWS}
   ShellApi,
+{$ENDIF}
+{$IFDEF HasUITypes}
+  UITypes,
 {$ENDIF}
   SysUtils,
   AbUtils,

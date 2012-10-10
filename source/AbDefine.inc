@@ -130,6 +130,9 @@
     {$DEFINE HasGridDrawingStyle}
     {$DEFINE HasTouch}
   {$IFEND}
+  {$IF RTLVersion >= 24} // Delphi XE3
+    {$DEFINE HasUITypes}
+  {$IFEND}
 {$ENDIF}
 
 {====General defines=================================================}
