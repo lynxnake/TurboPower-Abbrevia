@@ -775,7 +775,7 @@ begin
           Exit;
         end;
         {Is enough data now available?}
-        if FReadBufferAvailableBytes >= ACount then
+        if FReadBufferAvailableBytes >= (ACount - LBytesAlreadyRead) then
         begin
           {Enough data in the buffer: Fill the output buffer.}
           System.Move(FUncompressedDataBuffer,
