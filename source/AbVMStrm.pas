@@ -64,7 +64,7 @@ type
       vmsSwapFileDir  : string;     {swap file directory}
       vmsSwapFileName : string;     {swap file name}
       vmsSwapFileSize : Int64;      {size of swap file}
-      vmsSwapHandle   : System.THandle;    {swap file handle}
+      vmsSwapStream   : TFileStream;{swap file stream}
     protected
       procedure vmsSetMaxMemToUse(aNewMem : Longword);
 
@@ -427,13 +427,13 @@ end;
 {--------}
 procedure TAbVirtualMemoryStream.vmsSwapFileCreate;
 begin
-  if (vmsSwapHandle = 0) then begin
+  if (vmsSwapStream = nil) then begin
     vmsSwapFileName := AbCreateTempFile(vmsSwapFileDir);
-    vmsSwapHandle := FileOpen(vmsSwapFileName, fmOpenReadWrite);
-    if (vmsSwapHandle <= 0) then begin
-      vmsSwapHandle := 0;
+    try
+      vmsSwapStream := TFileStream.Create(vmsSwapFileName, fmCreate);
+    except
       DeleteFile(vmsSwapFileName);
-      raise EAbVMSErrorOpenSwap.Create( vmsSwapFileName );             
+      raise EAbVMSErrorOpenSwap.Create( vmsSwapFileName );
     end;
     vmsSwapFileSize := 0;
   end;
@@ -441,10 +441,9 @@ end;
 {--------}
 procedure TAbVirtualMemoryStream.vmsSwapFileDestroy;
 begin
-  if (vmsSwapHandle <> 0) then begin
-    FileClose(vmsSwapHandle);
+  if (vmsSwapStream <> nil) then begin
+    FreeAndNil(vmsSwapStream);
     DeleteFile(vmsSwapFileName);
-    vmsSwapHandle := 0;
   end;
 end;
 {--------}
@@ -453,33 +452,33 @@ var
   BytesRead : Longint;
   SeekResult: Int64;
 begin
-  if (vmsSwapHandle = 0) or (aPage^.vpStmOfs >= vmsSwapFileSize) then begin
+  if (vmsSwapStream = nil) or (aPage^.vpStmOfs >= vmsSwapFileSize) then begin
     {there is nothing to be read from the disk (either the swap file
      doesn't exist or it's too small) so zero out the page data}
     FillChar(aPage^.vpData, AB_VMSPageSize, 0)
   end
   else {there is something to be read from the swap file} begin
-    SeekResult := FileSeek(vmsSwapHandle, aPage^.vpStmOfs, 0);
+    SeekResult := vmsSwapStream.Seek(aPage^.vpStmOfs, soBeginning);
     if (SeekResult = -1) then
       raise EAbVMSSeekFail.Create( vmsSwapFileName );
-    BytesRead := FileRead(vmsSwapHandle, aPage^.vpData, AB_VMSPageSize);
+    BytesRead := vmsSwapStream.Read(aPage^.vpData, AB_VMSPageSize);
     if (BytesRead <> AB_VMSPageSize) then
-      raise EAbVMSReadFail.Create( AB_VMSPageSize, vmsSwapFileName );  
+      raise EAbVMSReadFail.Create( AB_VMSPageSize, vmsSwapFileName );
   end;
 end;
 {--------}
 procedure TAbVirtualMemoryStream.vmsSwapFileWrite(aPage : PvmsPage);
 var
-  NewPos : Int64;        
+  NewPos : Int64;
   SeekResult: Int64;
   BytesWritten : Longint;
 begin
-  if (vmsSwapHandle = 0) then
+  if (vmsSwapStream = nil) then
     vmsSwapFileCreate;
-  SeekResult := FileSeek(vmsSwapHandle, aPage^.vpStmOfs, 0);
+  SeekResult := vmsSwapStream.Seek(aPage^.vpStmOfs, soBeginning);
   if (SeekResult = -1) then
-    raise EAbVMSSeekFail.Create( vmsSwapFileName );                    
-  BytesWritten := FileWrite(vmsSwapHandle, aPage^.vpData, AB_VMSPageSize);
+    raise EAbVMSSeekFail.Create( vmsSwapFileName );
+  BytesWritten := vmsSwapStream.Write(aPage^.vpData, AB_VMSPageSize);
   if BytesWritten <> AB_VMSPageSize then
     raise EAbVMSWriteFail.Create( AB_VMSPageSize, vmsSwapFileName );   
   NewPos := aPage^.vpStmOfs + AB_VMSPageSize;
