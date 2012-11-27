@@ -77,7 +77,7 @@ type
       FStart        : PAnsiChar;
       FStartOffset  : longint;
       FStream       : TStream;
-      FStreamSize   : longint;
+      FStreamSize   : Int64;
       FUseCRC32     : boolean;
       FUseDeflate64 : boolean;
       FWinMask      : integer;
@@ -89,7 +89,7 @@ type
       procedure iwSlide;
     public
       constructor Create(aStream       : TStream;
-                         aStreamSize   : longint;
+                         aStreamSize   : Int64;
                          aWinSize      : integer;
                          aChainLength  : integer;
                          aUseDeflate64 : boolean;
@@ -168,7 +168,7 @@ const
 
 {===TAbDfInputWindow=================================================}
 constructor TAbDfInputWindow.Create(aStream       : TStream;
-                                    aStreamSize   : longint;
+                                    aStreamSize   : Int64;
                                     aWinSize      : integer;
                                     aChainLength  : integer;
                                     aUseDeflate64 : boolean;
