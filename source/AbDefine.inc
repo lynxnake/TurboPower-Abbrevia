@@ -133,6 +133,9 @@
   {$IF RTLVersion >= 24} // Delphi XE3
     {$DEFINE HasUITypes}
   {$IFEND}
+  {$IF RTLVersion >= 25} // Delphi XE4
+    {$DEFINE HasAnsiStrings}
+  {$IFEND}
 {$ENDIF}
 
 {====General defines=================================================}

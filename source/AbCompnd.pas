@@ -364,7 +364,7 @@ type
 implementation
 
 uses
-  StrUtils;
+  StrUtils{$IFDEF HasAnsiStrings}, AnsiStrings{$ENDIF};
 
 {-----------------------------------------------------------------------------}
 {-----------------------------------------------------------------------------}
@@ -790,15 +790,15 @@ var
   Updt      : Byte;
 begin
   FillChar(Sig, sbSignatureSize, #0);
-  StrPCopy(Sig, FSignature);
+  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(Sig, FSignature);
 
   FillChar(VolLabel[0], sbVolumeLabelSize, #0);
-  StrPCopy(VolLabel, FVolumeLabel);
+  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(VolLabel, FVolumeLabel);
 
   AllocSize := FAllocationSize;
 
   FillChar(Version[0], sbVersionSize, #0);
-  StrPCopy(Version, FVersion);
+  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(Version, FVersion);
 
   if FUpdating then
     Updt := $01
@@ -898,7 +898,7 @@ var
   FType     : Integer;
 begin
   FillChar(EntryName, rdEntryNameSize - 1, #0);
-  StrPCopy(EntryName, FName);
+  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(EntryName, FName);
 
   Strm.Write(EntryName[0], rdEntryNameSize);
 
@@ -1366,7 +1366,7 @@ var
 begin
   inherited Create;
   FSystemBlock := TAbSystemBlock.Create(VolLabel, AllocSize);
-  FSystemBlock.Signature := LeftStr(Signature, sbSignatureSize);
+  FSystemBlock.Signature := {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}LeftStr(Signature, sbSignatureSize);
   FFATTable    := TAbFATTable.Create(AllocSize);
   FRootDir     := TAbRootDir.Create(VolLabel, AllocSize);
   {create file}
@@ -1822,7 +1822,7 @@ begin
 
   {Ensure valid signature}
   FStream.Read(Sig[0], sbSignatureSize);
-  if Sig <> LeftStr(FSystemBlock.Signature, sbSignatureSize) then begin
+  if Sig <> {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}LeftStr(FSystemBlock.Signature, sbSignatureSize) then begin
     raise ECompoundFileError.Create(AbCmpndInvalidFile);
     exit;
   end;
@@ -1848,7 +1848,7 @@ begin
 
   {Ensure valid signature}
   FStream.Read(Sig[0], sbSignatureSize);
-  if Sig <> LeftStr(Signature, sbSignatureSize) then begin
+  if Sig <> {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}LeftStr(Signature, sbSignatureSize) then begin
     raise ECompoundFileError.Create(AbCmpndInvalidFile);
     exit;
   end;
