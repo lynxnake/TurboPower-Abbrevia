@@ -47,14 +47,12 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_DcpOutput>.\$(Platform)\$(Config)</DCC_DcpOutput>
         <DCC_UnitSearchPath>.\$(Platform)\$(Config);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_MajorVer>4</VerInfo_MajorVer>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Keys>CompanyName=;FileDescription=Abbrevia Components;FileVersion=5.0.0.0;InternalName=;LegalCopyright=Copyright (c) Abbrevia Group 2011;LegalTrademarks=;OriginalFilename=;ProductName=Abbrevia;ProductVersion=5.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;System.Win;Winapi;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_BplOutput>.\$(Platform)\$(Config)</DCC_BplOutput>
         <DCC_DependencyCheckOutputName>Abbrevia.bpl</DCC_DependencyCheckOutputName>
         <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>

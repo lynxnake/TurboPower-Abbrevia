@@ -42,9 +42,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_UnitSearchPath>.\$(Platform)\$(Config);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
-        <DCC_BplOutput>.\$(Platform)\$(Config)</DCC_BplOutput>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_DcpOutput>.\$(Platform)\$(Config)</DCC_DcpOutput>
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Keys>CompanyName=;FileDescription=Abbrevia Components;FileVersion=5.1.0.0;InternalName=;LegalCopyright=Copyright (c) Abbrevia Group;LegalTrademarks=;OriginalFilename=;ProductName=Abbrevia;ProductVersion=5.1;Comments=</VerInfo_Keys>

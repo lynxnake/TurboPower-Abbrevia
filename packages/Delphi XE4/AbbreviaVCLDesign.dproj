@@ -41,8 +41,6 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_BplOutput>.\$(Platform)\$(Config)</DCC_BplOutput>
-        <DCC_DcpOutput>.\$(Platform)\$(Config)</DCC_DcpOutput>
         <DCC_UnitSearchPath>.\$(Platform)\$(Config);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
@@ -66,10 +64,10 @@
         <DCC_Platform>x86</DCC_Platform>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_MajorVer>1</VerInfo_MajorVer>
+        <VerInfo_MinorVer>0</VerInfo_MinorVer>
         <Icon_MainIcon>AbbreviaVCLDesign_Icon.ico</Icon_MainIcon>
         <DCC_Namespace>System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
-        <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_UsePackage>AbbreviaVCL;$(DCC_UsePackage)</DCC_UsePackage>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
