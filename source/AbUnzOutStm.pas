@@ -166,9 +166,9 @@ var
   Abort : Boolean;
   NewProgress : Byte;
 begin
-  Result := FStream.Write(Buffer, Count);
-
   AbUpdateCRC( FCRC32, Buffer, Count );
+
+  Result := FStream.Write(Buffer, Count);
 
   Inc( FBytesWritten, Result );
   if Assigned( FOnProgress ) then begin
