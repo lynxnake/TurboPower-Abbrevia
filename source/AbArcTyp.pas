@@ -168,10 +168,11 @@ type
     function GetCount : Integer;
     function Get(Index : Integer) : TAbArchiveItem;
     procedure Put(Index : Integer; Item : TAbArchiveItem);
+    procedure UpdateHash(aItem: TAbArchiveItem; const aOldFileName: string);
   public {methods}
     constructor Create(AOwnsItems: Boolean);
     destructor Destroy; override;
-    function Add(Item : Pointer): Integer;
+    function Add(aItem : TAbArchiveItem): Integer;
     procedure Clear;
     procedure Delete(Index : Integer);
     function Find(const FN : string) : Integer;
@@ -796,16 +797,16 @@ begin
   inherited Destroy;
 end;
 { -------------------------------------------------------------------------- }
-function TAbArchiveList.Add(Item : Pointer) : Integer;
+function TAbArchiveList.Add(aItem : TAbArchiveItem) : Integer;
 var
   H : LongInt;
 begin
   if FOwnsItems then begin
-    H := GenerateHash(TAbArchiveItem(Item).FileName);
-    TAbArchiveItem(Item).NextItem := HashTable[H];
-    HashTable[H] := TAbArchiveItem(Item);
+    H := GenerateHash(aItem.FileName);
+    aItem.NextItem := HashTable[H];
+    HashTable[H] := aItem;
   end;
-  Result := FList.Add(Item);
+  Result := FList.Add(aItem);
 end;
 { -------------------------------------------------------------------------- }
 procedure TAbArchiveList.Clear;
@@ -822,20 +823,20 @@ end;
 procedure TAbArchiveList.Delete(Index: Integer);
 var
   Look : TAbArchiveItem;
-  Last : Pointer;
+  Last : ^TAbArchiveItem;
   FN : string;
 begin
   if FOwnsItems then begin
     FN := TAbArchiveItem(FList[Index]).FileName;
     Last := @HashTable[GenerateHash(FN)];
-    Look := TAbArchiveItem(Last^);
+    Look := Last^;
     while Look <> nil do begin
       if CompareText(Look.FileName, FN) = 0 then begin
-        Move(Look.NextItem, Last^, 4);
+        Last^ := Look.NextItem;
         Break;
       end;
       Last := @Look.NextItem;
-      Look := TAbArchiveItem(Last^);
+      Look := Last^;
     end;
     TObject(FList[Index]).Free;
   end;
@@ -933,31 +934,57 @@ procedure TAbArchiveList.Put(Index : Integer; Item : TAbArchiveItem);
 var
   H : LongInt;
   Look : TAbArchiveItem;
-  Last : Pointer;
+  Last : ^TAbArchiveItem;
   FN : string;
 begin
   if FOwnsItems then begin
     FN := TAbArchiveItem(FList[Index]).FileName;
     Last := @HashTable[GenerateHash(FN)];
-    Look := TAbArchiveItem(Last^);
+    Look := Last^;
     { Delete old index }
     while Look <> nil do begin
       if CompareText(Look.FileName, FN) = 0 then begin
-        Move(Look.NextItem, Last^, 4);
+        Last^ := Look.NextItem;
         Break;
       end;
       Last := @Look.NextItem;
-      Look := TAbArchiveItem(Last^);
+      Look := Last^;
     end;
     { Free old instance }
     TObject(FList[Index]).Free;
     { Add new index }
-    H := GenerateHash(TAbArchiveItem(Item).FileName);
-    TAbArchiveItem(Item).NextItem := HashTable[H];
-    HashTable[H] := TAbArchiveItem(Item);
+    H := GenerateHash(Item.FileName);
+    Item.NextItem := HashTable[H];
+    HashTable[H] := Item;
   end;
   { Replace pointer }
   FList[Index] := Item;
+end;
+{ -------------------------------------------------------------------------- }
+procedure TAbArchiveList.UpdateHash(aItem: TAbArchiveItem;
+  const aOldFileName: string);
+var
+  H : LongInt;
+  Last : ^TAbArchiveItem;
+  Look : TAbArchiveItem;
+begin
+  if FOwnsItems then begin
+    { Remove from old hash position }
+    Last := @HashTable[GenerateHash(aOldFileName)];
+    Look := Last^;
+    while Look <> nil do begin
+      if Look = aItem then begin
+        Last^ := Look.NextItem;
+        Break
+      end;
+      Last := @Look.NextItem;
+      Look := Last^
+    end;
+    { Add to new hash position }
+    H := GenerateHash(aItem.FileName);
+    aItem.NextItem := HashTable[H];
+    HashTable[H] := aItem
+  end;
 end;
 
 
@@ -1766,7 +1793,7 @@ var
   Confirm : Boolean;
   Found : Boolean;
   i : Integer;
-  FixedPath: string;
+  FixedPath, OldFileName: string;
 begin
   CheckValid;
   FixedPath := FixName(NewStoredPath);
@@ -1791,10 +1818,11 @@ begin
   if not Confirm then
     Exit;
 
-  with aItem do begin
-    FileName := FixedPath;
-    Action := aaMove;
-  end;
+  OldFileName := aItem.FileName;
+  aItem.FileName := FixedPath;
+  aItem.Action := aaMove;
+  ItemList.UpdateHash(aItem, OldFileName);
+
   FIsDirty := True;
   if AutoSave then
     Save;
