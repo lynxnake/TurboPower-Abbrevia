@@ -291,6 +291,9 @@ uses
   Windows,
   {$ENDIF}
   SysUtils,
+  {$IFDEF HasAnsiStrings}
+  System.AnsiStrings,
+  {$ENDIF}
   AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString;
 
 const
@@ -497,7 +500,7 @@ begin
   repeat
     DataRead := AStream.Read(Buff, BuffSiz - 1);
     Buff[DataRead] := #0;
-    Len := StrLen(Buff);
+    Len := {$IFDEF HasAnsiStrings}System.AnsiStrings.{$ENDIF}StrLen(Buff);
     if Len > 0 then begin
       SetLength(Result, Length(Result) + Len);
       Move(Buff, Result[Length(Result) - Len + 1], Len);
