@@ -326,6 +326,12 @@ const
   function AbDOS2UnixFileAttributes(Attr: LongInt): LongInt;
   function AbUnix2DosFileAttributes(Attr: LongInt): LongInt;
 
+{ AnisStrings }
+  function AbLeftStr(const AText: AnsiString; const ACount: Integer): AnsiString; {$IFDEF HasInline}inline;{$ENDIF}
+  function AbStrLen(const Str: PAnsiChar): Cardinal; {$IFDEF HasInline}inline;{$ENDIF}
+  function AbStrPCopy(Dest: PAnsiChar; const Source: AnsiString): PAnsiChar; {$IFDEF HasInline}inline;{$ENDIF}
+  function AbStrPLCopy(Dest: PAnsiChar; const Source: AnsiString; MaxLen: Cardinal): PAnsiChar; {$IFDEF HasInline}inline;{$ENDIF}
+
 { UNIX File Types and Permissions }
 const
   AB_FMODE_FILE          = $0000;
@@ -363,6 +369,9 @@ implementation
 
 uses
   StrUtils,
+{$IFDEF HasAnsiStrings}
+  System.AnsiStrings,
+{$ENDIF}
   AbConst,
   AbExcept;
 
@@ -1350,8 +1359,44 @@ end;
 {$IFNDEF UNICODE}
 function CharInSet(C: AnsiChar; CharSet: TSysCharSet): Boolean;
 begin
-Result := C in CharSet;
+  Result := C in CharSet;
 end;
 {$ENDIF}
+
+function AbLeftStr(const AText: AnsiString; const ACount: Integer): AnsiString;
+begin
+{$IFDEF HasAnsiStrings}
+  Result := System.AnsiStrings.LeftStr(AText, ACount);
+{$ELSE}
+  Result := StrUtils.LeftStr(AText, ACount);
+{$ENDIF}
+end;
+
+function AbStrLen(const Str: PAnsiChar): Cardinal;
+begin
+{$IFDEF HasAnsiStrings}
+  Result := System.AnsiStrings.StrLen(Str);
+{$ELSE}
+  Result := SysUtils.StrLen(Str);
+{$ENDIF}
+end;
+
+function AbStrPCopy(Dest: PAnsiChar; const Source: AnsiString): PAnsiChar;
+begin
+{$IFDEF HasAnsiStrings}
+  Result := System.AnsiStrings.StrPCopy(Dest, Source);
+{$ELSE}
+  Result := SysUtils.StrPCopy(Dest, Source);
+{$ENDIF}
+end;
+
+function AbStrPLCopy(Dest: PAnsiChar; const Source: AnsiString; MaxLen: Cardinal): PAnsiChar;
+begin
+{$IFDEF HasAnsiStrings}
+  Result := System.AnsiStrings.StrPLCopy(Dest, Source, MaxLen);
+{$ELSE}
+  Result := SysUtils.StrPLCopy(Dest, Source, MaxLen);
+{$ENDIF}
+end;
 
 end.

@@ -457,7 +457,9 @@ uses
   {$IFDEF MSWINDOWS}
   Windows, // Fix inline warnings
   {$ENDIF MSWINDOWS}
-  Math, RTLConsts, SysUtils, {$IFDEF HasAnsiStrings}AnsiStrings, {$ENDIF}AbCharset, AbVMStrm, AbExcept;
+  Math, RTLConsts, SysUtils,
+  {$IFDEF HasAnsiStrings}AnsiStrings, {$ENDIF}
+  AbCharset, AbVMStrm, AbExcept;
 
 { ****************** Helper functions Not from Classes Above ***************** }
 function OctalToInt(const Oct : PAnsiChar; aLen : integer): Int64;
@@ -1247,18 +1249,18 @@ begin
   FTarHeaderList.Insert(I, PHeader);{ Insert: Inserts at base index }
   FTarHeaderTypeList.Insert(I, Pointer( META_DATA_HEADER));{ This is the L/K Header }
   FillChar(PHeader^, AB_TAR_RECORDSIZE, #0); { Zero the whole block }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.Name, AB_TAR_L_HDR_NAME); { Stuff L/K String Name }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.Mode, AB_TAR_L_HDR_ARR8_0); { Stuff zeros }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.uid, AB_TAR_L_HDR_ARR8_0);  { Stuff zeros }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.gid, AB_TAR_L_HDR_ARR8_0);  { Stuff zeros }
+  AbStrPCopy(PHeader.Name, AB_TAR_L_HDR_NAME); { Stuff L/K String Name }
+  AbStrPCopy(PHeader.Mode, AB_TAR_L_HDR_ARR8_0); { Stuff zeros }
+  AbStrPCopy(PHeader.uid, AB_TAR_L_HDR_ARR8_0);  { Stuff zeros }
+  AbStrPCopy(PHeader.gid, AB_TAR_L_HDR_ARR8_0);  { Stuff zeros }
   tempStr := PadString(IntToOctal(Length(Value)+1), SizeOf(PHeader.Size)); { Stuff Size }
   Move(tempStr[1], PHeader.Size, Length(tempStr));
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.ModTime, AB_TAR_L_HDR_ARR12_0);  { Stuff zeros }
+  AbStrPCopy(PHeader.ModTime, AB_TAR_L_HDR_ARR12_0);  { Stuff zeros }
   { Check sum will be calculated as the Dirty flag is in caller. }
   PHeader.LinkFlag := LinkFlag;  { Stuff Link FlagSize }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.Magic.gnuOld, AB_TAR_MAGIC_GNUOLD); { Stuff the magic }
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.UsrName, AB_TAR_L_HDR_USR_NAME);
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(PHeader.GrpName, AB_TAR_L_HDR_GRP_NAME);
+  AbStrPCopy(PHeader.Magic.gnuOld, AB_TAR_MAGIC_GNUOLD); { Stuff the magic }
+  AbStrPCopy(PHeader.UsrName, AB_TAR_L_HDR_USR_NAME);
+  AbStrPCopy(PHeader.GrpName, AB_TAR_L_HDR_GRP_NAME);
   { All else stays as Zeros. }
   { Completed with L/K Header }
 
@@ -1426,7 +1428,7 @@ begin
     { Save off the new name and store to the Header }
     FTarItem.Name := Value;
     { Must add Null Termination before we store to Header }
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(PTarHeader.Name, RawFileName, AB_TAR_NAMESIZE);
+    AbStrPLCopy(PTarHeader.Name, RawFileName, AB_TAR_NAMESIZE);
   end;{ End else Short new name,... }
 
   { Update the inherited file names. }
@@ -1455,7 +1457,7 @@ begin
     Exit;
   { GrpName is extendable in PAX Headers, Rember PAX extended Header Over Rule File Headers }
   FTarItem.GrpName := Value;
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(PTarHeader.GrpName, AnsiString(Value), SizeOf(PTarHeader.GrpName));
+  AbStrPLCopy(PTarHeader.GrpName, AnsiString(Value), SizeOf(PTarHeader.GrpName));
   FTarItem.Dirty := True;
 end;
 
@@ -1593,7 +1595,7 @@ begin
     end; { End if GNU... }
     { Save off the new name and store to the Header }
     FTarItem.LinkName := Value;
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(PTarHeader.LinkName, RawLinkName, AB_TAR_NAMESIZE);
+    AbStrPLCopy(PTarHeader.LinkName, RawLinkName, AB_TAR_NAMESIZE);
   end;{ End else Short new name,... }
   FTarItem.Dirty := True;
 end;
@@ -1639,7 +1641,7 @@ begin
     Exit;
   { UsrName is extendable in PAX Headers, Remember PAX extended Header Over Rule File Headers }
   FTarItem.UsrName := Value;
-  {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(PTarHeader.UsrName, AnsiString(Value), SizeOf(PTarHeader.UsrName));
+  AbStrPLCopy(PTarHeader.UsrName, AnsiString(Value), SizeOf(PTarHeader.UsrName));
   FTarItem.Dirty := True;
 end;
 
@@ -1693,7 +1695,7 @@ begin
   DataRead := FStream.Read(FTarHeader, AB_TAR_RECORDSIZE); { Read in a header }
   { DataRead <> AB_TAR_RECORDSIZE means end of stream, and the End Of Archive
     record is all #0's, which the StrLen(FTarHeader.Name) check will catch }
-  while (DataRead = AB_TAR_RECORDSIZE) and ({$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrLen(FTarHeader.Name) > 0) and not FoundItem do
+  while (DataRead = AB_TAR_RECORDSIZE) and (AbStrLen(FTarHeader.Name) > 0) and not FoundItem do
   begin { Either exit when we find a supported file or end of file or an invalid header name. }
     if FTarHeader.LinkFlag in (AB_SUPPORTED_MD_HEADERS+AB_UNSUPPORTED_MD_HEADERS) then
     begin { We have a un/supported Meta-Data Header }

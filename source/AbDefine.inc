@@ -101,6 +101,7 @@
   {$IFEND}
   {$IF RTLVersion >= 20} // Delphi 2009
     {$DEFINE HasThreadFinished}
+    {$DEFINE HasInline}
   {$IFEND}
   {$IF RTLVersion >= 21} // Delphi 2010
     {$DEFINE HasThreadStart}

@@ -177,7 +177,11 @@ function VerifyCab(Strm : TStream) : TAbArchiveType; overload;
 implementation
 
 uses
-  SysUtils{$IFDEF HasAnsiStrings}, AnsiStrings{$ENDIF}, AbCharset, AbConst, AbExcept;
+  SysUtils,
+{$IFDEF HasAnsiStrings}
+  System.AnsiStrings,
+{$ENDIF}
+  AbCharset, AbConst, AbExcept;
 
 {$WARN UNIT_PLATFORM OFF}
 {$WARN SYMBOL_PLATFORM OFF}
@@ -279,7 +283,7 @@ begin
     {obtain next cabinet.  Make index zero-based}
     Archive.DoGetNextCabinet(Pred(iCab), CabName, Abort);
     if not Abort then
-      {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(szCab, AnsiString(CabName), Length(szCab));
+      AbStrPLCopy(szCab, AnsiString(CabName), Length(szCab));
   end;
   Result := not Abort;
 end;
@@ -345,7 +349,7 @@ var
 begin
   Archive.FTempFileID := Archive.FTempFileID + 1;
   if (Archive.TempDirectory <> '') then
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(TempPath, AnsiString(Archive.TempDirectory), Length(TempPath))
+    AbStrPLCopy(TempPath, AnsiString(Archive.TempDirectory), Length(TempPath))
   else
     GetTempPathA(255, TempPath);
   GetTempFileNameA(TempPath, 'VMS', Archive.FTempFileID, lpTempName);
@@ -621,9 +625,9 @@ begin
     iDisk             := 0;
     fFailOnIncompressible := 0;
     setID             := SetID;
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPCopy(szDisk, '');
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(szCab, FCabName, Length(szCab));
-    {$IFDEF HasAnsiStrings}AnsiStrings.{$ENDIF}StrPLCopy(szCabPath, FCabPath, Length(szCabPath));
+    AbStrPCopy(szDisk, '');
+    AbStrPLCopy(szCab, FCabName, Length(szCab));
+    AbStrPLCopy(szCabPath, FCabPath, Length(szCabPath));
   end;
 
     {obtain an FCI context}
