@@ -1203,7 +1203,8 @@ begin
     Result := Result or AB_FPERMISSION_OWNERWRITE;
 
   if (Attr and faDirectory) <> 0 then
-    Result := Result or AB_FMODE_DIR or AB_FPERMISSION_OWNEREXECUTE
+    Result := Result or AB_FMODE_DIR or AB_FPERMISSION_OWNEREXECUTE or
+      AB_FPERMISSION_GROUPEXECUTE or AB_FPERMISSION_OTHEREXECUTE
   else
     Result := Result or AB_FMODE_FILE;
   {$WARN SYMBOL_PLATFORM ON}
