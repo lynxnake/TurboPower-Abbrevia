@@ -61,6 +61,9 @@ uses
 {$IFDEF UNIX}
   DateUtils,
 {$ENDIF}
+{$IFDEF HasAnsiStrings}
+  System.AnsiStrings,
+{$ENDIF}
   SysUtils,
   Classes,
   AbCharset;
@@ -369,9 +372,6 @@ implementation
 
 uses
   StrUtils,
-{$IFDEF HasAnsiStrings}
-  System.AnsiStrings,
-{$ENDIF}
   AbConst,
   AbExcept;
 
