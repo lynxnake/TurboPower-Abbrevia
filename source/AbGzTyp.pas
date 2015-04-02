@@ -149,7 +149,8 @@ type
     procedure SetLastModTimeAsDateTime(const Value: TDateTime); override;
 
     procedure SaveGzHeaderToStream(AStream : TStream);
-    procedure LoadGzHeaderFromStream(AStream : TStream);
+    procedure LoadGzHeaderFromStream(AStream : TStream;
+      const AArchiveName : string = '');
   public
     property CompressionMethod : Byte
       read FGZHeader.CompMethod;
@@ -293,7 +294,8 @@ uses
 {$IFDEF HasAnsiStrings}
   System.AnsiStrings,
 {$ENDIF}
-  SysUtils, AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString;
+  SysUtils, StrUtils,
+  AbBitBkt, AbCharset, AbDfBase, AbDfDec, AbDfEnc, AbExcept, AbResString;
 
 const
   { Header Signature Values}
@@ -710,7 +712,8 @@ begin
   Result := AbUnixTimeToLocalDateTime(FGZHeader.ModTime);
 end;
 
-procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream);
+procedure TAbGzipItem.LoadGzHeaderFromStream(AStream: TStream;
+  const AArchiveName : string = '');
 var
   LenW : Word;
 begin
@@ -735,8 +738,16 @@ begin
     FRawFileName := ReadCStringInStream(AStream);
     FFileName := AbRawBytesToString(FRawFileName)
   end
-  else
-    FFileName := 'unknown';
+  else begin
+    FFileName := ExtractFileName(AArchiveName);
+    if FFileName = '' then
+      FFileName := 'unknown'
+    else if AnsiEndsStr('.tgz', FFileName) then
+      FFileName := ChangeFileExt(FFileName, '.tar')
+    else
+      { Don't check for '.gz' since it might use a different extension }
+      FFileName := ChangeFileExt(FFileName, '');
+  end;
 
   { any comment present? }
   if HasFileComment then
@@ -1051,7 +1062,7 @@ begin
     try
       if GzHelp.FindFirstItem then begin
         Item := TAbGzipItem.Create;
-        Item.LoadGzHeaderFromStream(FGzStream);
+        Item.LoadGzHeaderFromStream(FGzStream, ArchiveName);
         FGzStream.Seek(-SizeOf(TAbGzTailRec), soEnd);
         GZHelp.ReadTail;
         Item.CRC32 := GZHelp.TailCRC;
