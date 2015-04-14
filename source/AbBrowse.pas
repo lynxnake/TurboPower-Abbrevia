@@ -522,20 +522,20 @@ begin
     { Guess archive type based on it's extension }
     Ext := UpperCase(ExtractFileExt(FN));
     if (Ext = '.ZIP') or (Ext = '.JAR') then
-      Result := atZip;
-    if (Ext = '.EXE') then
-      Result := atSelfExtZip;
-    if (Ext = '.TAR') then
-      Result := atTar;
-    if (Ext = '.GZ') then
-      Result := atGzip;
-    if (Ext = '.TGZ') then
-      Result := atGzippedTar;
-    if (Ext = '.CAB') then
-      Result := atCab;
-    if (Ext = '.BZ2') then
-      Result := atBzip2;
-    if (Ext = '.TBZ') then
+      Result := atZip
+    else if (Ext = '.EXE') then
+      Result := atSelfExtZip
+    else if (Ext = '.TAR') then
+      Result := atTar
+    else if (Ext = '.GZ') then
+      Result := atGzip
+    else if (Ext = '.TGZ') then
+      Result := atGzippedTar
+    else if (Ext = '.CAB') then
+      Result := atCab
+    else if (Ext = '.BZ2') then
+      Result := atBzip2
+    else if (Ext = '.TBZ') then
       Result := atBzippedTar;
   end;
   {$IFNDEF MSWINDOWS}
@@ -547,9 +547,7 @@ begin
       guess or verify the contents }
     FS := TFileStream.Create(FN, fmOpenRead or fmShareDenyNone);
     try
-      if Result = atUnknown then
-        Result := AbDetermineArcType(FS)
-      else begin
+      if Result <> atUnknown then begin
         case Result of
           atZip : begin
             Result := VerifyZip(FS);
@@ -573,6 +571,8 @@ begin
           end;
         end;
       end;
+      if Result = atUnknown then
+        Result := AbDetermineArcType(FS);
     finally
       FS.Free;
     end;
@@ -583,10 +583,11 @@ function AbDetermineArcType(aStream: TStream): TAbArchiveType;
 begin
   { VerifyZip returns true for self-extracting zips too, so test those first }
   Result := VerifySelfExtracting(aStream);
-  if Result = atUnknown then
-    Result := VerifyZip(aStream);
+  { VerifyZip returns true for example when ZIP file is stored in a TAR archive, so test it first }
   if Result = atUnknown then
     Result := VerifyTar(aStream);
+  if Result = atUnknown then
+    Result := VerifyZip(aStream);
   if Result = atUnknown then
     Result := VerifyGzip(aStream);
   if Result = atUnknown then
