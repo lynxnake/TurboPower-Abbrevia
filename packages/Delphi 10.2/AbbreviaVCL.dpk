@@ -50,8 +50,8 @@ package AbbreviaVCL;
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Abbrevia Run-time package - VCL XE6'}
-{$LIBSUFFIX '200'}
+{$DESCRIPTION 'Abbrevia Run-time package - VCL'}
+{$LIBSUFFIX '250'}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}
 

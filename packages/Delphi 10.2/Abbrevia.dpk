@@ -50,8 +50,8 @@ package Abbrevia;
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Abbrevia Run-time package - RTL XE6'}
-{$LIBSUFFIX '200'}
+{$DESCRIPTION 'Abbrevia Run-time package - RTL'}
+{$LIBSUFFIX '250'}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}
 
