@@ -66,3 +66,4 @@ __recovery/
 *.stat
 
 #Output folders
+/packages/Delphi 10.2/Abbrevia.res
